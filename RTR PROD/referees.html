@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RefRater — Referees</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a0c10;--surface:#12151c;--surface2:#1a1e28;--border:#242836;--accent2:#f5a623;--red:#ff4757;--yellow:#ffd32a;--green:#37ecba;--text:#e8eaf0;--muted:#6b7280;--pl-purple:#37003c;--pl-green:#00ff85;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;}
+
+  header{background:linear-gradient(135deg,#37003c 0%,#1a0020 60%,#0a0c10 100%);border-bottom:2px solid var(--pl-green);padding:0 24px;position:sticky;top:0;z-index:100;box-shadow:0 4px 32px rgba(0,255,133,.12);}
+  .header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:60px;}
+  .logo{display:flex;align-items:center;gap:10px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.6rem;text-decoration:none;color:var(--text);}
+  .logo-badge{background:var(--pl-green);color:var(--pl-purple);width:34px;height:34px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
+  .logo span{color:var(--pl-green);}
+  .header-right{display:flex;align-items:center;gap:12px;}
+  nav{display:flex;gap:6px;}
+  nav a{background:none;border:1px solid transparent;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:.9rem;font-weight:600;letter-spacing:.5px;text-transform:uppercase;padding:6px 14px;border-radius:4px;cursor:pointer;transition:all .18s;text-decoration:none;display:inline-block;}
+  nav a.active,nav a:hover{background:rgba(0,255,133,.1);border-color:var(--pl-green);color:var(--pl-green);}
+  .user-chip{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 12px 5px 7px;cursor:pointer;transition:border-color .15s;font-size:.82rem;position:relative;}
+  .user-chip:hover{border-color:rgba(0,255,133,.4);}
+  .uc-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--pl-purple),#8b008b);border:1.5px solid var(--pl-green);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:var(--pl-green);flex-shrink:0;}
+  .uc-name{font-weight:600;color:var(--text);}
+  .preview-badge{background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.4);color:var(--accent2);font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 9px;border-radius:4px;}
+  .user-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;min-width:200px;z-index:200;box-shadow:0 8px 32px rgba(0,0,0,.4);display:none;overflow:hidden;}
+  .user-dropdown.open{display:block;}
+  .dd-head{padding:14px 16px;border-bottom:1px solid var(--border);background:var(--surface2);}
+  .dd-uname{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;}
+  .dd-team{font-size:.75rem;color:var(--muted);margin-top:2px;}
+  .dd-item{padding:11px 16px;font-size:.85rem;color:var(--muted);cursor:pointer;transition:background .12s;display:flex;align-items:center;gap:8px;}
+  .dd-item:hover{background:var(--surface2);color:var(--red);}
+
+  .page{max-width:1200px;margin:0 auto;padding:24px;}
+  .section-title{font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+
+  .refs-hero{background:linear-gradient(135deg,var(--pl-purple) 0%,#1a0028 60%,var(--surface) 100%);border:1px solid rgba(0,255,133,.15);border-radius:12px;padding:28px 32px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;}
+  .refs-hero h1{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2rem;text-transform:uppercase;letter-spacing:.5px;}
+  .refs-hero p{font-size:.85rem;color:rgba(255,255,255,.5);margin-top:6px;max-width:500px;line-height:1.6;}
+  .refs-hero-stats{display:flex;gap:24px;flex-shrink:0;}
+  .hero-stat .val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2.2rem;color:var(--pl-green);line-height:1;}
+  .hero-stat .lbl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+
+  .refs-controls{display:flex;align-items:center;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+  .refs-controls-label{font-family:'Barlow Condensed',sans-serif;font-size:.78rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;}
+  .sort-btn{background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:.5px;text-transform:uppercase;padding:7px 14px;cursor:pointer;transition:all .15s;}
+  .sort-btn:hover{border-color:rgba(0,255,133,.4);color:var(--text);}
+  .sort-btn.active{background:rgba(0,255,133,.08);border-color:var(--pl-green);color:var(--pl-green);}
+  .sort-btn.fan-sort.active{background:rgba(255,211,42,.08);border-color:var(--yellow);color:var(--yellow);}
+
+  .refs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
+
+  /* Referee profile card */
+  .rpc{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .2s,transform .15s;cursor:pointer;}
+  .rpc:hover{border-color:rgba(0,255,133,.3);transform:translateY(-2px);}
+  .rpc-head{background:linear-gradient(135deg,var(--pl-purple),#1a0028);padding:16px 18px;display:flex;align-items:center;gap:14px;}
+  .rpc-av{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#37003c,#8b008b);border:2px solid rgba(0,255,133,.35);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;color:var(--pl-green);flex-shrink:0;}
+  .rpc-info{flex:1;min-width:0;}
+  .rpc-name{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.15rem;}
+  .rpc-meta{font-size:.74rem;color:rgba(255,255,255,.4);margin-top:3px;}
+  .rpc-notes{font-size:.7rem;color:rgba(255,255,255,.3);margin-top:3px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .rpc-rank{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2.2rem;color:rgba(0,255,133,.18);line-height:1;flex-shrink:0;}
+
+  .rpc-body{padding:14px 18px;}
+
+  .rpc-scores{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+  .score-box{background:var(--surface2);border-radius:8px;padding:10px 12px;}
+  .score-box.nb{border-left:3px solid rgba(55,236,186,.5);}
+  .score-box.fb{border-left:3px solid rgba(255,211,42,.5);}
+  .score-lbl{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
+  .score-lbl.nl{color:var(--green);}.score-lbl.fl{color:var(--yellow);}
+  .score-val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.8rem;line-height:1;}
+  .score-val.nv{color:var(--green);}.score-val.fv{color:var(--yellow);}.score-val.none{color:var(--muted);font-size:1rem;}
+  .score-votes{font-size:.68rem;color:var(--muted);margin-top:2px;}
+
+  .bias-gap-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:8px 10px;background:var(--surface2);border-radius:6px;}
+  .bg-label{font-size:.72rem;color:var(--muted);flex-shrink:0;}
+  .bg-track{flex:1;background:var(--border);border-radius:4px;height:6px;overflow:hidden;}
+  .bg-fill{height:100%;border-radius:4px;transition:width .4s ease;}
+  .bg-val{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.78rem;flex-shrink:0;}
+  .bg-val.pos{color:var(--green);}.bg-val.neg{color:var(--red);}.bg-val.zero{color:var(--muted);}
+
+  .cat-bars{margin-bottom:14px;}
+  .bar-row{display:grid;grid-template-columns:112px 1fr 32px;align-items:center;gap:8px;margin-bottom:6px;}
+  .bar-lbl{font-size:.72rem;color:var(--muted);}
+  .bar-track{background:var(--surface2);border-radius:4px;height:6px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:4px;transition:width .4s ease;}
+  .bar-fill.g{background:var(--green);}.bar-fill.y{background:var(--yellow);}.bar-fill.r{background:var(--red);}
+  .bar-val{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:700;text-align:right;color:var(--muted);}
+
+  .recent-matches-title{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px;}
+  .recent-match-row{background:var(--surface2);border-radius:5px;padding:5px 9px;display:flex;align-items:center;justify-content:space-between;font-size:.75rem;margin-bottom:4px;}
+  .rm-teams{font-family:'Barlow Condensed',sans-serif;font-weight:600;}
+  .rm-score{font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--muted);}
+  .rm-score.live{color:var(--red);}
+
+  .rpc-footer{padding:10px 18px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .rpc-games{font-size:.75rem;color:var(--muted);}
+  .rpc-games strong{color:var(--text);}
+  .rpc-trend{display:flex;align-items:center;gap:4px;font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:700;}
+  .rpc-trend.up{color:var(--green);}.rpc-trend.down{color:var(--red);}.rpc-trend.flat{color:var(--muted);}
+
+  .data-banner{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;font-size:.78rem;gap:12px;flex-wrap:wrap;}
+  .db-left{display:flex;align-items:center;gap:8px;color:var(--muted);}
+  .db-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;animation:blink 2s infinite;}
+  .db-dot.off{background:var(--muted);animation:none;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+  .db-link{color:var(--pl-green);font-weight:600;cursor:pointer;}
+  .db-link:hover{text-decoration:underline;}
+
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--pl-green);color:var(--pl-purple);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.9rem;padding:12px 20px;border-radius:8px;box-shadow:0 8px 32px rgba(0,255,133,.3);transform:translateY(60px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;z-index:1000;}
+  .toast.show{transform:translateY(0);opacity:1;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="matches.html"><div class="logo-badge">🟣</div>Ref<span>Rater</span></a>
+    <div class="header-right">
+      <nav>
+        <a href="matches.html">Matches</a>
+        <a href="referees.html" class="active">Referees</a>
+        <a href="fantasy.html">Fantasy</a>
+        <a href="history.html">History</a>
+      </nav>
+      <div class="user-chip" id="userChip">
+        <div class="uc-avatar" id="ucAvatar"></div>
+        <span class="uc-name" id="ucName"></span>
+        <span id="ucTeamEmoji"></span>
+        <span style="color:var(--muted);font-size:.7rem;margin-left:2px">▾</span>
+        <div class="user-dropdown" id="userDropdown">
+          <div class="dd-head"><div class="dd-uname" id="ddName"></div><div class="dd-team" id="ddTeam"></div></div>
+          <div class="dd-item" id="ddLogout">↩ Sign out</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+  <div class="data-banner">
+    <div class="db-left"><div class="db-dot off" id="dbDot"></div><span id="dbText">Using built-in data · Connect Google Sheets for live updates</span></div>
+    <span class="db-link" id="dbHowTo">How to connect →</span>
+  </div>
+
+  <div class="refs-hero">
+    <div>
+      <h1>Referee <span style="color:var(--pl-green)">Standings</span></h1>
+      <p>All Premier League referees ranked by community ratings. Neutral and fan scores are tracked separately to remove bias. Click any card to go rate that referee.</p>
+    </div>
+    <div class="refs-hero-stats">
+      <div class="hero-stat"><div class="val" id="statRefs">–</div><div class="lbl">Referees</div></div>
+      <div class="hero-stat"><div class="val" id="statVotes">–</div><div class="lbl">Total Votes</div></div>
+      <div class="hero-stat"><div class="val" id="statAvg">–</div><div class="lbl">Avg Score</div></div>
+    </div>
+  </div>
+
+  <div class="refs-controls">
+    <span class="refs-controls-label">Sort by:</span>
+    <button class="sort-btn active" data-sort="neutral">Neutral Rating</button>
+    <button class="sort-btn fan-sort" data-sort="fan">Fan Rating</button>
+    <button class="sort-btn" data-sort="games">Games Played</button>
+    <button class="sort-btn" data-sort="votes">Most Voted</button>
+    <button class="sort-btn" data-sort="bias">Biggest Bias Gap</button>
+  </div>
+
+  <div class="refs-grid" id="refsGrid"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="shared.js"></script>
+<script>
+const currentUser = getCurrentUser();
+if (!PREVIEW_MODE && !currentUser) { window.location.href = 'login.html'; }
+
+let refSort = 'neutral';
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+
+// Header init
+function initHeader(){
+  const team=PL_TEAMS.find(t=>t.name===currentUser?.team);
+  document.getElementById('ucAvatar').textContent=(currentUser?.username||'?').slice(0,2).toUpperCase();
+  document.getElementById('ucName').textContent=currentUser?.username||'Guest';
+  document.getElementById('ucTeamEmoji').textContent=team?.emoji||'';
+  document.getElementById('ddName').textContent=currentUser?.username||'Guest';
+  document.getElementById('ddTeam').textContent=team?`${team.emoji} ${team.name} supporter`:'No team selected';
+  if(PREVIEW_MODE){
+    const b=document.createElement('div');b.className='preview-badge';b.textContent='Preview Mode';
+    document.getElementById('userChip').insertBefore(b,document.getElementById('userChip').firstChild);
+  }
+}
+
+document.getElementById('userChip').addEventListener('click',e=>{e.stopPropagation();document.getElementById('userDropdown').classList.toggle('open');});
+document.addEventListener('click',()=>document.getElementById('userDropdown').classList.remove('open'));
+document.getElementById('ddLogout').addEventListener('click',()=>{
+  if(PREVIEW_MODE){toast('Login is disabled in Preview Mode');return;}
+  clearCurrentUser();window.location.href='login.html';
+});
+document.getElementById('dbHowTo').addEventListener('click',()=>toast('See the 📖 How To Use sheet in the Excel file for setup instructions!'));
+
+// ── RENDER REFEREES ───────────────────────────────────────
+function renderRefs(){
+  // Hero stats
+  const totalVotes=REFS.reduce((s,r)=>s+r.neutralVotes+r.fanVotes,0);
+  const ratedRefs=REFS.filter(r=>r.neutralVotes>0);
+  const avgScore=ratedRefs.length?ratedRefs.reduce((s,r)=>s+r.neutralRating,0)/ratedRefs.length:0;
+  document.getElementById('statRefs').textContent=REFS.length;
+  document.getElementById('statVotes').textContent=totalVotes>0?totalVotes:'–';
+  document.getElementById('statAvg').textContent=avgScore>0?avgScore.toFixed(1):'–';
+
+  // Sort
+  const sorted=[...REFS].sort((a,b)=>{
+    if(refSort==='neutral'){
+      if(!a.neutralVotes&&!b.neutralVotes)return 0;if(!a.neutralVotes)return 1;if(!b.neutralVotes)return -1;
+      return b.neutralRating-a.neutralRating;
+    }
+    if(refSort==='fan'){
+      if(!a.fanVotes&&!b.fanVotes)return 0;if(!a.fanVotes)return 1;if(!b.fanVotes)return -1;
+      return b.fanRating-a.fanRating;
+    }
+    if(refSort==='games')return b.games-a.games;
+    if(refSort==='votes')return(b.neutralVotes+b.fanVotes)-(a.neutralVotes+a.fanVotes);
+    if(refSort==='bias'){
+      const gA=a.neutralVotes&&a.fanVotes?Math.abs(a.neutralRating-a.fanRating):0;
+      const gB=b.neutralVotes&&b.fanVotes?Math.abs(b.neutralRating-b.fanRating):0;
+      return gB-gA;
+    }
+    return 0;
+  });
+
+  document.getElementById('refsGrid').innerHTML=sorted.map((ref,rank)=>{
+    const hasN=ref.neutralVotes>0, hasF=ref.fanVotes>0;
+    const biasGap=hasN&&hasF?ref.neutralRating-ref.fanRating:null;
+    const gapAbs=biasGap!==null?Math.abs(biasGap):0;
+    const gapDir=biasGap!==null?(biasGap>0.1?'Fans rate lower':biasGap<-0.1?'Fans rate higher':'No bias'):' ';
+    const gapClass=biasGap!==null?(biasGap>0.1?'neg':biasGap<-0.1?'pos':'zero'):'zero';
+    const gapColor=biasGap!==null?(biasGap>0.1?'var(--red)':biasGap<-0.1?'var(--green)':'var(--muted)'):'var(--muted)';
+
+    // Category breakdown — seeded from neutral rating so it's deterministic per ref
+    const nR=ref.neutralRating;
+    const seed=ref.id*7;
+    const cats=[
+      {lbl:'Decision Making', v:hasN?Math.min(10,Math.max(1,nR+((seed%3)*.4-.6))):0},
+      {lbl:'Card Management', v:hasN?Math.min(10,Math.max(1,nR+(((seed*3)%5)*.4-.8))):0},
+      {lbl:'Game Control',    v:hasN?Math.min(10,Math.max(1,nR+(((seed*7)%4)*.4-.7))):0},
+      {lbl:'VAR Awareness',   v:hasN?Math.min(10,Math.max(1,nR+(((seed*11)%6)*.4-.9))):0},
+    ];
+
+    const recentMatches=MATCHES.filter(m=>m.refId===ref.id&&m.status!=='upcoming').slice(-3);
+
+    return`<div class="rpc" data-ref-id="${ref.id}">
+      <div class="rpc-head">
+        <div class="rpc-av">${ref.initials}</div>
+        <div class="rpc-info">
+          <div class="rpc-name">${ref.name}</div>
+          <div class="rpc-meta">${ref.nationality||'English'} · Age ${ref.age||'–'} ${ref.fifaListed==='Yes'?'· 🌍 FIFA':''}</div>
+          ${ref.notes?`<div class="rpc-notes">${ref.notes}</div>`:''}
+        </div>
+        <div class="rpc-rank">#${rank+1}</div>
+      </div>
+      <div class="rpc-body">
+        <div class="rpc-scores">
+          <div class="score-box nb">
+            <div class="score-lbl nl">Neutral Score</div>
+            ${hasN?`<div class="score-val nv">${ref.neutralRating.toFixed(1)}<span style="font-size:.8rem;color:var(--muted)">/10</span></div><div class="score-votes">${ref.neutralVotes} neutral votes</div>`:`<div class="score-val none">No data yet</div>`}
+          </div>
+          <div class="score-box fb">
+            <div class="score-lbl fl">Fan Score</div>
+            ${hasF?`<div class="score-val fv">${ref.fanRating.toFixed(1)}<span style="font-size:.8rem;color:var(--muted)">/10</span></div><div class="score-votes">${ref.fanVotes} fan votes</div>`:`<div class="score-val none">No data yet</div>`}
+          </div>
+        </div>
+        ${biasGap!==null?`
+        <div class="bias-gap-row">
+          <span class="bg-label">Fan bias:</span>
+          <div class="bg-track"><div class="bg-fill" style="width:${Math.min(100,gapAbs*15)}%;background:${gapColor}"></div></div>
+          <span class="bg-val ${gapClass}">${gapAbs.toFixed(1)} — ${gapDir}</span>
+        </div>`:''}
+        <div class="cat-bars">
+          ${cats.map(c=>{
+            const pct=hasN?c.v*10:0;
+            const bc=c.v>=7?'g':c.v>=5?'y':'r';
+            return`<div class="bar-row"><span class="bar-lbl">${c.lbl}</span><div class="bar-track"><div class="bar-fill ${bc}" style="width:${pct}%"></div></div><span class="bar-val">${hasN?c.v.toFixed(1):'–'}</span></div>`;
+          }).join('')}
+        </div>
+        ${recentMatches.length?`
+        <div class="recent-matches-title">Recent Matches</div>
+        ${recentMatches.map(m=>`
+          <div class="recent-match-row">
+            <span class="rm-teams">${m.hE} ${m.home} <span style="color:var(--muted)">vs</span> ${m.away} ${m.aE}</span>
+            <span class="rm-score${m.status==='live'?' live':''}">${m.score}</span>
+          </div>`).join('')}`:''}
+      </div>
+      <div class="rpc-footer">
+        <span class="rpc-games"><strong>${ref.games}</strong> games this season</span>
+        <span class="rpc-trend ${hasN?(ref.neutralRating>=7?'up':ref.neutralRating>=5?'flat':'down'):'flat'}">
+          ${hasN?(ref.neutralRating>=7?'▲ Performing well':ref.neutralRating>=5?'→ Average':'▼ Poor form'):'No data yet'}
+        </span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Sort buttons
+document.querySelector('.refs-controls').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-sort]');if(!btn)return;
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  refSort=btn.dataset.sort;
+  renderRefs();
+});
+
+// Click referee → go rate them on matches page
+document.getElementById('refsGrid').addEventListener('click',e=>{
+  const card=e.target.closest('[data-ref-id]');if(!card)return;
+  const refId=+card.dataset.refId;
+  const match=MATCHES.find(m=>m.refId===refId&&m.status!=='upcoming');
+  if(match){
+    sessionStorage.setItem('rr_open_match',match.id);
+    window.location.href='matches.html';
+  } else toast('No recent matches found for this referee');
+});
+
+// ── START ─────────────────────────────────────────────────
+initHeader();
+(async () => {
+  const fdLive     = await loadFromFootballData();
+  const sheetsLive = !fdLive && await loadFromSheets().catch(() => false);
+  if (fdLive || sheetsLive) {
+    document.getElementById('dbDot').className = 'db-dot';
+    document.getElementById('dbText').textContent = fdLive
+      ? `Live data · GW ${fdLive.gw} · ${fdLive.count} matches loaded · football-data.org`
+      : 'Live data from Google Sheets · Updates automatically';
+  }
+  renderRefs();
+})();
+</script>
+</body>
+</html>

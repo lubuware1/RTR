@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RefRater — Fantasy RTR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a0c10;--surface:#12151c;--surface2:#1a1e28;--border:#242836;--accent2:#f5a623;--red:#ff4757;--yellow:#ffd32a;--green:#37ecba;--text:#e8eaf0;--muted:#6b7280;--pl-purple:#37003c;--pl-green:#00ff85;--gold:#f5a623;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;}
+
+  /* === HEADER === */
+  header{background:linear-gradient(135deg,#37003c 0%,#1a0020 60%,#0a0c10 100%);border-bottom:2px solid var(--pl-green);padding:0 24px;position:sticky;top:0;z-index:100;box-shadow:0 4px 32px rgba(0,255,133,.12);}
+  .header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:60px;}
+  .logo{display:flex;align-items:center;gap:10px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.6rem;text-decoration:none;color:var(--text);}
+  .logo-badge{background:var(--pl-green);color:var(--pl-purple);width:34px;height:34px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
+  .logo span{color:var(--pl-green);}
+  .header-right{display:flex;align-items:center;gap:12px;}
+  nav{display:flex;gap:6px;}
+  nav a{background:none;border:1px solid transparent;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:.9rem;font-weight:600;letter-spacing:.5px;text-transform:uppercase;padding:6px 14px;border-radius:4px;cursor:pointer;transition:all .18s;text-decoration:none;display:inline-block;}
+  nav a.active,nav a:hover{background:rgba(0,255,133,.1);border-color:var(--pl-green);color:var(--pl-green);}
+  .user-chip{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 12px 5px 7px;cursor:pointer;transition:border-color .15s;font-size:.82rem;position:relative;}
+  .user-chip:hover{border-color:rgba(0,255,133,.4);}
+  .uc-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--pl-purple),#8b008b);border:1.5px solid var(--pl-green);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:var(--pl-green);flex-shrink:0;}
+  .uc-name{font-weight:600;color:var(--text);}
+  .preview-badge{background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.4);color:var(--accent2);font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 9px;border-radius:4px;}
+  .user-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;min-width:200px;z-index:200;box-shadow:0 8px 32px rgba(0,0,0,.4);display:none;overflow:hidden;}
+  .user-dropdown.open{display:block;}
+  .dd-head{padding:14px 16px;border-bottom:1px solid var(--border);background:var(--surface2);}
+  .dd-uname{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;}
+  .dd-team{font-size:.75rem;color:var(--muted);margin-top:2px;}
+  .dd-item{padding:11px 16px;font-size:.85rem;color:var(--muted);cursor:pointer;transition:background .12s;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);}
+  .dd-item:last-child{border-bottom:none;}
+  .dd-item:hover{background:var(--surface2);color:var(--text);}
+
+  /* === GW BANNER === */
+  .gw-banner{background:linear-gradient(90deg,rgba(55,0,60,.9),rgba(10,12,16,1));border-bottom:1px solid var(--border);padding:11px 24px;}
+  .gw-banner-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+  .gw-banner-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.05rem;letter-spacing:1px;text-transform:uppercase;}
+  .gw-banner-title span{color:var(--pl-green);}
+  .gw-banner-meta{font-size:.78rem;color:var(--muted);}
+  .gw-banner-meta strong{color:var(--red);}
+  .gw-status-pill{margin-left:auto;font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:4px 12px;border-radius:4px;display:flex;align-items:center;gap:6px;}
+  .gw-status-pill.live{background:rgba(255,71,87,.12);border:1px solid rgba(255,71,87,.35);color:var(--red);}
+  .gw-status-pill.upcoming{background:var(--surface2);border:1px solid var(--border);color:var(--muted);}
+  .gw-status-pill.complete{background:rgba(55,236,186,.1);border:1px solid rgba(55,236,186,.3);color:var(--green);}
+  .live-dot{width:6px;height:6px;background:var(--red);border-radius:50%;animation:blink 1.2s infinite;display:inline-block;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+  /* === LAYOUT === */
+  .container{max-width:1200px;margin:0 auto;padding:24px;display:grid;grid-template-columns:1fr 360px;gap:24px;}
+  .section-title{font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+
+  /* === TABS === */
+  .view-tabs{display:flex;margin-bottom:16px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:4px;gap:0;}
+  .view-tab{flex:1;background:none;border:none;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.5px;text-transform:uppercase;padding:8px;border-radius:6px;cursor:pointer;transition:all .15s;}
+  .view-tab.active{background:var(--surface2);color:var(--pl-green);border:1px solid rgba(0,255,133,.2);}
+
+  /* === PICK REF TAB === */
+  .deadline-notice{background:rgba(255,71,87,.07);border:1px solid rgba(255,71,87,.2);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:.8rem;color:rgba(255,71,87,.85);display:flex;align-items:center;gap:8px;}
+  .ref-pick-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .ref-pick-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:all .2s;position:relative;}
+  .ref-pick-card:hover:not(.locked){border-color:rgba(0,255,133,.3);transform:translateY(-1px);}
+  .ref-pick-card.selected{border-color:var(--pl-green);box-shadow:0 0 0 1px rgba(0,255,133,.15),0 4px 20px rgba(0,255,133,.08);}
+  .ref-pick-card.locked{cursor:default;}
+  .rpc-selected-badge{position:absolute;top:8px;right:8px;background:var(--pl-green);color:var(--pl-purple);font-family:'Barlow Condensed',sans-serif;font-size:.6rem;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:3px;}
+  .rpc-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .rpc-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--pl-purple),#8b008b);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.9rem;color:var(--pl-green);flex-shrink:0;}
+  .ref-pick-card.selected .rpc-av{border-color:var(--pl-green);}
+  .rpc-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.92rem;line-height:1.2;}
+  .rpc-match{font-size:.7rem;color:var(--muted);margin-top:2px;}
+  .rpc-bottom{display:flex;align-items:flex-end;justify-content:space-between;margin-top:8px;}
+  .rpc-pts{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5rem;line-height:1;}
+  .rpc-pts.complete{color:var(--green);}
+  .rpc-pts.live{color:var(--yellow);}
+  .rpc-pts.upcoming{color:var(--muted);}
+  .rpc-pts-sub{font-size:.6rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+  .rpc-status{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 8px;border-radius:3px;}
+  .rpc-status.complete{background:rgba(55,236,186,.1);color:var(--green);}
+  .rpc-status.live{background:rgba(255,71,87,.1);color:var(--red);}
+  .rpc-status.upcoming{background:var(--surface2);color:var(--muted);}
+
+  /* === BATTLES TAB === */
+  .scoring-guide{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr;gap:6px 20px;}
+  .sg-title{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);grid-column:1/-1;margin-bottom:4px;}
+  .sg-item{font-size:.75rem;display:flex;align-items:center;gap:6px;color:var(--muted);}
+  .sg-pts{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.8rem;min-width:28px;}
+  .sg-pts.pos{color:var(--green);}
+  .sg-pts.neg{color:var(--red);}
+
+  .battle-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden;}
+  .battle-header{background:var(--surface2);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+  .my-pick-badge{background:rgba(0,255,133,.1);border:1px solid rgba(0,255,133,.25);color:var(--pl-green);font-size:.62rem;padding:2px 7px;border-radius:3px;letter-spacing:.5px;}
+  .battle-body{padding:16px;display:grid;grid-template-columns:1fr 56px 1fr;align-items:center;gap:8px;}
+  .battle-ref{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;}
+  .br-av{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--pl-purple),#8b008b);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.1rem;color:var(--pl-green);}
+  .br-av.winner{border-color:var(--pl-green);box-shadow:0 0 14px rgba(0,255,133,.25);}
+  .br-av.loser{opacity:.45;}
+  .br-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.88rem;}
+  .br-match{font-size:.68rem;color:var(--muted);}
+  .br-pts{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.9rem;line-height:1;}
+  .br-pts.winner{color:var(--green);}
+  .br-pts.loser{color:var(--muted);}
+  .br-pts.live{color:var(--yellow);}
+  .br-pts.tbd{color:var(--muted);font-size:1.1rem;}
+  .br-pts-label{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;}
+  .vs-col{text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:.9rem;color:var(--muted);letter-spacing:2px;}
+  .battle-footer{padding:8px 16px 12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .battle-result-label{font-family:'Barlow Condensed',sans-serif;font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+  .battle-result-label.win{color:var(--green);}
+  .battle-result-label.loss{color:var(--red);}
+  .battle-result-label.draw{color:var(--yellow);}
+  .battle-result-label.live{color:var(--red);}
+  .battle-result-label.tbd{color:var(--muted);}
+  .battle-pickers{font-size:.72rem;color:var(--muted);}
+
+  /* === HISTORY TAB === */
+  .history-table{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+  .ht-head,.ht-row{display:grid;grid-template-columns:44px 1fr 64px 52px 64px 40px;gap:8px;padding:10px 16px;align-items:center;}
+  .ht-head{background:var(--surface2);border-bottom:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+  .ht-row{border-bottom:1px solid var(--border);font-size:.82rem;transition:background .12s;cursor:default;}
+  .ht-row:last-child{border-bottom:none;}
+  .ht-row:hover{background:var(--surface2);}
+  .ht-gw{font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--muted);}
+  .ht-ref{font-family:'Barlow Condensed',sans-serif;font-weight:600;}
+  .ht-refpts,.ht-mypts{font-family:'Barlow Condensed',sans-serif;font-weight:800;text-align:center;}
+  .ht-refpts{color:var(--green);}
+  .ht-result{font-family:'Barlow Condensed',sans-serif;font-weight:800;text-align:center;}
+  .ht-result.W{color:var(--green);}
+  .ht-result.D{color:var(--yellow);}
+  .ht-result.L{color:var(--red);}
+  .ht-wc{text-align:center;font-size:.95rem;}
+
+  /* === SIDEBAR === */
+  .side-panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;position:sticky;top:84px;}
+  .panel-head{background:linear-gradient(135deg,var(--pl-purple),#2a0035);padding:14px 18px;border-bottom:1px solid rgba(0,255,133,.2);display:flex;align-items:center;justify-content:space-between;}
+  .panel-head-text h2{font-family:'Barlow Condensed',sans-serif;font-size:1.05rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--pl-green);}
+  .panel-head-text p{font-size:.75rem;color:rgba(255,255,255,.45);margin-top:2px;}
+  .panel-close-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:rgba(255,255,255,.5);font-size:1rem;line-height:1;padding:4px 9px;cursor:pointer;transition:all .15s;display:none;}
+  .panel-close-btn:hover{background:rgba(255,71,87,.15);border-color:rgba(255,71,87,.4);color:var(--red);}
+  .panel-close-btn.visible{display:block;}
+  .panel-body{padding:16px;}
+
+  .no-pick-state{text-align:center;padding:28px 16px;}
+  .nps-icon{font-size:2rem;margin-bottom:8px;}
+  .nps-text{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:.9rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);}
+  .nps-sub{font-size:.75rem;color:var(--muted);margin-top:4px;}
+
+  .my-ref-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+  .my-ref-av{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--pl-purple),#8b008b);border:2px solid rgba(0,255,133,.3);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;color:var(--pl-green);flex-shrink:0;}
+  .my-ref-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;}
+  .my-ref-match{font-size:.72rem;color:var(--muted);margin-top:2px;}
+  .my-ref-pts{margin-left:auto;text-align:right;flex-shrink:0;}
+  .my-ref-pts-num{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.6rem;color:var(--green);line-height:1;}
+  .my-ref-pts-label{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+
+  .battle-status-box{border-radius:8px;padding:10px 12px;margin-bottom:12px;}
+  .battle-status-box.winning{background:rgba(55,236,186,.07);border:1px solid rgba(55,236,186,.2);}
+  .battle-status-box.losing{background:rgba(255,71,87,.07);border:1px solid rgba(255,71,87,.2);}
+  .battle-status-box.drawing{background:rgba(255,211,42,.07);border:1px solid rgba(255,211,42,.2);}
+  .battle-status-box.pending{background:var(--surface2);border:1px solid var(--border);}
+  .bsb-label{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:.5px;}
+  .bsb-label.winning{color:var(--green);}
+  .bsb-label.losing{color:var(--red);}
+  .bsb-label.drawing{color:var(--yellow);}
+  .bsb-label.pending{color:var(--muted);}
+  .bsb-detail{font-size:.76rem;color:var(--muted);margin-top:3px;line-height:1.4;}
+
+  .gw-pts-box{background:linear-gradient(135deg,rgba(0,255,133,.08),transparent);border:1px solid rgba(0,255,133,.18);border-radius:8px;padding:12px;text-align:center;margin-bottom:14px;}
+  .gw-pts-num{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2.4rem;color:var(--pl-green);line-height:1;}
+  .gw-pts-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:3px;}
+  .gw-pts-result{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.82rem;margin-top:5px;}
+  .gw-pts-result.W{color:var(--green);}
+  .gw-pts-result.D{color:var(--yellow);}
+  .gw-pts-result.L{color:var(--red);}
+  .gw-pts-result.tbd{color:var(--muted);}
+  .gw-pts-bonus{font-size:.7rem;color:var(--accent2);margin-top:2px;}
+
+  /* === WILDCARDS === */
+  .wc-title{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  .wc-grid{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+  .wc-btn{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;cursor:pointer;transition:all .15s;width:100%;text-align:left;}
+  .wc-btn:hover:not(:disabled){border-color:var(--accent2);background:rgba(245,166,35,.05);}
+  .wc-btn.active{background:rgba(245,166,35,.1);border-color:var(--accent2);}
+  .wc-btn:disabled{opacity:.38;cursor:not-allowed;}
+  .wc-icon{font-size:1.25rem;flex-shrink:0;}
+  .wc-info{flex:1;}
+  .wc-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.88rem;}
+  .wc-desc{font-size:.68rem;color:var(--muted);margin-top:1px;line-height:1.3;}
+  .wc-right{margin-left:auto;flex-shrink:0;text-align:right;}
+  .wc-uses-num{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.88rem;color:var(--accent2);}
+  .wc-uses-label{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;}
+  .wc-active-tag{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;font-weight:800;background:var(--accent2);color:#000;padding:2px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:.5px;}
+
+  /* === SEASON STATS === */
+  .season-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:14px;}
+  .stat-box{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px;text-align:center;}
+  .stat-num{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.2rem;}
+  .stat-num.w{color:var(--green);}
+  .stat-num.d{color:var(--yellow);}
+  .stat-num.l{color:var(--red);}
+  .stat-lbl{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+
+  /* === FANTASY LEAGUE TABLE === */
+  .fl-table{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:16px;}
+  .fl-header{background:var(--surface2);padding:12px 16px;font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);}
+  .fl-row{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);transition:background .15s;}
+  .fl-row:last-child{border-bottom:none;}
+  .fl-row.me{background:rgba(0,255,133,.04);}
+  .fl-row:hover{background:var(--surface2);}
+  .fl-rank{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.85rem;color:var(--muted);text-align:center;}
+  .fl-rank.top{color:var(--gold);}
+  .fl-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.88rem;}
+  .fl-name.me{color:var(--pl-green);}
+  .fl-sub{font-size:.68rem;color:var(--muted);margin-top:1px;}
+  .fl-pts{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.05rem;}
+  .fl-pts.me{color:var(--pl-green);}
+
+  /* === TOAST === */
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--pl-green);color:var(--pl-purple);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.9rem;padding:12px 20px;border-radius:8px;box-shadow:0 8px 32px rgba(0,255,133,.3);transform:translateY(60px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;z-index:1000;}
+  .toast.show{transform:translateY(0);opacity:1;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="matches.html"><div class="logo-badge">🟣</div>Ref<span>Rater</span></a>
+    <div class="header-right">
+      <nav>
+        <a href="matches.html">Matches</a>
+        <a href="referees.html">Referees</a>
+        <a href="fantasy.html" class="active">Fantasy</a>
+        <a href="history.html">History</a>
+      </nav>
+      <div class="user-chip" id="userChip">
+        <div class="uc-avatar" id="ucAvatar"></div>
+        <span class="uc-name" id="ucName"></span>
+        <span id="ucTeamEmoji"></span>
+        <span style="color:var(--muted);font-size:.7rem;margin-left:2px">▾</span>
+        <div class="user-dropdown" id="userDropdown">
+          <div class="dd-head">
+            <div class="dd-uname" id="ddName"></div>
+            <div class="dd-team" id="ddTeam"></div>
+          </div>
+          <div class="dd-item" id="ddLogout">↩ Sign out</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="gw-banner">
+  <div class="gw-banner-inner">
+    <div>
+      <div class="gw-banner-title">Fantasy RTR — <span>GW 29</span></div>
+      <div class="gw-banner-meta">⏰ Deadline: Sat 22 Mar · 14:00 &nbsp;·&nbsp; <strong>DEADLINE PASSED</strong></div>
+    </div>
+    <div class="gw-status-pill live"><span class="live-dot"></span> Live</div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- LEFT: Main Content -->
+  <div>
+    <div class="view-tabs" id="viewTabs">
+      <button class="view-tab active" data-tab="pick">Pick Ref</button>
+      <button class="view-tab" data-tab="battles">Battles</button>
+      <button class="view-tab" data-tab="history">My History</button>
+    </div>
+
+    <!-- TAB: PICK REF -->
+    <div id="tabPick">
+      <div class="deadline-notice">🔒 Deadline passed — picks are locked for GW 29</div>
+      <div class="ref-pick-grid" id="refPickGrid"><!-- rendered by JS --></div>
+    </div>
+
+    <!-- TAB: BATTLES -->
+    <div id="tabBattles" style="display:none">
+      <div class="scoring-guide">
+        <div class="sg-title">How Ref Points Work</div>
+        <div class="sg-item"><span class="sg-pts pos">+2</span> Correct VAR decision</div>
+        <div class="sg-item"><span class="sg-pts neg">−1</span> Incorrect penalty</div>
+        <div class="sg-item"><span class="sg-pts pos">+1</span> Neutral score above 5.0</div>
+        <div class="sg-item"><span class="sg-pts neg">−2</span> Incorrect red card</div>
+        <div class="sg-item"><span class="sg-pts neg">−1</span> Neutral score below 5.0</div>
+      </div>
+      <div id="battlesGrid"><!-- rendered by JS --></div>
+    </div>
+
+    <!-- TAB: HISTORY -->
+    <div id="tabHistory" style="display:none">
+      <div class="history-table">
+        <div class="ht-head">
+          <div>GW</div><div>Ref Picked</div><div>Ref Pts</div><div>Result</div><div>My Pts</div><div>WC</div>
+        </div>
+        <div id="historyRows"><!-- rendered by JS --></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Sidebar -->
+  <div>
+    <div class="side-panel">
+      <div class="panel-head">
+        <div class="panel-head-text">
+          <h2>⚽ My GW 29 Pick</h2>
+          <p id="panelSubtext">Select a ref from the Pick tab</p>
+        </div>
+        <button class="panel-close-btn" id="panelCloseBtn" title="Minimise">✕</button>
+      </div>
+      <div class="panel-body">
+
+        <!-- No pick made -->
+        <div id="noPick" class="no-pick-state">
+          <div class="nps-icon">🏳</div>
+          <div class="nps-text">No pick made</div>
+          <div class="nps-sub">Go to Pick Ref to choose your ref</div>
+        </div>
+
+        <!-- Pick made -->
+        <div id="hasPick" style="display:none">
+          <div class="my-ref-card" id="myRefCard"></div>
+          <div class="battle-status-box" id="battleStatusBox"></div>
+          <div class="gw-pts-box" id="gwPtsBox"></div>
+
+          <div class="wc-title">Wildcards</div>
+          <div class="wc-grid" id="wcGrid"></div>
+
+          <div class="section-title">Season Stats</div>
+          <div class="season-stats" id="seasonStats"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="fl-table">
+      <div class="fl-header">🏆 Fantasy League — GW 29</div>
+      <div id="fantasyLeague"><!-- rendered by JS --></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="shared.js"></script>
+<script>
+// ── AUTH ──────────────────────────────────────────────────
+const currentUser = getCurrentUser();
+if (!PREVIEW_MODE && !currentUser) { window.location.href = 'login.html'; }
+
+// ── FANTASY DATA ──────────────────────────────────────────
+const FGW = { gw: 29, deadlinePassed: true, status: 'live' };
+
+// Ref pairings for GW 29
+const BATTLES = [
+  { id:1, r1:1, r2:2 }, // Oliver vs Taylor     — both complete
+  { id:2, r1:3, r2:4 }, // Hooper vs Pawson      — both complete
+  { id:3, r1:5, r2:6 }, // Madley vs Attwell     — both live
+  { id:4, r1:7, r2:8 }, // Gillett vs Brooks     — both upcoming
+];
+
+// Fantasy points each ref earned this GW (null = not played yet)
+const REF_GW_PTS  = { 1:5, 2:1, 3:3, 4:0, 5:2, 6:1, 7:null, 8:null };
+const REF_STATUS  = { 1:'complete', 2:'complete', 3:'complete', 4:'complete', 5:'live', 6:'live', 7:'upcoming', 8:'upcoming' };
+
+// How many managers picked each ref this GW
+const PICK_COUNTS = { 1:12, 2:8, 3:5, 4:3, 5:7, 6:4, 7:9, 8:2 };
+
+// User's GW history
+const MY_HISTORY = [
+  { gw:28, refId:1, refPts:6, result:'W', myPts:5, wc:'var' },
+  { gw:27, refId:4, refPts:0, result:'L', myPts:0, wc:null  },
+  { gw:26, refId:3, refPts:3, result:'D', myPts:1, wc:null  },
+  { gw:25, refId:5, refPts:4, result:'W', myPts:3, wc:null  },
+  { gw:24, refId:1, refPts:5, result:'W', myPts:4, wc:'rc'  },
+  { gw:23, refId:2, refPts:1, result:'L', myPts:0, wc:null  },
+  { gw:22, refId:7, refPts:5, result:'W', myPts:3, wc:null  },
+  { gw:21, refId:1, refPts:4, result:'W', myPts:3, wc:null  },
+];
+
+// Fantasy league standings
+const FANTASY_LEAGUE = [
+  { username:'FootballFan99',  team:'Liverpool', pts:27, gwPick:'Gillett',  isMe:false },
+  { username:'RefNerd21',      team:'Man City',  pts:24, gwPick:'Oliver',   isMe:false },
+  { username:'TackleKing',     team:'Chelsea',   pts:22, gwPick:'Madley',   isMe:false },
+  { username:'PremierPundit',  team:'Arsenal',   pts:20, gwPick:'Oliver',   isMe:false },
+  { username:'Preview User',   team:'Arsenal',   pts:19, gwPick:'Oliver',   isMe:true  },
+  { username:'GoalLineGareth', team:'Everton',   pts:16, gwPick:'Pawson',   isMe:false },
+  { username:'OffTheBall',     team:'West Ham',  pts:14, gwPick:'Attwell',  isMe:false },
+];
+
+// ── WILDCARD STATE ────────────────────────────────────────
+// Each player gets 2 of each per season; stored in sessionStorage
+let wildcards = JSON.parse(sessionStorage.getItem('rtr_wc_29') || JSON.stringify({
+  yc:  { left:1, active:false }, // Yellow Card
+  rc:  { left:1, active:false }, // Red Card
+  var: { left:2, active:false }, // VAR Replay
+}));
+function saveWC() { sessionStorage.setItem('rtr_wc_29', JSON.stringify(wildcards)); }
+
+// ── PICK STATE ────────────────────────────────────────────
+// Default to Oliver (1) for Preview Mode demo; real users start with null
+let myPick = sessionStorage.getItem('rtr_pick_29')
+  ? +sessionStorage.getItem('rtr_pick_29')
+  : (PREVIEW_MODE ? 1 : null);
+
+// ── HELPERS ───────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function getRefMatch(refId) { return MATCHES.find(m => +m.refId === refId); }
+
+function getBattleForRef(refId) { return BATTLES.find(b => b.r1 === refId || b.r2 === refId); }
+
+function getOpponentId(refId) {
+  const b = getBattleForRef(refId);
+  return b ? (b.r1 === refId ? b.r2 : b.r1) : null;
+}
+
+function getBattleResult(battle) {
+  const p1 = REF_GW_PTS[battle.r1], p2 = REF_GW_PTS[battle.r2];
+  if (p1 === null || p2 === null) return 'tbd';
+  if (p1 > p2) return 'r1';
+  if (p2 > p1) return 'r2';
+  return 'draw';
+}
+
+function isLiveBattle(battle) {
+  return REF_STATUS[battle.r1] === 'live' || REF_STATUS[battle.r2] === 'live';
+}
+
+function calcMyGWPts() {
+  if (!myPick) return null;
+  const b = getBattleForRef(myPick);
+  if (!b) return null;
+  const res = getBattleResult(b);
+  if (res === 'tbd') return null;
+  const won  = (res === 'r1' && b.r1 === myPick) || (res === 'r2' && b.r2 === myPick);
+  const drew = res === 'draw';
+  let pts = won ? 3 : drew ? 1 : 0;
+  if (wildcards.rc.active)  pts += 1;
+  if (wildcards.var.active) pts += 2;
+  return { pts, result: won ? 'W' : drew ? 'D' : 'L' };
+}
+
+// ── HEADER ────────────────────────────────────────────────
+function initHeader() {
+  const team = PL_TEAMS.find(t => t.name === currentUser?.team);
+  document.getElementById('ucAvatar').textContent = (currentUser?.username || '?').slice(0, 2).toUpperCase();
+  document.getElementById('ucName').textContent   = currentUser?.username || 'Guest';
+  document.getElementById('ucTeamEmoji').textContent = team?.emoji || '';
+  document.getElementById('ddName').textContent = currentUser?.username || 'Guest';
+  document.getElementById('ddTeam').textContent = team ? `${team.emoji} ${team.name} supporter` : 'No team selected';
+  if (PREVIEW_MODE) {
+    const badge = document.createElement('div');
+    badge.className = 'preview-badge'; badge.textContent = 'Preview Mode';
+    document.getElementById('userChip').insertBefore(badge, document.getElementById('userChip').firstChild);
+  }
+}
+document.getElementById('userChip').addEventListener('click', e => {
+  e.stopPropagation();
+  document.getElementById('userDropdown').classList.toggle('open');
+});
+document.addEventListener('click', () => document.getElementById('userDropdown').classList.remove('open'));
+document.getElementById('ddLogout').addEventListener('click', () => {
+  if (PREVIEW_MODE) { toast('Login disabled in Preview Mode'); return; }
+  clearCurrentUser(); window.location.href = 'login.html';
+});
+
+// ── TABS ──────────────────────────────────────────────────
+document.getElementById('viewTabs').addEventListener('click', e => {
+  const tab = e.target.dataset.tab; if (!tab) return;
+  document.querySelectorAll('.view-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.getElementById('tabPick').style.display    = tab === 'pick'    ? 'block' : 'none';
+  document.getElementById('tabBattles').style.display = tab === 'battles' ? 'block' : 'none';
+  document.getElementById('tabHistory').style.display = tab === 'history' ? 'block' : 'none';
+});
+
+// ── PICK GRID ─────────────────────────────────────────────
+function renderPickGrid() {
+  document.getElementById('refPickGrid').innerHTML = REFS.map(ref => {
+    const m      = getRefMatch(ref.id);
+    const pts    = REF_GW_PTS[ref.id];
+    const status = REF_STATUS[ref.id];
+    const sel    = myPick === ref.id;
+    return `<div class="ref-pick-card${sel ? ' selected' : ''}${FGW.deadlinePassed ? ' locked' : ''}" data-rid="${ref.id}">
+      ${sel ? '<div class="rpc-selected-badge">MY PICK</div>' : ''}
+      <div class="rpc-top">
+        <div class="rpc-av">${ref.initials}</div>
+        <div>
+          <div class="rpc-name">${ref.name}</div>
+          <div class="rpc-match">${m ? `${m.hE} ${m.home} v ${m.away} ${m.aE}` : 'No match'}</div>
+        </div>
+      </div>
+      <div class="rpc-bottom">
+        <div>
+          <div class="rpc-pts ${status}">${pts !== null ? pts + ' pts' : 'TBD'}</div>
+          <div class="rpc-pts-sub">${status === 'live' ? 'live' : status === 'complete' ? 'final' : 'upcoming'}</div>
+        </div>
+        <div class="rpc-status ${status}">${status === 'live' ? '<span class="live-dot"></span> LIVE' : status === 'complete' ? 'FT' : 'KO 15:00'}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  if (!FGW.deadlinePassed) {
+    document.querySelectorAll('.ref-pick-card').forEach(card => {
+      card.addEventListener('click', () => {
+        myPick = +card.dataset.rid;
+        sessionStorage.setItem('rtr_pick_29', myPick);
+        renderPickGrid();
+        renderSidebar();
+        toast(`Picked ${gRef(myPick).name} for GW ${FGW.gw}`);
+      });
+    });
+  }
+}
+
+// ── BATTLES ───────────────────────────────────────────────
+function renderBattles() {
+  document.getElementById('battlesGrid').innerHTML = BATTLES.map(b => {
+    const r1 = gRef(b.r1), r2 = gRef(b.r2);
+    const m1 = getRefMatch(b.r1), m2 = getRefMatch(b.r2);
+    const p1 = REF_GW_PTS[b.r1], p2 = REF_GW_PTS[b.r2];
+    const s1 = REF_STATUS[b.r1], s2 = REF_STATUS[b.r2];
+    const res  = getBattleResult(b);
+    const live = isLiveBattle(b);
+    const myBattle = myPick && (b.r1 === myPick || b.r2 === myPick);
+
+    const r1win = res === 'r1', r2win = res === 'r2', tbd = res === 'tbd';
+
+    let resLabel = '', resClass = 'tbd';
+    if (tbd && live) { resLabel = '<span class="live-dot"></span> LIVE'; resClass = 'live'; }
+    else if (tbd)    { resLabel = 'UPCOMING'; }
+    else if (res === 'draw') { resLabel = 'DRAW'; resClass = 'draw'; }
+    else if (myBattle) {
+      const myWon = (r1win && b.r1 === myPick) || (r2win && b.r2 === myPick);
+      resLabel = myWon ? 'YOUR REF WON ✓' : 'YOUR REF LOST';
+      resClass = myWon ? 'win' : 'loss';
+    } else {
+      resLabel = r1win ? `${r1.name.split(' ').pop()} wins` : `${r2.name.split(' ').pop()} wins`;
+      resClass = 'win';
+    }
+
+    const avClass1 = !tbd ? (r1win ? ' winner' : ' loser') : '';
+    const avClass2 = !tbd ? (r2win ? ' winner' : ' loser') : '';
+    const ptClass1 = !tbd ? (r1win ? 'winner' : 'loser') : (s1 === 'live' ? 'live' : 'tbd');
+    const ptClass2 = !tbd ? (r2win ? 'winner' : 'loser') : (s2 === 'live' ? 'live' : 'tbd');
+
+    return `<div class="battle-card">
+      <div class="battle-header">
+        <span>Battle ${b.id}</span>
+        ${myBattle ? '<span class="my-pick-badge">MY PICK</span>' : ''}
+        <span>${tbd && !live ? 'UPCOMING' : live ? '<span class="live-dot"></span> LIVE' : 'COMPLETE'}</span>
+      </div>
+      <div class="battle-body">
+        <div class="battle-ref">
+          <div class="br-av${avClass1}">${r1.initials}</div>
+          <div class="br-name">${r1.name}</div>
+          <div class="br-match">${m1 ? `${m1.hE} ${m1.home} v ${m1.away}` : ''}</div>
+          <div class="br-pts ${ptClass1}">${p1 !== null ? p1 : '–'}</div>
+          <div class="br-pts-label">${p1 !== null ? 'pts' : s1 === 'upcoming' ? 'KO 15:00' : ''}</div>
+        </div>
+        <div class="vs-col">VS</div>
+        <div class="battle-ref">
+          <div class="br-av${avClass2}">${r2.initials}</div>
+          <div class="br-name">${r2.name}</div>
+          <div class="br-match">${m2 ? `${m2.hE} ${m2.home} v ${m2.away}` : ''}</div>
+          <div class="br-pts ${ptClass2}">${p2 !== null ? p2 : '–'}</div>
+          <div class="br-pts-label">${p2 !== null ? 'pts' : s2 === 'upcoming' ? 'KO 15:00' : ''}</div>
+        </div>
+      </div>
+      <div class="battle-footer">
+        <div class="battle-result-label ${resClass}">${resLabel}</div>
+        <div class="battle-pickers">${PICK_COUNTS[b.r1]} vs ${PICK_COUNTS[b.r2]} managers</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── SIDEBAR ───────────────────────────────────────────────
+document.getElementById('panelCloseBtn').addEventListener('click', () => {
+  document.getElementById('hasPick').style.display = 'none';
+  document.getElementById('noPick').style.display = 'block';
+  document.getElementById('panelCloseBtn').classList.remove('visible');
+  document.getElementById('panelSubtext').textContent = 'Select a ref from the Pick tab';
+});
+
+function renderSidebar() {
+  const noPick = document.getElementById('noPick');
+  const hasPick = document.getElementById('hasPick');
+
+  if (!myPick) {
+    noPick.style.display = 'block'; hasPick.style.display = 'none';
+    document.getElementById('panelCloseBtn').classList.remove('visible');
+    return;
+  }
+  noPick.style.display = 'none'; hasPick.style.display = 'block';
+  document.getElementById('panelCloseBtn').classList.add('visible');
+
+  const ref    = gRef(myPick);
+  const m      = getRefMatch(myPick);
+  const pts    = REF_GW_PTS[myPick];
+  const status = REF_STATUS[myPick];
+
+  // Ref card
+  document.getElementById('myRefCard').innerHTML = `
+    <div class="my-ref-av">${ref.initials}</div>
+    <div style="flex:1">
+      <div class="my-ref-name">${ref.name}</div>
+      <div class="my-ref-match">${m ? `${m.hE} ${m.home} v ${m.away} ${m.aE}` : ''}</div>
+    </div>
+    <div class="my-ref-pts">
+      <div class="my-ref-pts-num">${pts !== null ? pts : '–'}</div>
+      <div class="my-ref-pts-label">${status === 'live' ? 'live pts' : status === 'complete' ? 'gw pts' : 'tbd'}</div>
+    </div>`;
+
+  // Battle status
+  const battle = getBattleForRef(myPick);
+  const oppId  = getOpponentId(myPick);
+  const opp    = gRef(oppId);
+  const oppPts = REF_GW_PTS[oppId];
+  const res    = getBattleResult(battle);
+  const live   = isLiveBattle(battle);
+
+  let bsClass = 'pending', bsLabel = '', bsDetail = '';
+  if (res === 'tbd' && live) {
+    bsClass  = 'pending';
+    bsLabel  = 'LIVE';
+    const leading = pts > oppPts ? 'Leading' : pts < oppPts ? 'Trailing' : 'Level';
+    bsDetail = `${leading} — ${pts ?? '?'}pts vs ${opp.name}: ${oppPts ?? '?'}pts`;
+  } else if (res === 'tbd') {
+    bsLabel  = 'UPCOMING';
+    bsDetail = `vs ${opp.name} — awaiting kick-off`;
+  } else {
+    const won  = (res === 'r1' && battle.r1 === myPick) || (res === 'r2' && battle.r2 === myPick);
+    const drew = res === 'draw';
+    bsClass  = won ? 'winning' : drew ? 'drawing' : 'losing';
+    bsLabel  = won ? 'WINNING ✓' : drew ? 'DRAW' : 'LOSING';
+    bsDetail = `${ref.name.split(' ').pop()}: ${pts}pts &nbsp;vs&nbsp; ${opp.name.split(' ').pop()}: ${oppPts}pts`;
+  }
+
+  const bsBox = document.getElementById('battleStatusBox');
+  bsBox.className = `battle-status-box ${bsClass}`;
+  bsBox.innerHTML = `<div class="bsb-label ${bsClass}">${bsLabel}</div><div class="bsb-detail">${bsDetail}</div>`;
+
+  // GW Points box
+  const gwResult = calcMyGWPts();
+  const bonuses  = [wildcards.rc.active ? '🟥 Red Card +1' : '', wildcards.var.active ? '📺 VAR +2' : ''].filter(Boolean);
+  document.getElementById('gwPtsBox').innerHTML = `
+    <div class="gw-pts-num">${gwResult !== null ? gwResult.pts : '?'}</div>
+    <div class="gw-pts-label">GW Points</div>
+    <div class="gw-pts-result ${gwResult ? gwResult.result : 'tbd'}">${
+      gwResult
+        ? gwResult.result === 'W' ? 'WIN — 3pts base'
+        : gwResult.result === 'D' ? 'DRAW — 1pt base'
+        : 'LOSS — 0pts base'
+        : 'Awaiting result'
+    }</div>
+    ${bonuses.length ? `<div class="gw-pts-bonus">${bonuses.join(' · ')}</div>` : ''}`;
+
+  // Wildcards
+  renderWildcards();
+
+  // Season stats
+  const wins   = MY_HISTORY.filter(h => h.result === 'W').length;
+  const draws  = MY_HISTORY.filter(h => h.result === 'D').length;
+  const losses = MY_HISTORY.filter(h => h.result === 'L').length;
+  const total  = MY_HISTORY.reduce((s, h) => s + h.myPts, 0);
+  document.getElementById('seasonStats').innerHTML = `
+    <div class="stat-box"><div class="stat-num w">${wins}</div><div class="stat-lbl">Wins</div></div>
+    <div class="stat-box"><div class="stat-num d">${draws}</div><div class="stat-lbl">Draws</div></div>
+    <div class="stat-box"><div class="stat-num l">${losses}</div><div class="stat-lbl">Losses</div></div>`;
+
+  document.getElementById('panelSubtext').textContent = `${total} season pts · GW${FGW.gw} ${FGW.deadlinePassed ? '— locked' : '— pick before deadline'}`;
+}
+
+// ── WILDCARDS ─────────────────────────────────────────────
+function renderWildcards() {
+  const locked = FGW.deadlinePassed;
+
+  const wcs = [
+    { key:'yc',  icon:'🟨', name:'Yellow Card', desc:'Ignore neutral score this GW. Must use before deadline.', preDeadline:true },
+    { key:'rc',  icon:'🟥', name:'Red Card',    desc:'+1 bonus to your score this GW. Must use before deadline.', preDeadline:true },
+    { key:'var', icon:'📺', name:'VAR Replay',  desc:'+2 bonus to your score. Can be used after the game!', preDeadline:false },
+  ];
+
+  document.getElementById('wcGrid').innerHTML = wcs.map(w => {
+    const state = wildcards[w.key];
+    const isDisabled = state.active
+      ? (w.preDeadline && locked)   // active pre-deadline WC locked in once deadline passes
+      : (state.left === 0 || (w.preDeadline && locked));
+    return `<button class="wc-btn${state.active ? ' active' : ''}" data-wc="${w.key}"${isDisabled ? ' disabled' : ''}>
+      <span class="wc-icon">${w.icon}</span>
+      <div class="wc-info">
+        <div class="wc-name">${w.name}</div>
+        <div class="wc-desc">${w.desc}</div>
+      </div>
+      <div class="wc-right">
+        ${state.active
+          ? '<div class="wc-active-tag">ACTIVE</div>'
+          : `<div class="wc-uses-num">${state.left}</div><div class="wc-uses-label">left</div>`}
+      </div>
+    </button>`;
+  }).join('');
+
+  document.querySelectorAll('.wc-btn:not([disabled])').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.wc;
+      const wc  = wildcards[key];
+      if (wc.active) {
+        wc.active = false; wc.left++;
+        toast(`${key === 'yc' ? 'Yellow Card' : key === 'rc' ? 'Red Card' : 'VAR Replay'} deactivated`);
+      } else {
+        if (wc.left <= 0) { toast('No wildcards remaining'); return; }
+        wc.active = true; wc.left--;
+        toast(`${key === 'yc' ? '🟨 Yellow Card' : key === 'rc' ? '🟥 Red Card' : '📺 VAR Replay'} activated!`);
+      }
+      saveWC(); renderSidebar();
+    });
+  });
+}
+
+// ── HISTORY ───────────────────────────────────────────────
+function renderHistory() {
+  const wcIcon = { yc:'🟨', rc:'🟥', var:'📺' };
+  document.getElementById('historyRows').innerHTML = MY_HISTORY.map(h => {
+    const ref = gRef(h.refId);
+    return `<div class="ht-row">
+      <div class="ht-gw">GW${h.gw}</div>
+      <div class="ht-ref">${ref.name}</div>
+      <div class="ht-refpts">${h.refPts}</div>
+      <div class="ht-result ${h.result}">${h.result}</div>
+      <div class="ht-mypts">${h.myPts}</div>
+      <div class="ht-wc">${h.wc ? wcIcon[h.wc] : '—'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── LEAGUE TABLE ──────────────────────────────────────────
+function renderLeague() {
+  const sorted = [...FANTASY_LEAGUE].sort((a, b) => b.pts - a.pts);
+  document.getElementById('fantasyLeague').innerHTML = sorted.map((p, i) => {
+    const team = PL_TEAMS.find(t => t.name === p.team);
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1;
+    return `<div class="fl-row${p.isMe ? ' me' : ''}">
+      <div class="fl-rank${i < 3 ? ' top' : ''}">${medal}</div>
+      <div>
+        <div class="fl-name${p.isMe ? ' me' : ''}">${p.username}${p.isMe ? ' ★' : ''}</div>
+        <div class="fl-sub">${team?.emoji || ''} ${p.team} · picked ${p.gwPick}</div>
+      </div>
+      <div class="fl-pts${p.isMe ? ' me' : ''}">${p.pts}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── BUILD BATTLES FROM LIVE MATCHES ──────────────────────
+// Called after API load — pairs this GW's refs into random H2H battles.
+// VAR/pen/red-card fantasy points are still entered manually in REF_GW_PTS.
+function buildBattlesFromMatches() {
+  const refIds = [...new Set(MATCHES.map(m => m.refId))];
+  if (refIds.length < 2) return;
+
+  // Deterministic shuffle seeded by GW number so everyone sees same pairings
+  const gw = CURRENT_GW || FGW.gw;
+  const shuffled = [...refIds].sort((a, b) => ((a * 31 + gw * 17) % 97) - ((b * 31 + gw * 17) % 97));
+
+  BATTLES.length = 0;
+  for (let i = 0; i + 1 < shuffled.length; i += 2) {
+    BATTLES.push({ id: Math.floor(i / 2) + 1, r1: shuffled[i], r2: shuffled[i + 1] });
+  }
+
+  // Sync REF_MATCH_STATUS from live MATCHES data
+  refIds.forEach(refId => {
+    const m = MATCHES.find(x => x.refId === refId);
+    if (!m) return;
+    REF_MATCH_STATUS[refId] = m.status === 'recent' ? 'complete' : m.status;
+    // REF_GW_PTS stays as manually entered — don't overwrite
+    if (!(refId in REF_GW_PTS)) REF_GW_PTS[refId] = null;
+  });
+}
+
+// ── BOOT ──────────────────────────────────────────────────
+initHeader();
+(async () => {
+  const live = await loadFromFootballData();
+  if (live) {
+    FGW.gw = live.gw;
+    buildBattlesFromMatches();
+    document.querySelector('.gw-banner-title').innerHTML = `Fantasy RTR — <span>GW ${live.gw}</span>`;
+    document.querySelector('.panel-head-text h2').textContent = `⚽ My GW ${live.gw} Pick`;
+    document.querySelector('.gw-banner-meta').innerHTML =
+      `⏰ Deadline: locked &nbsp;·&nbsp; <strong>${live.count} matches loaded</strong>`;
+  }
+  renderPickGrid();
+  renderBattles();
+  renderSidebar();
+  renderHistory();
+  renderLeague();
+})();
+</script>
+</body>
+</html>
