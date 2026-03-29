@@ -12,7 +12,7 @@ const FD_API_BASE = 'https://api.football-data.org/v4';
 
 // Maps the API's full team names to our short names + emojis
 const TEAM_LOOKUP = {
-  'Arsenal FC':                 { short:'Arsenal',        emoji:'🔴' },
+  'Arsenal FC':                 { short:'Arsenal',        emoji:'images/arsenal-removebg-preview.png' },
   'Aston Villa FC':             { short:'Aston Villa',    emoji:'🟣' },
   'AFC Bournemouth':            { short:'Bournemouth',    emoji:'🍒' },
   'Brentford FC':               { short:'Brentford',      emoji:'🔴' },
@@ -23,15 +23,19 @@ const TEAM_LOOKUP = {
   'Fulham FC':                  { short:'Fulham',         emoji:'⚪' },
   'Ipswich Town FC':            { short:'Ipswich',        emoji:'🔵' },
   'Leicester City FC':          { short:'Leicester',      emoji:'🦊' },
-  'Liverpool FC':               { short:'Liverpool',      emoji:'🔴' },
-  'Manchester City FC':         { short:'Man City',       emoji:'🔵' },
+  'Liverpool FC':               { short:'Liverpool',      emoji:'images/liverpool-removebg-preview.png' },
+  'Manchester City FC':         { short:'Man City',       emoji:'images/mcity-removebg-preview.png' },
   'Manchester United FC':       { short:'Man Utd',        emoji:'🔴' },
   'Newcastle United FC':        { short:'Newcastle',      emoji:'⚫' },
   'Nottingham Forest FC':       { short:'Nottm Forest',   emoji:'🌲' },
   'Southampton FC':             { short:'Southampton',    emoji:'⚪' },
-  'Tottenham Hotspur FC':       { short:'Tottenham',      emoji:'⚪' },
-  'West Ham United FC':         { short:'West Ham',       emoji:'🔵' },
+  'Tottenham Hotspur FC':       { short:'Tottenham',      emoji:'images/tottenham-removebg-preview.png' },
+  'West Ham United FC':         { short:'West Ham',       emoji:'images/hammers-removebg-preview.png' },
   'Wolverhampton Wanderers FC': { short:'Wolves',         emoji:'🟡' },
+  // 2025/26 promoted sides
+  'Burnley FC':                 { short:'Burnley',         emoji:'🔴' },
+  'Sunderland AFC':             { short:'Sunderland',      emoji:'🔴' },
+  'Leeds United FC':            { short:'Leeds',           emoji:'⚪' },
 };
 
 let CURRENT_GW = null; // set when live data loads
@@ -72,55 +76,114 @@ async function loadFromFootballData() {
     const newMatches = [];
     let matchId = 1;
 
-    for (const m of mData.matches) {
-      const home = TEAM_LOOKUP[m.homeTeam.name] || { short: m.homeTeam.shortName || m.homeTeam.name, emoji: '⚽' };
-      const away = TEAM_LOOKUP[m.awayTeam.name] || { short: m.awayTeam.shortName || m.awayTeam.name, emoji: '⚽' };
+    const processMatches = (matches, gameweek) => {
+      for (const m of matches) {
+        const home = TEAM_LOOKUP[m.homeTeam.name] || { short: m.homeTeam.shortName || m.homeTeam.name, emoji: '⚽' };
+        const away = TEAM_LOOKUP[m.awayTeam.name] || { short: m.awayTeam.shortName || m.awayTeam.name, emoji: '⚽' };
 
-      // Status
-      let status;
-      if      (m.status === 'FINISHED' || m.status === 'AWARDED') status = 'recent';
-      else if (m.status === 'IN_PLAY'  || m.status === 'PAUSED')  status = 'live';
-      else                                                          status = 'upcoming';
+        // Status
+        let status;
+        if      (m.status === 'FINISHED' || m.status === 'AWARDED') status = 'recent';
+        else if (m.status === 'IN_PLAY'  || m.status === 'PAUSED')  status = 'live';
+        else                                                          status = 'upcoming';
 
-      // Score
-      const hs = m.score?.fullTime?.home, as_ = m.score?.fullTime?.away;
-      const score = (status !== 'upcoming' && hs != null) ? `${hs}–${as_}` : '–';
+        // Score
+        const hs = m.score?.fullTime?.home, as_ = m.score?.fullTime?.away;
+        const score = (status !== 'upcoming' && hs != null) ? `${hs}–${as_}` : '–';
 
-      // Cards and penalties from match detail
-      const d   = detailMap.get(m.id);
-      const yc  = d?.bookings?.filter(b => b.card === 'YELLOW').length ?? 0;
-      const rc  = d?.bookings?.filter(b => b.card === 'RED' || b.card === 'YELLOW_RED').length ?? 0;
-      const pen = d?.goals?.filter(g => g.type === 'PENALTY').length ?? 0;
+        // Cards and penalties from match detail
+        const d   = detailMap.get(m.id);
+        const yc  = d?.bookings?.filter(b => b.card === 'YELLOW').length ?? 0;
+        const rc  = d?.bookings?.filter(b => b.card === 'RED' || b.card === 'YELLOW_RED').length ?? 0;
+        const pen = d?.goals?.filter(g => g.type === 'PENALTY').length ?? 0;
 
-      // Referee — skip matches where no ref has been assigned yet
-      const apiRef = m.referees?.find(r => r.type === 'REFEREE') || m.referees?.[0];
-      if (!apiRef) continue;
+        // Referee — upcoming fixtures often have no ref assigned yet; use TBD placeholder.
+        //           Finished/live matches with no ref are skipped (shouldn't happen).
+        const apiRef = m.referees?.find(r => r.type === 'REFEREE') || m.referees?.[0];
+        let ref;
+        if (!apiRef) {
+          if (status !== 'upcoming') continue;
+          ref = REFS.find(r => r.id === 0);
+          if (!ref) {
+            ref = { id:0, name:'TBD', initials:'?', games:0, neutralRating:0, neutralVotes:0,
+                    fanRating:0, fanVotes:0, nationality:'', age:0, fifaListed:'No', notes:'Referee not yet announced' };
+            REFS.push(ref);
+          }
+        } else {
+          // Try to match to our existing REFS by full name, then by surname
+          ref = REFS.find(r => r.name.toLowerCase() === apiRef.name.toLowerCase());
+          if (!ref) ref = REFS.find(r => apiRef.name.toLowerCase().endsWith(r.name.split(' ').pop().toLowerCase()));
+          if (!ref) {
+            // Brand-new referee — add them with blank ratings
+            ref = {
+              id: Math.max(...REFS.map(r => r.id)) + 1,
+              name: apiRef.name,
+              initials: apiRef.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
+              games: 0, neutralRating: 0, neutralVotes: 0, fanRating: 0, fanVotes: 0,
+              nationality: apiRef.nationality || 'English', age: 0, fifaListed: 'Yes', notes: '',
+            };
+            REFS.push(ref);
+          }
+        }
 
-      // Try to match to our existing REFS by full name, then by surname
-      let ref = REFS.find(r => r.name.toLowerCase() === apiRef.name.toLowerCase());
-      if (!ref) ref = REFS.find(r => apiRef.name.toLowerCase().endsWith(r.name.split(' ').pop().toLowerCase()));
-      if (!ref) {
-        // Brand-new referee — add them with blank ratings
-        ref = {
-          id: Math.max(...REFS.map(r => r.id)) + 1,
-          name: apiRef.name,
-          initials: apiRef.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
-          games: 0, neutralRating: 0, neutralVotes: 0, fanRating: 0, fanVotes: 0,
-          nationality: apiRef.nationality || 'English', age: 0, fifaListed: 'Yes', notes: '',
-        };
-        REFS.push(ref);
+        newMatches.push({
+          id: matchId++,
+          home: home.short, hE: home.emoji,
+          away: away.short, aE: away.emoji,
+          score, status, refId: ref.id,
+          yc, rc, pen,
+          var: 0,        // VAR correct/incorrect is editorial — enter manually
+          apiMatchId: m.id, matchday: gameweek,
+          kickoff: m.utcDate,
+        });
       }
+    };
 
-      newMatches.push({
-        id: matchId++,
-        home: home.short, hE: home.emoji,
-        away: away.short, aE: away.emoji,
-        score, status, refId: ref.id,
-        yc, rc, pen,
-        var: 0,        // VAR correct/incorrect is editorial — enter manually
-        apiMatchId: m.id, matchday: gw,
-        kickoff: m.utcDate,
-      });
+    processMatches(mData.matches, gw);
+
+    // 5. Keep Recent + Upcoming tabs populated across the season break points:
+    //
+    //    a) All current GW matches are FINISHED → currentMatchday is the last played round.
+    //       Also load GW+1 so the Upcoming tab has the next fixtures.
+    //
+    //    b) All current GW matches are still SCHEDULED/TIMED → the API has already advanced
+    //       currentMatchday to the next round. Load GW-1 to fill Recent with last round's results,
+    //       then also fetch the detail (cards/pens) for those finished matches.
+    const allFinished = mData.matches.length > 0 &&
+      mData.matches.every(m => m.status === 'FINISHED' || m.status === 'AWARDED');
+    const allUpcoming = mData.matches.length > 0 &&
+      mData.matches.every(m => m.status !== 'FINISHED' && m.status !== 'AWARDED' &&
+                                m.status !== 'IN_PLAY'  && m.status !== 'PAUSED');
+
+    if (allFinished) {
+      try {
+        const nextRes = await fetch(`${base}/competitions/PL/matches?matchday=${gw + 1}`, { headers: hdrs });
+        if (nextRes.ok) {
+          const nextData = await nextRes.json();
+          processMatches(nextData.matches, gw + 1);
+        }
+      } catch (_) { /* next GW is optional */ }
+    }
+
+    if (allUpcoming && gw > 1) {
+      // The API has advanced to the upcoming round — fetch the previous round for Recent.
+      try {
+        const prevRes = await fetch(`${base}/competitions/PL/matches?matchday=${gw - 1}`, { headers: hdrs });
+        if (prevRes.ok) {
+          const prevData = await prevRes.json();
+          // Fetch cards/penalties for those finished matches and add to the existing detailMap.
+          const prevFinished = prevData.matches.filter(m => m.status === 'FINISHED' || m.status === 'AWARDED');
+          const prevDetails = await Promise.all(
+            prevFinished.map(m =>
+              fetch(`${base}/matches/${m.id}`, { headers: hdrs })
+                .then(r => r.ok ? r.json() : null)
+                .catch(() => null)
+            )
+          );
+          prevFinished.forEach((m, i) => { if (prevDetails[i]) detailMap.set(m.id, prevDetails[i]); });
+          processMatches(prevData.matches, gw - 1);
+        }
+      } catch (_) { /* prev GW is optional */ }
     }
 
     if (newMatches.length) MATCHES = newMatches;
@@ -160,7 +223,7 @@ const PL_TEAMS = [
   {name:"Ipswich",emoji:"🔵"},{name:"Leicester",emoji:"🦊"},{name:"Liverpool",emoji:"🔴"},
   {name:"Man City",emoji:"🔵"},{name:"Man Utd",emoji:"🔴"},{name:"Newcastle",emoji:"⚫"},
   {name:"Nottm Forest",emoji:"🌲"},{name:"Southampton",emoji:"⚪"},{name:"Tottenham",emoji:"⚪"},
-  {name:"West Ham",emoji:"🔵"},{name:"Wolves",emoji:"🟡"},
+  {name:"West Ham",emoji:"⚒️"},{name:"Wolves",emoji:"🟡"},
 ];
 
 let REFS = [
@@ -175,11 +238,11 @@ let REFS = [
 ];
 
 let MATCHES = [
-  {id:1,home:"Arsenal",       hE:"🔴",away:"Liverpool",    aE:"🔴",score:"2–1",status:"recent",  refId:1,yc:4,rc:0,pen:1,var:2},
-  {id:2,home:"Man City",      hE:"🔵",away:"Chelsea",      aE:"🔵",score:"1–1",status:"recent",  refId:2,yc:3,rc:1,pen:0,var:3},
-  {id:3,home:"Tottenham",     hE:"⚪",away:"Man Utd",      aE:"🔴",score:"0–2",status:"recent",  refId:3,yc:5,rc:0,pen:0,var:1},
+  {id:1,home:"Arsenal",       hE:"images/arsenal-removebg-preview.png",away:"Liverpool",    aE:"images/liverpool-removebg-preview.png",score:"2–1",status:"recent",  refId:1,yc:4,rc:0,pen:1,var:2},
+  {id:2,home:"Man City",      hE:"images/mcity-removebg-preview.png",away:"Chelsea",      aE:"🔵",score:"1–1",status:"recent",  refId:2,yc:3,rc:1,pen:0,var:3},
+  {id:3,home:"Tottenham",     hE:"images/tottenham-removebg-preview.png",away:"Man Utd",      aE:"🔴",score:"0–2",status:"recent",  refId:3,yc:5,rc:0,pen:0,var:1},
   {id:4,home:"Newcastle",     hE:"⚫",away:"Aston Villa",  aE:"🟣",score:"3–0",status:"recent",  refId:4,yc:2,rc:0,pen:1,var:0},
-  {id:5,home:"Brighton",      hE:"🔵",away:"West Ham",     aE:"🔵",score:"1–0",status:"live",    refId:5,yc:2,rc:0,pen:0,var:1},
+  {id:5,home:"Brighton",      hE:"🔵",away:"West Ham",     aE:"images/hammers-removebg-preview.png",score:"1–0",status:"live",    refId:5,yc:2,rc:0,pen:0,var:1},
   {id:6,home:"Wolves",        hE:"🟡",away:"Fulham",       aE:"⚪",score:"0–0",status:"live",    refId:6,yc:3,rc:0,pen:1,var:2},
   {id:7,home:"Everton",       hE:"🔵",away:"Brentford",    aE:"🔴",score:"–",  status:"upcoming",refId:7,yc:0,rc:0,pen:0,var:0},
   {id:8,home:"Crystal Palace",hE:"🦅",away:"Bournemouth",  aE:"🍒",score:"–",  status:"upcoming",refId:8,yc:0,rc:0,pen:0,var:0},
