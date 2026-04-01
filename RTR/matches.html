@@ -157,7 +157,15 @@
   .empty-state p{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:1rem;text-transform:uppercase;letter-spacing:1px;}
   .toast{position:fixed;bottom:24px;right:24px;background:var(--pl-green);color:var(--pl-purple);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.9rem;padding:12px 20px;border-radius:8px;box-shadow:0 8px 32px rgba(0,255,133,.3);transform:translateY(60px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;z-index:1000;}
   .toast.show{transform:translateY(0);opacity:1;}
+  img.emoji{height:1em;width:1em;vertical-align:-0.1em;}
+  @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  .skel{background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:4px;}
+  .skel-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;}
+  .skel-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .skel-circle{border-radius:50%;flex-shrink:0;}
+  .skel-line{height:11px;}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/twemoji@14/dist/twemoji.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -197,7 +205,7 @@
       <button class="view-tab" data-filter="recent">Recent</button>
       <button class="view-tab" data-filter="upcoming">Upcoming</button>
     </div>
-    <div class="section-title">GW 29 — 22 Mar 2025</div>
+    <div class="section-title">Group Stage · Matchday 1 · 11 Jun 2026</div>
     <div id="matchList"></div>
   </div>
   <div>
@@ -230,7 +238,7 @@
       </div>
     </div>
     <div class="leaderboard">
-      <div class="lb-header"><span>⭐ Ref Rankings 2024/25</span>
+      <div class="lb-header"><span>⭐ Ref Rankings · 2026 World Cup</span>
         <div class="lb-tabs">
           <button class="lb-tab active" id="lbN">Neutral</button>
           <button class="lb-tab ft" id="lbF">Fan</button>
@@ -243,11 +251,11 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="shared.js"></script>
 <script>
 // ── INIT ──────────────────────────────────────────────────
-// PREVIEW_MODE is set in shared.js — if true, skip login check
-const currentUser = getCurrentUser();
+let currentUser = getCurrentUser();
 if (!PREVIEW_MODE && !currentUser) { window.location.href = 'login.html'; }
 
 // State
@@ -262,9 +270,9 @@ function initHeader() {
   const team = PL_TEAMS.find(t => t.name === currentUser?.team);
   document.getElementById('ucAvatar').textContent = (currentUser?.username||'?').slice(0,2).toUpperCase();
   document.getElementById('ucName').textContent = currentUser?.username || 'Guest';
-  document.getElementById('ucTeamEmoji').textContent = team?.emoji || '';
+  document.getElementById('ucTeamEmoji').innerHTML = team ? flagImg(team.emoji, 18) : '';
   document.getElementById('ddName').textContent = currentUser?.username || 'Guest';
-  document.getElementById('ddTeam').textContent = team ? `${team.emoji} ${team.name} supporter` : 'No team selected';
+  document.getElementById('ddTeam').innerHTML = team ? `${flagImg(team.emoji, 16)} ${team.name} supporter` : 'No team selected';
   if (PREVIEW_MODE) {
     const badge = document.createElement('div');
     badge.className = 'preview-badge'; badge.textContent = 'Preview Mode';
@@ -272,7 +280,7 @@ function initHeader() {
   }
   if (currentUser?.team) {
     document.getElementById('fanBanner').style.display='flex';
-    document.getElementById('fanBannerEmoji').textContent = team?.emoji || '';
+    document.getElementById('fanBannerEmoji').innerHTML = team ? flagImg(team.emoji, 20) : '';
     document.getElementById('fanBannerTeam').textContent = currentUser.team;
   }
 }
@@ -282,9 +290,9 @@ document.getElementById('userChip').addEventListener('click', e => {
   document.getElementById('userDropdown').classList.toggle('open');
 });
 document.addEventListener('click', () => document.getElementById('userDropdown').classList.remove('open'));
-document.getElementById('ddLogout').addEventListener('click', () => {
+document.getElementById('ddLogout').addEventListener('click', async () => {
   if (PREVIEW_MODE) { toast('Login is disabled in Preview Mode'); return; }
-  clearCurrentUser();
+  await clearCurrentUser();
   window.location.href = 'login.html';
 });
 
@@ -293,6 +301,16 @@ function toast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── FLAG IMAGE HELPER ─────────────────────────────────────
+function flagImg(emoji) {
+  const codepoints = [...emoji]
+    .map(c => c.codePointAt(0))
+    .filter(cp => cp !== 0xFE0F)
+    .map(cp => cp.toString(16))
+    .join('-');
+  return `<img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/${codepoints}.svg" width="22" height="22" style="vertical-align:middle" alt="${emoji}">`;
 }
 
 // ── MATCH LIST ────────────────────────────────────────────
@@ -311,12 +329,12 @@ function renderList() {
     return `<div class="match-card${selId===m.id?' selected':''}${fan?' fan-match':''}" data-mid="${m.id}">
       <div class="match-header">
         <span>${live?'<span class="live-dot"></span>LIVE':up?'UPCOMING':'FULL TIME'}</span>
-        <span>${fan?'<span class="my-team-tag">MY TEAM</span> ':''}Premier League · GW 29</span>
+        <span>${fan?'<span class="my-team-tag">MY TEAM</span> ':''}2026 World Cup · Group ${m.group||'?'}</span>
       </div>
       <div class="match-body">
-        <div class="team home"><div class="team-badge">${m.hE}</div><span>${m.home}</span></div>
+        <div class="team home"><div class="team-badge">${flagImg(m.hE)}</div><span>${m.home}</span></div>
         <div class="score-block">${m.score}<span class="time"${live?' style="color:var(--red)"':''}>${live?"67'":up?'15:00':'FT'}</span></div>
-        <div class="team away"><div class="team-badge">${m.aE}</div><span>${m.away}</span></div>
+        <div class="team away"><div class="team-badge">${flagImg(m.aE)}</div><span>${m.away}</span></div>
       </div>
       ${!up?`<div class="card-stats" style="padding:0 16px 6px">
         <span class="stat-pill yc"><span class="icon">🟨</span>${m.yc}</span>
@@ -360,8 +378,8 @@ function openPanel(mid) {
   const m=MATCHES.find(x=>x.id===+mid), ref=REFS.find(r=>r.id===+m.refId);
   const biased=isBiasedVote(mid,currentUser);
   const team=PL_TEAMS.find(t=>t.name===currentUser?.team);
-  document.getElementById('panelMatchInfo').innerHTML=`<div style="font-size:1.3rem">${m.hE}⚔️${m.aE}</div><div><div class="sel-match-teams">${m.home} vs ${m.away}</div><div class="sel-match-date">GW 29 · 22 Mar 2025</div></div>${m.score!=='–'?`<div style="margin-left:auto;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem">${m.score}</div>`:''}`;
-  document.getElementById('panelRefCard').innerHTML=`<div class="rcard-av">${ref.initials}</div><div><div class="rcard-name">${ref.name}</div><div class="rcard-meta">${ref.games} PL games this season</div></div><div class="rcard-badge">FIFA</div>`;
+  document.getElementById('panelMatchInfo').innerHTML=`<div style="font-size:1.3rem">${m.hE}⚔️${m.aE}</div><div><div class="sel-match-teams">${m.home} vs ${m.away}</div><div class="sel-match-date">2026 World Cup · Group ${m.group||'?'} · MD1</div></div>${m.score!=='–'?`<div style="margin-left:auto;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem">${m.score}</div>`:''}`;
+  document.getElementById('panelRefCard').innerHTML=`<div class="rcard-av">${ref.initials}</div><div><div class="rcard-name">${ref.name}</div><div class="rcard-meta">${ref.nationality} · FIFA Listed</div></div><div class="rcard-badge">FIFA</div>`;
   const notice=document.getElementById('biasNotice');
   if(biased){notice.className='bias-notice fv';notice.innerHTML=`<strong>${team?.emoji||''} Fan vote detected</strong><br>Your rating goes into the <span style="color:var(--yellow);font-weight:600">Fan</span> pool — keeping the <span style="color:var(--green);font-weight:600">Neutral</span> score unbiased.`;notice.style.display='block';}
   else{notice.className='bias-notice nv';notice.innerHTML=`<strong>✓ Neutral vote</strong><br>Your rating goes into the <span style="color:var(--green);font-weight:600">Neutral</span> pool.`;notice.style.display='block';}
@@ -410,18 +428,29 @@ document.getElementById('panelForm').addEventListener('click',e=>{
   const cs=e.target.closest('[data-ci]'); if(cs){cats[+cs.dataset.ci]=+cs.dataset.cv;drawCats();return;}
   const ch=e.target.closest('[data-inc]'); if(ch){const k=ch.dataset.inc;incidents.has(k)?incidents.delete(k):incidents.add(k);ch.classList.toggle('on',incidents.has(k));}
 });
-document.getElementById('submitBtn').addEventListener('click',()=>{
+document.getElementById('submitBtn').addEventListener('click', async () => {
   if(!overall){const d=document.getElementById('ratingDesc');d.textContent='⚠ Please select an overall rating first';d.style.color='var(--red)';return;}
-  const ref=REFS.find(r=>r.id===+MATCHES.find(m=>m.id===selId).refId);
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=true; btn.textContent='Saving…';
+  const m=MATCHES.find(x=>x.id===selId);
+  const ref=REFS.find(r=>r.id===+m.refId);
   const biased=isBiasedVote(selId,currentUser);
+  const voteData = {
+    user_id: currentUser.id, match_id: selId, ref_id: ref.id,
+    overall, decision_making: cats[0], card_management: cats[1],
+    game_control: cats[2], var_awareness: cats[3],
+    incidents: [...incidents].join(','), comment: document.getElementById('commentBox').value.trim(),
+    is_fan_vote: !!biased
+  };
+  const ok = await saveVoteToDB(voteData);
+  if(!ok){ btn.disabled=false; btn.textContent='Submit Rating'; toast('⚠ Save failed — please try again'); return; }
   if(biased){const p=ref.fanRating*ref.fanVotes;ref.fanVotes++;ref.fanRating=Math.round((p+overall)/ref.fanVotes*10)/10;}
   else{const p=ref.neutralRating*ref.neutralVotes;ref.neutralVotes++;ref.neutralRating=Math.round((p+overall)/ref.neutralVotes*10)/10;}
   rated.add(selId);
   openPanel(selId);
-  document.getElementById('submitBtn').disabled=true;
-  document.getElementById('submitBtn').textContent='Already Rated ✓';
+  btn.disabled=true; btn.textContent='Already Rated ✓';
   renderList(); renderLb();
-  toast(biased?'⚽ Fan rating submitted separately':'✓ Neutral rating submitted!');
+  toast(biased?'⚽ Fan rating submitted!':'✓ Neutral rating submitted!');
 });
 document.getElementById('leaderboard').addEventListener('click',e=>{
   const r=e.target.closest('[data-lref]');if(!r)return;
@@ -430,21 +459,40 @@ document.getElementById('leaderboard').addEventListener('click',e=>{
 document.getElementById('lbN').addEventListener('click',()=>{lbMode='neutral';document.getElementById('lbN').classList.add('active');document.getElementById('lbF').classList.remove('active');renderLb();});
 document.getElementById('lbF').addEventListener('click',()=>{lbMode='fan';document.getElementById('lbF').classList.add('active');document.getElementById('lbN').classList.remove('active');renderLb();});
 
+// ── SKELETONS ─────────────────────────────────────────────
+function skelMatchCard() {
+  return `<div class="skel-card">
+    <div class="skel-row"><div class="skel skel-line" style="width:60px"></div><div class="skel skel-line" style="width:120px;margin-left:auto"></div></div>
+    <div class="skel-row" style="justify-content:space-between;margin-bottom:14px">
+      <div class="skel-row" style="gap:10px;margin:0"><div class="skel skel-circle" style="width:32px;height:32px"></div><div class="skel skel-line" style="width:80px"></div></div>
+      <div class="skel skel-line" style="width:40px;height:22px;border-radius:6px"></div>
+      <div class="skel-row" style="gap:10px;margin:0;flex-direction:row-reverse"><div class="skel skel-circle" style="width:32px;height:32px"></div><div class="skel skel-line" style="width:80px"></div></div>
+    </div>
+    <div class="skel-row"><div class="skel skel-circle" style="width:22px;height:22px"></div><div class="skel skel-line" style="width:130px"></div><div class="skel skel-line" style="width:50px;margin-left:auto"></div></div>
+  </div>`;
+}
+
 // ── START ─────────────────────────────────────────────────
 initHeader();
 (async () => {
-  document.getElementById('matchList').innerHTML =
-    '<div class="empty-state"><div class="icon">⚽</div><p>Loading live data…</p></div>';
-  const live = await loadFromFootballData();
-  if (!live) await loadFromSheets().catch(() => {});
-  if (live) {
-    const d = new Date();
-    document.querySelector('.section-title').textContent =
-      `GW ${live.gw} — ${d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })}`;
+  document.getElementById('matchList').innerHTML = Array(6).fill(skelMatchCard()).join('');
+  document.getElementById('leaderboard').innerHTML = Array(5).fill(`<div class="skel-card" style="display:flex;align-items:center;gap:12px"><div class="skel skel-circle" style="width:28px;height:28px;flex-shrink:0"></div><div style="flex:1"><div class="skel skel-line" style="width:60%;margin-bottom:6px"></div><div class="skel skel-line" style="width:40%"></div></div><div class="skel skel-line" style="width:32px;height:20px;border-radius:6px"></div></div>`).join('');
+  if (!PREVIEW_MODE) {
+    const valid = await checkAuth();
+    if (!valid) { window.location.href = 'login.html'; return; }
+    currentUser = getCurrentUser();
   }
+  await Promise.all([
+    loadFromSheets().catch(() => {}),
+    loadRatings(),
+    loadUserVotes(currentUser?.id).then(v => v.forEach(id => rated.add(id)))
+  ]);
+  syncMatchStatuses();
+  initHeader();
   renderList();
   renderLb();
 })();
 </script>
+<script>twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });</script>
 </body>
 </html>

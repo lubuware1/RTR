@@ -5,185 +5,189 @@
 // ════════════════════════════════════════════════════════
 
 // ── FOOTBALL-DATA.ORG API ────────────────────────────────
-// Free API key: https://www.football-data.org/client/register
-// Gives live PL fixtures, scores, referee assignments, and cards.
-const FOOTBALL_DATA_KEY = '15b079ce9d02424994eae82a3e5f4a31'; // ← Paste your free API key here
+// Disabled for World Cup format — no live API used.
+const FOOTBALL_DATA_KEY = '';
 const FD_API_BASE = 'https://api.football-data.org/v4';
 
-// Maps the API's full team names to our short names + emojis
-const TEAM_LOOKUP = {
-  'Arsenal FC':                 { short:'Arsenal',        emoji:'🔴' },
-  'Aston Villa FC':             { short:'Aston Villa',    emoji:'🟣' },
-  'AFC Bournemouth':            { short:'Bournemouth',    emoji:'🍒' },
-  'Brentford FC':               { short:'Brentford',      emoji:'🔴' },
-  'Brighton & Hove Albion FC':  { short:'Brighton',       emoji:'🔵' },
-  'Chelsea FC':                 { short:'Chelsea',        emoji:'🔵' },
-  'Crystal Palace FC':          { short:'Crystal Palace', emoji:'🦅' },
-  'Everton FC':                 { short:'Everton',        emoji:'🔵' },
-  'Fulham FC':                  { short:'Fulham',         emoji:'⚪' },
-  'Ipswich Town FC':            { short:'Ipswich',        emoji:'🔵' },
-  'Leicester City FC':          { short:'Leicester',      emoji:'🦊' },
-  'Liverpool FC':               { short:'Liverpool',      emoji:'🔴' },
-  'Manchester City FC':         { short:'Man City',       emoji:'🔵' },
-  'Manchester United FC':       { short:'Man Utd',        emoji:'🔴' },
-  'Newcastle United FC':        { short:'Newcastle',      emoji:'⚫' },
-  'Nottingham Forest FC':       { short:'Nottm Forest',   emoji:'🌲' },
-  'Southampton FC':             { short:'Southampton',    emoji:'⚪' },
-  'Tottenham Hotspur FC':       { short:'Tottenham',      emoji:'⚪' },
-  'West Ham United FC':         { short:'West Ham',       emoji:'🔵' },
-  'Wolverhampton Wanderers FC': { short:'Wolves',         emoji:'🟡' },
-};
-
-let CURRENT_GW = null; // set when live data loads
-
-async function loadFromFootballData() {
-  if (!FOOTBALL_DATA_KEY) return false;
-
-  const hdrs = { 'X-Auth-Token': FOOTBALL_DATA_KEY };
-  const base = FD_API_BASE;
-
-  try {
-    // 1. Get current matchday number
-    const compRes = await fetch(`${base}/competitions/PL`, { headers: hdrs });
-    if (!compRes.ok) throw new Error(`HTTP ${compRes.status}`);
-    const comp = await compRes.json();
-    const gw = comp.currentSeason.currentMatchday;
-    CURRENT_GW = gw;
-
-    // 2. Fetch all matches for this gameweek
-    const mRes = await fetch(`${base}/competitions/PL/matches?matchday=${gw}`, { headers: hdrs });
-    if (!mRes.ok) throw new Error(`HTTP ${mRes.status}`);
-    const mData = await mRes.json();
-
-    // 3. Fetch match details (cards + penalties) for finished matches
-    //    Free tier allows 10 req/min — a typical GW has 10 matches so one-shot is fine
-    const finished = mData.matches.filter(m => m.status === 'FINISHED' || m.status === 'AWARDED');
-    const detailResults = await Promise.all(
-      finished.map(m =>
-        fetch(`${base}/matches/${m.id}`, { headers: hdrs })
-          .then(r => r.ok ? r.json() : null)
-          .catch(() => null)
-      )
-    );
-    const detailMap = new Map();
-    finished.forEach((m, i) => { if (detailResults[i]) detailMap.set(m.id, detailResults[i]); });
-
-    // 4. Build the new MATCHES array and fill in any unknown refs
-    const newMatches = [];
-    let matchId = 1;
-
-    for (const m of mData.matches) {
-      const home = TEAM_LOOKUP[m.homeTeam.name] || { short: m.homeTeam.shortName || m.homeTeam.name, emoji: '⚽' };
-      const away = TEAM_LOOKUP[m.awayTeam.name] || { short: m.awayTeam.shortName || m.awayTeam.name, emoji: '⚽' };
-
-      // Status
-      let status;
-      if      (m.status === 'FINISHED' || m.status === 'AWARDED') status = 'recent';
-      else if (m.status === 'IN_PLAY'  || m.status === 'PAUSED')  status = 'live';
-      else                                                          status = 'upcoming';
-
-      // Score
-      const hs = m.score?.fullTime?.home, as_ = m.score?.fullTime?.away;
-      const score = (status !== 'upcoming' && hs != null) ? `${hs}–${as_}` : '–';
-
-      // Cards and penalties from match detail
-      const d   = detailMap.get(m.id);
-      const yc  = d?.bookings?.filter(b => b.card === 'YELLOW').length ?? 0;
-      const rc  = d?.bookings?.filter(b => b.card === 'RED' || b.card === 'YELLOW_RED').length ?? 0;
-      const pen = d?.goals?.filter(g => g.type === 'PENALTY').length ?? 0;
-
-      // Referee — skip matches where no ref has been assigned yet
-      const apiRef = m.referees?.find(r => r.type === 'REFEREE') || m.referees?.[0];
-      if (!apiRef) continue;
-
-      // Try to match to our existing REFS by full name, then by surname
-      let ref = REFS.find(r => r.name.toLowerCase() === apiRef.name.toLowerCase());
-      if (!ref) ref = REFS.find(r => apiRef.name.toLowerCase().endsWith(r.name.split(' ').pop().toLowerCase()));
-      if (!ref) {
-        // Brand-new referee — add them with blank ratings
-        ref = {
-          id: Math.max(...REFS.map(r => r.id)) + 1,
-          name: apiRef.name,
-          initials: apiRef.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
-          games: 0, neutralRating: 0, neutralVotes: 0, fanRating: 0, fanVotes: 0,
-          nationality: apiRef.nationality || 'English', age: 0, fifaListed: 'Yes', notes: '',
-        };
-        REFS.push(ref);
-      }
-
-      newMatches.push({
-        id: matchId++,
-        home: home.short, hE: home.emoji,
-        away: away.short, aE: away.emoji,
-        score, status, refId: ref.id,
-        yc, rc, pen,
-        var: 0,        // VAR correct/incorrect is editorial — enter manually
-        apiMatchId: m.id, matchday: gw,
-        kickoff: m.utcDate,
-      });
-    }
-
-    if (newMatches.length) MATCHES = newMatches;
-    return { gw, count: newMatches.length };
-
-  } catch (e) {
-    console.warn('football-data.org load failed, using fallback data:', e.message);
-    return false;
-  }
-}
+// No live API for World Cup format — always uses static match data.
+async function loadFromFootballData() { return false; }
 
 // ── GOOGLE SHEETS CONFIG ─────────────────────────────────
 // To connect live data:
 // 1. Upload refrater_database.xlsx to Google Sheets
 // 2. File > Share > Publish to Web > choose sheet > CSV > copy URL
 // 3. Paste URLs below
-const SHEETS_REFS_URL    = '';  // ← Paste Referees sheet CSV URL
-const SHEETS_MATCHES_URL = '';  // ← Paste Matches sheet CSV URL
+const SHEETS_REFS_URL    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRCN0t8slUy1uRhOiQMy80if6U9QjN8z5NnWT5A0QpzFh9ERkIchDxOu3TjOGt9EeDqk1rvFGchFyTY/pub?gid=122518751&single=true&output=csv';  // ← Paste Referees sheet CSV URL
+const SHEETS_MATCHES_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRCN0t8slUy1uRhOiQMy80if6U9QjN8z5NnWT5A0QpzFh9ERkIchDxOu3TjOGt9EeDqk1rvFGchFyTY/pub?gid=16807812&single=true&output=csv';  // ← Paste Matches sheet CSV URL
 
 // ── PREVIEW MODE ─────────────────────────────────────────
 // Set to true to skip login and use a guest account for easy previewing.
 // Set to false when you're ready to go live with real logins.
 const PREVIEW_MODE = true;
 
+// ── SUPABASE ──────────────────────────────────────────────
+const SUPABASE_URL = 'https://sxufittkehlktlfvicom.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4dWZpdHRrZWhsa3RsZnZpY29tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3OTEwNDIsImV4cCI6MjA5MDM2NzA0Mn0.aItkjIGsik_v_T6n167bdwE23ncvvWgwJ4IveT5MFyU';
+const _USER_KEY = 'rr_user';
+
+let _sb = null;
+function getSB() {
+  if (!_sb) _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  return _sb;
+}
+
+async function checkAuth() {
+  if (PREVIEW_MODE) return true;
+  const { data: { session } } = await getSB().auth.getSession();
+  if (!session) { localStorage.removeItem(_USER_KEY); return false; }
+  const { data: profile, error: profileError } = await getSB().from('RTR Profiles').select('username,team').eq('id', session.user.id).single();
+  console.log('[RTR] profile fetch:', profile, 'error:', profileError);
+  localStorage.setItem(_USER_KEY, JSON.stringify({
+    id: session.user.id, email: session.user.email,
+    username: profile?.username || 'User', team: profile?.team || null
+  }));
+  return true;
+}
+
+async function loadRatings() {
+  if (PREVIEW_MODE) return;
+  const { data: votes } = await getSB().from('RTR Votes').select('ref_id,overall,is_fan_vote');
+  if (!votes || !votes.length) return;
+  REFS.forEach(r => { r.neutralRating=0; r.neutralVotes=0; r.fanRating=0; r.fanVotes=0; });
+  const sums = {};
+  votes.forEach(v => {
+    if (!sums[v.ref_id]) sums[v.ref_id] = { nSum:0, nCount:0, fSum:0, fCount:0 };
+    if (v.is_fan_vote) { sums[v.ref_id].fSum += v.overall; sums[v.ref_id].fCount++; }
+    else               { sums[v.ref_id].nSum += v.overall; sums[v.ref_id].nCount++; }
+  });
+  REFS.forEach(r => {
+    const s = sums[r.id]; if (!s) return;
+    if (s.nCount) { r.neutralRating = Math.round(s.nSum/s.nCount*10)/10; r.neutralVotes = s.nCount; }
+    if (s.fCount) { r.fanRating     = Math.round(s.fSum/s.fCount*10)/10; r.fanVotes     = s.fCount; }
+  });
+}
+
+async function loadUserVotes(userId) {
+  if (PREVIEW_MODE) return new Set();
+  const { data } = await getSB().from('RTR Votes').select('match_id').eq('user_id', userId);
+  return new Set((data || []).map(v => v.match_id));
+}
+
+async function saveVoteToDB(voteData) {
+  if (PREVIEW_MODE) return true;
+  const { error } = await getSB().from('RTR Votes').upsert(voteData, { onConflict: 'user_id,match_id' });
+  return !error;
+}
+
+// ── FANTASY PICK PERSISTENCE ──────────────────────────────
+async function saveFantasyPick(matchweek, refId, wc) {
+  if (PREVIEW_MODE) return true;
+  const { data: { session } } = await getSB().auth.getSession();
+  if (!session) return false;
+  const { error } = await getSB().from('RTR Fantasy Picks').upsert({
+    user_id: session.user.id, matchweek, ref_id: refId,
+    wildcards: wc, updated_at: new Date().toISOString(),
+  }, { onConflict: 'user_id,matchweek' });
+  return !error;
+}
+
+async function loadMyFantasyPick(matchweek) {
+  if (PREVIEW_MODE) return null;
+  const { data: { session } } = await getSB().auth.getSession();
+  if (!session) return null;
+  const { data } = await getSB().from('RTR Fantasy Picks')
+    .select('ref_id, wildcards')
+    .eq('user_id', session.user.id).eq('matchweek', matchweek)
+    .maybeSingle();
+  return data;
+}
+
+async function loadManualBonuses(matchweek) {
+  if (PREVIEW_MODE) return {};
+  const { data } = await getSB().from('RTR Manual Bonuses')
+    .select('ref_id, pts, label')
+    .eq('matchweek', matchweek);
+  if (!data?.length) return {};
+  // Group by ref_id: { refId: [{pts, label}, ...] }
+  return data.reduce((acc, row) => {
+    if (!acc[row.ref_id]) acc[row.ref_id] = [];
+    acc[row.ref_id].push({ pts: row.pts, label: row.label });
+    return acc;
+  }, {});
+}
+
+async function saveManualBonus(matchweek, refId, pts, label) {
+  if (PREVIEW_MODE) return true;
+  const { error } = await getSB().from('RTR Manual Bonuses').insert({
+    matchweek, ref_id: refId, pts, label,
+  });
+  return !error;
+}
+
+async function deleteManualBonus(id) {
+  if (PREVIEW_MODE) return true;
+  const { error } = await getSB().from('RTR Manual Bonuses').delete().eq('id', id);
+  return !error;
+}
+
+async function loadFantasyLeaderboard(matchweek) {
+  if (PREVIEW_MODE) return [];
+  const { data: picks } = await getSB().from('RTR Fantasy Picks')
+    .select('user_id, ref_id, wildcards').eq('matchweek', matchweek);
+  if (!picks?.length) return [];
+  const { data: profiles } = await getSB().from('RTR Profiles')
+    .select('id, username, team').in('id', picks.map(p => p.user_id));
+  const pm = Object.fromEntries((profiles || []).map(p => [p.id, p]));
+  return picks.map(p => ({ ...p, profile: pm[p.user_id] || null }));
+}
+
 const PREVIEW_USER = {
   username: 'Preview User',
   email: 'preview@refrater.com',
-  team: 'Arsenal',
+  team: 'England',
   isPreview: true
 };
 
 // ── STATIC DATA ───────────────────────────────────────────
-const PL_TEAMS = [
-  {name:"Arsenal",emoji:"🔴"},{name:"Aston Villa",emoji:"🟣"},{name:"Bournemouth",emoji:"🍒"},
-  {name:"Brentford",emoji:"🔴"},{name:"Brighton",emoji:"🔵"},{name:"Chelsea",emoji:"🔵"},
-  {name:"Crystal Palace",emoji:"🦅"},{name:"Everton",emoji:"🔵"},{name:"Fulham",emoji:"⚪"},
-  {name:"Ipswich",emoji:"🔵"},{name:"Leicester",emoji:"🦊"},{name:"Liverpool",emoji:"🔴"},
-  {name:"Man City",emoji:"🔵"},{name:"Man Utd",emoji:"🔴"},{name:"Newcastle",emoji:"⚫"},
-  {name:"Nottm Forest",emoji:"🌲"},{name:"Southampton",emoji:"⚪"},{name:"Tottenham",emoji:"⚪"},
-  {name:"West Ham",emoji:"🔵"},{name:"Wolves",emoji:"🟡"},
+const WC_TEAMS = [
+  {name:"Argentina",    emoji:"🇦🇷"},{name:"Algeria",       emoji:"🇩🇿"},{name:"Australia",    emoji:"🇦🇺"},
+  {name:"Austria",      emoji:"🇦🇹"},{name:"Belgium",       emoji:"🇧🇪"},{name:"Brazil",       emoji:"🇧🇷"},
+  {name:"Cabo Verde",   emoji:"🇨🇻"},{name:"Canada",        emoji:"🇨🇦"},{name:"Colombia",     emoji:"🇨🇴"},
+  {name:"Croatia",      emoji:"🇭🇷"},{name:"Curaçao",       emoji:"🇨🇼"},{name:"Côte d'Ivoire",emoji:"🇨🇮"},
+  {name:"Ecuador",      emoji:"🇪🇨"},{name:"Egypt",         emoji:"🇪🇬"},{name:"England",      emoji:"🏴󠁧󠁢󠁥󠁮󠁧󠁿"},
+  {name:"France",       emoji:"🇫🇷"},{name:"Germany",       emoji:"🇩🇪"},{name:"Ghana",        emoji:"🇬🇭"},
+  {name:"Haiti",        emoji:"🇭🇹"},{name:"Iran",          emoji:"🇮🇷"},{name:"Japan",        emoji:"🇯🇵"},
+  {name:"Jordan",       emoji:"🇯🇴"},{name:"Mexico",        emoji:"🇲🇽"},{name:"Morocco",      emoji:"🇲🇦"},
+  {name:"Netherlands",  emoji:"🇳🇱"},{name:"New Zealand",   emoji:"🇳🇿"},{name:"Norway",       emoji:"🇳🇴"},
+  {name:"Panama",       emoji:"🇵🇦"},{name:"Paraguay",      emoji:"🇵🇾"},{name:"Portugal",     emoji:"🇵🇹"},
+  {name:"Qatar",        emoji:"🇶🇦"},{name:"Saudi Arabia",  emoji:"🇸🇦"},{name:"Scotland",     emoji:"🏴󠁧󠁢󠁳󠁣󠁴󠁿"},
+  {name:"Senegal",      emoji:"🇸🇳"},{name:"South Africa",  emoji:"🇿🇦"},{name:"South Korea",  emoji:"🇰🇷"},
+  {name:"Spain",        emoji:"🇪🇸"},{name:"Switzerland",   emoji:"🇨🇭"},{name:"Tunisia",      emoji:"🇹🇳"},
+  {name:"United States",emoji:"🇺🇸"},{name:"Uruguay",       emoji:"🇺🇾"},{name:"Uzbekistan",   emoji:"🇺🇿"},
 ];
+// Keep alias so any page still referencing PL_TEAMS doesn't break
+const PL_TEAMS = WC_TEAMS;
 
 let REFS = [
-  {id:1,name:"Michael Oliver", initials:"MO",games:18,neutralRating:7.4,neutralVotes:89,fanRating:5.8,fanVotes:53,nationality:"English",age:39,fifaListed:"Yes",notes:"PL's most experienced ref"},
-  {id:2,name:"Anthony Taylor", initials:"AT",games:21,neutralRating:6.1,neutralVotes:71,fanRating:4.9,fanVotes:60,nationality:"English",age:45,fifaListed:"Yes",notes:"Frequently controversial"},
-  {id:3,name:"Simon Hooper",   initials:"SH",games:15,neutralRating:6.8,neutralVotes:55,fanRating:6.2,fanVotes:32,nationality:"English",age:42,fifaListed:"Yes",notes:""},
-  {id:4,name:"Craig Pawson",   initials:"CP",games:19,neutralRating:7.2,neutralVotes:44,fanRating:5.5,fanVotes:19,nationality:"English",age:44,fifaListed:"Yes",notes:""},
-  {id:5,name:"Andy Madley",    initials:"AM",games:16,neutralRating:7.0,neutralVotes:21,fanRating:6.8,fanVotes:10,nationality:"English",age:38,fifaListed:"Yes",notes:""},
-  {id:6,name:"Stuart Attwell", initials:"SA",games:17,neutralRating:5.8,neutralVotes:13,fanRating:4.2,fanVotes:6, nationality:"English",age:40,fifaListed:"Yes",notes:"VAR specialist background"},
-  {id:7,name:"Jarred Gillett", initials:"JG",games:14,neutralRating:7.6,neutralVotes:0, fanRating:0,  fanVotes:0, nationality:"Australian",age:39,fifaListed:"Yes",notes:"Only overseas PL ref"},
-  {id:8,name:"John Brooks",    initials:"JB",games:12,neutralRating:6.4,neutralVotes:0, fanRating:0,  fanVotes:0, nationality:"English",age:41,fifaListed:"Yes",notes:""},
+  {id:1,  name:"Szymon Marciniak",      initials:"SM", games:0, neutralRating:0, neutralVotes:0, fanRating:0, fanVotes:0, nationality:"Polish",    age:43, fifaListed:"Yes", notes:"Refereed 2022 World Cup Final"},
+  {id:2,  name:"Daniele Orsato",        initials:"DO", games:0, neutralRating:0, neutralVotes:0, fanRating:0, fanVotes:0, nationality:"Italian",   age:49, fifaListed:"Yes", notes:"Experienced UEFA Champions League ref"},
+  {id:3,  name:"Anthony Taylor",        initials:"AT", games:0, neutralRating:0, neutralVotes:0, fanRating:0, fanVotes:0, nationality:"English",   age:45, fifaListed:"Yes", notes:"Premier League and UEFA ref"},
+  {id:4,  name:"Facundo Tello",         initials:"FT", games:0, neutralRating:0, neutralVotes:0, fanRating:0, fanVotes:0, nationality:"Argentine", age:38, fifaListed:"Yes", notes:"CONMEBOL top referee"},
+  {id:5,  name:"Fernando Rapallini",    initials:"FR", games:0, neutralRating:0, neutralVotes:0, fanRating:0, fanVotes:0, nationality:"Argentine", age:44, fifaListed:"Yes", notes:"2022 World Cup referee"},
+  {id:6,  name:"Felix Zwayer",          initials:"FZ", games:0, neutralRating:0, neutralVotes:0, fanRating:0, fanVotes:0, nationality:"German",    age:43, fifaListed:"Yes", notes:"Bundesliga top referee"},
+  {id:7,  name:"Ismail Elfath",         initials:"IE", games:0, neutralRating:0, neutralVotes:0, fanRating:0, fanVotes:0, nationality:"American",  age:41, fifaListed:"Yes", notes:"MLS and CONCACAF top referee"},
+  {id:8,  name:"Abdulrahman Al-Jassim", initials:"AJ", games:0, neutralRating:0, neutralVotes:0, fanRating:0, fanVotes:0, nationality:"Qatari",    age:38, fifaListed:"Yes", notes:"2022 World Cup host nation ref"},
+  {id:9,  name:"Slavko Vinčić",         initials:"SV", games:0, neutralRating:0, neutralVotes:0, fanRating:0, fanVotes:0, nationality:"Slovenian", age:43, fifaListed:"Yes", notes:"UEFA Europa League referee"},
+  {id:10, name:"Bakary Gassama",        initials:"BG", games:0, neutralRating:0, neutralVotes:0, fanRating:0, fanVotes:0, nationality:"Gambian",   age:44, fifaListed:"Yes", notes:"CAF top referee"},
+  {id:11, name:"Mustapha Ghorbal",      initials:"MG", games:0, neutralRating:0, neutralVotes:0, fanRating:0, fanVotes:0, nationality:"Algerian",  age:42, fifaListed:"Yes", notes:"CAF and FIFA referee"},
+  {id:12, name:"Ivan Barton",           initials:"IB", games:0, neutralRating:0, neutralVotes:0, fanRating:0, fanVotes:0, nationality:"Salvadoran",age:38, fifaListed:"Yes", notes:"CONCACAF FIFA referee"},
 ];
 
-let MATCHES = [
-  {id:1,home:"Arsenal",       hE:"🔴",away:"Liverpool",    aE:"🔴",score:"2–1",status:"recent",  refId:1,yc:4,rc:0,pen:1,var:2},
-  {id:2,home:"Man City",      hE:"🔵",away:"Chelsea",      aE:"🔵",score:"1–1",status:"recent",  refId:2,yc:3,rc:1,pen:0,var:3},
-  {id:3,home:"Tottenham",     hE:"⚪",away:"Man Utd",      aE:"🔴",score:"0–2",status:"recent",  refId:3,yc:5,rc:0,pen:0,var:1},
-  {id:4,home:"Newcastle",     hE:"⚫",away:"Aston Villa",  aE:"🟣",score:"3–0",status:"recent",  refId:4,yc:2,rc:0,pen:1,var:0},
-  {id:5,home:"Brighton",      hE:"🔵",away:"West Ham",     aE:"🔵",score:"1–0",status:"live",    refId:5,yc:2,rc:0,pen:0,var:1},
-  {id:6,home:"Wolves",        hE:"🟡",away:"Fulham",       aE:"⚪",score:"0–0",status:"live",    refId:6,yc:3,rc:0,pen:1,var:2},
-  {id:7,home:"Everton",       hE:"🔵",away:"Brentford",    aE:"🔴",score:"–",  status:"upcoming",refId:7,yc:0,rc:0,pen:0,var:0},
-  {id:8,home:"Crystal Palace",hE:"🦅",away:"Bournemouth",  aE:"🍒",score:"–",  status:"upcoming",refId:8,yc:0,rc:0,pen:0,var:0},
-];
+// 2026 FIFA World Cup — Group Stage Matchday 1
+// Note: UEFA/Intercontinental playoff winners TBD (determined March 2026)
+// Match data is loaded exclusively from Google Sheets (SHEETS_MATCHES_URL above).
+// Do not add hardcoded matches here — edit the Google Sheet instead.
+let MATCHES = [];
 
 const INCIDENTS = [
   "Correct penalty","Wrong penalty","Missed red card","Harsh red card",
@@ -193,16 +197,50 @@ const INCIDENTS = [
 
 const RATING_DESCS = ["","Terrible","Poor","Below average","Average","Decent","Good","Very good","Excellent","Outstanding","Flawless ⭐"];
 
+// ── MATCH STATUS SYNC ─────────────────────────────────────
+// Auto-sets each match's status from its kickoff time.
+// upcoming  = kickoff is in the future
+// live      = kickoff was < 105 min ago (90 min match + 15 min buffer)
+// complete  = kickoff was >= 105 min ago
+// Matches without a kickoff field keep their hardcoded status.
+function syncMatchStatuses() {
+  const now = Date.now();
+  const MATCH_DURATION_MS = 105 * 60 * 1000;
+  MATCHES.forEach(m => {
+    if (!m.kickoff) return;
+    const ko = new Date(m.kickoff).getTime();
+    if (now < ko) {
+      m.status = 'upcoming';
+    } else if (now < ko + MATCH_DURATION_MS) {
+      m.status = 'live';
+    } else {
+      m.status = 'complete';
+    }
+  });
+}
+
 // ── SESSION HELPERS ───────────────────────────────────────
-function getUsers()    { return JSON.parse(sessionStorage.getItem('rr_users') || '{}'); }
-function saveUsers(u)  { sessionStorage.setItem('rr_users', JSON.stringify(u)); }
 function getCurrentUser() {
   if (PREVIEW_MODE) return PREVIEW_USER;
-  return JSON.parse(sessionStorage.getItem('rr_currentUser') || 'null');
+  const s = localStorage.getItem(_USER_KEY);
+  return s ? JSON.parse(s) : null;
 }
-function saveCurrentUser(u) { sessionStorage.setItem('rr_currentUser', JSON.stringify(u)); }
-function clearCurrentUser() { sessionStorage.removeItem('rr_currentUser'); }
+async function clearCurrentUser() {
+  localStorage.removeItem(_USER_KEY);
+  if (!PREVIEW_MODE) await getSB().auth.signOut();
+}
 function isLoggedIn() { return PREVIEW_MODE || !!getCurrentUser(); }
+
+// ── FLAG IMAGE HELPER ─────────────────────────────────────
+function flagImg(emoji, size) {
+  const codepoints = [...emoji]
+    .map(c => c.codePointAt(0))
+    .filter(cp => cp !== 0xFE0F)
+    .map(cp => cp.toString(16))
+    .join('-');
+  const s = size || 22;
+  return `<img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/${codepoints}.svg" width="${s}" height="${s}" style="vertical-align:middle" alt="${emoji}">`;
+}
 
 // ── DATA HELPERS ──────────────────────────────────────────
 const gRef   = id => REFS.find(r => r.id === +id);
@@ -232,32 +270,53 @@ function parseCSV(text) {
 }
 
 async function loadFromSheets() {
-  if (!SHEETS_REFS_URL && !SHEETS_MATCHES_URL) return false;
+  if (!SHEETS_REFS_URL && !SHEETS_MATCHES_URL) {
+    console.warn('[RTR] No Sheets URLs configured');
+    return false;
+  }
   try {
+    console.log('[RTR] Fetching from Google Sheets...');
     const [refsRes, matchRes] = await Promise.all([
       SHEETS_REFS_URL    ? fetch(SHEETS_REFS_URL)    : Promise.resolve(null),
       SHEETS_MATCHES_URL ? fetch(SHEETS_MATCHES_URL) : Promise.resolve(null),
     ]);
-    if (refsRes && refsRes.ok) {
-      const parsed = parseCSV(await refsRes.text());
-      if (parsed.length) REFS = parsed.map(r => ({
-        ...r,
-        neutralRating: +r.neutralRating || 0, neutralVotes: +r.neutralVotes || 0,
-        fanRating:     +r.fanRating     || 0, fanVotes:     +r.fanVotes     || 0,
-      }));
+
+    if (refsRes) {
+      console.log('[RTR] Refs response status:', refsRes.status, refsRes.ok ? 'OK' : 'FAILED');
+      if (refsRes.ok) {
+        const parsed = parseCSV(await refsRes.text());
+        console.log('[RTR] Refs parsed:', parsed.length, 'rows');
+        if (parsed.length) REFS = parsed.map(r => ({
+          ...r,
+          neutralRating: +r.neutralRating || 0, neutralVotes: +r.neutralVotes || 0,
+          fanRating:     +r.fanRating     || 0, fanVotes:     +r.fanVotes     || 0,
+        }));
+      }
     }
-    if (matchRes && matchRes.ok) {
-      const parsed = parseCSV(await matchRes.text());
-      if (parsed.length) MATCHES = parsed.map(m => ({
-        ...m,
-        hE: m.homeEmoji || '⚽', aE: m.awayEmoji || '⚽',
-        yc: +m.yellowCards || 0, rc: +m.redCards || 0,
-        pen: +m.penaltiesGiven || 0, var: +m.varDecisions || 0,
-      }));
+
+    if (matchRes) {
+      console.log('[RTR] Matches response status:', matchRes.status, matchRes.ok ? 'OK' : 'FAILED');
+      if (matchRes.ok) {
+        const text = await matchRes.text();
+        console.log('[RTR] Matches raw CSV (first 200 chars):', text.slice(0, 200));
+        const parsed = parseCSV(text);
+        console.log('[RTR] Matches parsed:', parsed.length, 'rows', parsed[0] || '(empty)');
+        if (parsed.length) MATCHES = parsed.map(m => ({
+          ...m,
+          hE: m.homeEmoji || '⚽', aE: m.awayEmoji || '⚽',
+          yc: +m.yellowCards || 0, rc: +m.redCards || 0,
+          pen: +m.penaltiesGiven || 0, var: +m.varDecisions || 0,
+          perfectGame:     m.perfectGame === 'yes',
+          incorrectVarPen: +m.incorrectVarPen || 0,
+          incorrectVarRed: +m.incorrectVarRed || 0,
+        }));
+      }
     }
+
+    console.log('[RTR] Sheets load complete. MATCHES:', MATCHES.length, 'REFS:', REFS.length);
     return true;
   } catch (e) {
-    console.warn('Sheets load failed, using fallback data', e);
+    console.error('[RTR] Sheets load failed:', e);
     return false;
   }
 }

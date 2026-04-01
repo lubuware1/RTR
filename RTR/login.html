@@ -68,13 +68,15 @@
   .footer-note{text-align:center;margin-top:20px;font-size:.75rem;color:rgba(255,255,255,.2);}
   .footer-note a{color:rgba(0,255,133,.4);text-decoration:none;}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/twemoji@14/dist/twemoji.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 
 <div class="auth-wrap">
   <div class="auth-brand">
     <div class="auth-brand-logo"><div class="auth-brand-badge">🟣</div>Ref<span>Rater</span></div>
-    <p>Rate Premier League referees — unbiased, by the fans</p>
+    <p>Rate 2026 World Cup referees — unbiased, by the fans</p>
   </div>
 
   <div class="auth-box">
@@ -121,11 +123,11 @@
   <div class="onboard-box">
     <div class="onboard-head">
       <div class="onboard-step">Step 2 of 2 — Almost there!</div>
-      <h2>Pick Your Club ⚽</h2>
-      <p>Your vote on your own team's matches will be tracked separately to keep ratings unbiased</p>
+      <h2>Pick Your Nation 🌍</h2>
+      <p>Your vote on your own nation's matches will be tracked separately to keep ratings unbiased</p>
     </div>
     <div class="onboard-body">
-      <p class="team-hint">Choose the team you support (you can change this later in your profile)</p>
+      <p class="team-hint">Choose the nation you support (you can change this later in your profile)</p>
       <div class="team-grid" id="teamGrid"></div>
       <button class="onboard-btn" id="onboardDone" disabled>Let's Go →</button>
     </div>
@@ -133,31 +135,45 @@
 </div>
 
 <script>
+const SUPABASE_URL = 'https://sxufittkehlktlfvicom.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4dWZpdHRrZWhsa3RsZnZpY29tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3OTEwNDIsImV4cCI6MjA5MDM2NzA0Mn0.aItkjIGsik_v_T6n167bdwE23ncvvWgwJ4IveT5MFyU';
+const _USER_KEY = 'rr_user';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 const PL_TEAMS = [
-  {name:"Arsenal",emoji:"🔴"},{name:"Aston Villa",emoji:"🟣"},{name:"Bournemouth",emoji:"🍒"},
-  {name:"Brentford",emoji:"🔴"},{name:"Brighton",emoji:"🔵"},{name:"Chelsea",emoji:"🔵"},
-  {name:"Crystal Palace",emoji:"🦅"},{name:"Everton",emoji:"🔵"},{name:"Fulham",emoji:"⚪"},
-  {name:"Ipswich",emoji:"🔵"},{name:"Leicester",emoji:"🦊"},{name:"Liverpool",emoji:"🔴"},
-  {name:"Man City",emoji:"🔵"},{name:"Man Utd",emoji:"🔴"},{name:"Newcastle",emoji:"⚫"},
-  {name:"Nottm Forest",emoji:"🌲"},{name:"Southampton",emoji:"⚪"},{name:"Tottenham",emoji:"⚪"},
-  {name:"West Ham",emoji:"🔵"},{name:"Wolves",emoji:"🟡"},
+  {name:"Argentina",    emoji:"🇦🇷"},{name:"Algeria",       emoji:"🇩🇿"},{name:"Australia",    emoji:"🇦🇺"},
+  {name:"Austria",      emoji:"🇦🇹"},{name:"Belgium",       emoji:"🇧🇪"},{name:"Brazil",       emoji:"🇧🇷"},
+  {name:"Cabo Verde",   emoji:"🇨🇻"},{name:"Canada",        emoji:"🇨🇦"},{name:"Colombia",     emoji:"🇨🇴"},
+  {name:"Croatia",      emoji:"🇭🇷"},{name:"Curaçao",       emoji:"🇨🇼"},{name:"Côte d'Ivoire",emoji:"🇨🇮"},
+  {name:"Ecuador",      emoji:"🇪🇨"},{name:"Egypt",         emoji:"🇪🇬"},{name:"England",      emoji:"🏴󠁧󠁢󠁥󠁮󠁧󠁿"},
+  {name:"France",       emoji:"🇫🇷"},{name:"Germany",       emoji:"🇩🇪"},{name:"Ghana",        emoji:"🇬🇭"},
+  {name:"Haiti",        emoji:"🇭🇹"},{name:"Iran",          emoji:"🇮🇷"},{name:"Japan",        emoji:"🇯🇵"},
+  {name:"Jordan",       emoji:"🇯🇴"},{name:"Mexico",        emoji:"🇲🇽"},{name:"Morocco",      emoji:"🇲🇦"},
+  {name:"Netherlands",  emoji:"🇳🇱"},{name:"New Zealand",   emoji:"🇳🇿"},{name:"Norway",       emoji:"🇳🇴"},
+  {name:"Panama",       emoji:"🇵🇦"},{name:"Paraguay",      emoji:"🇵🇾"},{name:"Portugal",     emoji:"🇵🇹"},
+  {name:"Qatar",        emoji:"🇶🇦"},{name:"Saudi Arabia",  emoji:"🇸🇦"},{name:"Scotland",     emoji:"🏴󠁧󠁢󠁳󠁣󠁴󠁿"},
+  {name:"Senegal",      emoji:"🇸🇳"},{name:"South Africa",  emoji:"🇿🇦"},{name:"South Korea",  emoji:"🇰🇷"},
+  {name:"Spain",        emoji:"🇪🇸"},{name:"Switzerland",   emoji:"🇨🇭"},{name:"Tunisia",      emoji:"🇹🇳"},
+  {name:"United States",emoji:"🇺🇸"},{name:"Uruguay",       emoji:"🇺🇾"},{name:"Uzbekistan",   emoji:"🇺🇿"},
 ];
 
-function getUsers() { return JSON.parse(sessionStorage.getItem('rr_users') || '{}'); }
-function saveUsers(u) { sessionStorage.setItem('rr_users', JSON.stringify(u)); }
-function saveCurrentUser(u) { sessionStorage.setItem('rr_currentUser', JSON.stringify(u)); }
-function getCurrentUser() { return JSON.parse(sessionStorage.getItem('rr_currentUser') || 'null'); }
-
-// If already logged in, skip straight to app
-if (getCurrentUser()) { window.location.href = 'matches.html'; }
-
 function showErr(id, msg) { const el=document.getElementById(id); el.textContent=msg; el.style.display='block'; }
-function clearErr(id) { document.getElementById(id).style.display='none'; }
+function clearErr(id)     { document.getElementById(id).style.display='none'; }
+function setLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = loading;
+  btn.textContent = loading ? 'Please wait…' : btnId === 'loginBtn' ? 'Sign In' : 'Create Account →';
+}
+
+// If already have a valid session, skip to app
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) window.location.href = 'matches.html';
+})();
 
 // Tab switching
 document.querySelector('.auth-tabs').addEventListener('click', e => {
-  const tab = e.target.closest('[data-tab]'); if (!tab) return;
-  switchTab(tab.dataset.tab);
+  const tab = e.target.closest('[data-tab]'); if (!tab) return; switchTab(tab.dataset.tab);
 });
 document.getElementById('goSignup').addEventListener('click', () => switchTab('signup'));
 document.getElementById('goLogin').addEventListener('click',  () => switchTab('login'));
@@ -169,35 +185,40 @@ function switchTab(t) {
   clearErr('loginError'); clearErr('signupError');
 }
 
-// Login
-document.getElementById('loginBtn').addEventListener('click', () => {
+// ── SIGN IN ───────────────────────────────────────────────
+document.getElementById('loginBtn').addEventListener('click', async () => {
   clearErr('loginError');
-  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const email = document.getElementById('loginEmail').value.trim();
   const pass  = document.getElementById('loginPassword').value;
   if (!email || !pass) { showErr('loginError', 'Please fill in all fields'); return; }
-  const users = getUsers();
-  const user = users[email];
-  if (!user)            { showErr('loginError', 'No account found with that email'); return; }
-  if (user.password !== pass) { showErr('loginError', 'Incorrect password'); return; }
-  saveCurrentUser({...user});
+  setLoading('loginBtn', true);
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if (error) { showErr('loginError', error.message); setLoading('loginBtn', false); return; }
+  const { data: profile } = await sb.from('RTR Profiles').select('username,team').eq('id', data.user.id).single();
+  localStorage.setItem(_USER_KEY, JSON.stringify({
+    id: data.user.id, email: data.user.email,
+    username: profile?.username || 'User', team: profile?.team || null
+  }));
   window.location.href = 'matches.html';
 });
 
-// Signup
-document.getElementById('signupBtn').addEventListener('click', () => {
+// ── SIGN UP ───────────────────────────────────────────────
+let _pendingUserId = null;
+
+document.getElementById('signupBtn').addEventListener('click', async () => {
   clearErr('signupError');
   const username = document.getElementById('signupUsername').value.trim();
-  const email    = document.getElementById('signupEmail').value.trim().toLowerCase();
+  const email    = document.getElementById('signupEmail').value.trim();
   const pass     = document.getElementById('signupPassword').value;
   if (!username || !email || !pass) { showErr('signupError', 'Please fill in all fields'); return; }
-  if (pass.length < 6)              { showErr('signupError', 'Password must be at least 6 characters'); return; }
-  if (!/^[^@]+@[^@]+\.[^@]+$/.test(email)) { showErr('signupError', 'Please enter a valid email'); return; }
-  const users = getUsers();
-  if (users[email]) { showErr('signupError', 'An account with this email already exists'); return; }
-  const newUser = { username, email, password: pass, team: null, joinedAt: Date.now() };
-  users[email] = newUser;
-  saveUsers(users);
-  saveCurrentUser({...newUser});
+  if (pass.length < 6) { showErr('signupError', 'Password must be at least 6 characters'); return; }
+  setLoading('signupBtn', true);
+  const { data, error } = await sb.auth.signUp({ email, password: pass });
+  if (error) { showErr('signupError', error.message); setLoading('signupBtn', false); return; }
+  _pendingUserId = data.user.id;
+  await sb.from('RTR Profiles').upsert({ id: data.user.id, username, team: null });
+  localStorage.setItem(_USER_KEY, JSON.stringify({ id: data.user.id, email, username, team: null }));
+  setLoading('signupBtn', false);
   showOnboarding();
 });
 
@@ -208,7 +229,7 @@ document.addEventListener('keydown', e => {
   else document.getElementById('signupBtn').click();
 });
 
-// Team picker
+// ── TEAM PICKER ───────────────────────────────────────────
 let pickedTeam = null;
 
 function showOnboarding() {
@@ -223,6 +244,7 @@ function renderGrid() {
       <span class="t-emoji">${t.emoji}</span><span class="t-name">${t.name}</span>
     </div>`
   ).join('');
+  twemoji.parse(document.getElementById('teamGrid'), { folder: 'svg', ext: '.svg' });
   document.getElementById('onboardDone').disabled = !pickedTeam;
 }
 
@@ -231,16 +253,19 @@ document.getElementById('teamGrid').addEventListener('click', e => {
   pickedTeam = tile.dataset.team; renderGrid();
 });
 
-document.getElementById('onboardDone').addEventListener('click', () => {
+document.getElementById('onboardDone').addEventListener('click', async () => {
   if (!pickedTeam) return;
-  const user = getCurrentUser();
-  user.team = pickedTeam;
-  const users = getUsers();
-  users[user.email] = user;
-  saveUsers(users);
-  saveCurrentUser(user);
+  document.getElementById('onboardDone').disabled = true;
+  document.getElementById('onboardDone').textContent = 'Saving…';
+  const stored = JSON.parse(localStorage.getItem(_USER_KEY) || '{}');
+  if (stored.id) {
+    await sb.from('RTR Profiles').update({ team: pickedTeam }).eq('id', stored.id);
+    stored.team = pickedTeam;
+    localStorage.setItem(_USER_KEY, JSON.stringify(stored));
+  }
   window.location.href = 'matches.html';
 });
 </script>
+<script>twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });</script>
 </body>
 </html>

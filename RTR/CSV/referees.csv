@@ -1,0 +1,13 @@
+id,name,initials,nationality,age,fifaListed,notes,neutralRating,neutralVotes,fanRating,fanVotes,games
+1,Szymon Marciniak,SM,Polish,43,Yes,Refereed 2022 World Cup Final,0,0,0,0,0
+2,Daniele Orsato,DO,Italian,49,Yes,Experienced UEFA Champions League ref,0,0,0,0,0
+3,Anthony Taylor,AT,English,45,Yes,Premier League and UEFA ref,0,0,0,0,0
+4,Facundo Tello,FT,Argentine,38,Yes,CONMEBOL top referee,0,0,0,0,0
+5,Fernando Rapallini,FR,Argentine,44,Yes,2022 World Cup referee,0,0,0,0,0
+6,Felix Zwayer,FZ,German,43,Yes,Bundesliga top referee,0,0,0,0,0
+7,Ismail Elfath,IE,American,41,Yes,MLS and CONCACAF top referee,0,0,0,0,0
+8,Abdulrahman Al-Jassim,AJ,Qatari,38,Yes,2022 World Cup host nation ref,0,0,0,0,0
+9,Slavko Vinčić,SV,Slovenian,43,Yes,UEFA Europa League referee,0,0,0,0,0
+10,Bakary Gassama,BG,Gambian,44,Yes,CAF top referee,0,0,0,0,0
+11,Mustapha Ghorbal,MG,Algerian,42,Yes,CAF and FIFA referee,0,0,0,0,0
+12,Ivan Barton,IB,Salvadoran,38,Yes,CONCACAF FIFA referee,0,0,0,0,0

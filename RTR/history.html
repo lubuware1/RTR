@@ -116,6 +116,7 @@
   .toast{position:fixed;bottom:24px;right:24px;background:var(--pl-green);color:var(--pl-purple);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.9rem;padding:12px 20px;border-radius:8px;box-shadow:0 8px 32px rgba(0,255,133,.3);transform:translateY(60px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;z-index:1000;}
   .toast.show{transform:translateY(0);opacity:1;}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/twemoji@14/dist/twemoji.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -175,6 +176,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="shared.js"></script>
 <script>
 // ── AUTH ──────────────────────────────────────────────────
@@ -205,9 +207,9 @@ document.getElementById('userChip').addEventListener('click', e => {
   document.getElementById('userDropdown').classList.toggle('open');
 });
 document.addEventListener('click', () => document.getElementById('userDropdown').classList.remove('open'));
-document.getElementById('ddLogout').addEventListener('click', () => {
+document.getElementById('ddLogout').addEventListener('click', async () => {
   if (PREVIEW_MODE) { toast('Login disabled in Preview Mode'); return; }
-  clearCurrentUser(); window.location.href = 'login.html';
+  await clearCurrentUser(); window.location.href = 'login.html';
 });
 
 function toast(msg) {
@@ -468,5 +470,6 @@ initHeader();
   }
 })();
 </script>
+<script>twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });</script>
 </body>
 </html>

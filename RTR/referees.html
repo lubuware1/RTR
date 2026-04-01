@@ -112,7 +112,15 @@
 
   .toast{position:fixed;bottom:24px;right:24px;background:var(--pl-green);color:var(--pl-purple);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.9rem;padding:12px 20px;border-radius:8px;box-shadow:0 8px 32px rgba(0,255,133,.3);transform:translateY(60px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;z-index:1000;}
   .toast.show{transform:translateY(0);opacity:1;}
+  img.emoji{height:1em;width:1em;vertical-align:-0.1em;}
+  @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  .skel{background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:4px;}
+  .skel-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;}
+  .skel-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .skel-circle{border-radius:50%;flex-shrink:0;}
+  .skel-line{height:11px;}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/twemoji@14/dist/twemoji.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -172,6 +180,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="shared.js"></script>
 <script>
 const currentUser = getCurrentUser();
@@ -197,9 +206,9 @@ function initHeader(){
 
 document.getElementById('userChip').addEventListener('click',e=>{e.stopPropagation();document.getElementById('userDropdown').classList.toggle('open');});
 document.addEventListener('click',()=>document.getElementById('userDropdown').classList.remove('open'));
-document.getElementById('ddLogout').addEventListener('click',()=>{
+document.getElementById('ddLogout').addEventListener('click', async ()=>{
   if(PREVIEW_MODE){toast('Login is disabled in Preview Mode');return;}
-  clearCurrentUser();window.location.href='login.html';
+  await clearCurrentUser(); window.location.href='login.html';
 });
 document.getElementById('dbHowTo').addEventListener('click',()=>toast('See the 📖 How To Use sheet in the Excel file for setup instructions!'));
 
@@ -325,9 +334,25 @@ document.getElementById('refsGrid').addEventListener('click',e=>{
   } else toast('No recent matches found for this referee');
 });
 
+// ── SKELETONS ─────────────────────────────────────────────
+function skelRefCard() {
+  return `<div class="skel-card">
+    <div class="skel-row" style="margin-bottom:14px">
+      <div class="skel skel-circle" style="width:48px;height:48px"></div>
+      <div style="flex:1"><div class="skel skel-line" style="width:70%;margin-bottom:8px"></div><div class="skel skel-line" style="width:45%"></div></div>
+      <div class="skel skel-line" style="width:36px;height:36px;border-radius:6px"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="skel skel-line" style="height:36px;border-radius:8px"></div>
+      <div class="skel skel-line" style="height:36px;border-radius:8px"></div>
+    </div>
+  </div>`;
+}
+
 // ── START ─────────────────────────────────────────────────
 initHeader();
 (async () => {
+  document.getElementById('refsGrid').innerHTML = Array(12).fill(skelRefCard()).join('');
   const fdLive     = await loadFromFootballData();
   const sheetsLive = !fdLive && await loadFromSheets().catch(() => false);
   if (fdLive || sheetsLive) {
@@ -339,5 +364,6 @@ initHeader();
   renderRefs();
 })();
 </script>
+<script>twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });</script>
 </body>
 </html>
