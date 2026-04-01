@@ -18,7 +18,7 @@ async function loadFromFootballData() { return false; }
 // 2. File > Share > Publish to Web > choose sheet > CSV > copy URL
 // 3. Paste URLs below
 const SHEETS_REFS_URL    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRCN0t8slUy1uRhOiQMy80if6U9QjN8z5NnWT5A0QpzFh9ERkIchDxOu3TjOGt9EeDqk1rvFGchFyTY/pub?gid=122518751&single=true&output=csv';  // ← Paste Referees sheet CSV URL
-const SHEETS_MATCHES_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRCN0t8slUy1uRhOiQMy80if6U9QjN8z5NnWT5A0QpzFh9ERkIchDxOu3TjOGt9EeDqk1rvFGchFyTY/pub?gid=16807812&single=true&output=csv';  // ← Paste Matches sheet CSV URL
+const SHEETS_MATCHES_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRCN0t8slUy1uRhOiQMy80if6U9QjN8z5NnWT5A0QpzFh9ERkIchDxOu3TjOGt9EeDqk1rvFGchFyTY/pub?output=csv';  // ← FA Cup Test fixtures
 
 // ── PREVIEW MODE ─────────────────────────────────────────
 // Set to true to skip login and use a guest account for easy previewing.
