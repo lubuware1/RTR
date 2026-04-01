@@ -1201,10 +1201,7 @@
   <body>
     <header>
       <div class="header-inner">
-        <a class="logo" href="matches.html"
-          ><div class="logo-badge">🟣</div>
-          Ref<span>Rater</span></a
-        >
+        <a class="logo" href="matches.html"><img src="RRLogo.svg" alt="Ref Rater" style="height:44px;width:auto;display:block;"></a>
         <div class="header-right">
           <nav>
             <a href="matches.html">Matches</a>
@@ -1239,7 +1236,7 @@
             Fantasy RTR — <span>Matchweek 1</span>
           </div>
           <div class="gw-banner-meta">
-            ⏰ Deadline: Wed 11 Jun · 19:00 UTC &nbsp;·&nbsp;
+            ⏰ Deadline: Fri 4 Apr · 20:00 GMT &nbsp;·&nbsp;
             <strong>Picks Open</strong>
           </div>
         </div>
@@ -1645,6 +1642,7 @@
 
       // ── BATTLES ───────────────────────────────────────────────
       function renderBattles() {
+        const dlp = FGW.deadlinePassed;
         document.getElementById("battlesGrid").innerHTML = BATTLES.map((b) => {
           const r1 = gRef(b.r1),
             r2 = gRef(b.r2);
@@ -1658,13 +1656,20 @@
           const live = isLiveBattle(b);
           const myBattle = myPick && (b.r1 === myPick || b.r2 === myPick);
 
+          // Before deadline: hide opponent details — only reveal your own pick
+          const show1 = dlp || b.r1 === myPick;
+          const show2 = dlp || b.r2 === myPick;
+
           const r1win = res === "r1",
             r2win = res === "r2",
             tbd = res === "tbd";
 
           let resLabel = "",
             resClass = "tbd";
-          if (tbd && live) {
+          if (!dlp) {
+            resLabel = "UPCOMING";
+            resClass = "tbd";
+          } else if (tbd && live) {
             resLabel = '<span class="live-dot"></span> LIVE';
             resClass = "live";
           } else if (tbd) {
@@ -1684,51 +1689,43 @@
             resClass = "win";
           }
 
-          const avClass1 = !tbd ? (r1win ? " winner" : " loser") : "";
-          const avClass2 = !tbd ? (r2win ? " winner" : " loser") : "";
-          const ptClass1 = !tbd
-            ? r1win
-              ? "winner"
-              : "loser"
-            : s1 === "live"
-              ? "live"
-              : "tbd";
-          const ptClass2 = !tbd
-            ? r2win
-              ? "winner"
-              : "loser"
-            : s2 === "live"
-              ? "live"
-              : "tbd";
+          const avClass1 = dlp && !tbd ? (r1win ? " winner" : " loser") : "";
+          const avClass2 = dlp && !tbd ? (r2win ? " winner" : " loser") : "";
+          const ptClass1 = dlp && !tbd
+            ? r1win ? "winner" : "loser"
+            : s1 === "live" ? "live" : "tbd";
+          const ptClass2 = dlp && !tbd
+            ? r2win ? "winner" : "loser"
+            : s2 === "live" ? "live" : "tbd";
 
           return `<div class="battle-card">
       <div class="battle-header">
         <span>Battle ${b.id}</span>
         ${myBattle ? '<span class="my-pick-badge">MY PICK</span>' : ""}
-        <span>${tbd && !live ? "UPCOMING" : live ? '<span class="live-dot"></span> LIVE' : "COMPLETE"}</span>
+        <span>${!dlp ? "UPCOMING" : tbd && !live ? "UPCOMING" : live ? '<span class="live-dot"></span> LIVE' : "COMPLETE"}</span>
       </div>
       <div class="battle-body">
         <div class="battle-ref${b.r1 === myPick ? " my-pick" : ""}">
-          <div class="br-av${avClass1}">${r1.initials}</div>
-          <div class="br-name">${r1.name}</div>
-          <div class="br-match">${m1 ? `${m1.hE} ${m1.home} v  ${m1.away} ${m1.aE}` : ""}</div>
-          <div class="br-pts ${ptClass1}">${p1 !== null ? p1 : 0}</div>
-          <div class="br-pts-label">${p1 !== null ? "pts" : s1 === "live" ? "live" : "pending"}</div>
-          ${p1 !== null ? `<div class="br-breakdown">${getRefBreakdown(b.r1).map(i => `<div class="br-bd-item"><span class="br-bd-pts ${i.pts >= 0 ? "pos" : "neg"}">${i.pts >= 0 ? "+" : ""}${i.pts}</span>${i.label}</div>`).join("")}</div>` : ""}
+          <div class="br-av${avClass1}">${show1 ? r1.initials : "?"}</div>
+          <div class="br-name">${show1 ? r1.name : "???"}</div>
+          <div class="br-match">${show1 && m1 ? `${m1.hE} ${m1.home} v  ${m1.away} ${m1.aE}` : ""}</div>
+          <div class="br-pts ${ptClass1}">${dlp && p1 !== null ? p1 : "—"}</div>
+          <div class="br-pts-label">${dlp ? (p1 !== null ? "pts" : s1 === "live" ? "live" : "pending") : ""}</div>
+          ${dlp && p1 !== null ? `<div class="br-breakdown">${getRefBreakdown(b.r1).map(i => `<div class="br-bd-item"><span class="br-bd-pts ${i.pts >= 0 ? "pos" : "neg"}">${i.pts >= 0 ? "+" : ""}${i.pts}</span>${i.label}</div>`).join("")}</div>` : ""}
         </div>
         <div class="vs-col">VS</div>
         <div class="battle-ref${b.r2 === myPick ? " my-pick" : ""}">
-          <div class="br-av${avClass2}">${r2.initials}</div>
-          <div class="br-name">${r2.name}</div>
-          <div class="br-match">${m2 ? `${m2.hE} ${m2.home} v ${m2.away}  ${m2.aE}` : ""}</div>
-          <div class="br-pts ${ptClass2}">${p2 !== null ? p2 : 0}</div>
-          <div class="br-pts-label">${p2 !== null ? "pts" : s2 === "live" ? "live" : "pending"}</div>
-          ${p2 !== null ? `<div class="br-breakdown">${getRefBreakdown(b.r2).map(i => `<div class="br-bd-item"><span class="br-bd-pts ${i.pts >= 0 ? "pos" : "neg"}">${i.pts >= 0 ? "+" : ""}${i.pts}</span>${i.label}</div>`).join("")}</div>` : ""}
+          <div class="br-av${avClass2}">${show2 ? r2.initials : "?"}</div>
+          <div class="br-name">${show2 ? r2.name : "???"}</div>
+          <div class="br-match">${show2 && m2 ? `${m2.hE} ${m2.home} v ${m2.away}  ${m2.aE}` : ""}</div>
+          <div class="br-pts ${ptClass2}">${dlp && p2 !== null ? p2 : "—"}</div>
+          <div class="br-pts-label">${dlp ? (p2 !== null ? "pts" : s2 === "live" ? "live" : "pending") : ""}</div>
+          ${dlp && p2 !== null ? `<div class="br-breakdown">${getRefBreakdown(b.r2).map(i => `<div class="br-bd-item"><span class="br-bd-pts ${i.pts >= 0 ? "pos" : "neg"}">${i.pts >= 0 ? "+" : ""}${i.pts}</span>${i.label}</div>`).join("")}</div>` : ""}
         </div>
       </div>
       <div class="battle-footer">
         <div class="battle-result-label ${resClass}">${resLabel}</div>
-        <div class="battle-pickers">${PICK_COUNTS[b.r1]} vs ${PICK_COUNTS[b.r2]} managers</div>
+        <div class="battle-pickers">${dlp ? `${PICK_COUNTS[b.r1]} vs ${PICK_COUNTS[b.r2]} managers` : "Revealed after deadline"}</div>
       </div>
     </div>`;
         }).join("");
@@ -1796,14 +1793,19 @@
         let bsClass = "pending",
           bsLabel = "",
           bsDetail = "";
-        if (myEffPts === null || oppPts === null) {
+        const oppName = FGW.deadlinePassed ? opp.name : "???";
+        const oppSurname = FGW.deadlinePassed ? opp.name.split(" ").pop() : "???";
+        if (!FGW.deadlinePassed) {
+          bsLabel = "UPCOMING";
+          bsDetail = `vs ??? — opponent revealed after deadline`;
+        } else if (myEffPts === null || oppPts === null) {
           if (live) {
             bsClass = "pending";
             bsLabel = "LIVE";
-            bsDetail = `vs ${opp.name} — awaiting score`;
+            bsDetail = `vs ${oppName} — awaiting score`;
           } else {
             bsLabel = "UPCOMING";
-            bsDetail = `vs ${opp.name} — awaiting kick-off`;
+            bsDetail = `vs ${oppName} — awaiting kick-off`;
           }
         } else if (live) {
           bsClass = "pending";
@@ -1814,27 +1816,27 @@
               : myEffPts < oppPts
                 ? "Trailing"
                 : "Level";
-          bsDetail = `${leading} — ${myEffPts}pts vs ${opp.name}: ${oppPts}pts`;
+          bsDetail = `${leading} — ${myEffPts}pts vs ${oppName}: ${oppPts}pts`;
         } else {
           const won = myEffPts > oppPts;
           const drew = myEffPts === oppPts;
           bsClass = won ? "winning" : drew ? "drawing" : "losing";
           bsLabel = won ? "WINNING ✓" : drew ? "DRAW" : "LOSING";
-          bsDetail = `${ref.name.split(" ").pop()}: ${myEffPts}pts &nbsp;vs&nbsp; ${opp.name.split(" ").pop()}: ${oppPts}pts`;
+          bsDetail = `${ref.name.split(" ").pop()}: ${myEffPts}pts &nbsp;vs&nbsp; ${oppSurname}: ${oppPts}pts`;
         }
 
         const bsBox = document.getElementById("battleStatusBox");
         bsBox.className = `battle-status-box ${bsClass}`;
         bsBox.innerHTML = `<div class="bsb-label ${bsClass}">${bsLabel}</div><div class="bsb-detail">${bsDetail}</div>`;
 
-        // GW Points — win/draw/loss from the boosted ref score comparison
-        const gwResult = calcMyGWPts();
+        // GW Points — win/draw/loss from the boosted ref score comparison (only once complete)
+        const gwResult = live ? null : calcMyGWPts();
         const boostLine =
           wcBoost > 0
             ? `<div class="gw-pts-bonus">${[wildcards.rc.active ? "🟥 Red Card +1 to ref" : "", wildcards.var.active ? "📺 VAR +2 to ref" : ""].filter(Boolean).join(" · ")}</div>`
             : "";
         document.getElementById("gwPtsBox").innerHTML = `
-    <div class="gw-pts-num">${gwResult !== null ? gwResult.pts : "?"}</div>
+    <div class="gw-pts-num">${gwResult !== null ? gwResult.pts : "—"}</div>
     <div class="gw-pts-label">GW Points</div>
     <div class="gw-pts-result ${gwResult ? gwResult.result : "tbd"}">${
       gwResult

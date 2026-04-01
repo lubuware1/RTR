@@ -17,13 +17,13 @@ async function loadFromFootballData() { return false; }
 // 1. Upload refrater_database.xlsx to Google Sheets
 // 2. File > Share > Publish to Web > choose sheet > CSV > copy URL
 // 3. Paste URLs below
-const SHEETS_REFS_URL    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRCN0t8slUy1uRhOiQMy80if6U9QjN8z5NnWT5A0QpzFh9ERkIchDxOu3TjOGt9EeDqk1rvFGchFyTY/pub?gid=122518751&single=true&output=csv';  // ← Paste Referees sheet CSV URL
-const SHEETS_MATCHES_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRCN0t8slUy1uRhOiQMy80if6U9QjN8z5NnWT5A0QpzFh9ERkIchDxOu3TjOGt9EeDqk1rvFGchFyTY/pub?output=csv';  // ← FA Cup Test fixtures
+const SHEETS_REFS_URL    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRCN0t8slUy1uRhOiQMy80if6U9QjN8z5NnWT5A0QpzFh9ERkIchDxOu3TjOGt9EeDqk1rvFGchFyTY/pub?gid=1387412017&single=true&output=csv';  // ← FA Cup Test referees
+const SHEETS_MATCHES_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRCN0t8slUy1uRhOiQMy80if6U9QjN8z5NnWT5A0QpzFh9ERkIchDxOu3TjOGt9EeDqk1rvFGchFyTY/pub?gid=1689456721&single=true&output=csv';  // ← FA Cup Test fixtures
 
 // ── PREVIEW MODE ─────────────────────────────────────────
 // Set to true to skip login and use a guest account for easy previewing.
 // Set to false when you're ready to go live with real logins.
-const PREVIEW_MODE = true;
+const PREVIEW_MODE = false;
 
 // ── SUPABASE ──────────────────────────────────────────────
 const SUPABASE_URL = 'https://sxufittkehlktlfvicom.supabase.co';
