@@ -150,20 +150,10 @@ const PREVIEW_USER = {
 
 // ── STATIC DATA ───────────────────────────────────────────
 const WC_TEAMS = [
-  {name:"Argentina",    emoji:"🇦🇷"},{name:"Algeria",       emoji:"🇩🇿"},{name:"Australia",    emoji:"🇦🇺"},
-  {name:"Austria",      emoji:"🇦🇹"},{name:"Belgium",       emoji:"🇧🇪"},{name:"Brazil",       emoji:"🇧🇷"},
-  {name:"Cabo Verde",   emoji:"🇨🇻"},{name:"Canada",        emoji:"🇨🇦"},{name:"Colombia",     emoji:"🇨🇴"},
-  {name:"Croatia",      emoji:"🇭🇷"},{name:"Curaçao",       emoji:"🇨🇼"},{name:"Côte d'Ivoire",emoji:"🇨🇮"},
-  {name:"Ecuador",      emoji:"🇪🇨"},{name:"Egypt",         emoji:"🇪🇬"},{name:"England",      emoji:"🏴󠁧󠁢󠁥󠁮󠁧󠁿"},
-  {name:"France",       emoji:"🇫🇷"},{name:"Germany",       emoji:"🇩🇪"},{name:"Ghana",        emoji:"🇬🇭"},
-  {name:"Haiti",        emoji:"🇭🇹"},{name:"Iran",          emoji:"🇮🇷"},{name:"Japan",        emoji:"🇯🇵"},
-  {name:"Jordan",       emoji:"🇯🇴"},{name:"Mexico",        emoji:"🇲🇽"},{name:"Morocco",      emoji:"🇲🇦"},
-  {name:"Netherlands",  emoji:"🇳🇱"},{name:"New Zealand",   emoji:"🇳🇿"},{name:"Norway",       emoji:"🇳🇴"},
-  {name:"Panama",       emoji:"🇵🇦"},{name:"Paraguay",      emoji:"🇵🇾"},{name:"Portugal",     emoji:"🇵🇹"},
-  {name:"Qatar",        emoji:"🇶🇦"},{name:"Saudi Arabia",  emoji:"🇸🇦"},{name:"Scotland",     emoji:"🏴󠁧󠁢󠁳󠁣󠁴󠁿"},
-  {name:"Senegal",      emoji:"🇸🇳"},{name:"South Africa",  emoji:"🇿🇦"},{name:"South Korea",  emoji:"🇰🇷"},
-  {name:"Spain",        emoji:"🇪🇸"},{name:"Switzerland",   emoji:"🇨🇭"},{name:"Tunisia",      emoji:"🇹🇳"},
-  {name:"United States",emoji:"🇺🇸"},{name:"Uruguay",       emoji:"🇺🇾"},{name:"Uzbekistan",   emoji:"🇺🇿"},
+  {name:"Arsenal",        emoji:"🔴"},{name:"Chelsea",        emoji:"🔵"},
+  {name:"Leeds United",   emoji:"⚪"},{name:"Liverpool",      emoji:"🔴"},
+  {name:"Manchester City",emoji:"🔵"},{name:"Port Vale",      emoji:"⚫"},
+  {name:"Southampton",    emoji:"🔴"},{name:"West Ham",       emoji:"⚒️"},
 ];
 // Keep alias so any page still referencing PL_TEAMS doesn't break
 const PL_TEAMS = WC_TEAMS;
