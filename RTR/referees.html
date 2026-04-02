@@ -197,7 +197,7 @@ function initHeader(){
   document.getElementById('ucName').textContent=currentUser?.username||'Guest';
   document.getElementById('ucTeamEmoji').textContent=team?.emoji||'';
   document.getElementById('ddName').textContent=currentUser?.username||'Guest';
-  document.getElementById('ddTeam').textContent=team?`${team.emoji} ${team.name} supporter`:'No team selected';
+  document.getElementById('ddTeam').textContent=team?`${team.emoji} ${team.name} supporter`:currentUser?.team?`${currentUser.team} supporter`:'No team selected';
   if(PREVIEW_MODE){
     const b=document.createElement('div');b.className='preview-badge';b.textContent='Preview Mode';
     document.getElementById('userChip').insertBefore(b,document.getElementById('userChip').firstChild);

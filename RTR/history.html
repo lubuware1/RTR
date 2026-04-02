@@ -195,7 +195,7 @@ function initHeader() {
   document.getElementById('ucName').textContent   = currentUser?.username || 'Guest';
   document.getElementById('ucTeamEmoji').textContent = team?.emoji || '';
   document.getElementById('ddName').textContent = currentUser?.username || 'Guest';
-  document.getElementById('ddTeam').textContent = team ? `${team.emoji} ${team.name} supporter` : 'No team selected';
+  document.getElementById('ddTeam').textContent = team ? `${team.emoji} ${team.name} supporter` : currentUser?.team ? `${currentUser.team} supporter` : 'No team selected';
   if (PREVIEW_MODE) {
     const badge = document.createElement('div');
     badge.className = 'preview-badge'; badge.textContent = 'Preview Mode';

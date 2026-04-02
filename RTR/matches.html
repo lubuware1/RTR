@@ -200,16 +200,16 @@
       <div>Ratings for <strong id="fanBannerTeam"></strong> matches show <span style="color:var(--green)">neutral</span> and <span style="color:var(--yellow)">fan</span> scores separately</div>
     </div>
     <div class="view-tabs" id="filterTabs">
-      <button class="view-tab active" data-filter="all">All</button>
-      <button class="view-tab" data-filter="live">Live</button>
+      <button class="view-tab active" data-filter="live">Live</button>
       <button class="view-tab" data-filter="recent">Recent</button>
       <button class="view-tab" data-filter="upcoming">Upcoming</button>
+      <button class="view-tab" data-filter="all">All</button>
     </div>
     <div class="section-title">Group Stage · Matchday 1 · 11 Jun 2026</div>
     <div id="matchList"></div>
   </div>
   <div>
-    <div class="rating-panel">
+    <div class="rating-panel" id="ratingPanel">
       <div class="panel-head">
         <div class="panel-head-text"><h2>Rate the Referee</h2><p id="panelSubtitle">Select a match to submit your rating</p></div>
         <button class="panel-close-btn" id="panelCloseBtn" title="Close">✕</button>
@@ -261,7 +261,7 @@ if (!PREVIEW_MODE && !currentUser) { window.location.href = 'login.html'; }
 // State
 let selId=null, overall=0, cats=[0,0,0,0];
 const incidents=new Set(), rated=new Set();
-let filter='all', lbMode='neutral';
+let filter='live', lbMode='neutral';
 
 const DESCS = RATING_DESCS;
 
@@ -272,7 +272,7 @@ function initHeader() {
   document.getElementById('ucName').textContent = currentUser?.username || 'Guest';
   document.getElementById('ucTeamEmoji').innerHTML = team ? flagImg(team.emoji, 18) : '';
   document.getElementById('ddName').textContent = currentUser?.username || 'Guest';
-  document.getElementById('ddTeam').innerHTML = team ? `${flagImg(team.emoji, 16)} ${team.name} supporter` : 'No team selected';
+  document.getElementById('ddTeam').innerHTML = team ? `${flagImg(team.emoji, 16)} ${team.name} supporter` : currentUser?.team ? `${currentUser.team} supporter` : 'No team selected';
   if (PREVIEW_MODE) {
     const badge = document.createElement('div');
     badge.className = 'preview-badge'; badge.textContent = 'Preview Mode';
@@ -369,6 +369,8 @@ function closePanel() {
 document.getElementById('panelCloseBtn').addEventListener('click', closePanel);
 
 function openPanel(mid) {
+  const mx=MATCHES.find(x=>x.id===+mid);
+  if(mx && mx.status==='upcoming') return;
   selId=mid; overall=0; cats=[0,0,0,0]; incidents.clear();
   document.getElementById('commentBox').value='';
   document.getElementById('panelEmpty').style.display='none';
@@ -419,9 +421,17 @@ function renderLb(){
 
 // ── EVENTS ────────────────────────────────────────────────
 document.getElementById('matchList').addEventListener('click',e=>{const c=e.target.closest('[data-mid]');if(c)openPanel(+c.dataset.mid);});
+function updatePanelVisibility() {
+  const show = filter === 'live' || filter === 'recent';
+  document.getElementById('ratingPanel').style.display = show ? '' : 'none';
+  if (!show) closePanel();
+}
+
 document.getElementById('filterTabs').addEventListener('click',e=>{
   const b=e.target.closest('.view-tab');if(!b)return;
-  filter=b.dataset.filter; document.querySelectorAll('.view-tab').forEach(x=>x.classList.remove('active')); b.classList.add('active'); renderList();
+  filter=b.dataset.filter; document.querySelectorAll('.view-tab').forEach(x=>x.classList.remove('active')); b.classList.add('active');
+  updatePanelVisibility();
+  renderList();
 });
 document.getElementById('overallStars').addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(b){overall=+b.dataset.s;drawStars();}});
 document.getElementById('panelForm').addEventListener('click',e=>{
@@ -489,6 +499,7 @@ initHeader();
   ]);
   syncMatchStatuses();
   initHeader();
+  updatePanelVisibility();
   renderList();
   renderLb();
 })();

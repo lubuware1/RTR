@@ -755,6 +755,10 @@
       .panel-close-btn.visible {
         display: block;
       }
+      .sp-tabs{display:flex;background:var(--surface2);border-bottom:1px solid var(--border);}
+      .sp-tab{flex:1;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:10px 6px;cursor:pointer;transition:all .15s;}
+      .sp-tab.active{color:var(--pl-green);border-bottom-color:var(--pl-green);background:rgba(0,255,133,.05);}
+      .sp-tab:hover:not(.active){color:var(--text);background:rgba(255,255,255,.04);}
       .panel-body {
         padding: 16px;
       }
@@ -1236,7 +1240,7 @@
             Fantasy RTR — <span>Matchweek 1</span>
           </div>
           <div class="gw-banner-meta">
-            ⏰ Deadline: Fri 4 Apr · 20:00 GMT &nbsp;·&nbsp;
+            ⏰ Deadline: Fri 3 Apr · 20:00 GMT &nbsp;·&nbsp;
             <strong>Picks Open</strong>
           </div>
         </div>
@@ -1299,37 +1303,46 @@
         <div class="side-panel">
           <div class="panel-head">
             <div class="panel-head-text">
-              <h2>⚽ My MW1 Pick</h2>
+              <h2>⚽ Matchweek 1</h2>
               <p id="panelSubtext">Select a ref from the Pick tab</p>
             </div>
-            <button class="panel-close-btn" id="panelCloseBtn" title="Minimise">
-              ✕
-            </button>
+            <button class="panel-close-btn" id="panelCloseBtn" title="Close">✕</button>
           </div>
-          <div class="panel-body">
-            <!-- No pick made -->
-            <div id="noPick" class="no-pick-state">
-              <div class="nps-icon">🏳</div>
-              <div class="nps-text">No pick made</div>
-              <div class="nps-sub">Go to Pick Ref to choose your ref</div>
-            </div>
+          <div class="sp-tabs">
+            <button class="sp-tab active" data-sptab="pick">My Pick</button>
+            <button class="sp-tab" data-sptab="refs">Ref Scores</button>
+            <button class="sp-tab" data-sptab="league">Leaderboard</button>
+          </div>
 
-            <!-- Pick made -->
-            <div id="hasPick" style="display: none">
-              <div class="my-ref-card" id="myRefCard"></div>
-              <div class="battle-status-box" id="battleStatusBox"></div>
-              <div class="gw-pts-box" id="gwPtsBox"></div>
-
-              <div class="wc-title">Wildcards</div>
-              <div class="wc-grid" id="wcGrid"></div>
-
+          <!-- Tab: My Pick -->
+          <div class="sp-tab-content" id="spTabPick">
+            <div class="panel-body">
+              <div id="noPick" class="no-pick-state">
+                <div class="nps-icon">🏳</div>
+                <div class="nps-text">No pick made</div>
+                <div class="nps-sub">Go to Pick Ref to choose your ref</div>
+              </div>
+              <div id="hasPick" style="display:none">
+                <div class="my-ref-card" id="myRefCard"></div>
+                <div class="battle-status-box" id="battleStatusBox"></div>
+                <div class="gw-pts-box" id="gwPtsBox"></div>
+                <div class="wc-title">Wildcards</div>
+                <div class="wc-grid" id="wcGrid"></div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="fl-table">
-          <div class="fl-header">🏆 Fantasy League — Matchweek 1</div>
-          <div id="fantasyLeague"><!-- rendered by JS --></div>
+          <!-- Tab: Ref Scores -->
+          <div class="sp-tab-content" id="spTabRefs" style="display:none">
+            <div class="fl-header">🏅 GW Ref Scores — Matchweek 1</div>
+            <div id="refScores"><!-- rendered by JS --></div>
+          </div>
+
+          <!-- Tab: Leaderboard -->
+          <div class="sp-tab-content" id="spTabLeague" style="display:none">
+            <div class="fl-header">🏆 Fantasy League — Matchweek 1</div>
+            <div id="fantasyLeague"><!-- rendered by JS --></div>
+          </div>
         </div>
       </div>
     </div>
@@ -1346,7 +1359,7 @@
       }
 
       // ── FANTASY DATA ──────────────────────────────────────────
-      const FGW = { gw: 1, deadlinePassed: false, status: "upcoming" };
+      let FGW = { gw: 1, deadlinePassed: false, status: "upcoming" };
 
       // Battles are built from MATCHES data by buildBattlesFromMatches() on boot
       const BATTLES = [];
@@ -1551,7 +1564,7 @@
           currentUser?.username || "Guest";
         document.getElementById("ddTeam").textContent = team
           ? `${team.emoji} ${team.name} supporter`
-          : "No team selected";
+          : currentUser?.team ? `${currentUser.team} supporter` : "No team selected";
         if (PREVIEW_MODE) {
           const badge = document.createElement("div");
           badge.className = "preview-badge";
@@ -1643,6 +1656,48 @@
       // ── BATTLES ───────────────────────────────────────────────
       function renderBattles() {
         const dlp = FGW.deadlinePassed;
+
+        // Before deadline: inject a preview card for battle 1 showing user's pick vs ???
+        if (!dlp) {
+          const myRef = myPick ? gRef(myPick) : null;
+          const myMatch = myPick ? getRefMatch(myPick) : null;
+          const previewCards = BATTLES.map((b, idx) => {
+            const isFirst = idx === 0;
+            const showMyPick = isFirst && myRef;
+            return `<div class="battle-card">
+      <div class="battle-header">
+        <span>Battle ${b.id}</span>
+        ${showMyPick ? '<span class="my-pick-badge">MY PICK</span>' : ""}
+        <span>UPCOMING</span>
+      </div>
+      <div class="battle-body">
+        <div class="battle-ref${showMyPick ? " my-pick" : ""}">
+          <div class="br-av">${showMyPick ? myRef.initials : "?"}</div>
+          <div class="br-name">${showMyPick ? myRef.name : "???"}</div>
+          <div class="br-match">${showMyPick && myMatch ? `${myMatch.hE} ${myMatch.home} v ${myMatch.away} ${myMatch.aE}` : ""}</div>
+          <div class="br-pts tbd">—</div>
+          <div class="br-pts-label"></div>
+        </div>
+        <div class="vs-col">VS</div>
+        <div class="battle-ref">
+          <div class="br-av">?</div>
+          <div class="br-name">???</div>
+          <div class="br-match"></div>
+          <div class="br-pts tbd">—</div>
+          <div class="br-pts-label"></div>
+        </div>
+      </div>
+      <div class="battle-footer">
+        <div class="battle-result-label tbd">UPCOMING</div>
+        <div class="battle-pickers">Revealed after deadline</div>
+      </div>
+    </div>`;
+          }).join("");
+          document.getElementById("battlesGrid").innerHTML = previewCards;
+          reparse();
+          return;
+        }
+
         document.getElementById("battlesGrid").innerHTML = BATTLES.map((b) => {
           const r1 = gRef(b.r1),
             r2 = gRef(b.r2);
@@ -1656,9 +1711,9 @@
           const live = isLiveBattle(b);
           const myBattle = myPick && (b.r1 === myPick || b.r2 === myPick);
 
-          // Before deadline: hide opponent details — only reveal your own pick
-          const show1 = dlp || b.r1 === myPick;
-          const show2 = dlp || b.r2 === myPick;
+          // After deadline: show everything
+          const show1 = true;
+          const show2 = true;
 
           const r1win = res === "r1",
             r2win = res === "r2",
@@ -1739,6 +1794,17 @@
         document.getElementById("panelCloseBtn").classList.remove("visible");
         document.getElementById("panelSubtext").textContent =
           "Select a ref from the Pick tab";
+      });
+
+      // ── SIDEBAR TABS ──────────────────────────────────────────
+      document.querySelectorAll(".sp-tab").forEach(tab => {
+        tab.addEventListener("click", () => {
+          document.querySelectorAll(".sp-tab").forEach(t => t.classList.remove("active"));
+          document.querySelectorAll(".sp-tab-content").forEach(c => c.style.display = "none");
+          tab.classList.add("active");
+          const map = { pick: "spTabPick", refs: "spTabRefs", league: "spTabLeague" };
+          document.getElementById(map[tab.dataset.sptab]).style.display = "";
+        });
       });
 
       function renderSidebar() {
@@ -1957,6 +2023,30 @@
           .join("");
       }
 
+      // ── GW REF SCORES ─────────────────────────────────────────
+      function renderRefScores() {
+        const scored = REFS
+          .filter(r => r.id in REF_GW_PTS)
+          .sort((a, b) => (REF_GW_PTS[b.id] ?? -1) - (REF_GW_PTS[a.id] ?? -1));
+        if (!scored.length) {
+          document.getElementById("refScores").innerHTML = '<div style="padding:14px 16px;font-size:.82rem;color:var(--muted)">No scores yet this matchweek</div>';
+          return;
+        }
+        document.getElementById("refScores").innerHTML = scored.map((r, i) => {
+          const pts = REF_GW_PTS[r.id];
+          const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1;
+          const isMyRef = r.id === myPick;
+          return `<div class="fl-row${isMyRef ? " me" : ""}">
+      <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
+      <div>
+        <div class="fl-name${isMyRef ? " me" : ""}">${r.name}${isMyRef ? " ★" : ""}</div>
+        <div class="fl-sub">${r.nationality}</div>
+      </div>
+      <div class="fl-pts${isMyRef ? " me" : ""}">${pts !== null ? pts : "—"}</div>
+    </div>`;
+        }).join("");
+      }
+
       // ── LEADERBOARD FROM DB ───────────────────────────────────
       // Calculates each user's MW score from their stored pick + current REF_GW_PTS.
       function buildLeaderboard(dbPicks) {
@@ -1982,14 +2072,16 @@
               pts = won ? 3 : drew ? 1 : 0;
             }
           }
+          const isMe = p.user_id === currentUser?.id;
           FANTASY_LEAGUE.push({
-            username: profile?.username || "Unknown",
-            team: profile?.team || "",
+            username: profile?.username || (isMe ? currentUser.username : "Unknown"),
+            team: profile?.team || (isMe ? currentUser.team : ""),
             pts,
             gwPick: gRef(refId)?.name.split(" ").pop() || "—",
-            isMe: profile?.username === currentUser?.username,
+            isMe,
           });
         });
+        renderRefScores();
         renderLeague();
       }
 
@@ -2122,6 +2214,10 @@
           )
           .join("");
 
+        // Load GW config from Supabase (auto-calculates deadlinePassed)
+        const gwConfig = await loadGWConfig();
+        if (gwConfig) FGW = gwConfig;
+
         // Load sheets + ratings + manual bonuses, then build battles + compute points
         await loadFromSheets().catch(() => {});
         await loadRatings();
@@ -2150,6 +2246,7 @@
         // Build leaderboard from DB; falls back to static placeholder if no data
         const dbLeaderboard = await loadFantasyLeaderboard(FGW.gw);
         buildLeaderboard(dbLeaderboard);
+        renderRefScores();
         if (!dbLeaderboard.length) renderLeague();
 
         // Re-run twemoji after all async renders so flag emojis display correctly

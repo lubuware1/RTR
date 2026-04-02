@@ -130,6 +130,18 @@ async function deleteManualBonus(id) {
   return !error;
 }
 
+async function loadGWConfig() {
+  if (PREVIEW_MODE) return null;
+  const { data } = await getSB().from('RTR Config').select('gw,deadline,status').eq('id', 1).single();
+  if (!data) return null;
+  return {
+    gw: data.gw,
+    deadline: data.deadline,
+    deadlinePassed: new Date() > new Date(data.deadline),
+    status: data.status || 'upcoming'
+  };
+}
+
 async function loadFantasyLeaderboard(matchweek) {
   if (PREVIEW_MODE) return [];
   const { data: picks } = await getSB().from('RTR Fantasy Picks')
