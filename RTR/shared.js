@@ -198,7 +198,7 @@ function syncMatchStatuses() {
   const MATCH_DURATION_MS = 105 * 60 * 1000;
   MATCHES.forEach(m => {
     if (!m.kickoff) return;
-    const ko = new Date(m.kickoff).getTime();
+    const ko = new Date(String(m.kickoff).replace(/\s+T/, 'T')).getTime();
     if (now < ko) {
       m.status = 'upcoming';
     } else if (now < ko + MATCH_DURATION_MS) {
