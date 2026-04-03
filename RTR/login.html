@@ -88,8 +88,8 @@
 
       <!-- LOGIN -->
       <div id="loginForm">
-        <label class="field-label">Email</label>
-        <input class="auth-input" id="loginEmail" type="email" placeholder="you@example.com" autocomplete="email">
+        <label class="field-label">Email or Username</label>
+        <input class="auth-input" id="loginEmail" type="text" placeholder="you@example.com or GoallineGary" autocomplete="username">
         <label class="field-label">Password</label>
         <input class="auth-input" id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password">
         <div class="auth-error" id="loginError"></div>
@@ -178,11 +178,27 @@ function switchTab(t) {
 // ── SIGN IN ───────────────────────────────────────────────
 document.getElementById('loginBtn').addEventListener('click', async () => {
   clearErr('loginError');
-  const email = document.getElementById('loginEmail').value.trim();
-  const pass  = document.getElementById('loginPassword').value;
-  if (!email || !pass) { showErr('loginError', 'Please fill in all fields'); return; }
+  let identifier = document.getElementById('loginEmail').value.trim();
+  const pass     = document.getElementById('loginPassword').value;
+  if (!identifier || !pass) { showErr('loginError', 'Please fill in all fields'); return; }
   setLoading('loginBtn', true);
-  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+
+  // If no @ — treat as username, look up email from profiles
+  if (!identifier.includes('@')) {
+    const { data: profile, error: lookupErr } = await sb
+      .from('RTR Profiles')
+      .select('email')
+      .ilike('username', identifier)
+      .single();
+    if (lookupErr || !profile?.email) {
+      showErr('loginError', 'Username not found');
+      setLoading('loginBtn', false);
+      return;
+    }
+    identifier = profile.email;
+  }
+
+  const { data, error } = await sb.auth.signInWithPassword({ email: identifier, password: pass });
   if (error) { showErr('loginError', error.message); setLoading('loginBtn', false); return; }
   const { data: profile } = await sb.from('RTR Profiles').select('username,team').eq('id', data.user.id).single();
   localStorage.setItem(_USER_KEY, JSON.stringify({
@@ -206,7 +222,7 @@ document.getElementById('signupBtn').addEventListener('click', async () => {
   const { data, error } = await sb.auth.signUp({ email, password: pass });
   if (error) { showErr('signupError', error.message); setLoading('signupBtn', false); return; }
   _pendingUserId = data.user.id;
-  await sb.from('RTR Profiles').upsert({ id: data.user.id, username, team: null });
+  await sb.from('RTR Profiles').upsert({ id: data.user.id, username, email, team: null });
   localStorage.setItem(_USER_KEY, JSON.stringify({ id: data.user.id, email, username, team: null }));
   setLoading('signupBtn', false);
   showOnboarding();
