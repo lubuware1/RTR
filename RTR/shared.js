@@ -46,8 +46,8 @@ async function checkAuth() {
     id: session.user.id, email: session.user.email,
     username: profile?.username || 'User', team: profile?.team || null
   }));
-  // Force team selection if not set
-  if (!profile?.team) {
+  // Force team selection only if profile loaded and team is explicitly missing
+  if (profile && !profile.team) {
     window.location.href = 'login.html?onboard=1';
     return false;
   }
