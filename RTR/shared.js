@@ -46,6 +46,11 @@ async function checkAuth() {
     id: session.user.id, email: session.user.email,
     username: profile?.username || 'User', team: profile?.team || null
   }));
+  // Force team selection if not set
+  if (!profile?.team) {
+    window.location.href = 'login.html?onboard=1';
+    return false;
+  }
   return true;
 }
 

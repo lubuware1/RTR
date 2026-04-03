@@ -155,10 +155,18 @@ function setLoading(btnId, loading) {
   btn.textContent = loading ? 'Please wait…' : btnId === 'loginBtn' ? 'Sign In' : 'Create Account →';
 }
 
-// If already have a valid session, skip to app
+// If already have a valid session, skip to app (unless onboard=1 param present)
 (async () => {
   const { data: { session } } = await sb.auth.getSession();
-  if (session) window.location.href = 'matches.html';
+  if (!session) return;
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('onboard') === '1') {
+    // User is logged in but has no team — force team picker
+    _pendingUserId = session.user.id;
+    showOnboarding();
+  } else {
+    window.location.href = 'matches.html';
+  }
 })();
 
 // Tab switching
