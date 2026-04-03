@@ -1269,6 +1269,33 @@
       .fl-pts.me {
         color: var(--pl-green);
       }
+      .fl-wc-row {
+        display: flex;
+        gap: 5px;
+        margin-top: 4px;
+      }
+      .fl-wc-icon {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        font-size: 0.75rem;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 1px 5px;
+        opacity: 0.5;
+      }
+      .fl-wc-icon.used {
+        opacity: 1;
+        border-color: #00e67a;
+        box-shadow: 0 0 0 1px rgba(0,255,133,0.25);
+      }
+      .fl-wc-left {
+        font-family: "Barlow Condensed", sans-serif;
+        font-weight: 700;
+        font-size: 0.7rem;
+        color: #00e67a;
+      }
 
       /* === TOAST === */
       .toast {
@@ -2320,11 +2347,21 @@
             const team = PL_TEAMS.find((t) => t.name === p.team);
             const medal =
               i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1;
+            const wc = p.wildcards || {};
+            const wcIcons = [
+              { key: 'yc', icon: '🟨', left: wc.yc?.left ?? 1 },
+              { key: 'rc', icon: '🟥', left: wc.rc?.left ?? 1 },
+              { key: 'var', icon: '📺', left: wc.var?.left ?? 1 },
+            ];
+            const wcHtml = wcIcons.map(w =>
+              `<span class="fl-wc-icon${wc[w.key]?.active ? ' used' : ''}" title="${w.icon} · ${wc[w.key]?.left ?? 1} left">${w.icon}<span class="fl-wc-left">${wc[w.key]?.left ?? 1}</span></span>`
+            ).join('');
             return `<div class="fl-row${p.isMe ? " me" : ""}">
       <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
-      <div>
+      <div style="flex:1;min-width:0;">
         <div class="fl-name${p.isMe ? " me" : ""}">${p.username}${p.isMe ? " ★" : ""}</div>
         <div class="fl-sub">${team?.emoji || ""} ${p.team}${FGW.deadlinePassed || p.isMe ? ` · picked ${p.gwPick}` : " · pick hidden"}</div>
+        <div class="fl-wc-row">${wcHtml}</div>
       </div>
       <div class="fl-pts${p.isMe ? " me" : ""}">${p.pts}</div>
     </div>`;
@@ -2388,6 +2425,7 @@
             team: profile?.team || (isMe ? currentUser.team : ""),
             pts,
             gwPick: gRef(refId)?.name.split(" ").pop() || "—",
+            wildcards: p.wildcards || {},
             isMe,
           });
         });
