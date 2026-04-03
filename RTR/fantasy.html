@@ -2236,9 +2236,10 @@
         document.getElementById("wcGrid").innerHTML = wcs
           .map((w) => {
             const state = wildcards[w.key];
+            const anyActive = Object.values(wildcards).some(s => s.active);
             const isDisabled = state.active
               ? w.preDeadline && locked // active pre-deadline WC locked in once deadline passes
-              : state.left === 0 || (w.preDeadline && locked);
+              : state.left === 0 || (w.preDeadline && locked) || anyActive;
             return `<button class="wc-btn${state.active ? " active" : ""}" data-wc="${w.key}"${isDisabled ? " disabled" : ""}>
       <span class="wc-icon">${w.icon}</span>
       <div class="wc-info">
@@ -2269,6 +2270,11 @@
             } else {
               if (wc.left <= 0) {
                 toast("No wildcards remaining");
+                return;
+              }
+              const anyActive = Object.values(wildcards).some(s => s.active);
+              if (anyActive) {
+                toast("You can only use one wildcard per GW");
                 return;
               }
               wc.active = true;
