@@ -2296,7 +2296,7 @@
       <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
       <div>
         <div class="fl-name${p.isMe ? " me" : ""}">${p.username}${p.isMe ? " ★" : ""}</div>
-        <div class="fl-sub">${team?.emoji || ""} ${p.team} · picked ${p.gwPick}</div>
+        <div class="fl-sub">${team?.emoji || ""} ${p.team}${FGW.deadlinePassed || p.isMe ? ` · picked ${p.gwPick}` : " · pick hidden"}</div>
       </div>
       <div class="fl-pts${p.isMe ? " me" : ""}">${p.pts}</div>
     </div>`;
