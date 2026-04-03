@@ -271,9 +271,11 @@ document.getElementById('onboardDone').addEventListener('click', async () => {
   if (!pickedTeam) return;
   document.getElementById('onboardDone').disabled = true;
   document.getElementById('onboardDone').textContent = 'Saving…';
-  const stored = JSON.parse(localStorage.getItem(_USER_KEY) || '{}');
-  if (stored.id) {
-    await sb.from('RTR Profiles').update({ team: pickedTeam }).eq('id', stored.id);
+  const userId = _pendingUserId;
+  if (userId) {
+    await sb.from('RTR Profiles').update({ team: pickedTeam }).eq('id', userId);
+    const stored = JSON.parse(localStorage.getItem(_USER_KEY) || '{}');
+    stored.id = stored.id || userId;
     stored.team = pickedTeam;
     localStorage.setItem(_USER_KEY, JSON.stringify(stored));
   }
