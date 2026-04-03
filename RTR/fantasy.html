@@ -343,6 +343,144 @@
         color: var(--pl-green);
         border: 1px solid rgba(0, 255, 133, 0.2);
       }
+      .view-tabs-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+      .view-tabs-row .view-tabs {
+        margin-bottom: 0;
+        flex: 1;
+      }
+      .htp-btn {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--muted);
+        font-family: "Barlow Condensed", sans-serif;
+        font-weight: 700;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        padding: 8px 10px;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.15s;
+      }
+      .htp-btn:hover {
+        color: var(--pl-green);
+        border-color: rgba(0, 255, 133, 0.3);
+      }
+      /* Modal */
+      .htp-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.6);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+      }
+      .htp-overlay.open {
+        display: flex;
+      }
+      .htp-modal {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        width: min(480px, 90vw);
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+      .htp-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--border);
+        font-family: "Barlow Condensed", sans-serif;
+        font-weight: 700;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--pl-green);
+      }
+      .htp-close {
+        background: none;
+        border: none;
+        color: var(--muted);
+        font-size: 1rem;
+        cursor: pointer;
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+      .htp-close:hover { color: var(--text); }
+      .htp-body {
+        padding: 18px;
+        font-size: 0.88rem;
+        color: var(--text);
+        line-height: 1.6;
+      }
+      .htp-body p { margin: 0 0 12px; }
+      .htp-body ol { margin: 0 0 16px; padding-left: 20px; }
+      .htp-body li { margin-bottom: 8px; }
+      .htp-scoring {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px 14px;
+      }
+      .htp-scoring-title {
+        font-family: "Barlow Condensed", sans-serif;
+        font-weight: 700;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+      .htp-score-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 0;
+        font-size: 0.85rem;
+      }
+      .htp-pts {
+        font-family: "Barlow Condensed", sans-serif;
+        font-weight: 700;
+        font-size: 0.9rem;
+        min-width: 28px;
+        text-align: center;
+      }
+      .htp-pts.pos { color: var(--pl-green); }
+      .htp-pts.neg { color: #ff4757; }
+      .htp-demo {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 4px;
+      }
+      .htp-demo .ref-pick-card { background: var(--surface); }
+      .htp-demo .battle-card { background: var(--surface); border-radius: 8px; }
+      .htp-wc-icon {
+        font-size: 1.3rem;
+        min-width: 28px;
+        text-align: center;
+        margin-top: 2px;
+      }
+      .htp-wc-name {
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: var(--text);
+      }
+      .htp-wc-desc {
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin-top: 2px;
+      }
 
       /* === PICK REF TAB === */
       .deadline-notice {
@@ -1251,9 +1389,141 @@
     <div class="container">
       <!-- LEFT: Main Content -->
       <div>
-        <div class="view-tabs" id="viewTabs">
-          <button class="view-tab active" data-tab="pick">Pick Ref</button>
-          <button class="view-tab" data-tab="battles">Battles</button>
+        <div class="view-tabs-row">
+          <button class="htp-btn" id="htpBtn">❓ How to Play</button>
+          <div class="view-tabs" id="viewTabs">
+            <button class="view-tab active" data-tab="pick">Pick Ref</button>
+            <button class="view-tab" data-tab="battles">Battles</button>
+          </div>
+        </div>
+
+        <!-- HOW TO PLAY MODAL -->
+        <div class="htp-overlay" id="htpOverlay">
+          <div class="htp-modal">
+            <div class="htp-header">
+              <span>How to Play</span>
+              <button class="htp-close" id="htpClose">✕</button>
+            </div>
+            <div class="htp-body">
+              <p>Welcome to <strong>RefRater Fantasy</strong> — pick your referee each matchweek and rack up points!</p>
+              <ol>
+                <li>
+                  <strong>Pick a Ref</strong> — choose one referee from the available list before the deadline.
+                  <div class="htp-demo" style="max-width:220px;margin-top:8px;">
+                    <div class="ref-pick-card selected" style="cursor:default;pointer-events:none;">
+                      <div class="rpc-selected-badge">MY PICK</div>
+                      <div class="rpc-top">
+                        <div class="rpc-av">CP</div>
+                        <div>
+                          <div class="rpc-name">Craig Pawson</div>
+                          <div class="rpc-match">🔴 Arsenal v Chelsea 🔵</div>
+                        </div>
+                      </div>
+                      <div class="rpc-bottom">
+                        <div>
+                          <div class="rpc-pts complete">7</div>
+                          <div class="rpc-pts-sub">pts</div>
+                        </div>
+                        <div class="rpc-status complete">Complete</div>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <strong>Earn Points</strong> — your ref earns points based on their performance during the matchweek.
+                  <div class="htp-demo" style="margin-top:8px;">
+                    <div class="my-ref-card" style="display:flex;align-items:center;gap:12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;">
+                      <div class="my-ref-av">CP</div>
+                      <div style="flex:1">
+                        <div class="my-ref-name">Craig Pawson</div>
+                        <div class="my-ref-match">🔴 Arsenal v Chelsea 🔵</div>
+                      </div>
+                      <div class="my-ref-pts">
+                        <div class="my-ref-pts-num">7</div>
+                        <div class="my-ref-pts-label">ref pts</div>
+                      </div>
+                    </div>
+                    <div style="margin-top:6px;display:flex;flex-direction:column;gap:2px;">
+                      <div class="br-bd-item"><span class="br-bd-pts pos">+1</span> Yellow card 🟨</div>
+                      <div class="br-bd-item"><span class="br-bd-pts pos">+1</span> Yellow card 🟨</div>
+                      <div class="br-bd-item"><span class="br-bd-pts pos">+1</span> Red card 🟥</div>
+                      <div class="br-bd-item"><span class="br-bd-pts pos">+2</span> Correct VAR decision</div>
+                      <div class="br-bd-item"><span class="br-bd-pts pos">+2</span> Correct VAR decision</div>
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <strong>Battles</strong> — your pick is matched against other players. Win your battle to climb the leaderboard.
+                  <div class="htp-demo" style="margin-top:8px;">
+                    <div class="battle-card" style="margin-bottom:0;">
+                      <div class="battle-header">
+                        <span>Battle 1</span>
+                        <span class="my-pick-badge">MY PICK</span>
+                        <span>COMPLETE</span>
+                      </div>
+                      <div class="battle-body">
+                        <div class="battle-ref my-pick">
+                          <div class="br-av winner">CP</div>
+                          <div class="br-name">Craig Pawson</div>
+                          <div class="br-match">🔴 Arsenal v Chelsea 🔵</div>
+                          <div class="br-pts winner">7</div>
+                          <div class="br-pts-label">pts</div>
+                        </div>
+                        <div class="vs-col">VS</div>
+                        <div class="battle-ref">
+                          <div class="br-av loser">SB</div>
+                          <div class="br-name">Sam Barrott</div>
+                          <div class="br-match">🔴 Liverpool v ⚪ Leeds</div>
+                          <div class="br-pts loser">4</div>
+                          <div class="br-pts-label">pts</div>
+                        </div>
+                      </div>
+                      <div class="battle-footer">
+                        <div class="battle-result-label win">YOUR REF WON ✓</div>
+                        <div class="battle-pickers">3 vs 1 managers</div>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+                <li><strong>Deadline</strong> — picks lock at the matchweek deadline. You cannot change your pick after this.</li>
+              </ol>
+
+              <div class="htp-scoring">
+                <div class="htp-scoring-title">Ref Points Breakdown</div>
+                <div class="htp-score-row"><span class="htp-pts pos">+1</span> Per yellow card 🟨</div>
+                <div class="htp-score-row"><span class="htp-pts pos">+1</span> Per red card 🟥</div>
+                <div class="htp-score-row"><span class="htp-pts pos">+2</span> Correct VAR decision (penalty or red card)</div>
+                <div class="htp-score-row"><span class="htp-pts pos">+8</span> Perfect game — no cards, no VAR</div>
+                <div class="htp-score-row"><span class="htp-pts neg">−1</span> VAR overturns a penalty decision</div>
+                <div class="htp-score-row"><span class="htp-pts neg">−2</span> VAR overturns a red card decision</div>
+              </div>
+
+              <div class="htp-scoring" style="margin-top:12px;">
+                <div class="htp-scoring-title">Wildcards</div>
+                <div class="htp-score-row">
+                  <span class="htp-wc-icon">🟨</span>
+                  <div>
+                    <div class="htp-wc-name">Yellow Card</div>
+                    <div class="htp-wc-desc">Ignore a neutral score this GW. Must be used before the deadline.</div>
+                  </div>
+                </div>
+                <div class="htp-score-row" style="margin-top:8px;">
+                  <span class="htp-wc-icon">🟥</span>
+                  <div>
+                    <div class="htp-wc-name">Red Card</div>
+                    <div class="htp-wc-desc">+1 bonus added to your ref's score this GW. Must be used before the deadline.</div>
+                  </div>
+                </div>
+                <div class="htp-score-row" style="margin-top:8px;">
+                  <span class="htp-wc-icon">📺</span>
+                  <div>
+                    <div class="htp-wc-name">VAR Replay</div>
+                    <div class="htp-wc-desc">+2 bonus added to your ref's score. Can be used after the game has finished!</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- TAB: PICK REF -->
@@ -1594,6 +1864,17 @@
           await clearCurrentUser();
           window.location.href = "login.html";
         });
+
+      // ── HOW TO PLAY MODAL ─────────────────────────────────────
+      document.getElementById("htpBtn").addEventListener("click", () => {
+        document.getElementById("htpOverlay").classList.add("open");
+      });
+      document.getElementById("htpClose").addEventListener("click", () => {
+        document.getElementById("htpOverlay").classList.remove("open");
+      });
+      document.getElementById("htpOverlay").addEventListener("click", (e) => {
+        if (e.target === e.currentTarget) e.currentTarget.classList.remove("open");
+      });
 
       // ── TABS ──────────────────────────────────────────────────
       document.getElementById("viewTabs").addEventListener("click", (e) => {
