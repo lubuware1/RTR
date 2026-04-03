@@ -2349,19 +2349,21 @@
               i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1;
             const wc = p.wildcards || {};
             const wcIcons = [
-              { key: 'yc', icon: '🟨', left: wc.yc?.left ?? 1 },
-              { key: 'rc', icon: '🟥', left: wc.rc?.left ?? 1 },
-              { key: 'var', icon: '📺', left: wc.var?.left ?? 1 },
+              { key: 'yc', icon: '🟨', defaultLeft: 1 },
+              { key: 'rc', icon: '🟥', defaultLeft: 1 },
+              { key: 'var', icon: '📺', defaultLeft: 2 },
             ];
-            const wcHtml = wcIcons.map(w =>
-              `<span class="fl-wc-icon${wc[w.key]?.active ? ' used' : ''}" title="${w.icon} · ${wc[w.key]?.left ?? 1} left">${w.icon}<span class="fl-wc-left">${wc[w.key]?.left ?? 1}</span></span>`
-            ).join('');
+            const wcHtml = wcIcons.map(w => {
+              const realLeft = wc[w.key]?.left ?? w.defaultLeft;
+              const displayLeft = FGW.deadlinePassed ? realLeft : w.defaultLeft;
+              return `<span class="fl-wc-icon${FGW.deadlinePassed && wc[w.key]?.active ? ' used' : ''}" title="${w.icon}">${w.icon}<span class="fl-wc-left">${displayLeft}</span></span>`;
+            }).join('');
             return `<div class="fl-row${p.isMe ? " me" : ""}">
       <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
       <div style="flex:1;min-width:0;">
         <div class="fl-name${p.isMe ? " me" : ""}">${p.username}${p.isMe ? " ★" : ""}</div>
         <div class="fl-sub">${team?.emoji || ""} ${p.team}${FGW.deadlinePassed || p.isMe ? ` · picked ${p.gwPick}` : " · pick hidden"}</div>
-        ${FGW.deadlinePassed ? `<div class="fl-wc-row">${wcHtml}</div>` : ''}
+        <div class="fl-wc-row">${wcHtml}</div>
       </div>
       <div class="fl-pts${p.isMe ? " me" : ""}">${p.pts}</div>
     </div>`;
