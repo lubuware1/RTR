@@ -2361,7 +2361,7 @@
       <div style="flex:1;min-width:0;">
         <div class="fl-name${p.isMe ? " me" : ""}">${p.username}${p.isMe ? " ★" : ""}</div>
         <div class="fl-sub">${team?.emoji || ""} ${p.team}${FGW.deadlinePassed || p.isMe ? ` · picked ${p.gwPick}` : " · pick hidden"}</div>
-        <div class="fl-wc-row">${wcHtml}</div>
+        ${FGW.deadlinePassed ? `<div class="fl-wc-row">${wcHtml}</div>` : ''}
       </div>
       <div class="fl-pts${p.isMe ? " me" : ""}">${p.pts}</div>
     </div>`;
