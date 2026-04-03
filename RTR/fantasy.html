@@ -241,10 +241,12 @@
       }
       .gw-banner-meta {
         font-size: 0.78rem;
-        color: var(--muted);
+        color: #ffffff;
+        flex: 1;
+        text-align: center;
       }
       .gw-banner-meta strong {
-        color: var(--red);
+        color: #00e67a;
       }
       .gw-status-pill {
         margin-left: auto;
@@ -1379,11 +1381,10 @@
             Fantasy RTR — <span>Matchweek 1</span>
           </div>
           <div class="gw-banner-meta">
-            ⏰ Deadline: Fri 3 Apr · 20:00 GMT &nbsp;·&nbsp;
+            Deadline: Fri 3 Apr · 20:00 GMT &nbsp;·&nbsp;
             <strong>Picks Open</strong>
           </div>
         </div>
-        <div class="gw-status-pill upcoming">Upcoming</div>
       </div>
     </div>
 
@@ -1391,7 +1392,7 @@
       <!-- LEFT: Main Content -->
       <div>
         <div class="view-tabs-row">
-          <button class="htp-btn" id="htpBtn">❓ How to Play</button>
+          <button class="htp-btn" id="htpBtn"><span style="color:#00e67a;">?</span> How to Play</button>
           <div class="view-tabs" id="viewTabs">
             <button class="view-tab active" data-tab="pick">Pick Ref</button>
             <button class="view-tab" data-tab="battles">Battles</button>
@@ -1486,7 +1487,17 @@
                     </div>
                   </div>
                 </li>
-                <li><strong>Deadline</strong> — picks lock at the matchweek deadline. You cannot change your pick after this.</li>
+                <li>
+                  <strong>Deadline</strong> — picks lock at the matchweek deadline. You cannot change your pick after this.
+                  <div class="htp-demo" style="margin-top:8px;display:flex;flex-direction:column;gap:8px;">
+                    <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">Picks open</div>
+                    <div style="font-size:0.78rem;color:#ffffff;">Deadline: Fri 3 Apr · 20:00 GMT &nbsp;·&nbsp; <strong style="color:#00e67a;">Picks Open</strong></div>
+                    <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin-top:4px;">After deadline</div>
+                    <div style="background:rgba(255,71,87,0.07);border:1px solid rgba(255,71,87,0.2);border-radius:8px;padding:10px 14px;font-size:0.8rem;color:rgba(255,71,87,0.85);display:flex;align-items:center;gap:8px;">
+                      🔒 Deadline passed — picks are locked for Matchweek 1
+                    </div>
+                  </div>
+                </li>
               </ol>
 
               <div class="htp-scoring">
@@ -1505,7 +1516,7 @@
                   <span class="htp-wc-icon">🟨</span>
                   <div>
                     <div class="htp-wc-name">Yellow Card</div>
-                    <div class="htp-wc-desc">Ignore a neutral score this GW. Must be used before the deadline.</div>
+                    <div class="htp-wc-desc">Your ref gains +1 if the opposing ref issues a red card (first red card only). Must be used before the deadline.</div>
                   </div>
                 </div>
                 <div class="htp-score-row" style="margin-top:8px;">
@@ -1767,6 +1778,12 @@
         setTimeout(() => t.classList.remove("show"), 2800);
       }
 
+      function getRefRC(refId) {
+        return MATCHES
+          .filter(m => +m.refId === refId && (m.status === 'complete' || m.status === 'recent'))
+          .reduce((s, m) => s + (m.rc || 0), 0);
+      }
+
       function getRefMatch(refId) {
         return MATCHES.find((m) => +m.refId === refId);
       }
@@ -1806,6 +1823,7 @@
 
         // Wildcards boost the REF's score, which may flip the battle result
         let boostedPts = rawPts;
+        if (wildcards.yc.active) boostedPts += getRefRC(oppId) > 0 ? 1 : 0; // +1 for first opp red card
         if (wildcards.rc.active) boostedPts += 1;
         if (wildcards.var.active) boostedPts += 2;
 
@@ -2109,7 +2127,10 @@
         const status = REF_STATUS[myPick];
 
         // Wildcards boost the ref's score
+        const battle0 = getBattleForRef(myPick);
+        const oppId0 = battle0 ? (battle0.r1 === myPick ? battle0.r2 : battle0.r1) : null;
         const wcBoost =
+          (wildcards.yc.active && oppId0 ? (getRefRC(oppId0) > 0 ? 1 : 0) : 0) +
           (wildcards.rc.active ? 1 : 0) + (wildcards.var.active ? 2 : 0);
         const displayPts = rawPts !== null ? rawPts + wcBoost : null;
 
@@ -2181,7 +2202,7 @@
         const gwResult = live ? null : calcMyGWPts();
         const boostLine =
           wcBoost > 0
-            ? `<div class="gw-pts-bonus">${[wildcards.rc.active ? "🟥 Red Card +1 to ref" : "", wildcards.var.active ? "📺 VAR +2 to ref" : ""].filter(Boolean).join(" · ")}</div>`
+            ? `<div class="gw-pts-bonus">${[wildcards.yc.active ? `🟨 Yellow Card +${wcBoost - (wildcards.rc.active?1:0) - (wildcards.var.active?2:0)} from opp RCs` : "", wildcards.rc.active ? "🟥 Red Card +1 to ref" : "", wildcards.var.active ? "📺 VAR +2 to ref" : ""].filter(Boolean).join(" · ")}</div>`
             : "";
         document.getElementById("gwPtsBox").innerHTML = `
     <div class="gw-pts-num">${gwResult !== null ? gwResult.pts : "—"}</div>
@@ -2215,7 +2236,7 @@
             key: "yc",
             icon: "🟨",
             name: "Yellow Card",
-            desc: "Ignore neutral score this GW. Must use before deadline.",
+            desc: "Your ref gains +1 if the opposing ref issues a red card. Must use before deadline.",
             preDeadline: true,
           },
           {
@@ -2353,6 +2374,7 @@
               // Apply this user's wildcards to boost their ref's score
               const wc = p.wildcards || {};
               let boosted = rawPts;
+              if (wc.yc?.active) boosted += getRefRC(oppId) > 0 ? 1 : 0;
               if (wc.rc?.active) boosted += 1;
               if (wc.var?.active) boosted += 2;
               const won = boosted > oppPts;
