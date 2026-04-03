@@ -49,7 +49,7 @@ async function checkAuth() {
   // Force team selection only if profile loaded and team is explicitly missing
   if (profile && !profile.team) {
     window.location.href = 'login.html?onboard=1';
-    return false;
+    return true; // prevent calling page from also redirecting to login.html
   }
   return true;
 }
