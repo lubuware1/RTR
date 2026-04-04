@@ -339,7 +339,7 @@ function renderList() {
       ${!up?`<div class="card-stats" style="padding:0 16px 6px">
         <span class="stat-pill yc"><span class="icon">🟨</span>${m.yc}</span>
         ${m.rc?`<span class="stat-pill rc"><span class="icon">🟥</span>${m.rc}</span>`:''}
-        ${m.pen?`<span class="stat-pill"><span class="icon">⚽</span>PEN</span>`:''}
+        ${m.pen?`<span class="stat-pill"><span class="icon">⚽</span>${m.pen > 1 ? m.pen + 'x ' : ''}PEN</span>`:''}
         ${m.var?`<span class="stat-pill"><span class="icon">📺</span>VAR×${m.var}</span>`:''}
       </div>`:''}
       <div class="match-footer">
