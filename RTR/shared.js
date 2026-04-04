@@ -216,11 +216,15 @@ function syncMatchStatuses() {
   const now = Date.now();
   const MATCH_DURATION_MS = 105 * 60 * 1000;
   MATCHES.forEach(m => {
-    // Respect manually set complete status from the sheet
     if (m.status === 'complete') return;
     if (!m.kickoff) return;
     const ko = new Date(String(m.kickoff).replace(/\s+T/, 'T')).getTime();
     if (isNaN(ko)) return;
+    // If manually marked live in the sheet, only advance to complete — never revert to upcoming
+    if (m.status === 'live') {
+      if (now >= ko + MATCH_DURATION_MS) m.status = 'complete';
+      return;
+    }
     if (now < ko) {
       m.status = 'upcoming';
     } else if (now < ko + MATCH_DURATION_MS) {
