@@ -2570,6 +2570,7 @@
 
           const totalYC          = played.reduce((s, m) => s + (m.yc  || 0), 0);
           const totalRC          = played.reduce((s, m) => s + (m.rc  || 0), 0);
+          const totalCorrectPen  = played.reduce((s, m) => s + (m.pen || 0), 0);
           const isPerfect        = played.every((m) => m.perfectGame === true);
           const totalBadVarPen   = played.reduce((s, m) => s + (m.incorrectVarPen || 0), 0);
           const totalBadVarRed   = played.reduce((s, m) => s + (m.incorrectVarRed || 0), 0);
@@ -2581,6 +2582,11 @@
           if (totalRC > 0) {
             pts += totalRC;
             breakdown.push({ pts: totalRC, label: `${totalRC} red card${totalRC > 1 ? "s" : ""}` });
+          }
+          if (totalCorrectPen > 0) {
+            const p = totalCorrectPen * 2;
+            pts += p;
+            breakdown.push({ pts: p, label: `Correct VAR penalty${totalCorrectPen > 1 ? " ×" + totalCorrectPen : ""}` });
           }
           if (isPerfect) {
             pts += 8;
