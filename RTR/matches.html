@@ -502,6 +502,15 @@ initHeader();
   updatePanelVisibility();
   renderList();
   renderLb();
+  // Reload sheet data + re-check statuses every minute so changes propagate without a page refresh
+  setInterval(async () => {
+    // Preserve any complete statuses already in memory before reloading sheet
+    const alreadyComplete = new Set(MATCHES.filter(m => m.status === 'complete').map(m => m.id));
+    await loadFromSheets().catch(() => {});
+    MATCHES.forEach(m => { if (alreadyComplete.has(m.id)) m.status = 'complete'; });
+    syncMatchStatuses();
+    renderList();
+  }, 60 * 1000);
 })();
 </script>
 <script>twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });</script>
