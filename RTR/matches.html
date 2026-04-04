@@ -333,7 +333,7 @@ function renderList() {
       </div>
       <div class="match-body">
         <div class="team home"><div class="team-badge">${flagImg(m.hE)}</div><span>${m.home}</span></div>
-        <div class="score-block">${m.score}<span class="time"${live?' style="color:var(--red)"':''}>${live?"67'":up?'15:00':'FT'}</span></div>
+        <div class="score-block">${m.score}<span class="time"${live?' style="color:var(--red)"':''}>${live?'LIVE':up?'15:00':'FT'}</span></div>
         <div class="team away"><div class="team-badge">${flagImg(m.aE)}</div><span>${m.away}</span></div>
       </div>
       ${!up?`<div class="card-stats" style="padding:0 16px 6px">
