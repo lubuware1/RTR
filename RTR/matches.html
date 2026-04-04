@@ -492,8 +492,8 @@ initHeader();
     if (!valid) { window.location.href = 'login.html'; return; }
     currentUser = getCurrentUser();
   }
+  await loadFromSheets().catch(() => {});
   await Promise.all([
-    loadFromSheets().catch(() => {}),
     loadRatings(),
     loadUserVotes(currentUser?.id).then(v => v.forEach(id => rated.add(id)))
   ]);
@@ -507,9 +507,11 @@ initHeader();
     // Preserve any complete statuses already in memory before reloading sheet
     const alreadyComplete = new Set(MATCHES.filter(m => m.status === 'complete').map(m => m.id));
     await loadFromSheets().catch(() => {});
+    await loadRatings();
     MATCHES.forEach(m => { if (alreadyComplete.has(m.id)) m.status = 'complete'; });
     syncMatchStatuses();
     renderList();
+    renderLb();
   }, 60 * 1000);
 })();
 </script>

@@ -361,6 +361,7 @@ initHeader();
       ? `Live data · GW ${fdLive.gw} · ${fdLive.count} matches loaded · football-data.org`
       : 'Live data from Google Sheets · Updates automatically';
   }
+  await loadRatings();
   renderRefs();
 })();
 </script>
