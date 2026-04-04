@@ -316,7 +316,7 @@ function flagImg(emoji) {
 // ── MATCH LIST ────────────────────────────────────────────
 function renderList() {
   const el = document.getElementById('matchList');
-  const list = filter==='all' ? MATCHES : MATCHES.filter(m=>m.status===filter);
+  const list = filter==='all' ? MATCHES : MATCHES.filter(m=>m.status===(filter==='recent'?'complete':filter));
   if (!list.length) { el.innerHTML='<div class="empty-state"><div class="icon">📋</div><p>No matches</p></div>'; return; }
   el.innerHTML = list.map(m => {
     const ref = REFS.find(r=>r.id===+m.refId); if(!ref) return '';

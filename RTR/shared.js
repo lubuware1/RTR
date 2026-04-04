@@ -81,6 +81,7 @@ async function loadUserVotes(userId) {
 async function saveVoteToDB(voteData) {
   if (PREVIEW_MODE) return true;
   const { error } = await getSB().from('RTR Votes').upsert(voteData, { onConflict: 'user_id,match_id' });
+  if (error) console.error('[RTR] saveVoteToDB error:', error);
   return !error;
 }
 
@@ -214,8 +215,8 @@ function syncMatchStatuses() {
   const now = Date.now();
   const MATCH_DURATION_MS = 105 * 60 * 1000;
   MATCHES.forEach(m => {
-    // Respect manually set live/complete status from the sheet
-    if (m.status === 'live' || m.status === 'complete') return;
+    // Respect manually set complete status from the sheet
+    if (m.status === 'complete') return;
     if (!m.kickoff) return;
     const ko = new Date(String(m.kickoff).replace(/\s+T/, 'T')).getTime();
     if (isNaN(ko)) return;
