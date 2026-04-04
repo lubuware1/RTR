@@ -1269,6 +1269,31 @@
       .fl-pts.me {
         color: var(--pl-green);
       }
+      .lb-toggle {
+        display: flex;
+        gap: 4px;
+        padding: 8px 12px 0;
+      }
+      .lb-toggle-btn {
+        flex: 1;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--muted);
+        font-family: "Barlow Condensed", sans-serif;
+        font-weight: 700;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        padding: 6px;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .lb-toggle-btn.active {
+        background: rgba(0,255,133,0.1);
+        border-color: rgba(0,255,133,0.3);
+        color: var(--pl-green);
+      }
       .fl-wc-row {
         display: flex;
         gap: 5px;
@@ -1650,7 +1675,12 @@
           <!-- Tab: Leaderboard -->
           <div class="sp-tab-content" id="spTabLeague" style="display:none">
             <div class="fl-header">🏆 Fantasy League — Matchweek 1</div>
+            <div class="lb-toggle">
+              <button class="lb-toggle-btn active" data-lb="gw">GW Points</button>
+              <button class="lb-toggle-btn" data-lb="ref">Ref Points</button>
+            </div>
             <div id="fantasyLeague"><!-- rendered by JS --></div>
+            <div id="refPointsLeague" style="display:none"><!-- rendered by JS --></div>
           </div>
         </div>
       </div>
@@ -2134,6 +2164,16 @@
         });
       });
 
+      document.querySelectorAll(".lb-toggle-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".lb-toggle-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          const isRef = btn.dataset.lb === "ref";
+          document.getElementById("fantasyLeague").style.display = isRef ? "none" : "";
+          document.getElementById("refPointsLeague").style.display = isRef ? "" : "none";
+        });
+      });
+
       function renderSidebar() {
         const noPick = document.getElementById("noPick");
         const hasPick = document.getElementById("hasPick");
@@ -2371,6 +2411,34 @@
           .join("");
       }
 
+      // ── REF POINTS LEADERBOARD ────────────────────────────────
+      function renderRefPointsLeague() {
+        const rows = FANTASY_LEAGUE.map(p => {
+          const { refId, wildcards: wc = {} } = p;
+          const battle = refId ? getBattleForRef(refId) : null;
+          const oppId = battle ? (battle.r1 === refId ? battle.r2 : battle.r1) : null;
+          const rawPts = refId != null ? (REF_GW_PTS[refId] ?? null) : null;
+          const wcBoost = rawPts !== null
+            ? (wc.yc?.active && oppId ? (getRefRC(oppId) > 0 ? 1 : 0) : 0) +
+              (wc.rc?.active ? 1 : 0) + (wc.var?.active ? 2 : 0)
+            : 0;
+          return { ...p, refPts: rawPts !== null ? rawPts + wcBoost : null };
+        }).sort((a, b) => (b.refPts ?? -1) - (a.refPts ?? -1));
+
+        document.getElementById("refPointsLeague").innerHTML = rows.map((p, i) => {
+          const team = PL_TEAMS.find(t => t.name === p.team);
+          const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1;
+          return `<div class="fl-row${p.isMe ? " me" : ""}">
+      <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
+      <div>
+        <div class="fl-name${p.isMe ? " me" : ""}">${p.username}${p.isMe ? " ★" : ""}</div>
+        <div class="fl-sub">${team?.emoji || ""} ${p.team}${FGW.deadlinePassed || p.isMe ? ` · picked ${p.gwPick}` : " · pick hidden"}</div>
+      </div>
+      <div class="fl-pts${p.isMe ? " me" : ""}">${p.refPts !== null ? p.refPts : "—"}</div>
+    </div>`;
+        }).join("");
+      }
+
       // ── GW REF SCORES ─────────────────────────────────────────
       function renderRefScores() {
         const scored = REFS
@@ -2428,11 +2496,13 @@
             pts,
             gwPick: gRef(refId)?.name.split(" ").pop() || "—",
             wildcards: p.wildcards || {},
+            refId,
             isMe,
           });
         });
         renderRefScores();
         renderLeague();
+        renderRefPointsLeague();
       }
 
       // ── BUILD BATTLES FROM MATCHES ────────────────────────────
