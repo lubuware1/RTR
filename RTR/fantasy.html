@@ -2486,7 +2486,7 @@
         REFS.forEach((ref) => {
           const refMatches = MATCHES.filter((m) => +m.refId === ref.id);
           const played = refMatches.filter(
-            (m) => m.status === "complete" || m.status === "recent",
+            (m) => m.status === "complete" || m.status === "recent" || m.status === "live",
           );
 
           if (!played.length) {
