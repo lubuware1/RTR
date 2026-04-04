@@ -80,7 +80,8 @@ async function loadUserVotes(userId) {
 
 async function saveVoteToDB(voteData) {
   if (PREVIEW_MODE) return true;
-  const { error } = await getSB().from('RTR Votes').upsert(voteData, { onConflict: 'user_id,match_id' });
+  await getSB().from('RTR Votes').delete().eq('user_id', voteData.user_id).eq('match_id', voteData.match_id);
+  const { error } = await getSB().from('RTR Votes').insert(voteData);
   if (error) console.error('[RTR] saveVoteToDB error:', error);
   return !error;
 }
