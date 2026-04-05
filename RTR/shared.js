@@ -109,6 +109,17 @@ async function loadMyFantasyPick(matchweek) {
   return data;
 }
 
+async function loadAllManualBonuses() {
+  if (PREVIEW_MODE) return {};
+  const { data } = await getSB().from('RTR Manual Bonuses').select('ref_id, pts, label');
+  if (!data?.length) return {};
+  return data.reduce((acc, row) => {
+    if (!acc[row.ref_id]) acc[row.ref_id] = [];
+    acc[row.ref_id].push({ pts: row.pts, label: row.label });
+    return acc;
+  }, {});
+}
+
 async function loadManualBonuses(matchweek) {
   if (PREVIEW_MODE) return {};
   const { data } = await getSB().from('RTR Manual Bonuses')
@@ -319,6 +330,7 @@ async function loadFromSheets() {
         console.log('[RTR] Matches parsed:', parsed.length, 'rows', parsed[0] || '(empty)');
         if (parsed.length) MATCHES = parsed.map(m => ({
           ...m,
+          matchweek: +m.matchweek || 1,
           hE: m.homeEmoji || '⚽', aE: m.awayEmoji || '⚽',
           yc: +m.yellowCards || 0, rc: +m.redCards || 0,
           pen: +m.penaltiesGiven || 0, var: +m.varDecisions || 0,

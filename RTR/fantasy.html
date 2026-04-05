@@ -1673,6 +1673,8 @@
           <div class="sp-tab-content" id="spTabRefs" style="display:none">
             <div class="fl-header">🏅 GW Ref Scores — Matchweek 1</div>
             <div id="refScores"><!-- rendered by JS --></div>
+            <div class="fl-header" style="margin-top:16px;">📊 Season Ref Points</div>
+            <div id="refSeasonScores"><!-- rendered by JS --></div>
           </div>
 
           <!-- Tab: Leaderboard -->
@@ -1845,7 +1847,7 @@
       }
 
       function getRefMatch(refId) {
-        return MATCHES.find((m) => +m.refId === refId);
+        return gwMatches().find((m) => +m.refId === refId);
       }
 
       function getBattleForRef(refId) {
@@ -2207,7 +2209,8 @@
         <div class="battle-ref${b.r1 === myPick ? " my-pick" : ""}">
           <div class="br-av${avClass1}">${show1 ? r1.initials : "?"}</div>
           <div class="br-name">${show1 ? r1.name : "???"}</div>
-          <div class="br-match">${show1 && m1 ? `${m1.hE} ${m1.home} v  ${m1.away} ${m1.aE}` : ""}</div>
+          <div class="br-match">${show1 && m1 ? `${m1.home} v ${m1.away}` : ""}</div>
+          <div class="br-match" style="color:var(--muted);font-size:.68rem;">${show1 && m1?.kickoff ? new Date(String(m1.kickoff).replace(' ','T').replace(/Z$/,'')).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).replace(',','') : ""}</div>
           <div class="br-pts ${ptClass1}">${dlp && p1 !== null ? p1 : "—"}</div>
           <div class="br-pts-label">${dlp ? (p1 !== null ? "pts" : s1 === "live" ? "live" : "pending") : ""}</div>
           ${dlp && p1 !== null ? `<div class="br-breakdown">${getRefBreakdown(b.r1).map(i => `<div class="br-bd-item"><span class="br-bd-pts ${i.pts >= 0 ? "pos" : "neg"}">${i.pts >= 0 ? "+" : ""}${i.pts}</span>${i.label}</div>`).join("")}</div>` : ""}
@@ -2216,7 +2219,8 @@
         <div class="battle-ref${b.r2 === myPick ? " my-pick" : ""}">
           <div class="br-av${avClass2}">${show2 ? r2.initials : "?"}</div>
           <div class="br-name">${show2 ? r2.name : "???"}</div>
-          <div class="br-match">${show2 && m2 ? `${m2.hE} ${m2.home} v ${m2.away}  ${m2.aE}` : ""}</div>
+          <div class="br-match">${show2 && m2 ? `${m2.home} v ${m2.away}` : ""}</div>
+          <div class="br-match" style="color:var(--muted);font-size:.68rem;">${show2 && m2?.kickoff ? new Date(String(m2.kickoff).replace(' ','T').replace(/Z$/,'')).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).replace(',','') : ""}</div>
           <div class="br-pts ${ptClass2}">${dlp && p2 !== null ? p2 : "—"}</div>
           <div class="br-pts-label">${dlp ? (p2 !== null ? "pts" : s2 === "live" ? "live" : "pending") : ""}</div>
           ${dlp && p2 !== null ? `<div class="br-breakdown">${getRefBreakdown(b.r2).map(i => `<div class="br-bd-item"><span class="br-bd-pts ${i.pts >= 0 ? "pos" : "neg"}">${i.pts >= 0 ? "+" : ""}${i.pts}</span>${i.label}</div>`).join("")}</div>` : ""}
@@ -2468,7 +2472,20 @@
 
       // ── LEAGUE TABLE ──────────────────────────────────────────
       function renderLeague() {
-        const sorted = [...FANTASY_LEAGUE].sort((a, b) => b.pts - a.pts);
+        const sorted = [...FANTASY_LEAGUE].sort((a, b) => {
+          if (b.pts !== a.pts) return b.pts - a.pts;
+          // Tiebreaker: higher total ref points wins
+          const getRefPts = p => {
+            const battle = p.refId ? getBattleForRef(p.refId) : null;
+            const oppId = battle ? (battle.r1 === p.refId ? battle.r2 : battle.r1) : null;
+            const raw = p.refId != null ? (REF_GW_PTS[p.refId] ?? null) : null;
+            if (raw === null) return -1;
+            const wc = p.wildcards || {};
+            return raw + (wc.yc?.active && oppId ? (getRefRC(oppId) > 0 ? 1 : 0) : 0)
+                       + (wc.rc?.active ? 1 : 0) + (wc.var?.active ? 2 : 0);
+          };
+          return getRefPts(b) - getRefPts(a);
+        });
         document.getElementById("fantasyLeague").innerHTML = sorted
           .map((p, i) => {
             const team = PL_TEAMS.find((t) => t.name === p.team);
@@ -2550,6 +2567,45 @@
         }).join("");
       }
 
+      // ── SEASON REF SCORES ────────────────────────────────────
+      function computeSeasonRefPoints() {
+        const totals = {};
+        REFS.forEach(r => { totals[r.id] = 0; });
+        MATCHES.forEach(m => {
+          if (m.status !== 'complete' && m.status !== 'recent') return;
+          const refId = +m.refId;
+          if (!(refId in totals)) return;
+          totals[refId] += (m.yc || 0);
+          totals[refId] += (m.rc || 0);
+          totals[refId] += (m.pen || 0) * 2;
+          if (m.perfectGame) totals[refId] += 8;
+          totals[refId] -= (m.incorrectVarPen || 0);
+          totals[refId] -= (m.incorrectVarRed || 0) * 2;
+        });
+        // Add manual bonuses across all matchweeks — loaded separately below
+        return totals;
+      }
+
+      let REF_SEASON_PTS = {};
+
+      function renderSeasonRefScores() {
+        const sorted = REFS
+          .map(r => ({ ref: r, pts: REF_SEASON_PTS[r.id] ?? 0 }))
+          .sort((a, b) => b.pts - a.pts);
+        document.getElementById("refSeasonScores").innerHTML = sorted.map((row, i) => {
+          const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1;
+          const isMyRef = row.ref.id === myPick;
+          return `<div class="fl-row${isMyRef ? " me" : ""}">
+            <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
+            <div>
+              <div class="fl-name${isMyRef ? " me" : ""}">${row.ref.name}${isMyRef ? " ★" : ""}</div>
+              <div class="fl-sub">${row.ref.nationality}</div>
+            </div>
+            <div class="fl-pts${isMyRef ? " me" : ""}">${row.pts}</div>
+          </div>`;
+        }).join("");
+      }
+
       // ── LEADERBOARD FROM DB ───────────────────────────────────
       // Calculates each user's MW score from their stored pick + current REF_GW_PTS.
       function buildLeaderboard(dbPicks) {
@@ -2593,8 +2649,10 @@
       }
 
       // ── BUILD BATTLES FROM MATCHES ────────────────────────────
+      function gwMatches() { return MATCHES.filter(m => m.matchweek === FGW.gw); }
+
       function buildBattlesFromMatches() {
-        const refIds = [...new Set(MATCHES.map((m) => m.refId))];
+        const refIds = [...new Set(gwMatches().map((m) => m.refId))];
         if (refIds.length < 2) return;
 
         // Deterministic shuffle seeded by GW number so everyone sees same pairings
@@ -2612,9 +2670,9 @@
           });
         }
 
-        // Sync REF_STATUS based on ALL matches for each ref this MW
+        // Sync REF_STATUS based on current GW matches for each ref
         refIds.forEach((refId) => {
-          const refMatches = MATCHES.filter((x) => x.refId === refId);
+          const refMatches = gwMatches().filter((x) => x.refId === refId);
           if (refMatches.some((m) => m.status === "live")) {
             REF_STATUS[refId] = "live";
           } else if (
@@ -2641,7 +2699,7 @@
 
       function computeRefPoints() {
         REFS.forEach((ref) => {
-          const refMatches = MATCHES.filter((m) => +m.refId === ref.id);
+          const refMatches = gwMatches().filter((m) => +m.refId === ref.id);
           const played = refMatches.filter(
             (m) => m.status === "complete" || m.status === "recent" || m.status === "live",
           );
@@ -2734,10 +2792,21 @@
         // Load sheets + ratings + manual bonuses, then build battles + compute points
         await loadFromSheets().catch(() => {});
         await loadRatings();
-        REF_MANUAL_BONUS = await loadManualBonuses(FGW.gw);
+        const [gwBonuses, allBonuses] = await Promise.all([
+          loadManualBonuses(FGW.gw),
+          loadAllManualBonuses(),
+        ]);
+        REF_MANUAL_BONUS = gwBonuses;
         syncMatchStatuses();
         buildBattlesFromMatches();
         computeRefPoints();
+
+        // Compute season totals (all matchweeks)
+        REF_SEASON_PTS = computeSeasonRefPoints();
+        REFS.forEach(r => {
+          (allBonuses[r.id] || []).forEach(b => { REF_SEASON_PTS[r.id] = (REF_SEASON_PTS[r.id] || 0) + b.pts; });
+        });
+        renderSeasonRefScores();
 
         // Show deadline notice only if locked
         document.getElementById("deadlineNotice").style.display =
@@ -2762,6 +2831,9 @@
 
         // Build leaderboard from DB; falls back to static placeholder if no data
         const dbLeaderboard = await loadFantasyLeaderboard(FGW.gw);
+        // Populate pick counts per ref from leaderboard data
+        dbLeaderboard.forEach(p => { if (PICK_COUNTS[p.ref_id] !== undefined) PICK_COUNTS[p.ref_id]++; });
+        renderBattles();
         buildLeaderboard(dbLeaderboard);
         renderRefScores();
         if (!dbLeaderboard.length) renderLeague();

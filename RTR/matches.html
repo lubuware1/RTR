@@ -262,6 +262,7 @@ if (!PREVIEW_MODE && !currentUser) { window.location.href = 'login.html'; }
 let selId=null, overall=0, cats=[0,0,0,0];
 const incidents=new Set(), rated=new Set();
 let filter='live', lbMode='neutral';
+let currentGW = 1; // updated from Supabase on load
 
 const DESCS = RATING_DESCS;
 
@@ -316,7 +317,8 @@ function flagImg(emoji) {
 // ── MATCH LIST ────────────────────────────────────────────
 function renderList() {
   const el = document.getElementById('matchList');
-  const list = filter==='all' ? MATCHES : MATCHES.filter(m=>m.status===(filter==='recent'?'complete':filter));
+  const gwFiltered = MATCHES.filter(m => m.matchweek === currentGW);
+  const list = filter==='all' ? gwFiltered : gwFiltered.filter(m=>m.status===(filter==='recent'?'complete':filter));
   if (!list.length) { el.innerHTML='<div class="empty-state"><div class="icon">📋</div><p>No matches</p></div>'; return; }
   el.innerHTML = list.map(m => {
     const ref = REFS.find(r=>r.id===+m.refId); if(!ref) return '';
@@ -333,7 +335,7 @@ function renderList() {
       </div>
       <div class="match-body">
         <div class="team home"><div class="team-badge">${flagImg(m.hE)}</div><span>${m.home}</span></div>
-        <div class="score-block">${m.score}<span class="time"${live?' style="color:var(--red)"':''}>${live?'LIVE':up?'15:00':'FT'}</span></div>
+        <div class="score-block">${m.score}<span class="time"${live?' style="color:var(--red)"':''}>${live?'LIVE':up?(m.kickoff?new Date(String(m.kickoff).replace(' ','T').replace(/Z$/,'')).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).replace(',',''):'TBC'):'FT'}</span></div>
         <div class="team away"><div class="team-badge">${flagImg(m.aE)}</div><span>${m.away}</span></div>
       </div>
       ${!up?`<div class="card-stats" style="padding:0 16px 6px">
@@ -492,6 +494,8 @@ initHeader();
     if (!valid) { window.location.href = 'login.html'; return; }
     currentUser = getCurrentUser();
   }
+  const gwConfig = await loadGWConfig();
+  if (gwConfig) currentGW = gwConfig.gw;
   await loadFromSheets().catch(() => {});
   await Promise.all([
     loadRatings(),
