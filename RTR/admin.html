@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RTR Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0a0c10;--surface:#12151c;--surface2:#1a1e28;--border:#242836;--red:#ff4757;--yellow:#ffd32a;--green:#37ecba;--text:#e8eaf0;--muted:#6b7280;--pl-purple:#37003c;--pl-green:#00ff85;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;padding:24px;}
+  h1{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2rem;color:var(--pl-green);margin-bottom:4px;}
+  .subtitle{color:var(--muted);font-size:.85rem;margin-bottom:28px;}
+  .danger-badge{display:inline-block;background:rgba(255,71,87,.12);border:1px solid rgba(255,71,87,.4);color:var(--red);font-size:.65rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:4px;margin-left:8px;vertical-align:middle;}
+  .section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:20px;}
+  .section-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.1rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);color:var(--pl-green);}
+  label{display:block;font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+  input,select{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Barlow',sans-serif;font-size:.9rem;padding:8px 12px;width:100%;transition:border-color .15s;}
+  input:focus,select:focus{outline:none;border-color:var(--pl-green);}
+  .row{display:grid;gap:12px;margin-bottom:14px;}
+  .row.cols-2{grid-template-columns:1fr 1fr;}
+  .row.cols-3{grid-template-columns:1fr 1fr 1fr;}
+  .row.cols-4{grid-template-columns:1fr 1fr 1fr 1fr;}
+  .btn{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;letter-spacing:.5px;text-transform:uppercase;padding:9px 18px;border-radius:7px;cursor:pointer;transition:all .15s;border:none;}
+  .btn-green{background:rgba(0,255,133,.1);border:1.5px solid var(--pl-green);color:var(--pl-green);}
+  .btn-green:hover{background:rgba(0,255,133,.2);}
+  .btn-green:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-red{background:rgba(255,71,87,.1);border:1.5px solid var(--red);color:var(--red);}
+  .btn-red:hover{background:rgba(255,71,87,.2);}
+  .btn-yellow{background:rgba(255,211,42,.1);border:1.5px solid var(--yellow);color:var(--yellow);}
+  .btn-yellow:hover{background:rgba(255,211,42,.2);}
+  .btn-sm{padding:5px 12px;font-size:.75rem;}
+  .match-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:10px;}
+  .match-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+  .status-pill{font-size:.65rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:4px;}
+  .status-pill.live{background:rgba(255,71,87,.15);color:var(--red);}
+  .status-pill.complete{background:rgba(0,255,133,.1);color:var(--pl-green);}
+  .status-pill.upcoming{background:rgba(107,114,128,.15);color:var(--muted);}
+  .bonus-row{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin-bottom:6px;}
+  .bonus-pts{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.1rem;min-width:32px;}
+  .bonus-pts.pos{color:var(--green);}
+  .bonus-pts.neg{color:var(--red);}
+  .bonus-label{flex:1;font-size:.82rem;}
+  .bonus-meta{font-size:.7rem;color:var(--muted);}
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--pl-green);color:var(--pl-purple);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.9rem;padding:12px 20px;border-radius:8px;box-shadow:0 8px 32px rgba(0,255,133,.3);transform:translateY(60px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;z-index:1000;}
+  .toast.show{transform:translateY(0);opacity:1;}
+  .toast.err{background:var(--red);color:#fff;box-shadow:0 8px 32px rgba(255,71,87,.3);}
+  .access-denied{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;text-align:center;gap:12px;}
+  .access-denied h2{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:900;color:var(--red);}
+  .divider{border:none;border-top:1px solid var(--border);margin:16px 0;}
+  .field-group{margin-bottom:12px;}
+  select option{background:var(--surface2);}
+  .checkbox-row{display:flex;align-items:center;gap:8px;}
+  .checkbox-row input{width:auto;}
+  .checkbox-row label{margin:0;text-transform:none;font-size:.85rem;color:var(--text);}
+</style>
+</head>
+<body>
+<div id="accessDenied" class="access-denied" style="display:none">
+  <h2>Access Denied</h2>
+  <p style="color:var(--muted)">This page is restricted to administrators only.</p>
+  <a href="matches.html" style="color:var(--pl-green);">← Back to matches</a>
+</div>
+
+<div id="adminPanel" style="display:none;max-width:900px;margin:0 auto;">
+  <h1>RTR Admin Panel <span class="danger-badge">Admin Only</span></h1>
+  <p class="subtitle">Logged in as danawhiteware · Changes write to Supabase (source of truth) and are reflected immediately in the app.</p>
+
+  <!-- GW CONFIG -->
+  <div class="section">
+    <div class="section-title">⚙️ Matchweek Control</div>
+    <div class="row cols-2">
+      <div class="field-group">
+        <label>Active Matchweek</label>
+        <input type="number" id="cfgGW" min="1" max="50" value="1">
+      </div>
+      <div class="field-group">
+        <label>Picks Deadline (local time)</label>
+        <input type="datetime-local" id="cfgDeadline">
+      </div>
+    </div>
+    <button class="btn btn-green" id="saveGWBtn">Save Matchweek Config</button>
+  </div>
+
+  <!-- MATCH MANAGER -->
+  <div class="section">
+    <div class="section-title">⚽ Match Manager</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <div style="flex:1">
+        <label>Filter by Matchweek</label>
+        <select id="matchGWFilter"><option value="all">All Matchweeks</option></select>
+      </div>
+    </div>
+    <div id="matchList">
+      <div style="color:var(--muted);font-size:.85rem;">Loading matches…</div>
+    </div>
+  </div>
+
+  <!-- MANUAL BONUSES -->
+  <div class="section">
+    <div class="section-title">🎯 Manual Bonuses</div>
+    <div class="row cols-4" style="margin-bottom:14px;">
+      <div class="field-group">
+        <label>Referee</label>
+        <select id="bonusRef"></select>
+      </div>
+      <div class="field-group">
+        <label>Matchweek</label>
+        <input type="number" id="bonusMW" min="1" value="1">
+      </div>
+      <div class="field-group">
+        <label>Points</label>
+        <input type="number" id="bonusPts" placeholder="e.g. 2 or -1">
+      </div>
+      <div class="field-group">
+        <label>Label</label>
+        <input type="text" id="bonusLabel" placeholder="e.g. Correct VAR decision">
+      </div>
+    </div>
+    <button class="btn btn-green btn-sm" id="addBonusBtn" style="margin-bottom:16px;">+ Add Bonus</button>
+    <hr class="divider">
+    <div id="bonusList"><div style="color:var(--muted);font-size:.85rem;">Loading bonuses…</div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="shared.js"></script>
+<script>
+  const ADMIN_USER = 'danawhiteware';
+
+  function toast(msg, err=false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (err?' err':'');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ── MATCH CARD RENDERER ───────────────────────────────────
+  function renderMatchCard(m, overrides) {
+    const o = overrides[+m.id] || {};
+    const score   = o.score          ?? m.score ?? '–';
+    const status  = o.status         ?? m.status ?? 'upcoming';
+    const yc      = o.yellow_cards   ?? m.yc ?? 0;
+    const rc      = o.red_cards      ?? m.rc ?? 0;
+    const pen     = o.penalties_given ?? m.pen ?? 0;
+    const varD    = o.var_decisions  ?? m.var ?? 0;
+    const perfect = o.perfect_game   ?? m.perfectGame ?? false;
+    const badPen  = o.incorrect_var_pen ?? m.incorrectVarPen ?? 0;
+    const badRed  = o.incorrect_var_red ?? m.incorrectVarRed ?? 0;
+    const ref     = REFS.find(r => r.id === +m.refId);
+
+    const div = document.createElement('div');
+    div.className = 'match-card';
+    div.innerHTML = `
+      <div class="match-title">
+        <span>MW${m.matchweek} · ${m.home} vs ${m.away}</span>
+        <span class="status-pill ${status}">${status.toUpperCase()}</span>
+      </div>
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:12px;">Ref: ${ref?.name || 'Unknown'} · Kickoff: ${m.kickoff || '–'}</div>
+      <div class="row cols-2">
+        <div class="field-group">
+          <label>Score</label>
+          <input type="text" class="f-score" value="${score}" placeholder="e.g. 2–1">
+        </div>
+        <div class="field-group">
+          <label>Status</label>
+          <select class="f-status">
+            <option value="upcoming"${status==='upcoming'?' selected':''}>Upcoming</option>
+            <option value="live"${status==='live'?' selected':''}>Live</option>
+            <option value="complete"${status==='complete'?' selected':''}>Complete</option>
+          </select>
+        </div>
+      </div>
+      <div class="row cols-4">
+        <div class="field-group"><label>Yellow Cards</label><input type="number" class="f-yc" min="0" value="${yc}"></div>
+        <div class="field-group"><label>Red Cards</label><input type="number" class="f-rc" min="0" value="${rc}"></div>
+        <div class="field-group"><label>Penalties Given</label><input type="number" class="f-pen" min="0" value="${pen}"></div>
+        <div class="field-group"><label>VAR Decisions</label><input type="number" class="f-var" min="0" value="${varD}"></div>
+      </div>
+      <div class="row cols-2">
+        <div class="field-group"><label>Bad VAR Penalties</label><input type="number" class="f-bpen" min="0" value="${badPen}"></div>
+        <div class="field-group"><label>Bad VAR Reds</label><input type="number" class="f-bred" min="0" value="${badRed}"></div>
+      </div>
+      <div class="checkbox-row" style="margin-bottom:14px;">
+        <input type="checkbox" class="f-perfect" id="perf_${m.id}" ${perfect?'checked':''}>
+        <label for="perf_${m.id}">Perfect Game</label>
+      </div>
+      <button class="btn btn-green btn-sm save-match-btn" data-mid="${m.id}">Save Match</button>
+    `;
+    div.querySelector('.save-match-btn').addEventListener('click', async () => {
+      const btn = div.querySelector('.save-match-btn');
+      btn.disabled = true; btn.textContent = 'Saving…';
+      const stat = {
+        match_id:        +m.id,
+        matchweek:       +m.matchweek,
+        score:           div.querySelector('.f-score').value.trim(),
+        status:          div.querySelector('.f-status').value,
+        yellow_cards:    +div.querySelector('.f-yc').value,
+        red_cards:       +div.querySelector('.f-rc').value,
+        penalties_given: +div.querySelector('.f-pen').value,
+        var_decisions:   +div.querySelector('.f-var').value,
+        perfect_game:    div.querySelector('.f-perfect').checked,
+        incorrect_var_pen: +div.querySelector('.f-bpen').value,
+        incorrect_var_red: +div.querySelector('.f-bred').value,
+      };
+      const ok = await saveMatchStat(stat);
+      btn.disabled = false; btn.textContent = 'Save Match';
+      if (ok) {
+        overrides[+m.id] = stat;
+        const pill = div.querySelector('.status-pill');
+        pill.className = `status-pill ${stat.status}`;
+        pill.textContent = stat.status.toUpperCase();
+        toast(`✓ ${m.home} vs ${m.away} saved`);
+      } else {
+        toast('Save failed', true);
+      }
+    });
+    return div;
+  }
+
+  function renderMatchList(matches, overrides, gwFilter) {
+    const list = document.getElementById('matchList');
+    const filtered = gwFilter === 'all' ? matches : matches.filter(m => +m.matchweek === +gwFilter);
+    if (!filtered.length) { list.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">No matches found</div>'; return; }
+    list.innerHTML = '';
+    filtered.forEach(m => list.appendChild(renderMatchCard(m, overrides)));
+  }
+
+  // ── BONUS LIST RENDERER ───────────────────────────────────
+  async function loadAndRenderBonuses() {
+    const { data } = await getSB().from('RTR Manual Bonuses').select('id, ref_id, matchweek, pts, label').order('matchweek').order('id');
+    const el = document.getElementById('bonusList');
+    if (!data?.length) { el.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">No bonuses yet</div>'; return; }
+    el.innerHTML = '';
+    data.forEach(b => {
+      const ref = REFS.find(r => r.id === b.ref_id);
+      const row = document.createElement('div');
+      row.className = 'bonus-row';
+      row.innerHTML = `
+        <span class="bonus-pts ${b.pts>=0?'pos':'neg'}">${b.pts>=0?'+':''}${b.pts}</span>
+        <div>
+          <div class="bonus-label">${ref?.name || 'Unknown Ref'} · MW${b.matchweek}</div>
+          <div class="bonus-meta">${b.label}</div>
+        </div>
+        <button class="btn btn-red btn-sm" data-id="${b.id}">Remove</button>
+      `;
+      row.querySelector('button').addEventListener('click', async () => {
+        const ok = await deleteManualBonus(b.id);
+        if (ok) { row.remove(); toast('Bonus removed'); }
+        else toast('Failed to remove', true);
+      });
+      el.appendChild(row);
+    });
+  }
+
+  // ── BOOT ─────────────────────────────────────────────────
+  (async () => {
+    const user = getCurrentUser();
+    if (!user || user.username !== ADMIN_USER) {
+      document.getElementById('accessDenied').style.display = 'flex';
+      return;
+    }
+    document.getElementById('adminPanel').style.display = 'block';
+
+    // Load GW config
+    const gwConfig = await loadGWConfig();
+    if (gwConfig) {
+      document.getElementById('cfgGW').value = gwConfig.gw;
+      if (gwConfig.deadline) {
+        const d = new Date(gwConfig.deadline);
+        document.getElementById('cfgDeadline').value = new Date(d - d.getTimezoneOffset()*60000).toISOString().slice(0,16);
+      }
+    }
+
+    // Load sheets + overrides
+    await loadFromSheets().catch(() => {});
+    const overridesList = await getSB().from('RTR Match Stats').select('*');
+    const overrides = {};
+    (overridesList.data || []).forEach(o => { overrides[+o.match_id] = o; });
+
+    // Populate GW filter
+    const gws = [...new Set(MATCHES.map(m => m.matchweek))].sort((a,b)=>a-b);
+    const gwFilter = document.getElementById('matchGWFilter');
+    gws.forEach(gw => {
+      const opt = document.createElement('option');
+      opt.value = gw; opt.textContent = `Matchweek ${gw}`;
+      if (gwConfig && gw === gwConfig.gw) opt.selected = true;
+      gwFilter.appendChild(opt);
+    });
+
+    renderMatchList(MATCHES, overrides, gwConfig?.gw || 'all');
+    gwFilter.addEventListener('change', () => renderMatchList(MATCHES, overrides, gwFilter.value));
+
+    // Populate bonus ref dropdown
+    const bonusRef = document.getElementById('bonusRef');
+    REFS.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.id; opt.textContent = r.name;
+      bonusRef.appendChild(opt);
+    });
+    if (gwConfig) document.getElementById('bonusMW').value = gwConfig.gw;
+
+    await loadAndRenderBonuses();
+
+    // ── SAVE GW CONFIG ────────────────────────────────────
+    document.getElementById('saveGWBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('saveGWBtn');
+      btn.disabled = true; btn.textContent = 'Saving…';
+      const gw = +document.getElementById('cfgGW').value;
+      const deadline = new Date(document.getElementById('cfgDeadline').value).toISOString();
+      const ok = await saveGWConfig(gw, deadline);
+      btn.disabled = false; btn.textContent = 'Save Matchweek Config';
+      toast(ok ? `✓ GW${gw} config saved` : 'Save failed', !ok);
+    });
+
+    // ── ADD MANUAL BONUS ──────────────────────────────────
+    document.getElementById('addBonusBtn').addEventListener('click', async () => {
+      const refId = +document.getElementById('bonusRef').value;
+      const mw    = +document.getElementById('bonusMW').value;
+      const pts   = +document.getElementById('bonusPts').value;
+      const label = document.getElementById('bonusLabel').value.trim();
+      if (!pts || !label) { toast('Fill in points and label', true); return; }
+      const ok = await saveManualBonus(refId, mw, pts, label);
+      if (ok) {
+        document.getElementById('bonusPts').value = '';
+        document.getElementById('bonusLabel').value = '';
+        await loadAndRenderBonuses();
+        toast('✓ Bonus added');
+      } else toast('Failed to add bonus', true);
+    });
+  })();
+</script>
+</body>
+</html>

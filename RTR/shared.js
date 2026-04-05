@@ -109,6 +109,41 @@ async function loadMyFantasyPick(matchweek) {
   return data;
 }
 
+// ── MATCH STATS (admin overrides) ─────────────────────────
+async function loadMatchStats() {
+  if (PREVIEW_MODE) return [];
+  const { data } = await getSB().from('RTR Match Stats').select('*');
+  return data || [];
+}
+
+async function saveMatchStat(stat) {
+  if (PREVIEW_MODE) return true;
+  const { error } = await getSB().from('RTR Match Stats').upsert(stat, { onConflict: 'match_id' });
+  if (error) console.error('[RTR] saveMatchStat error:', error);
+  return !error;
+}
+
+async function saveGWConfig(gw, deadline) {
+  if (PREVIEW_MODE) return true;
+  const { error } = await getSB().from('RTR Config').update({ gw, deadline }).eq('id', 1);
+  if (error) console.error('[RTR] saveGWConfig error:', error);
+  return !error;
+}
+
+async function saveManualBonus(refId, matchweek, pts, label) {
+  if (PREVIEW_MODE) return true;
+  const { error } = await getSB().from('RTR Manual Bonuses').insert({ ref_id: refId, matchweek, pts, label });
+  if (error) console.error('[RTR] saveManualBonus error:', error);
+  return !error;
+}
+
+async function deleteManualBonus(id) {
+  if (PREVIEW_MODE) return true;
+  const { error } = await getSB().from('RTR Manual Bonuses').delete().eq('id', id);
+  if (error) console.error('[RTR] deleteManualBonus error:', error);
+  return !error;
+}
+
 async function loadAllManualBonuses() {
   if (PREVIEW_MODE) return {};
   const { data } = await getSB().from('RTR Manual Bonuses').select('ref_id, pts, label');
@@ -339,6 +374,28 @@ async function loadFromSheets() {
           incorrectVarRed: +m.incorrectVarRed || 0,
         }));
       }
+    }
+
+    // Merge Supabase match stat overrides on top of sheet data
+    const overrides = await loadMatchStats();
+    if (overrides.length) {
+      const overrideMap = Object.fromEntries(overrides.map(o => [+o.match_id, o]));
+      MATCHES = MATCHES.map(m => {
+        const o = overrideMap[+m.id];
+        if (!o) return m;
+        return {
+          ...m,
+          score:          o.score          ?? m.score,
+          status:         o.status         ?? m.status,
+          yc:             o.yellow_cards   ?? m.yc,
+          rc:             o.red_cards      ?? m.rc,
+          pen:            o.penalties_given ?? m.pen,
+          var:            o.var_decisions  ?? m.var,
+          perfectGame:    o.perfect_game   ?? m.perfectGame,
+          incorrectVarPen: o.incorrect_var_pen ?? m.incorrectVarPen,
+          incorrectVarRed: o.incorrect_var_red ?? m.incorrectVarRed,
+        };
+      });
     }
 
     console.log('[RTR] Sheets load complete. MATCHES:', MATCHES.length, 'REFS:', REFS.length);
