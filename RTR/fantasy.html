@@ -769,11 +769,10 @@
         color: var(--text);
       }
       .br-pts.live {
-        color: var(--yellow);
+        color: var(--text);
       }
       .br-pts.tbd {
-        color: var(--muted);
-        font-size: 1.1rem;
+        color: var(--text);
       }
       .br-pts-label {
         font-size: 0.6rem;
@@ -1436,7 +1435,7 @@
           <div class="gw-banner-title">
             Fantasy RTR — <span>Matchweek 1</span>
           </div>
-          <div class="gw-banner-meta">
+          <div class="gw-banner-meta" id="gwBannerMeta">
             Deadline: Fri 3 Apr · 20:00 GMT &nbsp;·&nbsp;
             <strong>Picks Open</strong>
           </div>
@@ -1976,12 +1975,96 @@
       }
 
       function renderPickGrid() {
+        if (FGW.deadlinePassed) {
+          const ref = myPick ? gRef(myPick) : null;
+          const m = myPick ? getRefMatch(myPick) : null;
+          if (!ref) {
+            document.getElementById("refPickGrid").innerHTML = `<div style="color:var(--muted);font-size:.9rem;">No pick made for this matchweek.</div>`;
+            return;
+          }
+          const hasN = ref.neutralVotes > 0, hasF = ref.fanVotes > 0;
+          const seed = ref.id * 7;
+          const nR = ref.neutralRating;
+          const cats = [
+            {lbl:'Decision Making', v:hasN?Math.min(10,Math.max(1,nR+((seed%3)*.4-.6))):0},
+            {lbl:'Card Management', v:hasN?Math.min(10,Math.max(1,nR+(((seed*3)%5)*.4-.8))):0},
+            {lbl:'Game Control',    v:hasN?Math.min(10,Math.max(1,nR+(((seed*7)%4)*.4-.7))):0},
+            {lbl:'VAR Awareness',   v:hasN?Math.min(10,Math.max(1,nR+(((seed*11)%6)*.4-.9))):0},
+          ];
+          const recentMatches = MATCHES.filter(x => x.refId == ref.id && x.status !== 'upcoming').slice(-3);
+          const trend = hasN ? (nR>=7?'▲ Performing well':nR>=5?'→ Average':'▼ Poor form') : 'No data yet';
+          const trendCol = hasN ? (nR>=7?'var(--green)':nR>=5?'var(--yellow)':'var(--red)') : 'var(--muted)';
+          document.getElementById("refPickGrid").innerHTML = `
+            <div style="background:linear-gradient(135deg,var(--pl-purple) 0%,#1a0028 50%,var(--surface) 100%);border:1.5px solid var(--pl-green);border-radius:14px;overflow:hidden;max-width:480px;box-shadow:0 0 32px rgba(0,255,133,.12);">
+              <!-- Header -->
+              <div style="padding:18px 20px 14px;display:flex;align-items:center;gap:16px;border-bottom:1px solid rgba(0,255,133,.15);">
+                <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#37003c,#8b008b);border:2.5px solid var(--pl-green);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;color:var(--pl-green);flex-shrink:0;box-shadow:0 0 16px rgba(0,255,133,.25);">${ref.initials}</div>
+                <div style="flex:1">
+                  <div style="font-size:.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--pl-green);margin-bottom:3px;">MY PICK · MW${FGW.gw}</div>
+                  <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;letter-spacing:.3px;">${ref.name}</div>
+                  <div style="font-size:.75rem;color:var(--muted);margin-top:2px;">${ref.nationality||'English'} · Age ${ref.age||'–'}${ref.fifaListed==='Yes'?' · 🌍 FIFA':''}</div>
+                </div>
+                <div style="font-size:.7rem;color:${trendCol};font-family:'Barlow Condensed',sans-serif;font-weight:700;text-align:right;">${trend}</div>
+              </div>
+              <!-- Match -->
+              ${m ? `<div style="padding:10px 20px;background:rgba(0,0,0,.2);font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border);">
+                <span style="color:var(--text);">${m.hE} ${m.home}</span>
+                <span>vs</span>
+                <span style="color:var(--text);">${m.away} ${m.aE}</span>
+                <span style="margin-left:auto;font-weight:600;color:${m.status==='live'?'var(--red)':m.status==='complete'?'var(--green)':'var(--muted)'};">${m.status==='live'?'● LIVE':m.status==='complete'?'FT':'Upcoming'}</span>
+              </div>` : ''}
+              <!-- Scores -->
+              <div style="padding:14px 20px;display:grid;grid-template-columns:1fr 1fr;gap:10px;border-bottom:1px solid var(--border);">
+                <div style="background:var(--surface2);border-radius:8px;padding:10px 12px;border-left:3px solid rgba(55,236,186,.5);">
+                  <div style="font-size:.65rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--green);margin-bottom:4px;">Neutral</div>
+                  ${hasN ? `<div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.6rem;color:var(--green);">${ref.neutralRating.toFixed(1)}<span style="font-size:.8rem;color:var(--muted)">/10</span></div><div style="font-size:.65rem;color:var(--muted);">${ref.neutralVotes} votes</div>` : `<div style="color:var(--muted);font-size:.8rem;">No data yet</div>`}
+                </div>
+                <div style="background:var(--surface2);border-radius:8px;padding:10px 12px;border-left:3px solid rgba(255,211,42,.5);">
+                  <div style="font-size:.65rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--yellow);margin-bottom:4px;">Fan</div>
+                  ${hasF ? `<div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.6rem;color:var(--yellow);">${ref.fanRating.toFixed(1)}<span style="font-size:.8rem;color:var(--muted)">/10</span></div><div style="font-size:.65rem;color:var(--muted);">${ref.fanVotes} votes</div>` : `<div style="color:var(--muted);font-size:.8rem;">No data yet</div>`}
+                </div>
+              </div>
+              <!-- Category bars -->
+              <div style="padding:14px 20px;border-bottom:1px solid var(--border);">
+                ${cats.map(c => {
+                  const pct = hasN ? c.v*10 : 0;
+                  const col = c.v>=7?'var(--green)':c.v>=5?'var(--yellow)':'var(--red)';
+                  return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                    <span style="font-size:.7rem;color:var(--muted);width:120px;flex-shrink:0;">${c.lbl}</span>
+                    <div style="flex:1;background:var(--border);border-radius:4px;height:6px;overflow:hidden;">
+                      <div style="width:${pct}%;height:100%;background:${col};border-radius:4px;transition:width .4s;"></div>
+                    </div>
+                    <span style="font-size:.75rem;font-weight:700;color:${col};width:28px;text-align:right;">${hasN?c.v.toFixed(1):'–'}</span>
+                  </div>`;
+                }).join('')}
+              </div>
+              ${recentMatches.length ? `
+              <!-- Recent matches -->
+              <div style="padding:12px 20px;border-bottom:1px solid var(--border);">
+                <div style="font-size:.65rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Recent Matches</div>
+                ${recentMatches.map(x => `
+                  <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:5px;padding:5px 9px;font-size:.75rem;margin-bottom:4px;">
+                    <span>${x.hE} ${x.home} <span style="color:var(--muted)">vs</span> ${x.away} ${x.aE}</span>
+                    <span style="font-weight:700;color:${x.status==='live'?'var(--red)':'var(--text)'};">${x.score}</span>
+                  </div>`).join('')}
+              </div>` : ''}
+              <!-- Footer / CTA -->
+              <div style="padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                <a href="referees.html" style="font-size:.78rem;color:var(--pl-green);font-weight:600;text-decoration:none;">Full profile →</a>
+                <button onclick="document.querySelector('[data-tab=battles]').click()" style="display:flex;align-items:center;gap:8px;background:rgba(0,255,133,.1);border:1.5px solid var(--pl-green);color:var(--pl-green);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.95rem;letter-spacing:.5px;text-transform:uppercase;padding:9px 18px;border-radius:8px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='rgba(0,255,133,.2)'" onmouseout="this.style.background='rgba(0,255,133,.1)'">
+                  View Battles →
+                </button>
+              </div>
+            </div>`;
+          return;
+        }
+
         document.getElementById("refPickGrid").innerHTML = REFS.map((ref) => {
           const m = getRefMatch(ref.id);
           const pts = REF_GW_PTS[ref.id];
           const status = REF_STATUS[ref.id];
           const sel = myPick === ref.id;
-          return `<div class="ref-pick-card${sel ? " selected" : ""}${FGW.deadlinePassed ? " locked" : ""}" data-rid="${ref.id}">
+          return `<div class="ref-pick-card${sel ? " selected" : ""}" data-rid="${ref.id}">
       ${sel ? '<div class="rpc-selected-badge">MY PICK</div>' : ""}
       <div class="rpc-top">
         <div class="rpc-av">${ref.initials}</div>
@@ -2659,6 +2742,10 @@
         // Show deadline notice only if locked
         document.getElementById("deadlineNotice").style.display =
           FGW.deadlinePassed ? "flex" : "none";
+
+        // Update banner meta — hide picks open text when deadline has passed
+        document.getElementById("gwBannerMeta").style.display =
+          FGW.deadlinePassed ? "none" : "";
 
         // Restore user's pick + wildcards from DB (overrides sessionStorage)
         const dbPick = await loadMyFantasyPick(FGW.gw);
