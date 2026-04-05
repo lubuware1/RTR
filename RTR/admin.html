@@ -257,8 +257,12 @@
 
   // ── BOOT ─────────────────────────────────────────────────
   (async () => {
+    // Re-run checkAuth to ensure localStorage is fresh from Supabase session
+    const authed = await checkAuth();
+    if (!authed) { window.location.href = 'login.html'; return; }
     const user = getCurrentUser();
-    if (!user || user.username !== ADMIN_USER) {
+    console.log('[RTR Admin] user:', user?.username);
+    if (!user || user.username.toLowerCase() !== ADMIN_USER.toLowerCase()) {
       document.getElementById('accessDenied').style.display = 'flex';
       return;
     }
