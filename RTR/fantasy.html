@@ -2538,12 +2538,14 @@
             ];
             const seasonLeft = USER_WC_LEFT[p.userId];
             const wcHtml = wcIcons.map(w => {
-              // Prefer season-computed left count; fall back to saved pick value
-              const realLeft = seasonLeft ? (seasonLeft[w.key] ?? w.defaultLeft) : (wc[w.key]?.left ?? w.defaultLeft);
+              // Left count at start of this GW: season history takes priority over saved pick value
+              const startLeft = seasonLeft ? (seasonLeft[w.key] ?? w.defaultLeft) : (wc[w.key]?.left ?? w.defaultLeft);
+              // If active this GW, subtract 1 to show remaining after this use
+              const usedThisGW = !!wc[w.key]?.active;
+              const realLeft = usedThisGW ? Math.max(0, startLeft - 1) : startLeft;
               const displayLeft = FGW.deadlinePassed ? realLeft : w.defaultLeft;
-              const usedPrev = seasonLeft ? (seasonLeft[w.key] ?? w.defaultLeft) < w.defaultLeft : false;
-              const usedNow = FGW.deadlinePassed && wc[w.key]?.active;
-              return `<span class="fl-wc-icon${(usedNow || (FGW.deadlinePassed && usedPrev && realLeft === 0)) ? ' used' : ''}" title="${w.icon}">${w.icon}<span class="fl-wc-left">${displayLeft}</span></span>`;
+              const isUsed = FGW.deadlinePassed && realLeft < w.defaultLeft;
+              return `<span class="fl-wc-icon${isUsed ? ' used' : ''}" title="${w.icon}">${w.icon}<span class="fl-wc-left">${displayLeft}</span></span>`;
             }).join('');
             return `<div class="fl-row${p.isMe ? " me" : ""}">
       <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
