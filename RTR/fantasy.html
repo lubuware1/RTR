@@ -2823,8 +2823,12 @@
         const dbPick = await loadMyFantasyPick(FGW.gw);
         if (dbPick) {
           myPick = dbPick.ref_id;
-          // If this GW already has saved wildcards, use those (they already reflect current GW usage)
-          if (dbPick.wildcards) wildcards = { ...seasonWC, ...dbPick.wildcards };
+          // Apply only active states from current GW — left counts always come from season totals
+          if (dbPick.wildcards) {
+            ['yc','rc','var'].forEach(k => {
+              if (dbPick.wildcards[k]?.active) wildcards[k].active = true;
+            });
+          }
           sessionStorage.setItem("rtr_pick_1", myPick);
           sessionStorage.setItem("rtr_wc_1", JSON.stringify(wildcards));
         }
