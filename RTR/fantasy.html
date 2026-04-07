@@ -1782,6 +1782,10 @@
 
 
       // Fantasy league standings
+      // Per-user wildcard left counts computed from full season history
+      // Populated after allPicks loads; used to override saved pick left counts
+      const USER_WC_LEFT = {};
+
       const FANTASY_LEAGUE = [
         {
           username: "FootballFan99",
@@ -2532,10 +2536,14 @@
               { key: 'rc', icon: '🟥', defaultLeft: 1 },
               { key: 'var', icon: '📺', defaultLeft: 2 },
             ];
+            const seasonLeft = USER_WC_LEFT[p.userId];
             const wcHtml = wcIcons.map(w => {
-              const realLeft = wc[w.key]?.left ?? w.defaultLeft;
+              // Prefer season-computed left count; fall back to saved pick value
+              const realLeft = seasonLeft ? (seasonLeft[w.key] ?? w.defaultLeft) : (wc[w.key]?.left ?? w.defaultLeft);
               const displayLeft = FGW.deadlinePassed ? realLeft : w.defaultLeft;
-              return `<span class="fl-wc-icon${FGW.deadlinePassed && wc[w.key]?.active ? ' used' : ''}" title="${w.icon}">${w.icon}<span class="fl-wc-left">${displayLeft}</span></span>`;
+              const usedPrev = seasonLeft ? (seasonLeft[w.key] ?? w.defaultLeft) < w.defaultLeft : false;
+              const usedNow = FGW.deadlinePassed && wc[w.key]?.active;
+              return `<span class="fl-wc-icon${(usedNow || (FGW.deadlinePassed && usedPrev && realLeft === 0)) ? ' used' : ''}" title="${w.icon}">${w.icon}<span class="fl-wc-left">${displayLeft}</span></span>`;
             }).join('');
             return `<div class="fl-row${p.isMe ? " me" : ""}">
       <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
@@ -2797,6 +2805,7 @@
             wildcards: p.wildcards || {},
             refId,
             isMe,
+            userId: p.user_id,
           });
         });
         renderRefScores();
@@ -3010,6 +3019,19 @@
 
         // Build season leaderboards across all GWs
         const allPicks = await loadAllFantasyPicks();
+
+        // Compute per-user wildcard left counts from full season history
+        const wcDefaults = { yc: 1, rc: 1, var: 2 };
+        allPicks.forEach(p => {
+          if (+p.matchweek >= FGW.gw) return; // only count previous GWs
+          const uid = p.user_id;
+          if (!USER_WC_LEFT[uid]) USER_WC_LEFT[uid] = { yc: wcDefaults.yc, rc: wcDefaults.rc, var: wcDefaults.var };
+          ['yc','rc','var'].forEach(k => {
+            if (p.wildcards?.[k]?.active) USER_WC_LEFT[uid][k] = Math.max(0, USER_WC_LEFT[uid][k] - 1);
+          });
+        });
+        renderLeague(); // re-render now that per-user wildcard history is known
+
         const seasonRefTotals = buildSeasonRefPointsLeague(allPicks);
         buildSeasonGWPointsLeague(allPicks, seasonRefTotals);
 
