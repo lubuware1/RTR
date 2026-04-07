@@ -347,7 +347,7 @@ function renderList() {
       <div class="match-footer">
         <div class="ref-row">
           <div class="ref-info"><div class="ref-avatar">${ref.initials}</div><div><div class="ref-name">${ref.name}</div><div class="ref-role">Referee</div></div></div>
-          ${rated.has(m.id)?`<span style="font-size:.7rem;color:var(--pl-green);font-weight:600">Rated ✓</span>`:''}
+          ${!up && rated.has(+m.id)?`<span style="font-size:.7rem;color:var(--pl-green);font-weight:600">Rated ✓</span>`:''}
         </div>
         ${!up?`<div class="vote-split">
           <div class="vote-bucket nb"><div><div class="vb-label nl">Neutral</div><div class="vb-stars">${nStars}</div></div><div><div class="vb-score ${hasN?'ns':'na'}">${hasN?ref.neutralRating.toFixed(1):'–'}</div><div class="vb-count">${ref.neutralVotes} votes</div></div></div>
@@ -497,10 +497,8 @@ initHeader();
   }
   const gwConfig = await loadGWConfig();
   if (gwConfig) currentGW = gwConfig.gw;
-  console.log('[RTR] currentGW:', currentGW, 'gwConfig:', gwConfig);
   await loadFromSheets().catch(() => {});
   const gwMatchIds = MATCHES.filter(m => m.matchweek === currentGW).map(m => +m.id);
-  console.log('[RTR] gwMatchIds:', gwMatchIds);
   await Promise.all([
     loadRatings(), // all-time ratings for ref rankings leaderboard
     loadUserVotes(currentUser?.id, gwMatchIds).then(v => v.forEach(id => rated.add(id)))
