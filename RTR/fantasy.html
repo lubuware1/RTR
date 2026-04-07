@@ -2817,10 +2817,14 @@
           FGW.deadlinePassed ? "none" : "";
 
         // Restore user's pick + wildcards from DB (overrides sessionStorage)
+        // Start from season wildcard totals (accounts for usage in previous GWs)
+        const seasonWC = await loadMySeasonWildcards(FGW.gw);
+        wildcards = seasonWC;
         const dbPick = await loadMyFantasyPick(FGW.gw);
         if (dbPick) {
           myPick = dbPick.ref_id;
-          wildcards = { ...wildcards, ...dbPick.wildcards };
+          // If this GW already has saved wildcards, use those (they already reflect current GW usage)
+          if (dbPick.wildcards) wildcards = { ...seasonWC, ...dbPick.wildcards };
           sessionStorage.setItem("rtr_pick_1", myPick);
           sessionStorage.setItem("rtr_wc_1", JSON.stringify(wildcards));
         }
