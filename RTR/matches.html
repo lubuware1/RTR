@@ -497,9 +497,10 @@ initHeader();
   const gwConfig = await loadGWConfig();
   if (gwConfig) currentGW = gwConfig.gw;
   await loadFromSheets().catch(() => {});
+  const gwMatchIds = MATCHES.filter(m => m.matchweek === currentGW).map(m => +m.id);
   await Promise.all([
-    loadRatings(),
-    loadUserVotes(currentUser?.id).then(v => v.forEach(id => rated.add(id)))
+    loadRatings(gwMatchIds),
+    loadUserVotes(currentUser?.id, gwMatchIds).then(v => v.forEach(id => rated.add(id)))
   ]);
   syncMatchStatuses();
   initHeader();
@@ -511,7 +512,8 @@ initHeader();
     // Preserve any complete statuses already in memory before reloading sheet
     const alreadyComplete = new Set(MATCHES.filter(m => m.status === 'complete').map(m => m.id));
     await loadFromSheets().catch(() => {});
-    await loadRatings();
+    const gwIds = MATCHES.filter(m => m.matchweek === currentGW).map(m => +m.id);
+    await loadRatings(gwIds);
     MATCHES.forEach(m => { if (alreadyComplete.has(m.id)) m.status = 'complete'; });
     syncMatchStatuses();
     renderList();

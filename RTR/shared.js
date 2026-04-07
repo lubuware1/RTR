@@ -54,9 +54,12 @@ async function checkAuth() {
   return true;
 }
 
-async function loadRatings() {
+async function loadRatings(matchIds) {
   if (PREVIEW_MODE) return;
-  const { data: votes } = await getSB().from('RTR Votes').select('ref_id,overall,is_fan_vote');
+  if (matchIds && matchIds.length === 0) { REFS.forEach(r => { r.neutralRating=0; r.neutralVotes=0; r.fanRating=0; r.fanVotes=0; }); return; }
+  let query = getSB().from('RTR Votes').select('ref_id,overall,is_fan_vote,match_id');
+  if (matchIds?.length) query = query.in('match_id', matchIds);
+  const { data: votes } = await query;
   if (!votes || !votes.length) return;
   REFS.forEach(r => { r.neutralRating=0; r.neutralVotes=0; r.fanRating=0; r.fanVotes=0; });
   const sums = {};
@@ -72,9 +75,12 @@ async function loadRatings() {
   });
 }
 
-async function loadUserVotes(userId) {
+async function loadUserVotes(userId, matchIds) {
   if (PREVIEW_MODE) return new Set();
-  const { data } = await getSB().from('RTR Votes').select('match_id').eq('user_id', userId);
+  if (matchIds && matchIds.length === 0) return new Set();
+  let query = getSB().from('RTR Votes').select('match_id').eq('user_id', userId);
+  if (matchIds?.length) query = query.in('match_id', matchIds);
+  const { data } = await query;
   return new Set((data || []).map(v => v.match_id));
 }
 
