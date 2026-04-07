@@ -2530,22 +2530,21 @@
             const team = PL_TEAMS.find((t) => t.name === p.team);
             const medal =
               i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1;
-            const wc = p.wildcards || {};
+            // For current user use local wildcards state (same source as My Pick panel)
+            // For others use their saved DB pick wildcards
+            const wc = p.isMe ? wildcards : (p.wildcards || {});
             const wcIcons = [
               { key: 'yc', icon: '🟨', defaultLeft: 1 },
               { key: 'rc', icon: '🟥', defaultLeft: 1 },
               { key: 'var', icon: '📺', defaultLeft: 2 },
             ];
-            const seasonLeft = USER_WC_LEFT[p.userId];
+            const seasonLeft = p.isMe ? null : USER_WC_LEFT[p.userId];
             const wcHtml = wcIcons.map(w => {
-              // Left count at start of this GW: season history takes priority over saved pick value
               const startLeft = seasonLeft ? (seasonLeft[w.key] ?? w.defaultLeft) : (wc[w.key]?.left ?? w.defaultLeft);
-              // If active this GW, subtract 1 to show remaining after this use
               const usedThisGW = !!wc[w.key]?.active;
               const realLeft = usedThisGW ? Math.max(0, startLeft - 1) : startLeft;
-              const displayLeft = FGW.deadlinePassed ? realLeft : w.defaultLeft;
-              const isUsed = FGW.deadlinePassed && realLeft < w.defaultLeft;
-              return `<span class="fl-wc-icon${isUsed ? ' used' : ''}" title="${w.icon}">${w.icon}<span class="fl-wc-left">${displayLeft}</span></span>`;
+              const isUsed = realLeft < w.defaultLeft;
+              return `<span class="fl-wc-icon${isUsed ? ' used' : ''}" title="${w.icon}">${w.icon}<span class="fl-wc-left">${realLeft}</span></span>`;
             }).join('');
             return `<div class="fl-row${p.isMe ? " me" : ""}">
       <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
