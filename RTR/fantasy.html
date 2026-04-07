@@ -1682,10 +1682,14 @@
             <div class="fl-header">🏆 Fantasy League — Matchweek 1</div>
             <div class="lb-toggle">
               <button class="lb-toggle-btn active" data-lb="gw">GW Points</button>
-              <button class="lb-toggle-btn" data-lb="ref">Total Ref Points</button>
+              <button class="lb-toggle-btn" data-lb="ref">GW Ref Points</button>
+              <button class="lb-toggle-btn" data-lb="season">Season Points</button>
+              <button class="lb-toggle-btn" data-lb="seasonref">Total Ref Pts</button>
             </div>
             <div id="fantasyLeague"><!-- rendered by JS --></div>
             <div id="refPointsLeague" style="display:none"><!-- rendered by JS --></div>
+            <div id="seasonPointsLeague" style="display:none"><!-- rendered by JS --></div>
+            <div id="seasonRefPointsLeague" style="display:none"><!-- rendered by JS --></div>
           </div>
         </div>
       </div>
@@ -2259,9 +2263,11 @@
         btn.addEventListener("click", () => {
           document.querySelectorAll(".lb-toggle-btn").forEach(b => b.classList.remove("active"));
           btn.classList.add("active");
-          const isRef = btn.dataset.lb === "ref";
-          document.getElementById("fantasyLeague").style.display = isRef ? "none" : "";
-          document.getElementById("refPointsLeague").style.display = isRef ? "" : "none";
+          const lb = btn.dataset.lb;
+          document.getElementById("fantasyLeague").style.display = lb === "gw" ? "" : "none";
+          document.getElementById("refPointsLeague").style.display = lb === "ref" ? "" : "none";
+          document.getElementById("seasonPointsLeague").style.display = lb === "season" ? "" : "none";
+          document.getElementById("seasonRefPointsLeague").style.display = lb === "seasonref" ? "" : "none";
         });
       });
 
@@ -2541,6 +2547,127 @@
       <div class="fl-pts${p.isMe ? " me" : ""}">${p.refPts !== null ? p.refPts : "—"}</div>
     </div>`;
         }).join("");
+      }
+
+      // ── SEASON GW POINTS PER USER ─────────────────────────────
+      function buildSeasonGWPointsLeague(allPicks, seasonRefTotals = {}) {
+        if (!allPicks.length) return;
+        const userTotals = {};
+        // Group picks by user then by matchweek
+        allPicks.forEach(p => {
+          const uid = p.user_id;
+          if (!userTotals[uid]) userTotals[uid] = { profile: p.profile, total: 0 };
+        });
+        // For each matchweek, compute battles and assign win/draw/loss pts
+        const gws = [...new Set(allPicks.map(p => p.matchweek))];
+        gws.forEach(gw => {
+          const gwPicks = allPicks.filter(p => p.matchweek === gw);
+          const gwMatchList = MATCHES.filter(m => +m.matchweek === gw);
+          // Build ref pts for this GW
+          const gwRefPts = {};
+          REFS.forEach(r => {
+            const played = gwMatchList.filter(m => +m.refId === r.id && (m.status === 'complete' || m.status === 'recent'));
+            if (!played.length) return;
+            let pts = played.reduce((s,m) => s + (m.yc||0) + (m.rc||0) + (m.pen||0)*2 - (m.incorrectVarPen||0) - (m.incorrectVarRed||0)*2 + (m.perfectGame?8:0), 0);
+            gwRefPts[r.id] = pts;
+          });
+          // Pair up refs into battles (same deterministic shuffle as buildBattlesFromMatches)
+          const refIds = [...new Set(gwMatchList.map(m => +m.refId))];
+          const shuffled = [...refIds].sort((a,b) => ((a*31+gw*17)%97) - ((b*31+gw*17)%97));
+          const gwBattles = {};
+          for (let i = 0; i+1 < shuffled.length; i+=2) {
+            gwBattles[shuffled[i]] = shuffled[i+1];
+            gwBattles[shuffled[i+1]] = shuffled[i];
+          }
+          gwPicks.forEach(p => {
+            const uid = p.user_id;
+            if (!userTotals[uid]) return;
+            const oppId = gwBattles[p.ref_id];
+            const myPts = gwRefPts[p.ref_id];
+            const oppPts = gwRefPts[oppId];
+            if (myPts == null || oppPts == null) return;
+            const wc = p.wildcards || {};
+            let boosted = myPts;
+            if (wc.rc?.active) boosted += 1;
+            if (wc.var?.active) boosted += 2;
+            userTotals[uid].total += boosted > oppPts ? 3 : boosted === oppPts ? 1 : 0;
+          });
+        });
+
+        const sorted = Object.entries(userTotals)
+          .map(([uid, v]) => ({ uid, ...v }))
+          .sort((a, b) => {
+            if (b.total !== a.total) return b.total - a.total;
+            // Tiebreaker: higher season total ref points wins
+            return (seasonRefTotals[b.uid] ?? 0) - (seasonRefTotals[a.uid] ?? 0);
+          });
+
+        document.getElementById("seasonPointsLeague").innerHTML = sorted.map((row, i) => {
+          const team = PL_TEAMS.find(t => t.name === row.profile?.team);
+          const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1;
+          const me = row.uid === currentUser?.id;
+          return `<div class="fl-row${me ? " me" : ""}">
+            <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
+            <div>
+              <div class="fl-name${me ? " me" : ""}">${row.profile?.username || "Unknown"}${me ? " ★" : ""}</div>
+              <div class="fl-sub">${team?.emoji || ""} ${row.profile?.team || ""}</div>
+            </div>
+            <div class="fl-pts${me ? " me" : ""}">${row.total}</div>
+          </div>`;
+        }).join("");
+      }
+
+      // ── SEASON REF POINTS PER USER ────────────────────────────
+      function calcRefPtsForMatch(m) {
+        if (!m || (m.status !== 'complete' && m.status !== 'recent')) return null;
+        let pts = (m.yc||0) + (m.rc||0) + (m.pen||0)*2;
+        if (m.perfectGame) pts += 8;
+        pts -= (m.incorrectVarPen||0);
+        pts -= (m.incorrectVarRed||0)*2;
+        return pts;
+      }
+
+      function buildSeasonRefPointsLeague(allPicks) {
+        if (!allPicks.length) return {};
+        // Sum ref points for each user across all GWs
+        const userTotals = {};
+        allPicks.forEach(p => {
+          const uid = p.user_id;
+          if (!userTotals[uid]) userTotals[uid] = { profile: p.profile, total: 0 };
+          const refMatches = MATCHES.filter(m => +m.refId === p.ref_id && +m.matchweek === p.matchweek);
+          refMatches.forEach(m => {
+            const pts = calcRefPtsForMatch(m);
+            if (pts !== null) {
+              const wc = p.wildcards || {};
+              let boosted = pts;
+              if (wc.rc?.active) boosted += 1;
+              if (wc.var?.active) boosted += 2;
+              userTotals[uid].total += boosted;
+            }
+          });
+        });
+
+        const sorted = Object.entries(userTotals)
+          .map(([uid, v]) => ({ uid, ...v }))
+          .sort((a, b) => b.total - a.total);
+
+        const isMe = uid => uid === currentUser?.id;
+        document.getElementById("seasonRefPointsLeague").innerHTML = sorted.map((row, i) => {
+          const team = PL_TEAMS.find(t => t.name === row.profile?.team);
+          const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1;
+          const me = isMe(row.uid);
+          return `<div class="fl-row${me ? " me" : ""}">
+            <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
+            <div>
+              <div class="fl-name${me ? " me" : ""}">${row.profile?.username || "Unknown"}${me ? " ★" : ""}</div>
+              <div class="fl-sub">${team?.emoji || ""} ${row.profile?.team || ""}</div>
+            </div>
+            <div class="fl-pts${me ? " me" : ""}">${row.total}</div>
+          </div>`;
+        }).join("");
+
+        // Return totals map for use as tiebreaker in season GW points
+        return Object.fromEntries(Object.entries(userTotals).map(([uid, v]) => [uid, v.total]));
       }
 
       // ── GW REF SCORES ─────────────────────────────────────────
@@ -2845,6 +2972,11 @@
         buildLeaderboard(dbLeaderboard);
         renderRefScores();
         if (!dbLeaderboard.length) renderLeague();
+
+        // Build season leaderboards across all GWs
+        const allPicks = await loadAllFantasyPicks();
+        const seasonRefTotals = buildSeasonRefPointsLeague(allPicks);
+        buildSeasonGWPointsLeague(allPicks, seasonRefTotals);
 
         // Re-run twemoji after all async renders so flag emojis display correctly
         twemoji.parse(document.body, { folder: "svg", ext: ".svg" });

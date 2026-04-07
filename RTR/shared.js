@@ -201,6 +201,16 @@ async function loadManualBonuses(matchweek) {
   }, {});
 }
 
+async function loadAllFantasyPicks() {
+  if (PREVIEW_MODE) return [];
+  const { data: picks } = await getSB().from('RTR Fantasy Picks').select('user_id, ref_id, matchweek, wildcards');
+  if (!picks?.length) return [];
+  const { data: profiles } = await getSB().from('RTR Profiles')
+    .select('id, username, team').in('id', picks.map(p => p.user_id));
+  const pm = Object.fromEntries((profiles || []).map(p => [p.id, p]));
+  return picks.map(p => ({ ...p, profile: pm[p.user_id] || null }));
+}
+
 async function saveManualBonus(matchweek, refId, pts, label) {
   if (PREVIEW_MODE) return true;
   const { error } = await getSB().from('RTR Manual Bonuses').insert({
