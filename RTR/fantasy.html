@@ -1436,7 +1436,7 @@
             Fantasy RTR — <span>Matchweek 1</span>
           </div>
           <div class="gw-banner-meta" id="gwBannerMeta">
-            Deadline: Fri 3 Apr · 20:00 GMT &nbsp;·&nbsp;
+            Deadline: <span id="deadlineText">—</span> &nbsp;·&nbsp;
             <strong>Picks Open</strong>
           </div>
         </div>
@@ -2942,6 +2942,12 @@
         // Update banner meta — hide picks open text when deadline has passed
         document.getElementById("gwBannerMeta").style.display =
           FGW.deadlinePassed ? "none" : "";
+        if (FGW.deadline) {
+          const d = new Date(FGW.deadline);
+          document.getElementById("deadlineText").textContent = d.toLocaleString('en-GB', {
+            weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false
+          });
+        }
 
         // Restore user's pick + wildcards from DB (overrides sessionStorage)
         // Start from season wildcard totals (accounts for usage in previous GWs)
