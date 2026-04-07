@@ -119,6 +119,15 @@
   .skel-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
   .skel-circle{border-radius:50%;flex-shrink:0;}
   .skel-line{height:11px;}
+
+  /* ── MOBILE ─────────────────────────────────────────────── */
+  @media(max-width:768px){
+    .refs-grid{grid-template-columns:1fr;}
+    .refs-hero{padding:18px 16px;}
+    .refs-hero h1{font-size:1.5rem;}
+    .refs-hero-stats{gap:14px;}
+    .page{padding:12px;}
+  }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/twemoji@14/dist/twemoji.min.js" crossorigin="anonymous"></script>
 </head>
@@ -134,6 +143,7 @@
         <a href="fantasy.html">Fantasy</a>
         <a href="history.html">History</a>
       </nav>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
       <div class="user-chip" id="userChip">
         <div class="uc-avatar" id="ucAvatar"></div>
         <span class="uc-name" id="ucName"></span>
@@ -147,6 +157,13 @@
     </div>
   </div>
 </header>
+
+<div class="mobile-nav" id="mobileNav">
+  <a href="matches.html">Matches</a>
+  <a href="referees.html" class="active">Referees</a>
+  <a href="fantasy.html">Fantasy</a>
+  <a href="history.html">History</a>
+</div>
 
 <div class="page">
   <div class="data-banner">
@@ -205,7 +222,8 @@ function initHeader(){
 }
 
 document.getElementById('userChip').addEventListener('click',e=>{e.stopPropagation();document.getElementById('userDropdown').classList.toggle('open');});
-document.addEventListener('click',()=>document.getElementById('userDropdown').classList.remove('open'));
+document.getElementById('hamburger').addEventListener('click',e=>{e.stopPropagation();document.getElementById('mobileNav').classList.toggle('open');});
+document.addEventListener('click',()=>{document.getElementById('userDropdown').classList.remove('open');document.getElementById('mobileNav').classList.remove('open');});
 document.getElementById('ddLogout').addEventListener('click', async ()=>{
   if(PREVIEW_MODE){toast('Login is disabled in Preview Mode');return;}
   await clearCurrentUser(); window.location.href='login.html';

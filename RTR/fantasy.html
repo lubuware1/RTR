@@ -1392,6 +1392,19 @@
       .skel-line {
         height: 11px;
       }
+
+      /* ── MOBILE ─────────────────────────────────────────── */
+      @media(max-width:768px){
+        .container{grid-template-columns:1fr !important;padding:12px;}
+        .gw-banner-inner{padding:12px 16px;}
+        .gw-banner-title{font-size:1.1rem;}
+        .ref-pick-grid{grid-template-columns:1fr !important;}
+        .side-panel{position:fixed;bottom:0;left:0;right:0;top:auto;border-radius:16px 16px 0 0;max-height:90vh;overflow-y:auto;z-index:200;transform:translateY(100%);transition:transform .3s ease;border-left:none;border-right:none;border-bottom:none;}
+        .side-panel.panel-open{transform:translateY(0);}
+        .panel-close-btn{display:block !important;}
+        .gw-banner-inner{padding:12px 16px;}
+        .gw-banner-title{font-size:1.1rem;}
+      }
     </style>
     <script
       src="https://cdn.jsdelivr.net/npm/twemoji@14/dist/twemoji.min.js"
@@ -1409,6 +1422,7 @@
             <a href="fantasy.html" class="active">Fantasy</a>
             <a href="history.html">History</a>
           </nav>
+          <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
           <div class="user-chip" id="userChip">
             <div class="uc-avatar" id="ucAvatar"></div>
             <span class="uc-name" id="ucName"></span>
@@ -1428,6 +1442,13 @@
         </div>
       </div>
     </header>
+
+    <div class="mobile-nav" id="mobileNav">
+      <a href="matches.html">Matches</a>
+      <a href="referees.html">Referees</a>
+      <a href="fantasy.html" class="active">Fantasy</a>
+      <a href="history.html">History</a>
+    </div>
 
     <div class="gw-banner">
       <div class="gw-banner-inner">
@@ -1936,9 +1957,14 @@
         e.stopPropagation();
         document.getElementById("userDropdown").classList.toggle("open");
       });
-      document.addEventListener("click", () =>
-        document.getElementById("userDropdown").classList.remove("open"),
-      );
+      document.getElementById("hamburger").addEventListener("click", (e) => {
+        e.stopPropagation();
+        document.getElementById("mobileNav").classList.toggle("open");
+      });
+      document.addEventListener("click", () => {
+        document.getElementById("userDropdown").classList.remove("open");
+        document.getElementById("mobileNav").classList.remove("open");
+      });
       document
         .getElementById("ddLogout")
         .addEventListener("click", async () => {
@@ -2246,6 +2272,7 @@
         document.getElementById("panelCloseBtn").classList.remove("visible");
         document.getElementById("panelSubtext").textContent =
           "Select a ref from the Pick tab";
+        document.querySelector(".side-panel").classList.remove("panel-open");
       });
 
       // ── SIDEBAR TABS ──────────────────────────────────────────
@@ -2279,11 +2306,13 @@
           noPick.style.display = "block";
           hasPick.style.display = "none";
           document.getElementById("panelCloseBtn").classList.remove("visible");
+        document.querySelector(".side-panel").classList.remove("panel-open");
           return;
         }
         noPick.style.display = "none";
         hasPick.style.display = "block";
         document.getElementById("panelCloseBtn").classList.add("visible");
+        document.querySelector(".side-panel").classList.add("panel-open");
 
         const ref = gRef(myPick);
         const m = getRefMatch(myPick);

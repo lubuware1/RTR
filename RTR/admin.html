@@ -53,6 +53,12 @@
   .checkbox-row{display:flex;align-items:center;gap:8px;}
   .checkbox-row input{width:auto;}
   .checkbox-row label{margin:0;text-transform:none;font-size:.85rem;color:var(--text);}
+
+  /* ── MOBILE ─────────────────────────────────────────────── */
+  @media(max-width:768px){
+    body{padding:12px;}
+    .row.cols-2,.row.cols-3,.row.cols-4{grid-template-columns:1fr;}
+  }
 </style>
 </head>
 <body>
