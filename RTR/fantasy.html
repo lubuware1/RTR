@@ -2065,7 +2065,7 @@
           return;
         }
 
-        document.getElementById("refPickGrid").innerHTML = REFS.map((ref) => {
+        document.getElementById("refPickGrid").innerHTML = REFS.filter(ref => getRefMatch(ref.id)).map((ref) => {
           const m = getRefMatch(ref.id);
           const pts = REF_GW_PTS[ref.id];
           const status = REF_STATUS[ref.id];
