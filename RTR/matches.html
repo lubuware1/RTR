@@ -497,8 +497,10 @@ initHeader();
   }
   const gwConfig = await loadGWConfig();
   if (gwConfig) currentGW = gwConfig.gw;
+  console.log('[RTR] currentGW:', currentGW, 'gwConfig:', gwConfig);
   await loadFromSheets().catch(() => {});
   const gwMatchIds = MATCHES.filter(m => m.matchweek === currentGW).map(m => +m.id);
+  console.log('[RTR] gwMatchIds:', gwMatchIds);
   await Promise.all([
     loadRatings(), // all-time ratings for ref rankings leaderboard
     loadUserVotes(currentUser?.id, gwMatchIds).then(v => v.forEach(id => rated.add(id)))
