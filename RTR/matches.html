@@ -408,7 +408,8 @@ function drawChips(){document.getElementById('incidentChips').innerHTML=INCIDENT
 
 // ── LEADERBOARD ───────────────────────────────────────────
 function renderLb(){
-  const sorted=[...REFS].sort((a,b)=>{
+  const usedRefIds = new Set(MATCHES.filter(m => m.status === 'complete').map(m => +m.refId));
+  const sorted=[...REFS].filter(r => usedRefIds.has(r.id)).sort((a,b)=>{
     const av=lbMode==='neutral'?a.neutralVotes:a.fanVotes, bv=lbMode==='neutral'?b.neutralVotes:b.fanVotes;
     const ar=lbMode==='neutral'?a.neutralRating:a.fanRating, br=lbMode==='neutral'?b.neutralRating:b.fanRating;
     if(!av&&!bv)return 0; if(!av)return 1; if(!bv)return -1; return br-ar;
@@ -499,7 +500,7 @@ initHeader();
   await loadFromSheets().catch(() => {});
   const gwMatchIds = MATCHES.filter(m => m.matchweek === currentGW).map(m => +m.id);
   await Promise.all([
-    loadRatings(gwMatchIds),
+    loadRatings(), // all-time ratings for ref rankings leaderboard
     loadUserVotes(currentUser?.id, gwMatchIds).then(v => v.forEach(id => rated.add(id)))
   ]);
   syncMatchStatuses();
@@ -512,8 +513,7 @@ initHeader();
     // Preserve any complete statuses already in memory before reloading sheet
     const alreadyComplete = new Set(MATCHES.filter(m => m.status === 'complete').map(m => m.id));
     await loadFromSheets().catch(() => {});
-    const gwIds = MATCHES.filter(m => m.matchweek === currentGW).map(m => +m.id);
-    await loadRatings(gwIds);
+    await loadRatings();
     MATCHES.forEach(m => { if (alreadyComplete.has(m.id)) m.status = 'complete'; });
     syncMatchStatuses();
     renderList();
