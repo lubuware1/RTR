@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RefRater</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0c10;--surface:#12151c;--surface2:#1a1e28;
+    --border:#242836;--text:#e8eaf0;--muted:#6b7280;
+    --pl-purple:#37003c;--pl-green:#00ff85;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;overflow-x:hidden;}
+
+  /* ── PURPLE SHIMMER BACKGROUND ── */
+  body::before{
+    content:'';
+    position:fixed;inset:0;
+    background:
+      radial-gradient(ellipse 70% 50% at 20% 30%, rgba(55,0,60,.55) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 60% at 80% 70%, rgba(80,0,90,.4) 0%, transparent 65%),
+      radial-gradient(ellipse 40% 40% at 50% 10%, rgba(100,0,80,.3) 0%, transparent 60%);
+    pointer-events:none;
+    z-index:0;
+    animation:shimmerDrift 12s ease-in-out infinite alternate;
+  }
+  @keyframes shimmerDrift{
+    0%  { opacity:.7; transform:scale(1)    rotate(0deg); }
+    50% { opacity:1;  transform:scale(1.06) rotate(1deg); }
+    100%{ opacity:.75;transform:scale(1.02) rotate(-1deg);}
+  }
+  /* ensure all content sits above the shimmer */
+  .hero,.scroll-section,footer{ position:relative;z-index:1; }
+
+  /* ── HEADER ── */
+
+  /* ── HERO ── */
+  .hero{
+    min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:40px 24px 40px;
+    text-align:center;
+  }
+  .hero-logo{cursor:default;position:relative;z-index:2;}
+  .hero-logo img{
+    height:80px;width:auto;
+    transition:filter .35s ease, transform .35s ease;
+    position:relative;z-index:2;
+  }
+  .hero-logo img:hover{
+    filter:drop-shadow(0 0 18px rgba(0,255,133,.9)) drop-shadow(0 0 40px rgba(0,255,133,.45));
+    transform:scale(1.04);
+  }
+  .hero-bg-img{
+    position:absolute;
+    top:50%;left:50%;
+    transform:translate(-50%,-58%);
+    width:min(680px, 90vw);
+    height:auto;
+    opacity:0.09;
+    pointer-events:none;
+    z-index:0;
+    filter:blur(1px) saturate(0.6);
+  }
+  .hero-sub{
+    font-size:.95rem;color:rgba(255,255,255,.4);
+    max-width:440px;line-height:1.75;margin-top:22px;margin-bottom:48px;
+  }
+  .scroll-hint{
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+    color:var(--pl-green);font-size:.7rem;letter-spacing:.12em;
+    text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;font-weight:700;
+    animation:hintFade 2.5s ease-in-out infinite;
+  }
+  @keyframes hintFade{0%,100%{opacity:.45}50%{opacity:1}}
+  .scroll-hint svg{animation:arrowBounce 2s ease-in-out infinite;}
+  @keyframes arrowBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(7px)}}
+
+  /* ── SCROLL CONTAINER ── */
+  .scroll-section{
+    padding:40px 24px 120px;
+    display:flex;flex-direction:column;
+    align-items:center;
+    gap:80px;
+  }
+
+  /* ── CARD WRAPPER — perspective parent ── */
+  .card-scene{
+    width:100%;max-width:680px;
+    perspective:1200px;
+    /* start tilted, JS will update on scroll */
+  }
+
+  /* ── CARD ── */
+  .nav-card{
+    display:block;text-decoration:none;color:var(--text);
+    background:var(--surface2);
+    border:1px solid var(--border);
+    border-radius:24px;
+    padding:0;
+    overflow:visible;
+    box-shadow:
+      0 0 #0000004d,
+      0 9px 20px #0000004a,
+      0 37px 37px #00000042,
+      0 84px 50px #00000026,
+      0 149px 60px #0000000a;
+    transition:border-color .25s,box-shadow .25s;
+    will-change:transform;
+    /* transform is driven by JS */
+    transform-origin:center bottom;
+  }
+  .nav-card:hover{
+    border-color:rgba(0,255,133,.45);
+    box-shadow:0 8px 48px rgba(0,255,133,.15),0 0 0 1px rgba(0,255,133,.08);
+  }
+
+  /* inner content area — dark "screen" look matching the React demo */
+  .nav-card-inner{
+    background:#0d0f14;
+    border-radius:18px;
+    margin:8px;
+    padding:36px 36px 32px;
+    display:flex;flex-direction:column;align-items:flex-start;gap:14px;
+    position:relative;
+    overflow:visible;
+  }
+  /* referee figure — only on the Matches card */
+  .card-ref-img{
+    position:absolute;
+    right:16px;
+    bottom:-8px;
+    height:230px;
+    width:auto;
+    object-fit:contain;
+    object-position:bottom center;
+    opacity:0.18;
+    filter:saturate(0) brightness(1.1);
+    transform:translateY(0) scale(1);
+    transition:opacity .45s ease, filter .45s ease, transform .45s cubic-bezier(.22,1,.36,1), height .45s cubic-bezier(.22,1,.36,1);
+    pointer-events:none;
+    z-index:2;
+  }
+  .nav-card:hover .card-ref-img{
+    opacity:1;
+    filter:saturate(1) brightness(1);
+    transform:translateY(-30px) scale(1.08);
+    height:270px;
+  }
+  .nav-card-icon{font-size:2.4rem;line-height:1;}
+  .nav-card-title{
+    font-family:'Barlow Condensed',sans-serif;font-weight:900;
+    font-size:2rem;text-transform:uppercase;letter-spacing:.5px;
+    color:var(--pl-green);
+  }
+  .nav-card-desc{font-size:.88rem;color:var(--muted);line-height:1.7;max-width:460px;}
+  .nav-card-arrow{
+    margin-top:10px;
+    font-family:'Barlow Condensed',sans-serif;font-weight:700;
+    font-size:.85rem;letter-spacing:.06em;text-transform:uppercase;
+    color:rgba(0,255,133,.4);
+    display:flex;align-items:center;gap:6px;
+    transition:color .15s,gap .15s;
+  }
+  .nav-card:hover .nav-card-arrow{color:var(--pl-green);gap:10px;}
+
+  /* accent strip at top of each card */
+  .nav-card-strip{height:3px;background:linear-gradient(90deg,var(--pl-green),transparent);}
+
+  /* ── FOOTER ── */
+  footer{
+    padding:24px;text-align:center;
+    font-size:.75rem;color:var(--muted);
+    border-top:1px solid var(--border);
+  }
+
+  @media(max-width:640px){
+    .card-scene{max-width:100%;}
+    .nav-card-inner{padding:28px 24px 24px;}
+    .hero-logo img{height:60px;}
+  }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <img class="hero-bg-img" src="CSV/WTqEb-removebg-preview.png" alt="">
+  <div class="hero-logo">
+    <img src="images/logos/RRLogo.svg" alt="RefRater">
+  </div>
+  <p class="hero-sub">Track Premier League referee performance, compare community ratings, and compete in the fantasy ref league.</p>
+  <div class="scroll-hint">
+    <span>Scroll to explore</span>
+    <svg width="18" height="22" viewBox="0 0 18 22" fill="none">
+      <path d="M9 2v16M3 12l6 6 6-6" stroke="var(--pl-green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+</section>
+
+<section class="scroll-section">
+
+  <div class="card-scene" data-tilt>
+    <a class="nav-card" href="matches.html">
+      <div class="nav-card-strip" style="border-radius:24px 24px 0 0;overflow:hidden;"></div>
+      <div class="nav-card-inner">
+        <div class="nav-card-title">Matches</div>
+        <div class="nav-card-desc">Live scores, match results, and referee assignments. Rate referees directly from each fixture.</div>
+        <div class="nav-card-arrow">View matches <span>→</span></div>
+        <img class="card-ref-img" src="CSV/R98pQ-removebg-preview.png" alt="">
+      </div>
+    </a>
+  </div>
+
+  <div class="card-scene" data-tilt>
+    <a class="nav-card" href="referees.html">
+      <div class="nav-card-strip"></div>
+      <div class="nav-card-inner">
+        <div class="nav-card-title">Referees</div>
+        <div class="nav-card-desc">Full referee standings ranked by neutral and fan scores. Explore career stats and recent form.</div>
+        <div class="nav-card-arrow">View referees <span>→</span></div>
+        <img class="card-ref-img" src="CSV/iqlTt-removebg-preview.png" alt="">
+      </div>
+    </a>
+  </div>
+
+  <div class="card-scene" data-tilt>
+    <a class="nav-card" href="fantasy.html">
+      <div class="nav-card-strip"></div>
+      <div class="nav-card-inner">
+        <div class="nav-card-title">Fantasy</div>
+        <div class="nav-card-desc">Pick your referee each matchweek, earn points, and climb the fantasy league leaderboard.</div>
+        <div class="nav-card-arrow">Play fantasy <span>→</span></div>
+        <img class="card-ref-img" src="CSV/ywv2S-removebg-preview.png" alt="">
+      </div>
+    </a>
+  </div>
+
+</section>
+
+<footer>© RefRater — Community referee ratings</footer>
+
+<script>
+  const isMobile = () => window.innerWidth <= 768;
+
+  // For each card scene, track its scroll progress and apply
+  // rotateX (tilt) + scale, mirroring the framer-motion component.
+  function updateCards() {
+    const scenes = document.querySelectorAll('[data-tilt]');
+    const vh = window.innerHeight;
+
+    scenes.forEach(scene => {
+      const card = scene.querySelector('.nav-card');
+      const rect = scene.getBoundingClientRect();
+
+      // progress: 0 = card bottom just entered screen, 1 = card fully past centre
+      const progress = Math.min(1, Math.max(0,
+        (vh - rect.top) / (vh * 0.85)
+      ));
+
+      // rotateX: starts at 20deg (tilted away), eases to 0 (face-on) — same as the React component
+      const startAngle = isMobile() ? 14 : 20;
+      const rotateX = startAngle * (1 - easeOut(progress));
+
+      // scale: starts slightly large, settles to 1
+      const scaleStart = isMobile() ? 0.82 : 0.92;
+      const scale = scaleStart + (1 - scaleStart) * easeOut(progress);
+
+      card.style.transform = `rotateX(${rotateX}deg) scale(${scale})`;
+    });
+  }
+
+  function easeOut(t) {
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  window.addEventListener('scroll', updateCards, { passive: true });
+  window.addEventListener('resize', updateCards, { passive: true });
+  updateCards();
+</script>
+
+</body>
+</html>

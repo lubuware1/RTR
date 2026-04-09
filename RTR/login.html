@@ -165,7 +165,7 @@ function setLoading(btnId, loading) {
     _pendingUserId = session.user.id;
     showOnboarding();
   } else {
-    window.location.href = 'matches.html';
+    window.location.href = 'index.html';
   }
 })();
 
@@ -213,7 +213,7 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
     id: data.user.id, email: data.user.email,
     username: profile?.username || 'User', team: profile?.team || null
   }));
-  window.location.href = 'matches.html';
+  window.location.href = 'index.html';
 });
 
 // ── SIGN UP ───────────────────────────────────────────────
@@ -279,7 +279,7 @@ document.getElementById('onboardDone').addEventListener('click', async () => {
     stored.team = pickedTeam;
     localStorage.setItem(_USER_KEY, JSON.stringify(stored));
   }
-  window.location.href = 'matches.html';
+  window.location.href = 'index.html';
 });
 </script>
 <script>twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });</script>

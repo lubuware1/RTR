@@ -1272,6 +1272,27 @@
       .fl-pts.me {
         color: var(--pl-green);
       }
+      .ref-scores-col-header {
+        display: grid;
+        grid-template-columns: 1fr 52px 52px 52px;
+        padding: 4px 16px 4px calc(28px + 16px + 10px);
+        font-size: .65rem;
+        font-weight: 700;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        border-bottom: 1px solid var(--border);
+      }
+      .ref-scores-col-header span { text-align: center; }
+      .ref-scores-col-header span:first-child { text-align: left; }
+      .fl-pts-dual {
+        display: flex;
+        gap: 8px;
+      }
+      .fl-pts-dual-col {
+        width: 44px;
+        text-align: center;
+      }
       .lb-toggle {
         display: flex;
         gap: 4px;
@@ -1692,10 +1713,14 @@
 
           <!-- Tab: Ref Scores -->
           <div class="sp-tab-content" id="spTabRefs" style="display:none">
-            <div class="fl-header">🏅 GW Ref Scores — Matchweek 1</div>
+            <div class="fl-header">🏅 Ref Scores — Matchweek 1</div>
+            <div class="ref-scores-col-header">
+              <span></span>
+              <span>GP</span>
+              <span>MW</span>
+              <span>Total</span>
+            </div>
             <div id="refScores"><!-- rendered by JS --></div>
-            <div class="fl-header" style="margin-top:16px;">📊 Season Ref Points</div>
-            <div id="refSeasonScores"><!-- rendered by JS --></div>
           </div>
 
           <!-- Tab: Leaderboard -->
@@ -1703,14 +1728,10 @@
             <div class="fl-header">🏆 Fantasy League — Matchweek 1</div>
             <div class="lb-toggle">
               <button class="lb-toggle-btn active" data-lb="gw">GW Points</button>
-              <button class="lb-toggle-btn" data-lb="ref">GW Ref Points</button>
               <button class="lb-toggle-btn" data-lb="season">Season Points</button>
-              <button class="lb-toggle-btn" data-lb="seasonref">Total Ref Pts</button>
             </div>
             <div id="fantasyLeague"><!-- rendered by JS --></div>
-            <div id="refPointsLeague" style="display:none"><!-- rendered by JS --></div>
             <div id="seasonPointsLeague" style="display:none"><!-- rendered by JS --></div>
-            <div id="seasonRefPointsLeague" style="display:none"><!-- rendered by JS --></div>
           </div>
         </div>
       </div>
@@ -2296,9 +2317,7 @@
           btn.classList.add("active");
           const lb = btn.dataset.lb;
           document.getElementById("fantasyLeague").style.display = lb === "gw" ? "" : "none";
-          document.getElementById("refPointsLeague").style.display = lb === "ref" ? "" : "none";
           document.getElementById("seasonPointsLeague").style.display = lb === "season" ? "" : "none";
-          document.getElementById("seasonRefPointsLeague").style.display = lb === "seasonref" ? "" : "none";
         });
       });
 
@@ -2546,6 +2565,14 @@
               const isUsed = realLeft < w.defaultLeft;
               return `<span class="fl-wc-icon${isUsed ? ' used' : ''}" title="${w.icon}">${w.icon}<span class="fl-wc-left">${realLeft}</span></span>`;
             }).join('');
+            const battle = p.refId ? getBattleForRef(p.refId) : null;
+            const oppId = battle ? (battle.r1 === p.refId ? battle.r2 : battle.r1) : null;
+            const rawRefPts = p.refId != null ? (REF_GW_PTS[p.refId] ?? null) : null;
+            const wcBoost = rawRefPts !== null
+              ? (wc.yc?.active && oppId ? (getRefRC(oppId) > 0 ? 1 : 0) : 0) +
+                (wc.rc?.active ? 1 : 0) + (wc.var?.active ? 2 : 0)
+              : 0;
+            const refPtsDisplay = rawRefPts !== null ? rawRefPts + wcBoost : null;
             return `<div class="fl-row${p.isMe ? " me" : ""}">
       <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
       <div style="flex:1;min-width:0;">
@@ -2553,38 +2580,10 @@
         <div class="fl-sub">${team?.emoji || ""} ${p.team}${FGW.deadlinePassed || p.isMe ? ` · picked ${p.gwPick}` : " · pick hidden"}</div>
         <div class="fl-wc-row">${wcHtml}</div>
       </div>
-      <div class="fl-pts${p.isMe ? " me" : ""}">${p.pts}</div>
+      <div class="fl-pts${p.isMe ? " me" : ""}">${p.pts} <span style="font-size:.75em;opacity:.65;font-weight:500">(${refPtsDisplay !== null ? refPtsDisplay : "—"} ref pts)</span></div>
     </div>`;
           })
           .join("");
-      }
-
-      // ── REF POINTS LEADERBOARD ────────────────────────────────
-      function renderRefPointsLeague() {
-        const rows = FANTASY_LEAGUE.map(p => {
-          const { refId, wildcards: wc = {} } = p;
-          const battle = refId ? getBattleForRef(refId) : null;
-          const oppId = battle ? (battle.r1 === refId ? battle.r2 : battle.r1) : null;
-          const rawPts = refId != null ? (REF_GW_PTS[refId] ?? null) : null;
-          const wcBoost = rawPts !== null
-            ? (wc.yc?.active && oppId ? (getRefRC(oppId) > 0 ? 1 : 0) : 0) +
-              (wc.rc?.active ? 1 : 0) + (wc.var?.active ? 2 : 0)
-            : 0;
-          return { ...p, refPts: rawPts !== null ? rawPts + wcBoost : null };
-        }).sort((a, b) => (b.refPts ?? -1) - (a.refPts ?? -1));
-
-        document.getElementById("refPointsLeague").innerHTML = rows.map((p, i) => {
-          const team = PL_TEAMS.find(t => t.name === p.team);
-          const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1;
-          return `<div class="fl-row${p.isMe ? " me" : ""}">
-      <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
-      <div>
-        <div class="fl-name${p.isMe ? " me" : ""}">${p.username}${p.isMe ? " ★" : ""}</div>
-        <div class="fl-sub">${team?.emoji || ""} ${p.team}${FGW.deadlinePassed || p.isMe ? ` · picked ${p.gwPick}` : " · pick hidden"}</div>
-      </div>
-      <div class="fl-pts${p.isMe ? " me" : ""}">${p.refPts !== null ? p.refPts : "—"}</div>
-    </div>`;
-        }).join("");
       }
 
       // ── SEASON GW POINTS PER USER ─────────────────────────────
@@ -2644,13 +2643,14 @@
           const team = PL_TEAMS.find(t => t.name === row.profile?.team);
           const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1;
           const me = row.uid === currentUser?.id;
+          const refPts = seasonRefTotals[row.uid] ?? 0;
           return `<div class="fl-row${me ? " me" : ""}">
             <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
             <div>
               <div class="fl-name${me ? " me" : ""}">${row.profile?.username || "Unknown"}${me ? " ★" : ""}</div>
               <div class="fl-sub">${team?.emoji || ""} ${row.profile?.team || ""}</div>
             </div>
-            <div class="fl-pts${me ? " me" : ""}">${row.total}</div>
+            <div class="fl-pts${me ? " me" : ""}">${row.total} <span style="font-size:.75em;opacity:.65;font-weight:500">(${refPts} ref pts)</span></div>
           </div>`;
         }).join("");
       }
@@ -2685,40 +2685,22 @@
           });
         });
 
-        const sorted = Object.entries(userTotals)
-          .map(([uid, v]) => ({ uid, ...v }))
-          .sort((a, b) => b.total - a.total);
-
-        const isMe = uid => uid === currentUser?.id;
-        document.getElementById("seasonRefPointsLeague").innerHTML = sorted.map((row, i) => {
-          const team = PL_TEAMS.find(t => t.name === row.profile?.team);
-          const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1;
-          const me = isMe(row.uid);
-          return `<div class="fl-row${me ? " me" : ""}">
-            <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
-            <div>
-              <div class="fl-name${me ? " me" : ""}">${row.profile?.username || "Unknown"}${me ? " ★" : ""}</div>
-              <div class="fl-sub">${team?.emoji || ""} ${row.profile?.team || ""}</div>
-            </div>
-            <div class="fl-pts${me ? " me" : ""}">${row.total}</div>
-          </div>`;
-        }).join("");
-
-        // Return totals map for use as tiebreaker in season GW points
+        // Return totals map for use as tiebreaker in season GW points and display alongside season pts
         return Object.fromEntries(Object.entries(userTotals).map(([uid, v]) => [uid, v.total]));
       }
 
       // ── GW REF SCORES ─────────────────────────────────────────
       function renderRefScores() {
-        const scored = REFS
-          .filter(r => r.id in REF_GW_PTS)
-          .sort((a, b) => (REF_GW_PTS[b.id] ?? -1) - (REF_GW_PTS[a.id] ?? -1));
-        if (!scored.length) {
+        const allRefs = REFS.filter(r => r.id in REF_GW_PTS || r.id in REF_SEASON_PTS);
+        const sorted = allRefs.sort((a, b) => (REF_GW_PTS[b.id] ?? -1) - (REF_GW_PTS[a.id] ?? -1));
+        if (!sorted.length) {
           document.getElementById("refScores").innerHTML = '<div style="padding:14px 16px;font-size:.82rem;color:var(--muted)">No scores yet this matchweek</div>';
           return;
         }
-        document.getElementById("refScores").innerHTML = scored.map((r, i) => {
-          const pts = REF_GW_PTS[r.id];
+        document.getElementById("refScores").innerHTML = sorted.map((r, i) => {
+          const gwPts = REF_GW_PTS[r.id] ?? null;
+          const seasonPts = REF_SEASON_PTS[r.id] ?? 0;
+          const gamesPlayed = MATCHES.filter(m => +m.refId === r.id && (m.status === 'complete' || m.status === 'recent')).length;
           const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1;
           const isMyRef = r.id === myPick;
           return `<div class="fl-row${isMyRef ? " me" : ""}">
@@ -2727,7 +2709,11 @@
         <div class="fl-name${isMyRef ? " me" : ""}">${r.name}${isMyRef ? " ★" : ""}</div>
         <div class="fl-sub">${r.nationality}</div>
       </div>
-      <div class="fl-pts${isMyRef ? " me" : ""}">${pts !== null ? pts : "—"}</div>
+      <div class="fl-pts-dual">
+        <div class="fl-pts-dual-col"><div class="fl-pts${isMyRef ? " me" : ""}">${gamesPlayed}</div></div>
+        <div class="fl-pts-dual-col"><div class="fl-pts${isMyRef ? " me" : ""}" style="color:var(--pl-green)">${gwPts !== null ? gwPts : "—"}</div></div>
+        <div class="fl-pts-dual-col"><div class="fl-pts${isMyRef ? " me" : ""}">${seasonPts}</div></div>
+      </div>
     </div>`;
         }).join("");
       }
@@ -2752,24 +2738,6 @@
       }
 
       let REF_SEASON_PTS = {};
-
-      function renderSeasonRefScores() {
-        const sorted = REFS
-          .map(r => ({ ref: r, pts: REF_SEASON_PTS[r.id] ?? 0 }))
-          .sort((a, b) => b.pts - a.pts);
-        document.getElementById("refSeasonScores").innerHTML = sorted.map((row, i) => {
-          const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1;
-          const isMyRef = row.ref.id === myPick;
-          return `<div class="fl-row${isMyRef ? " me" : ""}">
-            <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
-            <div>
-              <div class="fl-name${isMyRef ? " me" : ""}">${row.ref.name}${isMyRef ? " ★" : ""}</div>
-              <div class="fl-sub">${row.ref.nationality}</div>
-            </div>
-            <div class="fl-pts${isMyRef ? " me" : ""}">${row.pts}</div>
-          </div>`;
-        }).join("");
-      }
 
       // ── LEADERBOARD FROM DB ───────────────────────────────────
       // Calculates each user's MW score from their stored pick + current REF_GW_PTS.
@@ -2811,7 +2779,6 @@
         });
         renderRefScores();
         renderLeague();
-        renderRefPointsLeague();
       }
 
       // ── BUILD BATTLES FROM MATCHES ────────────────────────────
@@ -2972,7 +2939,7 @@
         REFS.forEach(r => {
           (allBonuses[r.id] || []).forEach(b => { REF_SEASON_PTS[r.id] = (REF_SEASON_PTS[r.id] || 0) + b.pts; });
         });
-        renderSeasonRefScores();
+        renderRefScores(); // re-render now that season pts are computed
 
         // Show deadline notice only if locked
         document.getElementById("deadlineNotice").style.display =
@@ -3031,7 +2998,11 @@
             if (p.wildcards?.[k]?.active) USER_WC_LEFT[uid][k] = Math.max(0, USER_WC_LEFT[uid][k] - 1);
           });
         });
-        renderLeague(); // re-render now that per-user wildcard history is known
+        // Rebuild GW leaderboard from allPicks — catches any users missed by loadFantasyLeaderboard
+        // (e.g. matchweek type mismatch). Uses numeric comparison to be safe.
+        const gwPicks = allPicks.filter(p => +p.matchweek === FGW.gw);
+        if (gwPicks.length) buildLeaderboard(gwPicks);
+        else renderLeague(); // re-render with updated wildcard data if no additional picks found
 
         const seasonRefTotals = buildSeasonRefPointsLeague(allPicks);
         buildSeasonGWPointsLeague(allPicks, seasonRefTotals);

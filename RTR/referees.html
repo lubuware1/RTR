@@ -64,6 +64,10 @@
   .rpc-rank{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2.2rem;color:rgba(0,255,133,.18);line-height:1;flex-shrink:0;}
 
   .rpc-body{padding:14px 18px;}
+  .rpc-card-stats{display:flex;gap:6px;margin-bottom:14px;}
+  .rpc-stat-pill{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 8px;text-align:center;}
+  .rpc-stat-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.05rem;}
+  .rpc-stat-lbl{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:1px;}
 
   .rpc-scores{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
   .score-box{background:var(--surface2);border-radius:8px;padding:10px 12px;}
@@ -166,7 +170,7 @@
 </div>
 
 <div class="page">
-  <div class="data-banner">
+  <div class="data-banner" style="display:none">
     <div class="db-left"><div class="db-dot off" id="dbDot"></div><span id="dbText">Using built-in data · Connect Google Sheets for live updates</span></div>
     <span class="db-link" id="dbHowTo">How to connect →</span>
   </div>
@@ -279,6 +283,10 @@ function renderRefs(){
     ];
 
     const recentMatches=MATCHES.filter(m=>m.refId===ref.id&&m.status!=='upcoming').slice(-3);
+    const playedMatches=MATCHES.filter(m=>m.refId===ref.id&&(m.status==='complete'||m.status==='recent'));
+    const totalYC=playedMatches.reduce((s,m)=>s+(m.yc||0),0);
+    const totalRC=playedMatches.reduce((s,m)=>s+(m.rc||0),0);
+    const totalVAR=playedMatches.reduce((s,m)=>s+(m.var||0),0);
 
     return`<div class="rpc" data-ref-id="${ref.id}">
       <div class="rpc-head">
@@ -291,6 +299,11 @@ function renderRefs(){
         <div class="rpc-rank">#${rank+1}</div>
       </div>
       <div class="rpc-body">
+        <div class="rpc-card-stats">
+          <div class="rpc-stat-pill"><div class="rpc-stat-val" style="color:#f5c518">${totalYC}</div><div class="rpc-stat-lbl">Yellow Cards</div></div>
+          <div class="rpc-stat-pill"><div class="rpc-stat-val" style="color:var(--red)">${totalRC}</div><div class="rpc-stat-lbl">Red Cards</div></div>
+          <div class="rpc-stat-pill"><div class="rpc-stat-val" style="color:var(--pl-green)">${totalVAR}</div><div class="rpc-stat-lbl">VAR Decisions</div></div>
+        </div>
         <div class="rpc-scores">
           <div class="score-box nb">
             <div class="score-lbl nl">Neutral Score</div>
