@@ -69,6 +69,7 @@
   .hero-sub{
     font-size:.95rem;color:rgba(255,255,255,.4);
     max-width:440px;line-height:1.75;margin-top:22px;margin-bottom:48px;
+    position:relative;z-index:2;
   }
   .scroll-hint{
     display:flex;flex-direction:column;align-items:center;gap:8px;
@@ -156,8 +157,9 @@
     font-family:'Barlow Condensed',sans-serif;font-weight:900;
     font-size:2rem;text-transform:uppercase;letter-spacing:.5px;
     color:var(--pl-green);
+    position:relative;z-index:3;
   }
-  .nav-card-desc{font-size:.88rem;color:var(--muted);line-height:1.7;max-width:460px;}
+  .nav-card-desc{font-size:.88rem;color:var(--muted);line-height:1.7;max-width:460px;position:relative;z-index:3;}
   .nav-card-arrow{
     margin-top:10px;
     font-family:'Barlow Condensed',sans-serif;font-weight:700;
@@ -165,6 +167,7 @@
     color:rgba(0,255,133,.4);
     display:flex;align-items:center;gap:6px;
     transition:color .15s,gap .15s;
+    position:relative;z-index:3;
   }
   .nav-card:hover .nav-card-arrow{color:var(--pl-green);gap:10px;}
 

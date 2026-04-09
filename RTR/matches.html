@@ -152,9 +152,10 @@
   .lb-score{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.1rem;text-align:right;}
   .lb-score.g{color:var(--green);}.lb-score.y{color:var(--yellow);}.lb-score.r{color:var(--red);}
 
-  .empty-state{text-align:center;padding:40px 20px;color:var(--muted);}
+  .empty-state{text-align:center;padding:40px 20px;color:var(--muted);position:relative;overflow:hidden;}
   .empty-state .icon{font-size:2.5rem;margin-bottom:10px;}
-  .empty-state p{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:1rem;text-transform:uppercase;letter-spacing:1px;}
+  .empty-state p{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:1rem;text-transform:uppercase;letter-spacing:1px;position:relative;z-index:2;}
+  .empty-state-img{display:block;margin:0 auto 14px;height:160px;width:auto;object-fit:contain;opacity:0.55;filter:saturate(0.7);position:relative;z-index:1;}
   .toast{position:fixed;bottom:24px;right:24px;background:var(--pl-green);color:var(--pl-purple);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.9rem;padding:12px 20px;border-radius:8px;box-shadow:0 8px 32px rgba(0,255,133,.3);transform:translateY(60px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;z-index:1000;}
   .toast.show{transform:translateY(0);opacity:1;}
   img.emoji{height:1em;width:1em;vertical-align:-0.1em;}
@@ -222,10 +223,10 @@
       <div>Ratings for <strong id="fanBannerTeam"></strong> matches show <span style="color:var(--green)">neutral</span> and <span style="color:var(--yellow)">fan</span> scores separately</div>
     </div>
     <div class="view-tabs" id="filterTabs">
+      <button class="view-tab" data-filter="all">All</button>
+      <button class="view-tab" data-filter="upcoming">Upcoming</button>
       <button class="view-tab active" data-filter="live">Live</button>
       <button class="view-tab" data-filter="recent">Recent</button>
-      <button class="view-tab" data-filter="upcoming">Upcoming</button>
-      <button class="view-tab" data-filter="all">All</button>
     </div>
     <div class="section-title">Group Stage · Matchday 1 · 11 Jun 2026</div>
     <div id="matchList"></div>
@@ -237,7 +238,10 @@
         <button class="panel-close-btn" id="panelCloseBtn" title="Close">✕</button>
       </div>
       <div class="panel-body">
-        <div class="empty-state" id="panelEmpty"><div class="icon">🏳</div><p>Pick a match to begin</p></div>
+        <div class="empty-state" id="panelEmpty">
+          <img class="empty-state-img" src="CSV/ywv2S-removebg-preview.png" alt="">
+          <p>Pick a match to rate the referee after kick off</p>
+        </div>
         <div id="panelForm" style="display:none">
           <div class="sel-match-info" id="panelMatchInfo"></div>
           <div class="rcard" id="panelRefCard"></div>
