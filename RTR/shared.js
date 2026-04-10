@@ -23,7 +23,7 @@ const SHEETS_MATCHES_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRCN
 // ── PREVIEW MODE ─────────────────────────────────────────
 // Set to true to skip login and use a guest account for easy previewing.
 // Set to false when you're ready to go live with real logins.
-const PREVIEW_MODE = false;
+const PREVIEW_MODE = true;
 
 // ── SUPABASE ──────────────────────────────────────────────
 const SUPABASE_URL = 'https://sxufittkehlktlfvicom.supabase.co';
@@ -235,6 +235,98 @@ async function loadGWConfig() {
     deadlinePassed: new Date() > new Date(data.deadline),
     status: data.status || 'upcoming'
   };
+}
+
+// ── INCIDENTS ─────────────────────────────────────────────
+
+const INCIDENT_TYPES = [
+  { type: 'Red Card',        weight: 1.2 },
+  { type: 'Yellow Card',     weight: 0.3 },
+  { type: 'Penalty Given',   weight: 0.8 },
+  { type: 'Penalty Missed',  weight: 0.8 },
+  { type: 'VAR Decision',    weight: 0.6 },
+  { type: 'Goal Disallowed', weight: 0.7 },
+  { type: 'Foul Not Given',  weight: 0.4 },
+  { type: 'Offside Decision',weight: 0.4 },
+];
+
+// Compute incident-driven score from base 5.0
+// incidents: [{ type, weight }]
+// votes: { [incidentId]: { correct: N, wrong: N } }
+function calcIncidentScore(incidents, votes) {
+  if (!incidents.length) return 5.0;
+  let score = 5.0;
+  incidents.forEach(inc => {
+    const v = votes[inc.id];
+    if (!v) return;
+    const total = v.correct + v.wrong;
+    if (!total) return;
+    const sentiment = (v.correct - v.wrong) / total; // -1 to +1
+    score += inc.weight * sentiment;
+  });
+  return Math.min(10, Math.max(1, Math.round(score * 10) / 10));
+}
+
+async function loadIncidents(matchId) {
+  if (PREVIEW_MODE) return [];
+  const { data } = await getSB().from('RTR Incidents')
+    .select('id, match_id, type, minute, description, weight')
+    .eq('match_id', matchId)
+    .order('minute', { ascending: true });
+  return data || [];
+}
+
+async function loadIncidentVotes(incidentIds) {
+  if (!incidentIds.length) return {};
+  if (PREVIEW_MODE) return {};
+  const { data } = await getSB().from('RTR Incident Votes')
+    .select('incident_id, vote')
+    .in('incident_id', incidentIds);
+  // Aggregate: { incidentId: { correct: N, wrong: N } }
+  const agg = {};
+  incidentIds.forEach(id => { agg[id] = { correct: 0, wrong: 0 }; });
+  (data || []).forEach(v => {
+    if (!agg[v.incident_id]) agg[v.incident_id] = { correct: 0, wrong: 0 };
+    agg[v.incident_id][v.vote]++;
+  });
+  return agg;
+}
+
+async function loadMyIncidentVotes(userId, incidentIds) {
+  if (!incidentIds.length || PREVIEW_MODE) return {};
+  const { data } = await getSB().from('RTR Incident Votes')
+    .select('incident_id, vote, created_at')
+    .eq('user_id', userId)
+    .in('incident_id', incidentIds);
+  // { incidentId: { vote, created_at } }
+  const map = {};
+  (data || []).forEach(v => { map[v.incident_id] = { vote: v.vote, created_at: v.created_at }; });
+  return map;
+}
+
+async function saveIncidentVote(incidentId, userId, vote) {
+  if (PREVIEW_MODE) return true;
+  const { error } = await getSB().from('RTR Incident Votes').insert({
+    incident_id: incidentId, user_id: userId, vote, created_at: new Date().toISOString()
+  });
+  if (error) console.error('[RTR] saveIncidentVote error:', error);
+  return !error;
+}
+
+async function saveIncident(matchId, type, minute, description) {
+  if (PREVIEW_MODE) return null;
+  const weight = INCIDENT_TYPES.find(t => t.type === type)?.weight ?? 0.5;
+  const { data, error } = await getSB().from('RTR Incidents').insert({
+    match_id: matchId, type, minute: minute !== null ? +minute : null, description: description || null, weight
+  }).select().single();
+  if (error) console.error('[RTR] saveIncident error:', error);
+  return data || null;
+}
+
+async function deleteIncident(id) {
+  if (PREVIEW_MODE) return true;
+  const { error } = await getSB().from('RTR Incidents').delete().eq('id', id);
+  return !error;
 }
 
 async function loadFantasyLeaderboard(matchweek) {

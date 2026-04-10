@@ -110,30 +110,45 @@
   .pvs-score.ns{color:var(--green);}.pvs-score.fs{color:var(--yellow);}
   .pvs-none{color:var(--muted);font-size:.8rem;font-family:'Barlow Condensed',sans-serif;}
   .pvs-count{font-size:.7rem;color:var(--muted);margin-top:3px;}
-  .rating-label{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
-  .star-row{display:flex;gap:4px;margin-bottom:6px;justify-content:center;}
-  .star-btn{background:none;border:none;font-size:2.2rem;cursor:pointer;padding:0 2px;transition:transform .12s;color:var(--border);line-height:1;}
-  .star-btn:hover,.star-btn.active{color:var(--yellow);}
-  .star-btn:hover{transform:scale(1.2);}
-  .rating-desc{text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:.85rem;color:var(--muted);margin-bottom:14px;min-height:1.2em;}
-  .cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
-  .cat-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px;}
-  .cat-item label{display:block;font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;pointer-events:none;}
-  .cat-stars-row{display:flex;gap:2px;}
-  .cat-star{background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--border);padding:0;transition:color .1s,transform .1s;}
-  .cat-star:hover,.cat-star.active{color:var(--yellow);}
-  .cat-star:hover{transform:scale(1.15);}
-  .inc-label{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
-  .inc-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
-  .chip{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:.76rem;font-weight:600;color:var(--muted);cursor:pointer;transition:all .15s;user-select:none;}
-  .chip:hover{border-color:var(--accent2);color:var(--accent2);}
-  .chip.on{background:rgba(245,166,35,.12);border-color:var(--accent2);color:var(--accent2);}
-  .comment-box{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Barlow',sans-serif;font-size:.85rem;padding:10px 12px;resize:none;outline:none;transition:border-color .2s;margin-bottom:14px;}
-  .comment-box:focus{border-color:rgba(0,255,133,.4);}
-  .comment-box::placeholder{color:var(--muted);}
-  .submit-btn{width:100%;background:var(--pl-green);color:var(--pl-purple);border:none;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;letter-spacing:1px;text-transform:uppercase;padding:12px;cursor:pointer;transition:all .2s;}
-  .submit-btn:hover{background:#00e67a;box-shadow:0 4px 20px rgba(0,255,133,.3);}
-  .submit-btn:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;transform:none;box-shadow:none;}
+  /* ── INCIDENT SCORE DISPLAY ── */
+  .inc-score-block{text-align:center;padding:16px 0 10px;border-bottom:1px solid var(--border);margin-bottom:16px;}
+  .inc-score-val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:3rem;line-height:1;}
+  .inc-score-val.g{color:var(--green);}.inc-score-val.y{color:var(--yellow);}.inc-score-val.r{color:var(--red);}
+  .inc-score-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px;font-family:'Barlow Condensed',sans-serif;font-weight:700;}
+  .inc-star-row{display:flex;justify-content:center;gap:3px;margin:8px 0 0;}
+  .inc-star{font-size:1.1rem;color:var(--border);}
+  .inc-star.on{color:var(--yellow);}
+
+  /* ── INCIDENT LIST ── */
+  .inc-section-label{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  .inc-item{margin-bottom:6px;}
+  .inc-row{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;cursor:pointer;user-select:none;transition:border-color .15s;}
+  .inc-row:hover{border-color:rgba(255,255,255,.15);}
+  .inc-row.open{border-color:var(--pl-green);border-bottom-left-radius:0;border-bottom-right-radius:0;}
+  .inc-type{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;flex:1;}
+  .inc-minute{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.75rem;color:var(--pl-green);background:rgba(0,255,133,.08);border:1px solid rgba(0,255,133,.2);border-radius:4px;padding:1px 6px;flex-shrink:0;}
+  .inc-row-tally{font-size:.72rem;color:var(--muted);font-family:'Barlow Condensed',sans-serif;white-space:nowrap;}
+  .inc-row-tally.voted-c{color:var(--green);}.inc-row-tally.voted-w{color:var(--red);}
+  .inc-chevron{font-size:.6rem;color:var(--muted);transition:transform .2s;flex-shrink:0;}
+  .inc-row.open .inc-chevron{transform:rotate(180deg);}
+  .inc-expand{display:none;padding:12px 12px 10px;background:var(--surface2);border:1px solid var(--pl-green);border-top:none;border-bottom-left-radius:8px;border-bottom-right-radius:8px;}
+  .inc-expand.open{display:block;}
+  .inc-minute-wrap{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+  .inc-minute-wrap label{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
+  .inc-minute-input{width:70px;background:var(--surface);border:1.5px solid var(--border);border-radius:6px;padding:6px 8px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;text-align:center;outline:none;appearance:textfield;-moz-appearance:textfield;}
+  .inc-minute-input::-webkit-outer-spin-button,.inc-minute-input::-webkit-inner-spin-button{-webkit-appearance:none;}
+  .inc-minute-input:focus{border-color:var(--pl-green);}
+  .inc-desc{font-size:.78rem;color:var(--muted);margin-bottom:10px;line-height:1.4;}
+  .inc-vote-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+  .inc-vote-btn{border:1.5px solid var(--border);border-radius:7px;padding:9px 10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .18s;background:var(--surface);color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px;}
+  .inc-vote-btn:hover:not(:disabled){transform:translateY(-1px);}
+  .inc-vote-btn.correct:hover:not(:disabled),.inc-vote-btn.correct.voted{background:rgba(55,236,186,.1);border-color:var(--green);color:var(--green);}
+  .inc-vote-btn.wrong:hover:not(:disabled),.inc-vote-btn.wrong.voted{background:rgba(255,71,87,.1);border-color:var(--red);color:var(--red);}
+  .inc-vote-btn:disabled{opacity:.55;cursor:not-allowed;transform:none;}
+  .inc-bar-wrap{display:flex;align-items:center;gap:8px;font-size:.72rem;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-weight:700;}
+  .inc-bar{flex:1;height:5px;border-radius:3px;background:var(--border);overflow:hidden;}
+  .inc-bar-fill{height:100%;background:var(--green);border-radius:3px;transition:width .4s ease;}
+  .inc-cooldown{font-size:.7rem;color:var(--muted);text-align:center;margin-top:6px;font-family:'Barlow Condensed',sans-serif;min-height:1em;}
 
   /* Leaderboard */
   .leaderboard{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:16px;}
@@ -245,21 +260,15 @@
         <div id="panelForm" style="display:none">
           <div class="sel-match-info" id="panelMatchInfo"></div>
           <div class="rcard" id="panelRefCard"></div>
-          <div class="bias-notice" id="biasNotice"></div>
-          <div class="pvs" id="panelVoteSummary"></div>
-          <div class="rating-label">Your Rating (1–10)</div>
-          <div class="star-row" id="overallStars"></div>
-          <div class="rating-desc" id="ratingDesc">Tap a star to rate</div>
-          <div class="cat-grid">
-            <div class="cat-item"><label>Decision Making</label><div class="cat-stars-row" id="cat0"></div></div>
-            <div class="cat-item"><label>Card Management</label><div class="cat-stars-row" id="cat1"></div></div>
-            <div class="cat-item"><label>Game Control</label><div class="cat-stars-row" id="cat2"></div></div>
-            <div class="cat-item"><label>VAR Awareness</label><div class="cat-stars-row" id="cat3"></div></div>
+          <!-- Incident-driven score -->
+          <div class="inc-score-block">
+            <div class="inc-score-val" id="incScoreVal">5.0</div>
+            <div class="inc-star-row" id="incStarRow"></div>
+            <div class="inc-score-label">Community Ref Score</div>
           </div>
-          <div class="inc-label">Key Incidents</div>
-          <div class="inc-chips" id="incidentChips"></div>
-          <textarea class="comment-box" id="commentBox" rows="3" placeholder="Add a comment (optional)…"></textarea>
-          <button class="submit-btn" id="submitBtn">Submit Rating</button>
+          <!-- Incident cards -->
+          <div class="inc-section-label">Key Incidents</div>
+          <div id="incidentList"></div>
         </div>
       </div>
     </div>
@@ -285,8 +294,8 @@ let currentUser = getCurrentUser();
 if (!PREVIEW_MODE && !currentUser) { window.location.href = 'login.html'; }
 
 // State
-let selId=null, overall=0, cats=[0,0,0,0];
-const incidents=new Set(), rated=new Set();
+let selId=null;
+const rated=new Set();
 let filter='all', lbMode='neutral';
 let currentGW = 1; // updated from Supabase on load
 
@@ -394,6 +403,8 @@ function renderList() {
 // ── PANEL ─────────────────────────────────────────────────
 function closePanel() {
   selId=null;
+  if (cooldownInterval) { clearInterval(cooldownInterval); cooldownInterval=null; }
+  matchIncidents=[]; incidentVoteTotals={}; myIncidentVotes={};
   document.getElementById('panelEmpty').style.display='block';
   document.getElementById('panelForm').style.display='none';
   document.getElementById('panelCloseBtn').classList.remove('visible');
@@ -404,42 +415,207 @@ function closePanel() {
 
 document.getElementById('panelCloseBtn').addEventListener('click', closePanel);
 
-function openPanel(mid) {
-  const mx=MATCHES.find(x=>x.id===+mid);
-  if(mx && mx.status==='upcoming') return;
-  selId=mid; overall=0; cats=[0,0,0,0]; incidents.clear();
-  document.getElementById('commentBox').value='';
-  document.getElementById('panelEmpty').style.display='none';
-  document.getElementById('panelForm').style.display='block';
-  document.getElementById('panelCloseBtn').classList.add('visible');
-  document.getElementById('ratingPanel').classList.add('panel-open');
-  document.getElementById('panelSubtitle').textContent='Tap ✕ to close';
-  const m=MATCHES.find(x=>x.id===+mid), ref=REFS.find(r=>r.id===+m.refId);
-  const biased=isBiasedVote(mid,currentUser);
-  const team=PL_TEAMS.find(t=>t.name===currentUser?.team);
-  document.getElementById('panelMatchInfo').innerHTML=`<div style="font-size:1.3rem">${m.hE}⚔️${m.aE}</div><div><div class="sel-match-teams">${m.home} vs ${m.away}</div><div class="sel-match-date">2026 World Cup · Group ${m.group||'?'} · MD1</div></div>${m.score!=='–'?`<div style="margin-left:auto;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem">${m.score}</div>`:''}`;
-  document.getElementById('panelRefCard').innerHTML=`<div class="rcard-av">${ref.initials}</div><div><div class="rcard-name">${ref.name}</div><div class="rcard-meta">${ref.nationality} · FIFA Listed</div></div><div class="rcard-badge">FIFA</div>`;
-  const notice=document.getElementById('biasNotice');
-  if(biased){notice.className='bias-notice fv';notice.innerHTML=`<strong>${team?.emoji||''} Fan vote detected</strong><br>Your rating goes into the <span style="color:var(--yellow);font-weight:600">Fan</span> pool — keeping the <span style="color:var(--green);font-weight:600">Neutral</span> score unbiased.`;notice.style.display='block';}
-  else{notice.className='bias-notice nv';notice.innerHTML=`<strong>✓ Neutral vote</strong><br>Your rating goes into the <span style="color:var(--green);font-weight:600">Neutral</span> pool.`;notice.style.display='block';}
-  const hasN=ref.neutralVotes>0, hasF=ref.fanVotes>0;
-  document.getElementById('panelVoteSummary').innerHTML=`
-    <div class="pvs-box nb"><div class="pvs-lbl nl">Neutral Score</div>${hasN?`<div class="pvs-score ns">${ref.neutralRating.toFixed(1)}<span style="font-size:.75rem;color:var(--muted)">/10</span></div><div class="pvs-count">${ref.neutralVotes} votes</div>`:`<div class="pvs-none">No ratings yet</div>`}</div>
-    <div class="pvs-box fb"><div class="pvs-lbl fl">Fan Score</div>${hasF?`<div class="pvs-score fs">${ref.fanRating.toFixed(1)}<span style="font-size:.75rem;color:var(--muted)">/10</span></div><div class="pvs-count">${ref.fanVotes} votes</div>`:`<div class="pvs-none">No fan ratings yet</div>`}</div>`;
-  drawStars(); drawCats(); drawChips();
-  const btn=document.getElementById('submitBtn');
-  btn.disabled=rated.has(mid); btn.textContent=rated.has(mid)?'Already Rated ✓':'Submit Rating';
-  renderList();
+// ── INCIDENT VOTING STATE ─────────────────────────────────
+const COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
+let matchIncidents = []; // incidents for current open match
+let incidentVoteTotals = {}; // { id: { correct, wrong } }
+let myIncidentVotes = {}; // { id: { vote, created_at } }
+let cooldownInterval = null;
+
+function getCooldownKey(incidentId) {
+  return `rtr_icd_${incidentId}_${currentUser?.id || 'guest'}`;
 }
 
-function drawStars(){
-  document.getElementById('overallStars').innerHTML=Array.from({length:10},(_,i)=>`<button class="star-btn${i<overall?' active':''}" data-s="${i+1}">★</button>`).join('');
-  const d=document.getElementById('ratingDesc');
-  d.textContent=overall?DESCS[overall]:'Tap a star to rate';
-  d.style.color=overall>=7?'var(--green)':overall>=5?'var(--yellow)':overall>0?'var(--red)':'var(--muted)';
+function getLastVoteTime(incidentId) {
+  // Check localStorage first (fast), then myIncidentVotes from DB
+  const ls = localStorage.getItem(getCooldownKey(incidentId));
+  if (ls) return +ls;
+  const db = myIncidentVotes[incidentId];
+  return db ? new Date(db.created_at).getTime() : null;
 }
-function drawCats(){for(let i=0;i<4;i++)document.getElementById('cat'+i).innerHTML=Array.from({length:5},(_,j)=>`<button class="cat-star${j<cats[i]?' active':''}" data-ci="${i}" data-cv="${j+1}">★</button>`).join('');}
-function drawChips(){document.getElementById('incidentChips').innerHTML=INCIDENTS.map(inc=>`<div class="chip${incidents.has(inc)?' on':''}" data-inc="${inc}">${inc}</div>`).join('');}
+
+function isCoolingDown(incidentId) {
+  const t = getLastVoteTime(incidentId);
+  return t && (Date.now() - t) < COOLDOWN_MS;
+}
+
+function cooldownRemaining(incidentId) {
+  const t = getLastVoteTime(incidentId);
+  if (!t) return 0;
+  return Math.max(0, COOLDOWN_MS - (Date.now() - t));
+}
+
+function fmtMs(ms) {
+  const s = Math.ceil(ms / 1000);
+  const m = Math.floor(s / 60), sec = s % 60;
+  return `${m}:${String(sec).padStart(2,'0')}`;
+}
+
+function renderIncidentScore(incs, votes) {
+  const score = calcIncidentScore(incs, votes);
+  const sc = score >= 7 ? 'g' : score >= 5 ? 'y' : 'r';
+  document.getElementById('incScoreVal').textContent = score.toFixed(1);
+  document.getElementById('incScoreVal').className = `inc-score-val ${sc}`;
+  const filled = Math.round(score);
+  document.getElementById('incStarRow').innerHTML = Array.from({length:10},(_,i) =>
+    `<span class="inc-star${i < filled ? ' on' : ''}">★</span>`).join('');
+}
+
+// Synthetic ID for incident types not yet in DB
+function syntheticId(type) { return 'type_' + type.replace(/\s+/g, '_'); }
+
+// Merged list: always all 8 types, with DB record attached if admin added one
+function getMergedIncidents() {
+  return INCIDENT_TYPES.map(({ type, weight }) => {
+    const db = matchIncidents.find(i => i.type === type);
+    return db || { id: syntheticId(type), type, weight, minute: null, description: null, _virtual: true };
+  });
+}
+
+function renderIncidentList() {
+  const el = document.getElementById('incidentList');
+  // Preserve which items are currently open
+  const openIds = new Set([...document.querySelectorAll('.inc-expand.open')].map(e => e.dataset.iid));
+
+  el.innerHTML = getMergedIncidents().map(inc => {
+    const v = incidentVoteTotals[inc.id] || { correct: 0, wrong: 0 };
+    const total = v.correct + v.wrong;
+    const correctPct = total ? Math.round((v.correct / total) * 100) : 50;
+    const cooling = isCoolingDown(inc.id);
+    const myVote = myIncidentVotes[inc.id]?.vote || null;
+    const isOpen = openIds.has(String(inc.id));
+
+    // Tally badge shown in collapsed row
+    let tallyHtml = '', tallyClass = '';
+    if (myVote) {
+      tallyClass = myVote === 'correct' ? 'voted-c' : 'voted-w';
+      tallyHtml = myVote === 'correct' ? `✅ Voted Correct` : `❌ Voted Wrong`;
+    } else if (total) {
+      tallyHtml = `${v.correct}✅ ${v.wrong}❌`;
+    }
+
+    return `<div class="inc-item">
+      <div class="inc-row${isOpen?' open':''}" data-itype="${inc.id}">
+        <span class="inc-type">${inc.type}</span>
+        ${inc.minute !== null ? `<span class="inc-minute">${inc.minute}'</span>` : ''}
+        ${tallyHtml ? `<span class="inc-row-tally ${tallyClass}">${tallyHtml}</span>` : ''}
+        <span class="inc-chevron">▼</span>
+      </div>
+      <div class="inc-expand${isOpen?' open':''}" data-iid="${inc.id}">
+        ${inc.description ? `<div class="inc-desc">${inc.description}</div>` : ''}
+        <div class="inc-minute-wrap">
+          <label for="inc-min-${inc.id}">Minute</label>
+          <input class="inc-minute-input" id="inc-min-${inc.id}" type="number" min="1" max="120" placeholder="e.g. 45" value="${inc.minute !== null ? inc.minute : ''}">
+        </div>
+        <div class="inc-vote-row">
+          <button class="inc-vote-btn correct${myVote==='correct'?' voted':''}" data-iid="${inc.id}" data-vote="correct" ${cooling||!inc.minute?'disabled':''}>
+            ✅ Correct ${v.correct ? `<span style="opacity:.6;font-size:.75em">(${v.correct})</span>` : ''}
+          </button>
+          <button class="inc-vote-btn wrong${myVote==='wrong'?' voted':''}" data-iid="${inc.id}" data-vote="wrong" ${cooling||!inc.minute?'disabled':''}>
+            ❌ Wrong ${v.wrong ? `<span style="opacity:.6;font-size:.75em">(${v.wrong})</span>` : ''}
+          </button>
+        </div>
+        <div class="inc-bar-wrap">
+          <span style="color:var(--green)">${correctPct}%</span>
+          <div class="inc-bar"><div class="inc-bar-fill" style="width:${correctPct}%"></div></div>
+          <span style="color:var(--red)">${100 - correctPct}%</span>
+        </div>
+        <div class="inc-cooldown" id="inc-cd-${inc.id}">${cooling ? `Revote in ${fmtMs(cooldownRemaining(inc.id))}` : ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Enable vote buttons only when minute is filled
+document.getElementById('incidentList').addEventListener('input', e => {
+  const input = e.target.closest('.inc-minute-input');
+  if (!input) return;
+  const expandEl = input.closest('.inc-expand');
+  if (!expandEl) return;
+  const hasMinute = input.value.trim() !== '';
+  expandEl.querySelectorAll('.inc-vote-btn').forEach(btn => {
+    if (!btn.classList.contains('voted')) btn.disabled = !hasMinute;
+  });
+});
+
+// Toggle accordion rows
+document.getElementById('incidentList').addEventListener('click', e => {
+  const row = e.target.closest('.inc-row');
+  if (!row || e.target.closest('.inc-vote-btn')) return;
+  const itemId = row.dataset.itype;
+  const expandEl = document.querySelector(`.inc-expand[data-iid="${itemId}"]`);
+  if (!expandEl) return;
+  const isOpen = expandEl.classList.contains('open');
+  // Collapse all
+  document.querySelectorAll('.inc-expand.open').forEach(el => el.classList.remove('open'));
+  document.querySelectorAll('.inc-row.open').forEach(el => el.classList.remove('open'));
+  // Open this one if it was closed
+  if (!isOpen) { expandEl.classList.add('open'); row.classList.add('open'); }
+});
+
+function startCooldownTick() {
+  if (cooldownInterval) clearInterval(cooldownInterval);
+  cooldownInterval = setInterval(() => {
+    getMergedIncidents().forEach(inc => {
+      const cdEl = document.getElementById(`inc-cd-${inc.id}`);
+      const btn1 = document.querySelector(`[data-iid="${inc.id}"][data-vote="correct"]`);
+      const btn2 = document.querySelector(`[data-iid="${inc.id}"][data-vote="wrong"]`);
+      if (!cdEl) return;
+      const remaining = cooldownRemaining(inc.id);
+      if (remaining > 0) {
+        cdEl.textContent = `Revote in ${fmtMs(remaining)}`;
+        if (btn1) btn1.disabled = true;
+        if (btn2) btn2.disabled = true;
+      } else {
+        cdEl.textContent = '';
+        // Only re-enable if the minute input has been filled
+        const expandEl = cdEl.closest('.inc-expand');
+        const minuteFilled = expandEl?.querySelector('.inc-minute-input')?.value.trim() !== '';
+        if (btn1 && !btn1.classList.contains('voted')) btn1.disabled = !minuteFilled;
+        if (btn2 && !btn2.classList.contains('voted')) btn2.disabled = !minuteFilled;
+      }
+    });
+  }, 1000);
+}
+
+async function openPanel(mid) {
+  selId = mid;
+  document.getElementById('panelEmpty').style.display = 'none';
+  document.getElementById('panelForm').style.display = 'block';
+  document.getElementById('panelCloseBtn').classList.add('visible');
+  document.getElementById('ratingPanel').classList.add('panel-open');
+  document.getElementById('panelSubtitle').textContent = 'Tap ✕ to close';
+
+  const m = MATCHES.find(x => x.id === +mid);
+  const ref = REFS.find(r => r.id === +m.refId);
+
+  document.getElementById('panelMatchInfo').innerHTML = `
+    <div style="font-size:1.3rem">${m.hE}⚔️${m.aE}</div>
+    <div>
+      <div class="sel-match-teams">${m.home} vs ${m.away}</div>
+      <div class="sel-match-date">2026 World Cup · Group ${m.group||'?'} · MD1</div>
+    </div>
+    ${m.score !== '–' ? `<div style="margin-left:auto;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem">${m.score}</div>` : ''}`;
+
+  document.getElementById('panelRefCard').innerHTML = `
+    <div class="rcard-av">${ref.initials}</div>
+    <div><div class="rcard-name">${ref.name}</div><div class="rcard-meta">${ref.nationality} · FIFA Listed</div></div>
+    <div class="rcard-badge">FIFA</div>`;
+
+  // Load incidents + votes
+  document.getElementById('incidentList').innerHTML = `<div style="color:var(--muted);font-size:.82rem;padding:12px 0;">Loading incidents…</div>`;
+  matchIncidents = await loadIncidents(mid);
+  const ids = matchIncidents.map(i => i.id);
+  [incidentVoteTotals, myIncidentVotes] = await Promise.all([
+    loadIncidentVotes(ids),
+    loadMyIncidentVotes(currentUser?.id, ids),
+  ]);
+
+  renderIncidentScore(getMergedIncidents(), incidentVoteTotals);
+  renderIncidentList();
+  startCooldownTick();
+  renderList();
+}
 
 // ── LEADERBOARD ───────────────────────────────────────────
 function renderLb(){
@@ -460,9 +636,8 @@ function renderLb(){
 // ── EVENTS ────────────────────────────────────────────────
 document.getElementById('matchList').addEventListener('click',e=>{const c=e.target.closest('[data-mid]');if(c)openPanel(+c.dataset.mid);});
 function updatePanelVisibility() {
-  const show = filter === 'live' || filter === 'recent';
-  document.getElementById('ratingPanel').style.display = show ? '' : 'none';
-  if (!show) closePanel();
+  // Panel is always visible — incidents can be voted on for any match
+  document.getElementById('ratingPanel').style.display = '';
 }
 
 document.getElementById('filterTabs').addEventListener('click',e=>{
@@ -471,34 +646,73 @@ document.getElementById('filterTabs').addEventListener('click',e=>{
   updatePanelVisibility();
   renderList();
 });
-document.getElementById('overallStars').addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(b){overall=+b.dataset.s;drawStars();}});
-document.getElementById('panelForm').addEventListener('click',e=>{
-  const cs=e.target.closest('[data-ci]'); if(cs){cats[+cs.dataset.ci]=+cs.dataset.cv;drawCats();return;}
-  const ch=e.target.closest('[data-inc]'); if(ch){const k=ch.dataset.inc;incidents.has(k)?incidents.delete(k):incidents.add(k);ch.classList.toggle('on',incidents.has(k));}
-});
-document.getElementById('submitBtn').addEventListener('click', async () => {
-  if(!overall){const d=document.getElementById('ratingDesc');d.textContent='⚠ Please select an overall rating first';d.style.color='var(--red)';return;}
-  const btn=document.getElementById('submitBtn');
-  btn.disabled=true; btn.textContent='Saving…';
-  const m=MATCHES.find(x=>x.id===selId);
-  const ref=REFS.find(r=>r.id===+m.refId);
-  const biased=isBiasedVote(selId,currentUser);
-  const voteData = {
-    user_id: currentUser.id, match_id: selId, ref_id: ref.id,
-    overall, decision_making: cats[0], card_management: cats[1],
-    game_control: cats[2], var_awareness: cats[3],
-    incidents: [...incidents].join(','), comment: document.getElementById('commentBox').value.trim(),
-    is_fan_vote: !!biased
-  };
-  const ok = await saveVoteToDB(voteData);
-  if(!ok){ btn.disabled=false; btn.textContent='Submit Rating'; toast('⚠ Save failed — please try again'); return; }
-  if(biased){const p=ref.fanRating*ref.fanVotes;ref.fanVotes++;ref.fanRating=Math.round((p+overall)/ref.fanVotes*10)/10;}
-  else{const p=ref.neutralRating*ref.neutralVotes;ref.neutralVotes++;ref.neutralRating=Math.round((p+overall)/ref.neutralVotes*10)/10;}
-  rated.add(selId);
-  openPanel(selId);
-  btn.disabled=true; btn.textContent='Already Rated ✓';
-  renderList(); renderLb();
-  toast(biased?'⚽ Fan rating submitted!':'✓ Neutral rating submitted!');
+// ── INCIDENT VOTE HANDLER ─────────────────────────────────
+document.getElementById('incidentList').addEventListener('click', async e => {
+  const btn = e.target.closest('.inc-vote-btn');
+  if (!btn || btn.disabled) return;
+  let incidentId = btn.dataset.iid; // may be a synthetic string like "type_Red_Card"
+  const vote = btn.dataset.vote; // 'correct' or 'wrong'
+  const isVirtual = incidentId.startsWith('type_');
+
+  // Read minute from the input inside this expand panel
+  const expandEl = btn.closest('.inc-expand');
+  const minuteInput = expandEl?.querySelector('.inc-minute-input');
+  const minute = minuteInput ? +minuteInput.value || null : null;
+
+  // If voting on a virtual incident, auto-create DB record first
+  if (isVirtual) {
+    const typeName = INCIDENT_TYPES.find(t => syntheticId(t.type) === incidentId)?.type;
+    if (typeName) {
+      const newInc = await saveIncident(selId, typeName, minute, null);
+      if (newInc) {
+        // Replace synthetic entry with real DB record
+        matchIncidents.push(newInc);
+        const oldId = incidentId;
+        incidentId = newInc.id;
+        // Migrate any existing optimistic state from synthetic key
+        if (incidentVoteTotals[oldId]) { incidentVoteTotals[incidentId] = incidentVoteTotals[oldId]; delete incidentVoteTotals[oldId]; }
+        if (myIncidentVotes[oldId]) { myIncidentVotes[incidentId] = myIncidentVotes[oldId]; delete myIncidentVotes[oldId]; }
+      }
+    }
+  } else if (minute !== null) {
+    // Update minute on existing DB incident if user entered one
+    const existing = matchIncidents.find(i => i.id === incidentId || i.id === +incidentId);
+    if (existing && existing.minute === null) existing.minute = minute;
+  }
+
+  // Optimistic UI update
+  btn.disabled = true;
+  if (!incidentVoteTotals[incidentId]) incidentVoteTotals[incidentId] = { correct: 0, wrong: 0 };
+  incidentVoteTotals[incidentId][vote]++;
+  myIncidentVotes[incidentId] = { vote, created_at: new Date().toISOString() };
+  localStorage.setItem(getCooldownKey(incidentId), Date.now());
+
+  const merged = getMergedIncidents();
+  renderIncidentScore(merged, incidentVoteTotals);
+  renderIncidentList();
+  startCooldownTick();
+
+  const ok = await saveIncidentVote(incidentId, currentUser?.id, vote);
+  if (!ok) {
+    // Rollback
+    incidentVoteTotals[incidentId][vote]--;
+    delete myIncidentVotes[incidentId];
+    localStorage.removeItem(getCooldownKey(incidentId));
+    renderIncidentScore(getMergedIncidents(), incidentVoteTotals);
+    renderIncidentList();
+    toast('⚠ Vote failed — please try again');
+    return;
+  }
+
+  // Update ref score in leaderboard
+  const m = MATCHES.find(x => x.id === selId);
+  const ref = REFS.find(r => r.id === +m.refId);
+  if (ref) {
+    const newScore = calcIncidentScore(getMergedIncidents(), incidentVoteTotals);
+    ref.neutralRating = newScore;
+    renderLb();
+  }
+  toast(`${vote === 'correct' ? '✅' : '❌'} Vote recorded!`);
 });
 document.getElementById('leaderboard').addEventListener('click',e=>{
   const r=e.target.closest('[data-lref]');if(!r)return;

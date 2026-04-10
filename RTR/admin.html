@@ -127,6 +127,42 @@
     <hr class="divider">
     <div id="bonusList"><div style="color:var(--muted);font-size:.85rem;">Loading bonuses…</div></div>
   </div>
+
+  <!-- KEY INCIDENTS -->
+  <div class="section">
+    <div class="section-title">⚡ Key Incidents</div>
+    <div class="row cols-4" style="margin-bottom:8px;">
+      <div class="field-group">
+        <label>Match</label>
+        <select id="incMatchSel"><option value="">Select match…</option></select>
+      </div>
+      <div class="field-group">
+        <label>Incident Type</label>
+        <select id="incType">
+          <option value="">Select type…</option>
+          <option>Red Card</option>
+          <option>Yellow Card</option>
+          <option>Penalty Given</option>
+          <option>Penalty Missed</option>
+          <option>VAR Decision</option>
+          <option>Goal Disallowed</option>
+          <option>Foul Not Given</option>
+          <option>Offside Decision</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>Minute</label>
+        <input type="number" id="incMinute" min="1" max="120" placeholder="e.g. 45">
+      </div>
+      <div class="field-group">
+        <label>Description (optional)</label>
+        <input type="text" id="incDesc" placeholder="e.g. Handball in box">
+      </div>
+    </div>
+    <button class="btn btn-green btn-sm" id="addIncidentBtn" style="margin-bottom:16px;">+ Add Incident</button>
+    <hr class="divider">
+    <div id="incidentAdminList"><div style="color:var(--muted);font-size:.85rem;">Select a match to view incidents.</div></div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -340,6 +376,63 @@
         toast('✓ Bonus added');
       } else toast('Failed to add bonus', true);
     });
+
+    // ── INCIDENTS ─────────────────────────────────────────
+    // Populate match selector
+    const incMatchSel = document.getElementById('incMatchSel');
+    MATCHES.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = `MW${m.matchweek} · ${m.home} vs ${m.away} (${m.status})`;
+      incMatchSel.appendChild(opt);
+    });
+
+    async function renderIncidentAdminList(matchId) {
+      const el = document.getElementById('incidentAdminList');
+      if (!matchId) { el.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">Select a match above.</div>'; return; }
+      el.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">Loading…</div>';
+      const incs = await loadIncidents(+matchId);
+      if (!incs.length) { el.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">No incidents yet for this match.</div>'; return; }
+      el.innerHTML = incs.map(inc => `
+        <div class="bonus-row" id="inc-admin-${inc.id}">
+          <span class="bonus-pts pos" style="min-width:40px;font-size:.8rem;">${inc.minute}'</span>
+          <span class="bonus-label"><strong>${inc.type}</strong>${inc.description ? ` — ${inc.description}` : ''}</span>
+          <span class="bonus-meta">weight ±${inc.weight}</span>
+          <button class="btn btn-red btn-sm" data-del-inc="${inc.id}">Delete</button>
+        </div>`).join('');
+    }
+
+    incMatchSel.addEventListener('change', () => renderIncidentAdminList(incMatchSel.value));
+
+    document.getElementById('addIncidentBtn').addEventListener('click', async () => {
+      const matchId = incMatchSel.value;
+      const type    = document.getElementById('incType').value;
+      const minute  = document.getElementById('incMinute').value;
+      const desc    = document.getElementById('incDesc').value.trim();
+      if (!matchId) { toast('Select a match first', true); return; }
+      if (!type)    { toast('Select an incident type', true); return; }
+      if (!minute)  { toast('Enter the minute', true); return; }
+      const inc = await saveIncident(+matchId, type, +minute, desc);
+      if (inc) {
+        document.getElementById('incMinute').value = '';
+        document.getElementById('incDesc').value = '';
+        await renderIncidentAdminList(matchId);
+        toast(`✓ Incident added — ${type} ${minute}'`);
+      } else toast('Failed to add incident', true);
+    });
+
+    document.getElementById('incidentAdminList').addEventListener('click', async e => {
+      const btn = e.target.closest('[data-del-inc]');
+      if (!btn) return;
+      const id = +btn.dataset.delInc;
+      btn.disabled = true; btn.textContent = '…';
+      const ok = await deleteIncident(id);
+      if (ok) {
+        document.getElementById(`inc-admin-${id}`)?.remove();
+        toast('Incident deleted');
+      } else { btn.disabled = false; btn.textContent = 'Delete'; toast('Delete failed', true); }
+    });
+
   })();
 </script>
 </body>
