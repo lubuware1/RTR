@@ -23,7 +23,7 @@ const SHEETS_MATCHES_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRCN
 // ── PREVIEW MODE ─────────────────────────────────────────
 // Set to true to skip login and use a guest account for easy previewing.
 // Set to false when you're ready to go live with real logins.
-const PREVIEW_MODE = true;
+const PREVIEW_MODE = false;
 
 // ── SUPABASE ──────────────────────────────────────────────
 const SUPABASE_URL = 'https://sxufittkehlktlfvicom.supabase.co';
