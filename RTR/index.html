@@ -46,25 +46,24 @@
     text-align:center;
   }
   .hero-logo{cursor:default;position:relative;z-index:2;}
-  .hero-logo img{
-    height:80px;width:auto;
+  .hero-logo-wordmark{
+    height:72px;width:auto;
     transition:filter .35s ease, transform .35s ease;
     position:relative;z-index:2;
   }
-  .hero-logo img:hover{
+  .hero-logo:hover .hero-logo-wordmark{
     filter:drop-shadow(0 0 18px rgba(0,255,133,.9)) drop-shadow(0 0 40px rgba(0,255,133,.45));
     transform:scale(1.04);
   }
-  .hero-bg-img{
+  .hero-ref-bg{
     position:absolute;
-    top:50%;left:50%;
-    transform:translate(-50%,-58%);
-    width:min(680px, 90vw);
-    height:auto;
-    opacity:0.28;
+    bottom:0;left:50%;
+    transform:translateX(-50%);
+    height:90%;width:auto;
+    opacity:0.18;
     pointer-events:none;
     z-index:0;
-    filter:blur(0.5px) saturate(0.8);
+    filter:saturate(1.2);
   }
   .hero-sub{
     font-size:.95rem;color:rgba(255,255,255,.4);
@@ -184,7 +183,7 @@
   @media(max-width:768px){
     .card-scene{max-width:100%;}
     .nav-card-inner{padding:28px 24px 24px;}
-    .hero-logo img{height:60px;}
+    .hero-logo-wordmark{height:52px;}
     /* disable hover state — JS drives images on mobile instead */
     .nav-card:hover .card-ref-img{
       opacity:inherit;filter:inherit;transform:inherit;height:inherit;
@@ -200,9 +199,9 @@
 <body>
 
 <section class="hero">
-  <img class="hero-bg-img" src="CSV/WTqEb-removebg-preview.png" alt="">
+  <img class="hero-ref-bg" src="CSV/image__5_-removebg-preview.png" alt="">
   <div class="hero-logo">
-    <img src="images/logos/RRLogo.svg" alt="RefRater">
+    <img class="hero-logo-wordmark" src="images/logos/RRLogo.svg" alt="RefRater">
   </div>
   <p class="hero-sub">Track Premier League referee performance, compare community ratings, and compete in the fantasy ref league.</p>
   <div class="scroll-hint">
