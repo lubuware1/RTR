@@ -121,6 +121,10 @@
 
   /* ── INCIDENT LIST ── */
   .inc-section-label{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  .inc-pregame{text-align:center;padding:28px 16px;border:1px dashed var(--border);border-radius:10px;}
+  .inc-pregame-icon{font-size:1.8rem;margin-bottom:8px;}
+  .inc-pregame-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;margin-bottom:4px;}
+  .inc-pregame-sub{font-size:.78rem;color:var(--muted);}
   .inc-item{margin-bottom:6px;}
   .inc-row{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;cursor:pointer;user-select:none;transition:border-color .15s;}
   .inc-row:hover{border-color:rgba(255,255,255,.15);}
@@ -601,6 +605,20 @@ async function openPanel(mid) {
     <div class="rcard-av">${ref.initials}</div>
     <div><div class="rcard-name">${ref.name}</div><div class="rcard-meta">${ref.nationality} · FIFA Listed</div></div>
     <div class="rcard-badge">FIFA</div>`;
+
+  // Block voting for upcoming matches
+  if (m.status === 'upcoming') {
+    document.getElementById('incidentList').innerHTML = `
+      <div class="inc-pregame">
+        <div class="inc-pregame-icon">🔒</div>
+        <div class="inc-pregame-title">Match hasn't started yet</div>
+        <div class="inc-pregame-sub">Voting opens once the game kicks off</div>
+      </div>`;
+    document.getElementById('incScoreVal').textContent = '–';
+    document.getElementById('incStarRow').innerHTML = '';
+    renderList();
+    return;
+  }
 
   // Load incidents + votes
   document.getElementById('incidentList').innerHTML = `<div style="color:var(--muted);font-size:.82rem;padding:12px 0;">Loading incidents…</div>`;
