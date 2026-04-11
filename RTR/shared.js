@@ -276,20 +276,24 @@ async function loadIncidents(matchId) {
   return data || [];
 }
 
+// Returns { neutral: { incidentId: {correct,wrong} }, fan: { incidentId: {correct,wrong} } }
 async function loadIncidentVotes(incidentIds) {
-  if (!incidentIds.length) return {};
-  if (PREVIEW_MODE) return {};
+  if (!incidentIds.length) return { neutral: {}, fan: {} };
+  if (PREVIEW_MODE) return { neutral: {}, fan: {} };
   const { data } = await getSB().from('RTR Incident Votes')
-    .select('incident_id, vote')
+    .select('incident_id, vote, is_fan')
     .in('incident_id', incidentIds);
-  // Aggregate: { incidentId: { correct: N, wrong: N } }
-  const agg = {};
-  incidentIds.forEach(id => { agg[id] = { correct: 0, wrong: 0 }; });
-  (data || []).forEach(v => {
-    if (!agg[v.incident_id]) agg[v.incident_id] = { correct: 0, wrong: 0 };
-    agg[v.incident_id][v.vote]++;
+  const neutral = {}, fan = {};
+  incidentIds.forEach(id => {
+    neutral[id] = { correct: 0, wrong: 0 };
+    fan[id]     = { correct: 0, wrong: 0 };
   });
-  return agg;
+  (data || []).forEach(v => {
+    const bucket = v.is_fan ? fan : neutral;
+    if (!bucket[v.incident_id]) bucket[v.incident_id] = { correct: 0, wrong: 0 };
+    bucket[v.incident_id][v.vote]++;
+  });
+  return { neutral, fan };
 }
 
 async function loadMyIncidentVotes(userId, incidentIds) {
@@ -304,10 +308,10 @@ async function loadMyIncidentVotes(userId, incidentIds) {
   return map;
 }
 
-async function saveIncidentVote(incidentId, userId, vote) {
+async function saveIncidentVote(incidentId, userId, vote, isFan) {
   if (PREVIEW_MODE) return true;
   const { error } = await getSB().from('RTR Incident Votes').insert({
-    incident_id: incidentId, user_id: userId, vote, created_at: new Date().toISOString()
+    incident_id: incidentId, user_id: userId, vote, is_fan: !!isFan, created_at: new Date().toISOString()
   });
   if (error) console.error('[RTR] saveIncidentVote error:', error);
   return !error;

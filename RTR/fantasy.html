@@ -1602,7 +1602,7 @@
                 <div class="htp-score-row"><span class="htp-pts pos">+1</span> Per yellow card 🟨</div>
                 <div class="htp-score-row"><span class="htp-pts pos">+1</span> Per red card 🟥</div>
                 <div class="htp-score-row"><span class="htp-pts pos">+2</span> Correct VAR decision (penalty or red card)</div>
-                <div class="htp-score-row"><span class="htp-pts pos">+8</span> Perfect game — no cards, no VAR</div>
+                <div class="htp-score-row"><span class="htp-pts pos">+5</span> Perfect game — no VAR decisions</div>
                 <div class="htp-score-row"><span class="htp-pts neg">−1</span> VAR overturns a penalty decision</div>
                 <div class="htp-score-row"><span class="htp-pts neg">−2</span> VAR overturns a red card decision</div>
               </div>
@@ -1663,7 +1663,7 @@
               <span class="sg-pts pos">+2</span> Correct VAR decision (penalty or red card)
             </div>
             <div class="sg-item">
-              <span class="sg-pts pos">+8</span> Perfect game — no cards, no VAR
+              <span class="sg-pts pos">+5</span> Perfect game — no VAR decisions
             </div>
             <div class="sg-item">
               <span class="sg-pts neg">−1</span> VAR overturn penalty decision
@@ -2605,7 +2605,7 @@
           REFS.forEach(r => {
             const played = gwMatchList.filter(m => +m.refId === r.id && (m.status === 'complete' || m.status === 'recent'));
             if (!played.length) return;
-            let pts = played.reduce((s,m) => s + (m.yc||0) + (m.rc||0) + (m.pen||0)*2 - (m.incorrectVarPen||0) - (m.incorrectVarRed||0)*2 + (m.perfectGame?8:0), 0);
+            let pts = played.reduce((s,m) => s + (m.yc||0) + (m.rc||0) + (m.pen||0)*2 - (m.incorrectVarPen||0) - (m.incorrectVarRed||0)*2 + (m.perfectGame?5:0), 0);
             gwRefPts[r.id] = pts;
           });
           // Pair up refs into battles (same deterministic shuffle as buildBattlesFromMatches)
@@ -2659,7 +2659,7 @@
       function calcRefPtsForMatch(m) {
         if (!m || (m.status !== 'complete' && m.status !== 'recent')) return null;
         let pts = (m.yc||0) + (m.rc||0) + (m.pen||0)*2;
-        if (m.perfectGame) pts += 8;
+        if (m.perfectGame) pts += 5;
         pts -= (m.incorrectVarPen||0);
         pts -= (m.incorrectVarRed||0)*2;
         return pts;
@@ -2729,7 +2729,7 @@
           totals[refId] += (m.yc || 0);
           totals[refId] += (m.rc || 0);
           totals[refId] += (m.pen || 0) * 2;
-          if (m.perfectGame) totals[refId] += 8;
+          if (m.perfectGame) totals[refId] += 5;
           totals[refId] -= (m.incorrectVarPen || 0);
           totals[refId] -= (m.incorrectVarRed || 0) * 2;
         });
@@ -2867,8 +2867,8 @@
             breakdown.push({ pts: p, label: `Correct VAR penalty${totalCorrectPen > 1 ? " ×" + totalCorrectPen : ""}` });
           }
           if (isPerfect) {
-            pts += 8;
-            breakdown.push({ pts: 8, label: "Perfect game" });
+            pts += 5;
+            breakdown.push({ pts: 5, label: "Perfect game" });
           }
           if (totalBadVarPen > 0) {
             const p = totalBadVarPen * -1;

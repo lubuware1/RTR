@@ -137,11 +137,6 @@
   .inc-row.open .inc-chevron{transform:rotate(180deg);}
   .inc-expand{display:none;padding:12px 12px 10px;background:var(--surface2);border:1px solid var(--pl-green);border-top:none;border-bottom-left-radius:8px;border-bottom-right-radius:8px;}
   .inc-expand.open{display:block;}
-  .inc-minute-wrap{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
-  .inc-minute-wrap label{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
-  .inc-minute-input{width:70px;background:var(--surface);border:1.5px solid var(--border);border-radius:6px;padding:6px 8px;color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;text-align:center;outline:none;appearance:textfield;-moz-appearance:textfield;}
-  .inc-minute-input::-webkit-outer-spin-button,.inc-minute-input::-webkit-inner-spin-button{-webkit-appearance:none;}
-  .inc-minute-input:focus{border-color:var(--pl-green);}
   .inc-desc{font-size:.78rem;color:var(--muted);margin-bottom:10px;line-height:1.4;}
   .inc-vote-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
   .inc-vote-btn{border:1.5px solid var(--border);border-radius:7px;padding:9px 10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .18s;background:var(--surface);color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px;}
@@ -268,7 +263,8 @@
           <div class="inc-score-block">
             <div class="inc-score-val" id="incScoreVal">5.0</div>
             <div class="inc-star-row" id="incStarRow"></div>
-            <div class="inc-score-label">Community Ref Score</div>
+            <div class="inc-score-label" id="incScoreLabel">Community Ref Score</div>
+            <div id="incScoreSec" style="margin-top:4px;min-height:1em;"></div>
           </div>
           <!-- Incident cards -->
           <div class="inc-section-label">Key Incidents</div>
@@ -422,7 +418,7 @@ document.getElementById('panelCloseBtn').addEventListener('click', closePanel);
 // ── INCIDENT VOTING STATE ─────────────────────────────────
 const COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
 let matchIncidents = []; // incidents for current open match
-let incidentVoteTotals = {}; // { id: { correct, wrong } }
+let incidentVoteTotals = { neutral: {}, fan: {} }; // split by vote type
 let myIncidentVotes = {}; // { id: { vote, created_at } }
 let cooldownInterval = null;
 
@@ -455,14 +451,34 @@ function fmtMs(ms) {
   return `${m}:${String(sec).padStart(2,'0')}`;
 }
 
-function renderIncidentScore(incs, votes) {
-  const score = calcIncidentScore(incs, votes);
-  const sc = score >= 7 ? 'g' : score >= 5 ? 'y' : 'r';
-  document.getElementById('incScoreVal').textContent = score.toFixed(1);
+function renderIncidentScore(incs, voteTotals) {
+  const m = MATCHES.find(x => x.id === selId);
+  const isFan = m && isFanMatch(m, currentUser);
+
+  const neutralScore = calcIncidentScore(incs, voteTotals.neutral);
+  const fanScore     = calcIncidentScore(incs, voteTotals.fan);
+
+  // Primary score: show fan score if this is the user's team's match, else neutral
+  const primary = isFan ? fanScore : neutralScore;
+  const sc = primary >= 7 ? 'g' : primary >= 5 ? 'y' : 'r';
+  document.getElementById('incScoreVal').textContent = primary.toFixed(1);
   document.getElementById('incScoreVal').className = `inc-score-val ${sc}`;
-  const filled = Math.round(score);
+  const filled = Math.round(primary);
   document.getElementById('incStarRow').innerHTML = Array.from({length:10},(_,i) =>
     `<span class="inc-star${i < filled ? ' on' : ''}">★</span>`).join('');
+
+  // Secondary score shown below
+  const secEl = document.getElementById('incScoreSec');
+  if (secEl) {
+    if (isFan) {
+      secEl.innerHTML = `<span style="color:var(--muted);font-size:.7rem">Neutral: <b style="color:#fff">${neutralScore.toFixed(1)}</b></span>`;
+    } else {
+      const fanVoteCount = Object.values(voteTotals.fan).reduce((s,v)=>s+v.correct+v.wrong,0);
+      secEl.innerHTML = fanVoteCount
+        ? `<span style="color:var(--muted);font-size:.7rem">Fan: <b style="color:#fff">${fanScore.toFixed(1)}</b></span>`
+        : '';
+    }
+  }
 }
 
 // Synthetic ID for incident types not yet in DB
@@ -481,8 +497,12 @@ function renderIncidentList() {
   // Preserve which items are currently open
   const openIds = new Set([...document.querySelectorAll('.inc-expand.open')].map(e => e.dataset.iid));
 
+  const curMatch = MATCHES.find(x => x.id === selId);
+  const viewingAsFan = curMatch && isFanMatch(curMatch, currentUser);
+  const voteBucket = viewingAsFan ? incidentVoteTotals.fan : incidentVoteTotals.neutral;
+
   el.innerHTML = getMergedIncidents().map(inc => {
-    const v = incidentVoteTotals[inc.id] || { correct: 0, wrong: 0 };
+    const v = voteBucket[inc.id] || { correct: 0, wrong: 0 };
     const total = v.correct + v.wrong;
     const correctPct = total ? Math.round((v.correct / total) * 100) : 50;
     const cooling = isCoolingDown(inc.id);
@@ -507,15 +527,11 @@ function renderIncidentList() {
       </div>
       <div class="inc-expand${isOpen?' open':''}" data-iid="${inc.id}">
         ${inc.description ? `<div class="inc-desc">${inc.description}</div>` : ''}
-        <div class="inc-minute-wrap">
-          <label for="inc-min-${inc.id}">Minute</label>
-          <input class="inc-minute-input" id="inc-min-${inc.id}" type="number" min="1" max="120" placeholder="e.g. 45" value="${inc.minute !== null ? inc.minute : ''}">
-        </div>
         <div class="inc-vote-row">
-          <button class="inc-vote-btn correct${myVote==='correct'?' voted':''}" data-iid="${inc.id}" data-vote="correct" ${cooling||!inc.minute?'disabled':''}>
+          <button class="inc-vote-btn correct${myVote==='correct'?' voted':''}" data-iid="${inc.id}" data-vote="correct" ${cooling?'disabled':''}>
             ✅ Correct ${v.correct ? `<span style="opacity:.6;font-size:.75em">(${v.correct})</span>` : ''}
           </button>
-          <button class="inc-vote-btn wrong${myVote==='wrong'?' voted':''}" data-iid="${inc.id}" data-vote="wrong" ${cooling||!inc.minute?'disabled':''}>
+          <button class="inc-vote-btn wrong${myVote==='wrong'?' voted':''}" data-iid="${inc.id}" data-vote="wrong" ${cooling?'disabled':''}>
             ❌ Wrong ${v.wrong ? `<span style="opacity:.6;font-size:.75em">(${v.wrong})</span>` : ''}
           </button>
         </div>
@@ -530,17 +546,6 @@ function renderIncidentList() {
   }).join('');
 }
 
-// Enable vote buttons only when minute is filled
-document.getElementById('incidentList').addEventListener('input', e => {
-  const input = e.target.closest('.inc-minute-input');
-  if (!input) return;
-  const expandEl = input.closest('.inc-expand');
-  if (!expandEl) return;
-  const hasMinute = input.value.trim() !== '';
-  expandEl.querySelectorAll('.inc-vote-btn').forEach(btn => {
-    if (!btn.classList.contains('voted')) btn.disabled = !hasMinute;
-  });
-});
 
 // Toggle accordion rows
 document.getElementById('incidentList').addEventListener('click', e => {
@@ -572,11 +577,8 @@ function startCooldownTick() {
         if (btn2) btn2.disabled = true;
       } else {
         cdEl.textContent = '';
-        // Only re-enable if the minute input has been filled
-        const expandEl = cdEl.closest('.inc-expand');
-        const minuteFilled = expandEl?.querySelector('.inc-minute-input')?.value.trim() !== '';
-        if (btn1 && !btn1.classList.contains('voted')) btn1.disabled = !minuteFilled;
-        if (btn2 && !btn2.classList.contains('voted')) btn2.disabled = !minuteFilled;
+        if (btn1 && !btn1.classList.contains('voted')) btn1.disabled = false;
+        if (btn2 && !btn2.classList.contains('voted')) btn2.disabled = false;
       }
     });
   }, 1000);
@@ -624,11 +626,15 @@ async function openPanel(mid) {
   document.getElementById('incidentList').innerHTML = `<div style="color:var(--muted);font-size:.82rem;padding:12px 0;">Loading incidents…</div>`;
   matchIncidents = await loadIncidents(mid);
   const ids = matchIncidents.map(i => i.id);
-  [incidentVoteTotals, myIncidentVotes] = await Promise.all([
+  const [voteSplit, myVotes] = await Promise.all([
     loadIncidentVotes(ids),
     loadMyIncidentVotes(currentUser?.id, ids),
   ]);
+  incidentVoteTotals = voteSplit;
+  myIncidentVotes = myVotes;
 
+  const isFan = isFanMatch(m, currentUser);
+  document.getElementById('incScoreLabel').textContent = isFan ? 'Fan Score' : 'Neutral Score';
   renderIncidentScore(getMergedIncidents(), incidentVoteTotals);
   renderIncidentList();
   startCooldownTick();
@@ -637,17 +643,17 @@ async function openPanel(mid) {
 
 // ── LEADERBOARD ───────────────────────────────────────────
 function renderLb(){
-  const usedRefIds = new Set(MATCHES.filter(m => m.status === 'complete').map(m => +m.refId));
-  const sorted=[...REFS].filter(r => usedRefIds.has(r.id)).sort((a,b)=>{
+  // Show any ref who has votes across any matchweek
+  const sorted=[...REFS].filter(r => (lbMode==='neutral' ? r.neutralVotes : r.fanVotes) > 0).sort((a,b)=>{
     const av=lbMode==='neutral'?a.neutralVotes:a.fanVotes, bv=lbMode==='neutral'?b.neutralVotes:b.fanVotes;
     const ar=lbMode==='neutral'?a.neutralRating:a.fanRating, br=lbMode==='neutral'?b.neutralRating:b.fanRating;
     if(!av&&!bv)return 0; if(!av)return 1; if(!bv)return -1; return br-ar;
   });
+  if (!sorted.length) { document.getElementById('leaderboard').innerHTML = `<div style="padding:16px;color:var(--muted);font-size:.82rem;text-align:center">No ${lbMode} votes yet</div>`; return; }
   document.getElementById('leaderboard').innerHTML=sorted.map((ref,i)=>{
     const votes=lbMode==='neutral'?ref.neutralVotes:ref.fanVotes, rating=lbMode==='neutral'?ref.neutralRating:ref.fanRating;
-    if(!votes)return`<div class="lb-row" data-lref="${ref.id}"><div class="lb-rank">${i+1}</div><div><div class="lb-ref-name">${ref.name}</div><div class="lb-games">No ${lbMode} votes yet</div></div><div class="lb-score" style="color:var(--muted)">–</div></div>`;
     const sc=rating>=7.5?'g':rating>=6?'y':'r';
-    return`<div class="lb-row" data-lref="${ref.id}"><div class="lb-rank${i<3?' top':''}">${i+1}</div><div><div class="lb-ref-name">${ref.name}</div><div class="lb-games">${votes} ${lbMode} votes</div></div><div class="lb-score ${sc}">${rating.toFixed(1)}</div></div>`;
+    return`<div class="lb-row" data-lref="${ref.id}"><div class="lb-rank${i<3?' top':''}">${i+1}</div><div><div class="lb-ref-name">${ref.name}</div><div class="lb-games">${votes} votes · all time</div></div><div class="lb-score ${sc}">${rating.toFixed(1)}</div></div>`;
   }).join('');
 }
 
@@ -672,48 +678,44 @@ document.getElementById('incidentList').addEventListener('click', async e => {
   const vote = btn.dataset.vote; // 'correct' or 'wrong'
   const isVirtual = incidentId.startsWith('type_');
 
-  // Read minute from the input inside this expand panel
-  const expandEl = btn.closest('.inc-expand');
-  const minuteInput = expandEl?.querySelector('.inc-minute-input');
-  const minute = minuteInput ? +minuteInput.value || null : null;
+  // Determine if this is a fan vote
+  const voteMatch = MATCHES.find(x => x.id === selId);
+  const isFan = voteMatch && isFanMatch(voteMatch, currentUser);
+  const bucket = isFan ? 'fan' : 'neutral';
+  console.log('[RTR] vote check — user.team:', currentUser?.team, '| home:', voteMatch?.home, '| away:', voteMatch?.away, '| isFan:', isFan);
 
   // If voting on a virtual incident, auto-create DB record first
   if (isVirtual) {
     const typeName = INCIDENT_TYPES.find(t => syntheticId(t.type) === incidentId)?.type;
     if (typeName) {
-      const newInc = await saveIncident(selId, typeName, minute, null);
+      const newInc = await saveIncident(selId, typeName, null, null);
       if (newInc) {
-        // Replace synthetic entry with real DB record
         matchIncidents.push(newInc);
         const oldId = incidentId;
         incidentId = newInc.id;
-        // Migrate any existing optimistic state from synthetic key
-        if (incidentVoteTotals[oldId]) { incidentVoteTotals[incidentId] = incidentVoteTotals[oldId]; delete incidentVoteTotals[oldId]; }
+        // Migrate optimistic state from synthetic key
+        if (incidentVoteTotals.neutral[oldId]) { incidentVoteTotals.neutral[incidentId] = incidentVoteTotals.neutral[oldId]; delete incidentVoteTotals.neutral[oldId]; }
+        if (incidentVoteTotals.fan[oldId])     { incidentVoteTotals.fan[incidentId]     = incidentVoteTotals.fan[oldId];     delete incidentVoteTotals.fan[oldId]; }
         if (myIncidentVotes[oldId]) { myIncidentVotes[incidentId] = myIncidentVotes[oldId]; delete myIncidentVotes[oldId]; }
       }
     }
-  } else if (minute !== null) {
-    // Update minute on existing DB incident if user entered one
-    const existing = matchIncidents.find(i => i.id === incidentId || i.id === +incidentId);
-    if (existing && existing.minute === null) existing.minute = minute;
   }
 
   // Optimistic UI update
   btn.disabled = true;
-  if (!incidentVoteTotals[incidentId]) incidentVoteTotals[incidentId] = { correct: 0, wrong: 0 };
-  incidentVoteTotals[incidentId][vote]++;
+  if (!incidentVoteTotals[bucket][incidentId]) incidentVoteTotals[bucket][incidentId] = { correct: 0, wrong: 0 };
+  incidentVoteTotals[bucket][incidentId][vote]++;
   myIncidentVotes[incidentId] = { vote, created_at: new Date().toISOString() };
   localStorage.setItem(getCooldownKey(incidentId), Date.now());
 
-  const merged = getMergedIncidents();
-  renderIncidentScore(merged, incidentVoteTotals);
+  renderIncidentScore(getMergedIncidents(), incidentVoteTotals);
   renderIncidentList();
   startCooldownTick();
 
-  const ok = await saveIncidentVote(incidentId, currentUser?.id, vote);
+  const ok = await saveIncidentVote(incidentId, currentUser?.id, vote, isFan);
   if (!ok) {
     // Rollback
-    incidentVoteTotals[incidentId][vote]--;
+    incidentVoteTotals[bucket][incidentId][vote]--;
     delete myIncidentVotes[incidentId];
     localStorage.removeItem(getCooldownKey(incidentId));
     renderIncidentScore(getMergedIncidents(), incidentVoteTotals);
@@ -723,14 +725,13 @@ document.getElementById('incidentList').addEventListener('click', async e => {
   }
 
   // Update ref score in leaderboard
-  const m = MATCHES.find(x => x.id === selId);
-  const ref = REFS.find(r => r.id === +m.refId);
+  const ref = REFS.find(r => r.id === +voteMatch.refId);
   if (ref) {
-    const newScore = calcIncidentScore(getMergedIncidents(), incidentVoteTotals);
-    ref.neutralRating = newScore;
+    ref.neutralRating = calcIncidentScore(getMergedIncidents(), incidentVoteTotals.neutral);
+    ref.fanRating     = calcIncidentScore(getMergedIncidents(), incidentVoteTotals.fan);
     renderLb();
   }
-  toast(`${vote === 'correct' ? '✅' : '❌'} Vote recorded!`);
+  toast(`${vote === 'correct' ? '✅' : '❌'} Vote recorded as ${isFan ? 'Fan' : 'Neutral'}!`);
 });
 document.getElementById('leaderboard').addEventListener('click',e=>{
   const r=e.target.closest('[data-lref]');if(!r)return;
@@ -738,6 +739,69 @@ document.getElementById('leaderboard').addEventListener('click',e=>{
 });
 document.getElementById('lbN').addEventListener('click',()=>{lbMode='neutral';document.getElementById('lbN').classList.add('active');document.getElementById('lbF').classList.remove('active');renderLb();});
 document.getElementById('lbF').addEventListener('click',()=>{lbMode='fan';document.getElementById('lbF').classList.add('active');document.getElementById('lbN').classList.remove('active');renderLb();});
+
+// ── LOAD ALL INCIDENT RATINGS ────────────────────────────
+// Populates ref.neutralRating, ref.fanRating, ref.neutralVotes, ref.fanVotes
+// from the incident voting tables so match cards + leaderboard stay up to date
+async function loadIncidentRatings() {
+  if (PREVIEW_MODE) return;
+  // Fetch all incidents for all matches
+  const { data: incidents } = await getSB()
+    .from('RTR Incidents').select('id, match_id, type, weight');
+  if (!incidents?.length) return;
+
+  // Fetch all votes
+  const ids = incidents.map(i => i.id);
+  const { data: votes } = await getSB()
+    .from('RTR Incident Votes').select('incident_id, vote, is_fan')
+    .in('incident_id', ids);
+
+  // Group incidents by match
+  const byMatch = {};
+  incidents.forEach(inc => {
+    if (!byMatch[inc.match_id]) byMatch[inc.match_id] = [];
+    byMatch[inc.match_id].push(inc);
+  });
+
+  // Aggregate votes per incident split by fan/neutral
+  const neutral = {}, fan = {};
+  ids.forEach(id => { neutral[id] = { correct:0, wrong:0 }; fan[id] = { correct:0, wrong:0 }; });
+  (votes||[]).forEach(v => {
+    const b = v.is_fan ? fan : neutral;
+    if (b[v.incident_id]) b[v.incident_id][v.vote]++;
+  });
+
+  // Compute per-ref scores — accumulate across all matches for the same ref
+  REFS.forEach(r => { r.neutralRating=5; r.neutralVotes=0; r.fanRating=5; r.fanVotes=0; });
+  // Collect all incidents per ref across all matches
+  const refNeutral = {}, refFan = {};
+  MATCHES.forEach(m => {
+    const incs = byMatch[m.id];
+    if (!incs) return;
+    const ref = REFS.find(r => r.id === +m.refId);
+    if (!ref) return;
+    if (!refNeutral[ref.id]) refNeutral[ref.id] = [];
+    if (!refFan[ref.id])     refFan[ref.id]     = [];
+    incs.forEach(inc => {
+      const nv = neutral[inc.id] || { correct:0, wrong:0 };
+      const fv = fan[inc.id]     || { correct:0, wrong:0 };
+      if (nv.correct + nv.wrong) refNeutral[ref.id].push({ ...inc, _v: nv });
+      if (fv.correct + fv.wrong) refFan[ref.id].push({ ...inc, _v: fv });
+    });
+  });
+  REFS.forEach(r => {
+    if (refNeutral[r.id]?.length) {
+      const vMap = Object.fromEntries(refNeutral[r.id].map(i => [i.id, i._v]));
+      r.neutralRating = calcIncidentScore(refNeutral[r.id], vMap);
+      r.neutralVotes  = refNeutral[r.id].reduce((s,i) => s + i._v.correct + i._v.wrong, 0);
+    }
+    if (refFan[r.id]?.length) {
+      const vMap = Object.fromEntries(refFan[r.id].map(i => [i.id, i._v]));
+      r.fanRating = calcIncidentScore(refFan[r.id], vMap);
+      r.fanVotes  = refFan[r.id].reduce((s,i) => s + i._v.correct + i._v.wrong, 0);
+    }
+  });
+}
 
 // ── SKELETONS ─────────────────────────────────────────────
 function skelMatchCard() {
@@ -767,7 +831,7 @@ initHeader();
   await loadFromSheets().catch(() => {});
   const gwMatchIds = MATCHES.filter(m => m.matchweek === currentGW).map(m => +m.id);
   await Promise.all([
-    loadRatings(), // all-time ratings for ref rankings leaderboard
+    loadIncidentRatings(), // incident-driven neutral + fan scores per ref
     loadUserVotes(currentUser?.id, gwMatchIds).then(v => v.forEach(id => rated.add(id)))
   ]);
   syncMatchStatuses();
@@ -780,7 +844,7 @@ initHeader();
     // Preserve any complete statuses already in memory before reloading sheet
     const alreadyComplete = new Set(MATCHES.filter(m => m.status === 'complete').map(m => m.id));
     await loadFromSheets().catch(() => {});
-    await loadRatings();
+    await loadIncidentRatings();
     MATCHES.forEach(m => { if (alreadyComplete.has(m.id)) m.status = 'complete'; });
     syncMatchStatuses();
     renderList();
