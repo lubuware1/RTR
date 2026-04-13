@@ -86,7 +86,7 @@
     <a href="matches.html"><img src="images/logos/RRLogo.svg" alt="RefRater"></a>
   </div>
   <h1>RTR Admin Panel <span class="danger-badge">Admin Only</span></h1>
-  <p class="subtitle">Logged in as danawhiteware · Changes write to Supabase (source of truth) and are reflected immediately in the app.</p>
+  <p class="subtitle" id="adminSubtitle">Changes write to Supabase (source of truth) and are reflected immediately in the app.</p>
 
   <!-- GW CONFIG -->
   <div class="section">
@@ -203,7 +203,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="shared.js"></script>
 <script>
-  const ADMIN_USER = 'danawhiteware';
+  const ADMIN_USERS = ['danawhiteware', 'jware89'];
 
   function toast(msg, err=false) {
     const t = document.getElementById('toast');
@@ -337,11 +337,12 @@
     if (!authed) { window.location.href = 'login.html'; return; }
     const user = getCurrentUser();
     console.log('[RTR Admin] user:', user?.username);
-    if (!user || user.username.toLowerCase() !== ADMIN_USER.toLowerCase()) {
+    if (!user || !ADMIN_USERS.includes(user.username.toLowerCase())) {
       document.getElementById('accessDenied').style.display = 'flex';
       return;
     }
     document.getElementById('adminPanel').style.display = 'block';
+    document.getElementById('adminSubtitle').textContent = `Logged in as ${user.username} · Changes write to Supabase (source of truth) and are reflected immediately in the app.`;
 
     // Load GW config
     const gwConfig = await loadGWConfig();
