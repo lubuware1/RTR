@@ -603,7 +603,7 @@ document.getElementById('filterTabs').addEventListener('click',e=>{
 document.getElementById('incidentList').addEventListener('click', async e => {
   const btn = e.target.closest('.inc-vote-btn');
   if (!btn || btn.disabled) return;
-  const incidentId = +btn.dataset.iid;
+  const incidentId = btn.dataset.iid;
   const vote = btn.dataset.vote; // 'correct' or 'wrong'
 
   const voteMatch = MATCHES.find(x => x.id === selId);
