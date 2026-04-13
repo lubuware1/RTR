@@ -63,12 +63,8 @@
   .heatmap-stat{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:120px;}
   .heatmap-stat-val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.6rem;color:#c064c0;}
   .heatmap-stat-lbl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
-  .heatmap-chart{width:100%;overflow-x:auto;padding-bottom:4px;}
-  .heatmap-bars{display:flex;align-items:flex-end;gap:2px;height:100px;padding:0 2px;}
-  .heatmap-bar-wrap{display:flex;flex-direction:column;align-items:center;flex:1;min-width:6px;max-width:18px;}
-  .heatmap-bar{width:100%;background:#8b008b;border-radius:2px 2px 0 0;min-height:2px;transition:height .3s;}
-  .heatmap-bar:hover{background:#c064c0;}
-  .heatmap-bar-tip{font-size:.6rem;color:var(--muted);margin-top:3px;writing-mode:vertical-rl;transform:rotate(180deg);height:22px;overflow:hidden;}
+  .heatmap-chart{width:100%;overflow-x:auto;}
+  .heatmap-chart svg{display:block;width:100%;min-width:500px;}
   .heatmap-empty{color:var(--muted);font-size:.85rem;padding:12px 0;}
 
   /* ── MOBILE ─────────────────────────────────────────────── */
@@ -505,7 +501,7 @@
         return;
       }
 
-      // Bucket by minute (null → minute 0 = unknown)
+      // Bucket by minute
       const MAX_MIN = 130;
       const counts = new Array(MAX_MIN + 1).fill(0);
       let nullCount = 0;
@@ -515,21 +511,21 @@
       });
 
       const total = flags.length;
-      const peak  = counts.reduce((best, c, i) => c > counts[best] ? i : best, 0);
-      const max   = Math.max(...counts, 1);
+      const peakIdx = counts.reduce((best, c, i) => c > counts[best] ? i : best, 0);
+      const max = Math.max(...counts, 1);
 
-      // Stats row
+      // Stat tiles
       let html = `<div class="heatmap-meta">
         <div class="heatmap-stat">
           <div class="heatmap-stat-val">${total}</div>
           <div class="heatmap-stat-lbl">Total Flags</div>
         </div>
         <div class="heatmap-stat">
-          <div class="heatmap-stat-val">${counts[peak] ? peak + "'" : '—'}</div>
+          <div class="heatmap-stat-val">${counts[peakIdx] ? peakIdx + "'" : '—'}</div>
           <div class="heatmap-stat-lbl">Peak Minute</div>
         </div>
         <div class="heatmap-stat">
-          <div class="heatmap-stat-val">${counts[peak]}</div>
+          <div class="heatmap-stat-val">${counts[peakIdx]}</div>
           <div class="heatmap-stat-lbl">Peak Flags</div>
         </div>
         ${nullCount ? `<div class="heatmap-stat">
@@ -538,24 +534,110 @@
         </div>` : ''}
       </div>`;
 
-      // Bar chart — show minutes 1–130, skip leading/trailing zeros for readability
-      // Find the range with data (plus a small buffer)
-      let first = MAX_MIN, last = 0;
-      counts.forEach((c, i) => { if (c > 0) { if (i < first) first = i; if (i > last) last = i; } });
-      first = Math.max(1, first - 2);
-      last  = Math.min(MAX_MIN, last + 2);
+      // Build SVG line graph
+      // Show full 0–90, extend to 130 if there's ET data
+      const hasET = counts.slice(91).some(c => c > 0);
+      const endMin = hasET ? MAX_MIN : 90;
+      const W = 860, H = 160;
+      const PAD = { top: 16, right: 20, bottom: 32, left: 32 };
+      const gW = W - PAD.left - PAD.right;
+      const gH = H - PAD.top  - PAD.bottom;
 
-      html += `<div class="heatmap-chart"><div class="heatmap-bars">`;
-      for (let min = first; min <= last; min++) {
-        const c   = counts[min];
-        const h   = Math.round((c / max) * 96);
-        const tip = c > 0 ? `${min}' (${c})` : `${min}'`;
-        html += `<div class="heatmap-bar-wrap" title="${tip}">
-          <div class="heatmap-bar" style="height:${Math.max(2, h)}px;${c===0?'opacity:.18':''}"></div>
-          <div class="heatmap-bar-tip">${min}'</div>
-        </div>`;
+      const xScale = min => PAD.left + (min / endMin) * gW;
+      const yScale = v  => PAD.top  + gH - (v / max) * gH;
+
+      // Build smooth path points for every minute 0..endMin
+      const pts = [];
+      for (let m = 0; m <= endMin; m++) pts.push([xScale(m), yScale(counts[m])]);
+
+      // Polyline points string
+      const linePoints = pts.map(p => p.join(',')).join(' ');
+
+      // Filled area path (close down to baseline)
+      const areaPath = `M${pts[0][0]},${yScale(0)} ` +
+        pts.map(p => `L${p[0]},${p[1]}`).join(' ') +
+        ` L${pts[pts.length-1][0]},${yScale(0)} Z`;
+
+      // X-axis tick marks every 15 mins
+      const ticks = [];
+      for (let t = 0; t <= endMin; t += 15) ticks.push(t);
+
+      // Y-axis gridlines (up to 3)
+      const yGridSteps = Math.min(max, 3);
+      const yGrids = [];
+      for (let i = 1; i <= yGridSteps; i++) {
+        const v = Math.round((max / yGridSteps) * i);
+        yGrids.push({ v, y: yScale(v) });
       }
-      html += `</div></div>`;
+
+      // Glow dots at every minute with flags; bigger + redder glow at peak
+      const dots = [];
+      for (let m = 0; m <= endMin; m++) {
+        if (!counts[m]) continue;
+        const isPeak = m === peakIdx;
+        const intensity = counts[m] / max;
+        const r = isPeak ? 7 : 3 + intensity * 3;
+        const glow = isPeak
+          ? `filter:drop-shadow(0 0 8px #ff1744) drop-shadow(0 0 16px rgba(255,23,68,.6))`
+          : `filter:drop-shadow(0 0 ${Math.round(3 + intensity*5)}px rgba(192,100,192,.9))`;
+        const col = isPeak ? '#ff1744' : '#c064c0';
+        dots.push({ m, x: xScale(m), y: yScale(counts[m]), r, glow, col, count: counts[m] });
+      }
+
+      html += `<div class="heatmap-chart">
+        <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#8b008b" stop-opacity=".45"/>
+              <stop offset="100%" stop-color="#8b008b" stop-opacity=".03"/>
+            </linearGradient>
+            <filter id="peakGlow" x="-100%" y="-100%" width="300%" height="300%">
+              <feGaussianBlur stdDeviation="4" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+
+          <!-- Y gridlines -->
+          ${yGrids.map(g => `
+            <line x1="${PAD.left}" y1="${g.y}" x2="${W - PAD.right}" y2="${g.y}"
+              stroke="#242836" stroke-width="1" stroke-dasharray="4,4"/>
+            <text x="${PAD.left - 4}" y="${g.y + 4}" fill="#6b7280" font-size="9" text-anchor="end">${g.v}</text>
+          `).join('')}
+
+          <!-- Baseline -->
+          <line x1="${PAD.left}" y1="${yScale(0)}" x2="${W - PAD.right}" y2="${yScale(0)}"
+            stroke="#242836" stroke-width="1"/>
+
+          <!-- Half-time marker -->
+          <line x1="${xScale(45)}" y1="${PAD.top}" x2="${xScale(45)}" y2="${yScale(0)}"
+            stroke="#3a3f52" stroke-width="1" stroke-dasharray="3,3"/>
+          <text x="${xScale(45)}" y="${H - 2}" fill="#3a3f52" font-size="9" text-anchor="middle">HT</text>
+
+          ${hasET ? `<line x1="${xScale(90)}" y1="${PAD.top}" x2="${xScale(90)}" y2="${yScale(0)}"
+            stroke="#3a3f52" stroke-width="1" stroke-dasharray="3,3"/>
+          <text x="${xScale(90)}" y="${H - 2}" fill="#3a3f52" font-size="9" text-anchor="middle">90</text>` : ''}
+
+          <!-- Filled area -->
+          <path d="${areaPath}" fill="url(#areaGrad)"/>
+
+          <!-- Line -->
+          <polyline points="${linePoints}"
+            fill="none" stroke="#8b008b" stroke-width="2"
+            stroke-linejoin="round" stroke-linecap="round"
+            style="filter:drop-shadow(0 0 4px rgba(139,0,139,.6))"/>
+
+          <!-- X-axis ticks -->
+          ${ticks.map(t => `
+            <text x="${xScale(t)}" y="${H - 6}" fill="#6b7280" font-size="9" text-anchor="middle">${t}'</text>
+          `).join('')}
+
+          <!-- Glow dots -->
+          ${dots.map(d => `
+            <circle cx="${d.x}" cy="${d.y}" r="${d.r}" fill="${d.col}" style="${d.glow}"/>
+            ${d.count > 1 ? `<text x="${d.x}" y="${d.y - d.r - 3}" fill="${d.col}" font-size="8" text-anchor="middle" font-family="Barlow Condensed,sans-serif" font-weight="700">${d.count}</text>` : ''}
+          `).join('')}
+        </svg>
+      </div>`;
 
       el.innerHTML = html;
     }
