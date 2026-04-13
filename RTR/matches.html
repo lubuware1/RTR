@@ -506,10 +506,24 @@ function renderIncidentList() {
 }
 
 // "Incorrect Decision" button — scrolls to incident panel
-document.getElementById('incFlagBtn').addEventListener('click', () => {
-  const el = document.getElementById('incidentList');
-  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  if (!matchIncidents.length) toast('No decisions logged yet for this match');
+document.getElementById('incFlagBtn').addEventListener('click', async () => {
+  // Calculate match minute from kickoff time
+  const m = MATCHES.find(x => x.id === selId);
+  let matchMinute = null;
+  if (m?.kickoff) {
+    const ko = new Date(String(m.kickoff).replace(' ', 'T').replace(/Z$/, '')).getTime();
+    const elapsed = Math.floor((Date.now() - ko) / 60000);
+    if (elapsed >= 0 && elapsed <= 130) matchMinute = Math.min(130, elapsed);
+  }
+
+  // Save the flag (fire-and-forget)
+  if (selId && currentUser?.id) {
+    saveDecisionFlag(selId, matchMinute).catch(() => {});
+  }
+
+  // Scroll to decisions panel
+  document.getElementById('incidentList').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  toast('⚑ Flagged!');
 });
 
 

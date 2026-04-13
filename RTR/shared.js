@@ -329,6 +329,28 @@ async function saveIncident(matchId, type, minute, description) {
   return data || null;
 }
 
+async function saveDecisionFlag(matchId, matchMinute) {
+  if (PREVIEW_MODE) return true;
+  const { data: { session } } = await getSB().auth.getSession();
+  if (!session) return false;
+  const { error } = await getSB().from('RTR Decision Flags').insert({
+    user_id: session.user.id,
+    match_id: +matchId,
+    match_minute: matchMinute !== null ? +matchMinute : null,
+    created_at: new Date().toISOString(),
+  });
+  if (error) console.error('[RTR] saveDecisionFlag error:', error);
+  return !error;
+}
+
+async function loadDecisionFlags(matchId) {
+  if (PREVIEW_MODE) return [];
+  const { data } = await getSB().from('RTR Decision Flags')
+    .select('match_minute, created_at')
+    .eq('match_id', matchId);
+  return data || [];
+}
+
 async function deleteIncident(id) {
   if (PREVIEW_MODE) return true;
   const { error } = await getSB().from('RTR Incidents').delete().eq('id', id);

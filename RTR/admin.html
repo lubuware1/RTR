@@ -58,6 +58,19 @@
   .checkbox-row input{width:auto;}
   .checkbox-row label{margin:0;text-transform:none;font-size:.85rem;color:var(--text);}
 
+  /* ── HEATMAP ─────────────────────────────────────────────── */
+  .heatmap-meta{display:flex;gap:24px;margin-bottom:16px;flex-wrap:wrap;}
+  .heatmap-stat{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:120px;}
+  .heatmap-stat-val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.6rem;color:#c064c0;}
+  .heatmap-stat-lbl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+  .heatmap-chart{width:100%;overflow-x:auto;padding-bottom:4px;}
+  .heatmap-bars{display:flex;align-items:flex-end;gap:2px;height:100px;padding:0 2px;}
+  .heatmap-bar-wrap{display:flex;flex-direction:column;align-items:center;flex:1;min-width:6px;max-width:18px;}
+  .heatmap-bar{width:100%;background:#8b008b;border-radius:2px 2px 0 0;min-height:2px;transition:height .3s;}
+  .heatmap-bar:hover{background:#c064c0;}
+  .heatmap-bar-tip{font-size:.6rem;color:var(--muted);margin-top:3px;writing-mode:vertical-rl;transform:rotate(180deg);height:22px;overflow:hidden;}
+  .heatmap-empty{color:var(--muted);font-size:.85rem;padding:12px 0;}
+
   /* ── MOBILE ─────────────────────────────────────────────── */
   @media(max-width:768px){
     body{padding:12px;}
@@ -133,6 +146,20 @@
     <button class="btn btn-green btn-sm" id="addBonusBtn" style="margin-bottom:16px;">+ Add Bonus</button>
     <hr class="divider">
     <div id="bonusList"><div style="color:var(--muted);font-size:.85rem;">Loading bonuses…</div></div>
+  </div>
+
+  <!-- DECISION FLAG HEATMAP -->
+  <div class="section">
+    <div class="section-title">🔥 Incorrect Decision Flag Heatmap</div>
+    <div class="row cols-2" style="margin-bottom:14px;">
+      <div class="field-group">
+        <label>Match</label>
+        <select id="hmMatchSel"><option value="">Select match…</option></select>
+      </div>
+    </div>
+    <div id="hmContent">
+      <div class="heatmap-empty">Select a match to view the heatmap.</div>
+    </div>
   </div>
 
   <!-- KEY INCIDENTS -->
@@ -457,6 +484,83 @@
         toast('Decision deleted');
       }
     });
+
+    // ── HEATMAP ───────────────────────────────────────────
+    const hmMatchSel = document.getElementById('hmMatchSel');
+    MATCHES.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = `MW${m.matchweek} · ${m.home} vs ${m.away} (${m.status})`;
+      hmMatchSel.appendChild(opt);
+    });
+
+    async function renderHeatmap(matchId) {
+      const el = document.getElementById('hmContent');
+      if (!matchId) { el.innerHTML = '<div class="heatmap-empty">Select a match to view the heatmap.</div>'; return; }
+      el.innerHTML = '<div class="heatmap-empty">Loading…</div>';
+
+      const flags = await loadDecisionFlags(matchId);
+      if (!flags.length) {
+        el.innerHTML = '<div class="heatmap-empty">No flags recorded yet for this match.</div>';
+        return;
+      }
+
+      // Bucket by minute (null → minute 0 = unknown)
+      const MAX_MIN = 130;
+      const counts = new Array(MAX_MIN + 1).fill(0);
+      let nullCount = 0;
+      flags.forEach(f => {
+        if (f.match_minute === null || f.match_minute === undefined) { nullCount++; }
+        else { const m = Math.min(MAX_MIN, Math.max(0, +f.match_minute)); counts[m]++; }
+      });
+
+      const total = flags.length;
+      const peak  = counts.reduce((best, c, i) => c > counts[best] ? i : best, 0);
+      const max   = Math.max(...counts, 1);
+
+      // Stats row
+      let html = `<div class="heatmap-meta">
+        <div class="heatmap-stat">
+          <div class="heatmap-stat-val">${total}</div>
+          <div class="heatmap-stat-lbl">Total Flags</div>
+        </div>
+        <div class="heatmap-stat">
+          <div class="heatmap-stat-val">${counts[peak] ? peak + "'" : '—'}</div>
+          <div class="heatmap-stat-lbl">Peak Minute</div>
+        </div>
+        <div class="heatmap-stat">
+          <div class="heatmap-stat-val">${counts[peak]}</div>
+          <div class="heatmap-stat-lbl">Peak Flags</div>
+        </div>
+        ${nullCount ? `<div class="heatmap-stat">
+          <div class="heatmap-stat-val">${nullCount}</div>
+          <div class="heatmap-stat-lbl">Unknown Min.</div>
+        </div>` : ''}
+      </div>`;
+
+      // Bar chart — show minutes 1–130, skip leading/trailing zeros for readability
+      // Find the range with data (plus a small buffer)
+      let first = MAX_MIN, last = 0;
+      counts.forEach((c, i) => { if (c > 0) { if (i < first) first = i; if (i > last) last = i; } });
+      first = Math.max(1, first - 2);
+      last  = Math.min(MAX_MIN, last + 2);
+
+      html += `<div class="heatmap-chart"><div class="heatmap-bars">`;
+      for (let min = first; min <= last; min++) {
+        const c   = counts[min];
+        const h   = Math.round((c / max) * 96);
+        const tip = c > 0 ? `${min}' (${c})` : `${min}'`;
+        html += `<div class="heatmap-bar-wrap" title="${tip}">
+          <div class="heatmap-bar" style="height:${Math.max(2, h)}px;${c===0?'opacity:.18':''}"></div>
+          <div class="heatmap-bar-tip">${min}'</div>
+        </div>`;
+      }
+      html += `</div></div>`;
+
+      el.innerHTML = html;
+    }
+
+    hmMatchSel.addEventListener('change', () => renderHeatmap(hmMatchSel.value));
 
   })();
 </script>
