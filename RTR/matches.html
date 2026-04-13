@@ -206,6 +206,7 @@
         <a href="matches.html" class="active">Matches</a>
         <a href="referees.html">Referees</a>
         <a href="fantasy.html">Fantasy</a>
+        <a href="badges.html">Badges</a>
         <a href="history.html">History</a>
       </nav>
       <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
@@ -227,6 +228,7 @@
   <a href="matches.html" class="active">Matches</a>
   <a href="referees.html">Referees</a>
   <a href="fantasy.html">Fantasy</a>
+  <a href="badges.html">Badges</a>
   <a href="history.html">History</a>
 </div>
 
@@ -682,8 +684,6 @@ document.getElementById('incidentList').addEventListener('click', async e => {
   const voteMatch = MATCHES.find(x => x.id === selId);
   const isFan = voteMatch && isFanMatch(voteMatch, currentUser);
   const bucket = isFan ? 'fan' : 'neutral';
-  console.log('[RTR] vote check — user.team:', currentUser?.team, '| home:', voteMatch?.home, '| away:', voteMatch?.away, '| isFan:', isFan);
-
   // If voting on a virtual incident, auto-create DB record first
   if (isVirtual) {
     const typeName = INCIDENT_TYPES.find(t => syntheticId(t.type) === incidentId)?.type;
@@ -732,6 +732,9 @@ document.getElementById('incidentList').addEventListener('click', async e => {
     renderLb();
   }
   toast(`${vote === 'correct' ? '✅' : '❌'} Vote recorded as ${isFan ? 'Fan' : 'Neutral'}!`);
+
+  // Check voting badges (fire-and-forget)
+  if (currentUser?.id) checkVotingBadges(currentUser.id).catch(() => {});
 });
 document.getElementById('leaderboard').addEventListener('click',e=>{
   const r=e.target.closest('[data-lref]');if(!r)return;

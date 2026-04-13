@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RefRater — Badges</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="shared.js"></script>
+<style>
+  body { background: var(--bg); }
+
+  /* ── SHIMMER ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 70% 50% at 20% 30%, rgba(55,0,60,.45) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 60% at 80% 70%, rgba(80,0,90,.3) 0%, transparent 65%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .page { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 32px 20px 80px; }
+
+  /* ── HERO ── */
+  .badges-hero {
+    text-align: center;
+    padding: 40px 0 36px;
+  }
+  .badges-hero h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900; font-size: 2.6rem; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--pl-green);
+  }
+  .badges-hero p {
+    color: var(--muted); font-size: .9rem; margin-top: 8px;
+  }
+  .badge-progress-bar {
+    margin: 24px auto 0;
+    max-width: 360px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    height: 10px;
+    overflow: hidden;
+  }
+  .badge-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--pl-green), #00cc6a);
+    border-radius: 999px;
+    transition: width .6s cubic-bezier(.22,1,.36,1);
+    width: 0%;
+  }
+  .badge-progress-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: .8rem; font-weight: 700;
+    letter-spacing: .5px; text-transform: uppercase;
+    color: var(--muted); margin-top: 8px;
+    text-align: center;
+  }
+
+  /* ── CATEGORY SECTION ── */
+  .badge-category { margin-bottom: 40px; }
+  .badge-category-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: .72rem; font-weight: 700;
+    letter-spacing: 2.5px; text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 18px;
+  }
+  .badge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+  }
+
+  /* ── BADGE CARD ── */
+  .badge-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px 18px 20px;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 10px; text-align: center;
+    transition: border-color .2s, box-shadow .2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .badge-card.earned {
+    border-color: rgba(0,255,133,.35);
+    box-shadow: 0 0 0 1px rgba(0,255,133,.08), 0 8px 32px rgba(0,255,133,.08);
+  }
+  .badge-card.locked {
+    opacity: .45;
+    filter: grayscale(0.6);
+  }
+  .badge-card.earned::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,255,133,.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .badge-icon {
+    font-size: 2.2rem;
+    line-height: 1;
+    filter: drop-shadow(0 2px 8px rgba(0,255,133,.3));
+  }
+  .badge-card.locked .badge-icon {
+    filter: none;
+  }
+  .badge-lock {
+    position: absolute; top: 10px; right: 12px;
+    font-size: .85rem; opacity: .5;
+  }
+  .badge-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800; font-size: 1.05rem;
+    text-transform: uppercase; letter-spacing: .5px;
+    color: var(--text);
+  }
+  .badge-card.earned .badge-name { color: var(--pl-green); }
+  .badge-desc {
+    font-size: .78rem; color: var(--muted);
+    line-height: 1.55;
+  }
+  .badge-earned-date {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: .72rem; letter-spacing: .5px;
+    color: rgba(0,255,133,.6); text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  /* ── LOADING SKELETON ── */
+  .badge-skeleton {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    height: 160px;
+    animation: shimmerPulse 1.4s ease-in-out infinite;
+  }
+  @keyframes shimmerPulse {
+    0%, 100% { opacity: .4 }
+    50% { opacity: .7 }
+  }
+
+  @media (max-width: 600px) {
+    .badge-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .badge-card { padding: 18px 12px 16px; }
+    .badge-icon { font-size: 1.8rem; }
+    .badge-name { font-size: .95rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="matches.html"><img src="images/logos/RRLogo.svg" alt="RefRater" style="height:44px;width:auto;display:block;"></a>
+    <div class="header-right">
+      <nav>
+        <a href="matches.html">Matches</a>
+        <a href="referees.html">Referees</a>
+        <a href="fantasy.html">Fantasy</a>
+        <a href="badges.html" class="active">Badges</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+      <div class="user-chip" id="userChip">
+        <div class="uc-avatar" id="ucAvatar"></div>
+        <span class="uc-name" id="ucName"></span>
+        <span id="ucTeamEmoji"></span>
+        <span style="color:var(--muted);font-size:.7rem;margin-left:2px">▾</span>
+        <div class="user-dropdown" id="userDropdown">
+          <div class="dd-head">
+            <div class="dd-name" id="ddName"></div>
+            <div class="dd-team" id="ddTeam"></div>
+          </div>
+          <div class="dd-item" id="ddBadges">🏅 My Badges</div>
+          <div class="dd-item danger" id="ddLogout">↩ Sign out</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-nav" id="mobileNav">
+  <a href="matches.html">Matches</a>
+  <a href="referees.html">Referees</a>
+  <a href="fantasy.html">Fantasy</a>
+  <a href="badges.html" class="active">Badges</a>
+</div>
+
+<div class="page">
+
+  <div class="badges-hero">
+    <h1>Badges</h1>
+    <p>Earn achievements by voting, playing fantasy, and staying active</p>
+    <div class="badge-progress-bar">
+      <div class="badge-progress-fill" id="progressFill"></div>
+    </div>
+    <div class="badge-progress-label" id="progressLabel">Loading…</div>
+  </div>
+
+  <div id="badgeContent">
+    <!-- skeleton while loading -->
+    <div class="badge-category">
+      <div class="badge-category-title">Voting</div>
+      <div class="badge-grid">
+        <div class="badge-skeleton"></div>
+        <div class="badge-skeleton"></div>
+        <div class="badge-skeleton"></div>
+        <div class="badge-skeleton"></div>
+      </div>
+    </div>
+    <div class="badge-category">
+      <div class="badge-category-title">Fantasy</div>
+      <div class="badge-grid">
+        <div class="badge-skeleton"></div>
+        <div class="badge-skeleton"></div>
+        <div class="badge-skeleton"></div>
+        <div class="badge-skeleton"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── INIT ──────────────────────────────────────────────────
+let currentUser = null;
+
+function toast(msg, dur = 3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+function fmt(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+}
+
+// ── HEADER ────────────────────────────────────────────────
+function initHeader() {
+  const user = getCurrentUser();
+  currentUser = user;
+  if (!user) { window.location.href = 'login.html'; return; }
+
+  document.getElementById('ucAvatar').textContent = (user.username || 'U').slice(0,1).toUpperCase();
+  document.getElementById('ucName').textContent   = user.username || 'User';
+  const team = WC_TEAMS.find(t => t.name === user.team);
+  document.getElementById('ucTeamEmoji').textContent = team?.emoji || '';
+  document.getElementById('ddName').textContent   = user.username || 'User';
+  document.getElementById('ddTeam').textContent   = user.team ? `${user.team} fan` : 'No team set';
+
+  document.getElementById('userChip').addEventListener('click', () => {
+    document.getElementById('userDropdown').classList.toggle('open');
+  });
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#userChip')) document.getElementById('userDropdown').classList.remove('open');
+  });
+  document.getElementById('ddLogout').addEventListener('click', async () => {
+    await clearCurrentUser(); window.location.href = 'login.html';
+  });
+  document.getElementById('ddBadges').addEventListener('click', () => {
+    window.location.href = 'badges.html';
+  });
+
+  // hamburger
+  document.getElementById('hamburger').addEventListener('click', () => {
+    document.getElementById('mobileNav').classList.toggle('open');
+  });
+}
+
+// ── RENDER BADGES ─────────────────────────────────────────
+function renderBadges(earned) {
+  const earnedKeys = new Set(earned.map(b => b.badge_key));
+  const earnedMap  = Object.fromEntries(earned.map(b => [b.badge_key, b.awarded_at]));
+
+  // Group by category
+  const categories = ['Voting', 'Fantasy', 'Loyalty', 'Special'];
+  let html = '';
+
+  categories.forEach(cat => {
+    const defs = BADGE_DEFS.filter(b => b.category === cat);
+    if (!defs.length) return;
+
+    html += `<div class="badge-category">
+      <div class="badge-category-title">${cat}</div>
+      <div class="badge-grid">`;
+
+    defs.forEach(def => {
+      const isEarned = earnedKeys.has(def.key);
+      const dateStr  = isEarned ? earnedMap[def.key] : null;
+      html += `
+        <div class="badge-card ${isEarned ? 'earned' : 'locked'}">
+          ${!isEarned ? '<span class="badge-lock">🔒</span>' : ''}
+          <div class="badge-icon">${def.icon}</div>
+          <div class="badge-name">${def.name}</div>
+          <div class="badge-desc">${def.desc}</div>
+          ${dateStr ? `<div class="badge-earned-date">Earned ${fmt(dateStr)}</div>` : ''}
+        </div>`;
+    });
+
+    html += '</div></div>';
+  });
+
+  document.getElementById('badgeContent').innerHTML = html;
+
+  // Progress bar
+  const total = BADGE_DEFS.length;
+  const got   = earnedKeys.size;
+  const pct   = total ? Math.round(got / total * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `${got} / ${total} earned`;
+}
+
+// ── MAIN ──────────────────────────────────────────────────
+(async function init() {
+  const authed = await checkAuth();
+  if (!authed) { window.location.href = 'login.html'; return; }
+
+  initHeader();
+  if (!currentUser) return;
+
+  const earned = await loadMyBadges(currentUser.id);
+  renderBadges(earned);
+})();
+</script>
+</body>
+</html>

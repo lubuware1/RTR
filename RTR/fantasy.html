@@ -1441,6 +1441,7 @@
             <a href="matches.html">Matches</a>
             <a href="referees.html">Referees</a>
             <a href="fantasy.html" class="active">Fantasy</a>
+            <a href="badges.html">Badges</a>
             <a href="history.html">History</a>
           </nav>
           <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
@@ -1468,6 +1469,7 @@
       <a href="matches.html">Matches</a>
       <a href="referees.html">Referees</a>
       <a href="fantasy.html" class="active">Fantasy</a>
+      <a href="badges.html">Badges</a>
       <a href="history.html">History</a>
     </div>
 
@@ -2149,6 +2151,12 @@
                   ? `Picked ${gRef(myPick).name} for MW${FGW.gw}`
                   : `Picked ${gRef(myPick).name} (saved locally)`,
               );
+              // Check fantasy badges (fire-and-forget)
+              const curUser = getCurrentUser();
+              if (curUser?.id) {
+                const sw = await loadMySeasonWildcards(FGW.gw + 1);
+                checkFantasyBadges(curUser.id, sw).catch(() => {});
+              }
             });
           });
         }

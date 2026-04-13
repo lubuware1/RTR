@@ -51,6 +51,8 @@ async function checkAuth() {
     window.location.href = 'login.html?onboard=1';
     return true; // prevent calling page from also redirecting to login.html
   }
+  // Award profile_setup badge if team is set
+  if (profile?.team) checkProfileBadge(session.user.id).catch(() => {});
   return true;
 }
 
@@ -597,3 +599,100 @@ const SHARED_CSS = `
   }
 `;
 (function(){const s=document.createElement('style');s.textContent=SHARED_CSS;document.head.appendChild(s);})();
+
+// ── BADGE SYSTEM ──────────────────────────────────────────
+const BADGE_DEFS = [
+  // Voting
+  { key: 'first_vote',    category: 'Voting',   icon: '🗳️', name: 'First Vote',     desc: 'Cast your first incident vote' },
+  { key: 'hot_take',      category: 'Voting',   icon: '🔥', name: 'Hot Take',       desc: 'Vote on 10 different incidents' },
+  { key: 'centurion',     category: 'Voting',   icon: '💯', name: 'Centurion',      desc: 'Vote on 100 incidents' },
+  { key: 'voting_streak', category: 'Voting',   icon: '📈', name: 'On a Roll',      desc: 'Vote in 3 consecutive matchweeks' },
+  // Fantasy
+  { key: 'first_pick',    category: 'Fantasy',  icon: '⚽', name: 'First Pick',     desc: 'Make your first fantasy pick' },
+  { key: 'wildcard_king', category: 'Fantasy',  icon: '🃏', name: 'Wildcard King',  desc: 'Use all your wildcards in a season' },
+  { key: 'podium',        category: 'Fantasy',  icon: '🏆', name: 'Podium',         desc: 'Finish top 3 in a matchweek leaderboard' },
+  { key: 'match_winner',  category: 'Fantasy',  icon: '🎯', name: 'Match Winner',   desc: 'Your picked ref scores 10+ points in a GW' },
+  // Loyalty
+  { key: 'profile_setup', category: 'Loyalty',  icon: '👤', name: 'All Kitted Out', desc: 'Set your favourite team on your profile' },
+  { key: 'early_adopter', category: 'Loyalty',  icon: '🌟', name: 'Early Adopter',  desc: 'Among the first 50 users to join RefRater' },
+  // Special
+  { key: 'perfect_voter', category: 'Special',  icon: '🎖️', name: 'Perfect Eye',    desc: 'Vote correctly on all incidents in a match' },
+];
+
+async function awardBadge(userId, badgeKey) {
+  if (PREVIEW_MODE || !userId) return false;
+  // insert with unique constraint — silently ignore duplicate
+  const { error } = await getSB().from('RTR Badges').insert({
+    user_id: userId, badge_key: badgeKey, awarded_at: new Date().toISOString()
+  });
+  // error code 23505 = unique violation (already earned) — that's fine
+  if (error && error.code !== '23505') console.warn('[RTR] awardBadge error:', error);
+  return !error;
+}
+
+async function loadMyBadges(userId) {
+  if (PREVIEW_MODE || !userId) return [];
+  const { data } = await getSB().from('RTR Badges')
+    .select('badge_key, awarded_at').eq('user_id', userId);
+  return data || [];
+}
+
+// Called after any incident vote is saved
+async function checkVotingBadges(userId) {
+  if (PREVIEW_MODE || !userId) return;
+  // Total vote count
+  const { count } = await getSB().from('RTR Incident Votes')
+    .select('id', { count: 'exact', head: true }).eq('user_id', userId);
+  if (count >= 1)   await awardBadge(userId, 'first_vote');
+  if (count >= 10)  await awardBadge(userId, 'hot_take');
+  if (count >= 100) await awardBadge(userId, 'centurion');
+  // Streak: 3 consecutive matchweeks with at least 1 vote
+  const { data: votedGWs } = await getSB().from('RTR Incident Votes')
+    .select('matchweek').eq('user_id', userId).not('matchweek', 'is', null);
+  if (votedGWs?.length) {
+    const gws = [...new Set(votedGWs.map(v => +v.matchweek))].sort((a, b) => a - b);
+    let streak = 1, max = 1;
+    for (let i = 1; i < gws.length; i++) {
+      streak = gws[i] === gws[i - 1] + 1 ? streak + 1 : 1;
+      if (streak > max) max = streak;
+    }
+    if (max >= 3) await awardBadge(userId, 'voting_streak');
+  }
+}
+
+// Called after a fantasy pick is saved
+async function checkFantasyBadges(userId, seasonWildcards) {
+  if (PREVIEW_MODE || !userId) return;
+  // First pick
+  const { count } = await getSB().from('RTR Fantasy Picks')
+    .select('id', { count: 'exact', head: true }).eq('user_id', userId);
+  if (count >= 1) await awardBadge(userId, 'first_pick');
+  // Wildcard king: all wildcards exhausted (left = 0 for yc, rc, var)
+  if (seasonWildcards) {
+    const { yc, rc, var: varWC } = seasonWildcards;
+    if (yc.left === 0 && rc.left === 0 && varWC.left === 0) {
+      await awardBadge(userId, 'wildcard_king');
+    }
+  }
+}
+
+// Called on profile setup / login when team is set
+async function checkProfileBadge(userId) {
+  if (PREVIEW_MODE || !userId) return;
+  await awardBadge(userId, 'profile_setup');
+}
+
+// Called when fantasy leaderboard resolves to check top-3 finish
+async function checkPodiumBadge(userId, gw) {
+  if (PREVIEW_MODE || !userId) return;
+  // Load all picks for this GW and check if user is in top 3 by points
+  // (Points calculation is done on the fantasy page — this is a helper
+  //  that the fantasy page calls after computing scores)
+  await awardBadge(userId, 'podium');
+}
+
+// Called when match-winner threshold is met (10+ pts, picked ref)
+async function checkMatchWinnerBadge(userId) {
+  if (PREVIEW_MODE || !userId) return;
+  await awardBadge(userId, 'match_winner');
+}
