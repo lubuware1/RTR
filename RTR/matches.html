@@ -137,7 +137,7 @@
   .inc-minute{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.75rem;color:var(--pl-green);background:rgba(0,255,133,.08);border:1px solid rgba(0,255,133,.2);border-radius:4px;padding:1px 6px;flex-shrink:0;}
   .inc-card-detail{font-size:.82rem;color:#fff;margin-bottom:10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
   .inc-card-player{font-weight:600;}
-  .inc-card-outcome{color:var(--muted);}
+  .inc-card-outcome{color:var(--pl-green);}
   .inc-card-outcome::before{content:'·';margin-right:6px;color:var(--border);}
   .inc-empty{text-align:center;padding:24px 16px;color:var(--muted);font-size:.82rem;border:1px dashed var(--border);border-radius:8px;}
   .inc-vote-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
@@ -494,7 +494,7 @@ function renderIncidentList() {
       </div>` : ''}
       <div class="inc-vote-row">
         <button class="inc-vote-btn correct${myVote==='correct'?' voted':''}" data-iid="${inc.id}" data-vote="correct" ${locked?'disabled':''}>✅ Correct</button>
-        <button class="inc-vote-btn wrong${myVote==='wrong'?' voted':''}"   data-iid="${inc.id}" data-vote="wrong"   ${locked?'disabled':''}>❌ Incorrect</button>
+        <button class="inc-vote-btn wrong${myVote==='wrong'?' voted':''}"   data-iid="${inc.id}" data-vote="wrong"   ${locked?'disabled':''}>Incorrect</button>
       </div>
       ${total ? `<div class="inc-bar-wrap">
         <span style="color:var(--green)">${correctPct}%</span>
@@ -640,7 +640,7 @@ document.getElementById('incidentList').addEventListener('click', async e => {
     ref.fanRating     = calcIncidentScore(matchIncidents, incidentVoteTotals.fan);
     renderLb();
   }
-  toast(`${vote === 'correct' ? '✅' : '❌'} Vote recorded as ${isFan ? 'Fan' : 'Neutral'}!`);
+  toast(`${vote === 'correct' ? '✅' : ''} Vote recorded as ${isFan ? 'Fan' : 'Neutral'}!`.trim());
 
   if (currentUser?.id) checkVotingBadges(currentUser.id).catch(() => {});
 });
