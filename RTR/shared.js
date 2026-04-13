@@ -242,31 +242,39 @@ async function loadGWConfig() {
 // ── INCIDENTS ─────────────────────────────────────────────
 
 const INCIDENT_TYPES = [
-  { type: 'Red Card',        weight: 1.2 },
-  { type: 'Yellow Card',     weight: 0.3 },
-  { type: 'Penalty Given',   weight: 0.8 },
-  { type: 'Penalty Missed',  weight: 0.8 },
-  { type: 'VAR Decision',    weight: 0.6 },
-  { type: 'Goal Disallowed', weight: 0.7 },
-  { type: 'Foul Not Given',  weight: 0.4 },
-  { type: 'Offside Decision',weight: 0.4 },
+  { type: 'Red Card',        weight: 1.5 },
+  { type: 'Penalty Given',   weight: 1.2 },
+  { type: 'Goal Decision',   weight: 1.2 },
+  { type: 'Yellow Card',     weight: 0.8 },
+  { type: 'VAR Decision',    weight: 0.5 },
+  { type: 'Offside Decision',weight: 0.5 },
+  { type: 'Foul Not Given',  weight: 0.5 },
+  { type: 'Other',           weight: 0.5 },
 ];
 
-// Compute incident-driven score from base 5.0
-// incidents: [{ type, weight }]
+// Votes threshold config
+const VOTE_MULTIPLIER = 3;   // each real user counts as N votes toward the threshold
+const MIN_VOTES = 25;        // effective votes needed before a decision affects the score
+
+// Compute incident-driven score starting from 10.
+// Returns null if no decisions have cleared the vote threshold yet.
+// incidents: [{ id, weight }]
 // votes: { [incidentId]: { correct: N, wrong: N } }
 function calcIncidentScore(incidents, votes) {
-  if (!incidents.length) return 5.0;
-  let score = 5.0;
+  if (!incidents.length) return null;
+  let score = 10.0;
+  let anyQualified = false;
   incidents.forEach(inc => {
     const v = votes[inc.id];
     if (!v) return;
     const total = v.correct + v.wrong;
-    if (!total) return;
-    const sentiment = (v.correct - v.wrong) / total; // -1 to +1
-    score += inc.weight * sentiment;
+    if (total * VOTE_MULTIPLIER < MIN_VOTES) return; // below threshold — pending
+    anyQualified = true;
+    const penalty = inc.weight * (v.wrong / total);
+    score -= penalty;
   });
-  return Math.min(10, Math.max(1, Math.round(score * 10) / 10));
+  if (!anyQualified) return null;
+  return Math.max(1.0, Math.round(score * 10) / 10);
 }
 
 async function loadIncidents(matchId) {

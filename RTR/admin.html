@@ -142,7 +142,17 @@
       </div>
       <div class="field-group">
         <label>Decision Type</label>
-        <input type="text" id="incType" placeholder="e.g. Foul, Penalty, Red Card">
+        <select id="incType">
+          <option value="">Select type…</option>
+          <option value="Red Card">Red Card (−1.5)</option>
+          <option value="Penalty Given">Penalty Given (−1.2)</option>
+          <option value="Goal Decision">Goal Decision (−1.2)</option>
+          <option value="Yellow Card">Yellow Card (−0.8)</option>
+          <option value="VAR Decision">VAR Decision (−0.5)</option>
+          <option value="Offside Decision">Offside Decision (−0.5)</option>
+          <option value="Foul Not Given">Foul Not Given (−0.5)</option>
+          <option value="Other">Other (−0.5)</option>
+        </select>
       </div>
       <div class="field-group">
         <label>Player</label>
@@ -375,7 +385,7 @@
       const desc = [player, outcome, colour].filter(Boolean).join('||');
       const inc = await saveIncident(+matchId, type, minute ? +minute : null, desc);
       if (inc) {
-        document.getElementById('incType').value           = '';
+        document.getElementById('incType').selectedIndex    = 0;
         document.getElementById('incPlayer').value         = '';
         document.getElementById('incOutcome').value        = '';
         document.getElementById('incOutcomeColour').value  = 'green';

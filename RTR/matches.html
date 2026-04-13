@@ -111,13 +111,18 @@
   .pvs-none{color:var(--muted);font-size:.8rem;font-family:'Barlow Condensed',sans-serif;}
   .pvs-count{font-size:.7rem;color:var(--muted);margin-top:3px;}
   /* ── INCIDENT SCORE DISPLAY ── */
-  .inc-score-block{text-align:center;padding:16px 0 10px;border-bottom:1px solid var(--border);margin-bottom:16px;}
-  .inc-score-val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:3rem;line-height:1;}
-  .inc-score-val.g{color:var(--green);}.inc-score-val.y{color:var(--yellow);}.inc-score-val.r{color:var(--red);}
-  .inc-score-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:4px;font-family:'Barlow Condensed',sans-serif;font-weight:700;}
-  .inc-star-row{display:flex;justify-content:center;gap:3px;margin:8px 0 0;}
-  .inc-star{font-size:1.1rem;color:var(--border);}
-  .inc-star.on{color:var(--yellow);}
+  .inc-score-block{padding:0 0 14px;border-bottom:1px solid var(--border);margin-bottom:16px;}
+  .inc-dual-scores{display:flex;gap:10px;}
+  .inc-score-tile{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 10px 12px;text-align:center;}
+  .inc-tile-label{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;}
+  .inc-tile-label.nl{color:var(--green);}
+  .inc-tile-label.fl{color:var(--yellow);}
+  .inc-tile-val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2.2rem;line-height:1;}
+  .inc-tile-val.g{color:var(--green);}.inc-tile-val.y{color:var(--yellow);}.inc-tile-val.r{color:var(--red);}
+  .inc-tile-val.pending{color:var(--muted);font-size:1rem;padding:4px 0;}
+  .inc-tile-denom{font-size:.75rem;color:var(--muted);font-family:'Barlow Condensed',sans-serif;margin-left:1px;}
+  .inc-tile-sub{font-size:.65rem;color:var(--muted);margin-top:5px;}
+  .inc-pending-badge{display:inline-block;font-size:.62rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;background:rgba(107,114,128,.15);color:var(--muted);border:1px solid rgba(107,114,128,.25);border-radius:4px;padding:2px 7px;margin-top:6px;}
 
   /* ── INCIDENT VOTING ── */
   .inc-pregame{text-align:center;padding:28px 16px;border:1px dashed var(--border);border-radius:10px;}
@@ -268,10 +273,18 @@
           <div class="rcard" id="panelRefCard"></div>
           <!-- Incident-driven score -->
           <div class="inc-score-block">
-            <div class="inc-score-val" id="incScoreVal">5.0</div>
-            <div class="inc-star-row" id="incStarRow"></div>
-            <div class="inc-score-label" id="incScoreLabel">Community Ref Score</div>
-            <div id="incScoreSec" style="margin-top:4px;min-height:1em;"></div>
+            <div class="inc-dual-scores">
+              <div class="inc-score-tile">
+                <div class="inc-tile-label nl">Neutral Rating</div>
+                <div class="inc-tile-val" id="incScoreNeutralVal">–</div>
+                <div class="inc-tile-sub" id="incScoreNeutralSub"></div>
+              </div>
+              <div class="inc-score-tile">
+                <div class="inc-tile-label fl">Fan Rating</div>
+                <div class="inc-tile-val" id="incScoreFanVal">–</div>
+                <div class="inc-tile-sub" id="incScoreFanSub"></div>
+              </div>
+            </div>
           </div>
           <!-- Incorrect Decision button + Incidents panel -->
           <button class="inc-flag-btn" id="incFlagBtn">⚑ Incorrect Decision</button>
@@ -430,31 +443,33 @@ let incidentVoteTotals = { neutral: {}, fan: {} }; // split by vote type
 let myIncidentVotes = {}; // { incidentId: { vote, created_at } }
 
 function renderIncidentScore(incs, voteTotals) {
-  const m = MATCHES.find(x => x.id === selId);
-  const isFan = m && isFanMatch(m, currentUser);
-
   const neutralScore = calcIncidentScore(incs, voteTotals.neutral);
   const fanScore     = calcIncidentScore(incs, voteTotals.fan);
+  const needed = Math.ceil(MIN_VOTES / VOTE_MULTIPLIER);
 
-  const primary = isFan ? fanScore : neutralScore;
-  const sc = primary >= 7 ? 'g' : primary >= 5 ? 'y' : 'r';
-  document.getElementById('incScoreVal').textContent = primary.toFixed(1);
-  document.getElementById('incScoreVal').className = `inc-score-val ${sc}`;
-  const filled = Math.round(primary);
-  document.getElementById('incStarRow').innerHTML = Array.from({length:10},(_,i) =>
-    `<span class="inc-star${i < filled ? ' on' : ''}">★</span>`).join('');
-
-  const secEl = document.getElementById('incScoreSec');
-  if (secEl) {
-    if (isFan) {
-      secEl.innerHTML = `<span style="color:var(--muted);font-size:.7rem">Neutral: <b style="color:#fff">${neutralScore.toFixed(1)}</b></span>`;
+  function updateTile(valId, subId, score, voteCount) {
+    const valEl = document.getElementById(valId);
+    const subEl = document.getElementById(subId);
+    if (!valEl) return;
+    if (score === null) {
+      valEl.textContent = 'Pending';
+      valEl.className = 'inc-tile-val pending';
+      subEl.textContent = voteCount
+        ? `${voteCount} vote${voteCount !== 1 ? 's' : ''} · need ${needed} to unlock`
+        : `Need ${needed} votes to unlock`;
     } else {
-      const fanVoteCount = Object.values(voteTotals.fan).reduce((s,v)=>s+v.correct+v.wrong,0);
-      secEl.innerHTML = fanVoteCount
-        ? `<span style="color:var(--muted);font-size:.7rem">Fan: <b style="color:#fff">${fanScore.toFixed(1)}</b></span>`
-        : '';
+      const sc = score >= 7 ? 'g' : score >= 5 ? 'y' : 'r';
+      valEl.innerHTML = `${score.toFixed(1)}<span class="inc-tile-denom">/10</span>`;
+      valEl.className = `inc-tile-val ${sc}`;
+      subEl.textContent = `${voteCount} vote${voteCount !== 1 ? 's' : ''}`;
     }
   }
+
+  const nVotes = Object.values(voteTotals.neutral).reduce((s,v) => s + v.correct + v.wrong, 0);
+  const fVotes = Object.values(voteTotals.fan).reduce((s,v) => s + v.correct + v.wrong, 0);
+
+  updateTile('incScoreNeutralVal', 'incScoreNeutralSub', neutralScore, nVotes);
+  updateTile('incScoreFanVal',     'incScoreFanSub',     fanScore,     fVotes);
 }
 
 function renderIncidentList() {
@@ -481,6 +496,8 @@ function renderIncidentList() {
     const correctPct = total ? Math.round((v.correct / total) * 100) : 50;
     const myVote = myIncidentVotes[inc.id]?.vote || null;
     const locked = !!myVote;
+    const isPending = total * VOTE_MULTIPLIER < MIN_VOTES;
+    const needed = Math.ceil(MIN_VOTES / VOTE_MULTIPLIER);
 
     return `<div class="inc-card${locked ? ' voted' : ''}">
       <div class="inc-card-header">
@@ -501,6 +518,7 @@ function renderIncidentList() {
         </div>
         <span style="color:#c064c0">${100-correctPct}%</span>
       </div>` : ''}
+      ${isPending ? `<div class="inc-pending-badge">⏳ ${total}/${needed} votes · pending score</div>` : ''}
     </div>`;
   }).join('');
 }
@@ -561,8 +579,12 @@ async function openPanel(mid) {
         <div class="inc-pregame-sub">Voting opens once the game kicks off</div>
       </div>`;
     document.getElementById('incFlagBtn').disabled = true;
-    document.getElementById('incScoreVal').textContent = '–';
-    document.getElementById('incStarRow').innerHTML = '';
+    ['incScoreNeutralVal','incScoreFanVal'].forEach(id => {
+      const el = document.getElementById(id); if (el) { el.textContent = '–'; el.className = 'inc-tile-val'; }
+    });
+    ['incScoreNeutralSub','incScoreFanSub'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.textContent = '';
+    });
     renderList();
     return;
   }
@@ -578,8 +600,6 @@ async function openPanel(mid) {
   incidentVoteTotals = voteSplit;
   myIncidentVotes = myVotes;
 
-  const isFan = isFanMatch(m, currentUser);
-  document.getElementById('incScoreLabel').textContent = isFan ? 'Fan Score' : 'Neutral Score';
   renderIncidentScore(matchIncidents, incidentVoteTotals);
   renderIncidentList();
   renderList();
@@ -597,7 +617,7 @@ function renderLb(){
   document.getElementById('leaderboard').innerHTML=sorted.map((ref,i)=>{
     const votes=lbMode==='neutral'?ref.neutralVotes:ref.fanVotes, rating=lbMode==='neutral'?ref.neutralRating:ref.fanRating;
     const sc=rating>=7.5?'g':rating>=6?'y':'r';
-    return`<div class="lb-row" data-lref="${ref.id}"><div class="lb-rank${i<3?' top':''}">${i+1}</div><div><div class="lb-ref-name">${ref.name}</div><div class="lb-games">${votes} votes · all time</div></div><div class="lb-score ${sc}">${rating.toFixed(1)}</div></div>`;
+    return`<div class="lb-row" data-lref="${ref.id}"><div class="lb-rank${i<3?' top':''}">${i+1}</div><div><div class="lb-ref-name">${ref.name}</div><div class="lb-games">${votes} votes · all time</div></div><div class="lb-score ${sc}">${rating != null ? rating.toFixed(1) : '–'}</div></div>`;
   }).join('');
 }
 
@@ -647,8 +667,10 @@ document.getElementById('incidentList').addEventListener('click', async e => {
   // Update ref score in leaderboard
   const ref = REFS.find(r => r.id === +voteMatch.refId);
   if (ref) {
-    ref.neutralRating = calcIncidentScore(matchIncidents, incidentVoteTotals.neutral);
-    ref.fanRating     = calcIncidentScore(matchIncidents, incidentVoteTotals.fan);
+    const ns = calcIncidentScore(matchIncidents, incidentVoteTotals.neutral);
+    const fs = calcIncidentScore(matchIncidents, incidentVoteTotals.fan);
+    if (ns !== null) ref.neutralRating = ns;
+    if (fs !== null) ref.fanRating     = fs;
     renderLb();
   }
   toast(`${vote === 'correct' ? '✅' : ''} Vote recorded as ${isFan ? 'Fan' : 'Neutral'}!`.trim());
@@ -714,13 +736,15 @@ async function loadIncidentRatings() {
   REFS.forEach(r => {
     if (refNeutral[r.id]?.length) {
       const vMap = Object.fromEntries(refNeutral[r.id].map(i => [i.id, i._v]));
-      r.neutralRating = calcIncidentScore(refNeutral[r.id], vMap);
-      r.neutralVotes  = refNeutral[r.id].reduce((s,i) => s + i._v.correct + i._v.wrong, 0);
+      const ns = calcIncidentScore(refNeutral[r.id], vMap);
+      if (ns !== null) r.neutralRating = ns;
+      r.neutralVotes = refNeutral[r.id].reduce((s,i) => s + i._v.correct + i._v.wrong, 0);
     }
     if (refFan[r.id]?.length) {
       const vMap = Object.fromEntries(refFan[r.id].map(i => [i.id, i._v]));
-      r.fanRating = calcIncidentScore(refFan[r.id], vMap);
-      r.fanVotes  = refFan[r.id].reduce((s,i) => s + i._v.correct + i._v.wrong, 0);
+      const fs = calcIncidentScore(refFan[r.id], vMap);
+      if (fs !== null) r.fanRating = fs;
+      r.fanVotes = refFan[r.id].reduce((s,i) => s + i._v.correct + i._v.wrong, 0);
     }
   });
 }
