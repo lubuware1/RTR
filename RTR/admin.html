@@ -437,11 +437,16 @@
       if (!btn) return;
       const id = +btn.dataset.delInc;
       btn.disabled = true; btn.textContent = '…';
-      const ok = await deleteIncident(id);
-      if (ok) {
+      // Delete directly with Supabase so we can log any error
+      const { error } = await getSB().from('RTR Incidents').delete().eq('id', id);
+      if (error) {
+        console.error('[RTR] deleteIncident error:', error);
+        btn.disabled = false; btn.textContent = 'Delete';
+        toast(`Delete failed: ${error.message}`, true);
+      } else {
         document.getElementById(`inc-admin-${id}`)?.remove();
-        toast('Incident deleted');
-      } else { btn.disabled = false; btn.textContent = 'Delete'; toast('Delete failed', true); }
+        toast('Decision deleted');
+      }
     });
 
   })();

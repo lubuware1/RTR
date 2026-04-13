@@ -130,8 +130,8 @@
   .inc-flag-btn:disabled{opacity:.45;cursor:not-allowed;}
   /* Incident cards */
   .inc-section-label{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
-  .inc-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 14px 12px;margin-bottom:10px;transition:border-color .2s;}
-  .inc-card.voted{border-color:rgba(0,255,133,.2);}
+  .inc-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 14px 12px;margin-bottom:10px;transition:all .2s;}
+  .inc-card.voted{opacity:.7;}
   .inc-card-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
   .inc-card-type{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.95rem;text-transform:uppercase;letter-spacing:.5px;color:var(--text);flex:1;}
   .inc-minute{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.75rem;color:var(--pl-green);background:rgba(0,255,133,.08);border:1px solid rgba(0,255,133,.2);border-radius:4px;padding:1px 6px;flex-shrink:0;}
@@ -143,13 +143,16 @@
   .inc-vote-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
   .inc-vote-btn{border:1.5px solid var(--border);border-radius:7px;padding:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .18s;background:var(--surface);color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px;}
   .inc-vote-btn:hover:not(:disabled){transform:translateY(-1px);}
-  .inc-vote-btn.correct:hover:not(:disabled),.inc-vote-btn.correct.voted{background:rgba(55,236,186,.1);border-color:var(--green);color:var(--green);}
-  .inc-vote-btn.wrong:hover:not(:disabled),.inc-vote-btn.wrong.voted{background:rgba(255,71,87,.1);border-color:var(--red);color:var(--red);}
+  .inc-vote-btn.correct:hover:not(:disabled){background:rgba(55,236,186,.1);border-color:var(--green);color:var(--green);}
+  .inc-vote-btn.wrong:hover:not(:disabled){background:rgba(255,71,87,.1);border-color:var(--red);color:var(--red);}
   .inc-vote-btn:disabled{opacity:.55;cursor:not-allowed;transform:none;}
+  /* Voted state — replaces buttons */
+  .inc-voted-badge{display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:7px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  .inc-voted-badge.correct{border-color:rgba(55,236,186,.25);color:var(--green);}
+  .inc-voted-badge.wrong{border-color:rgba(255,71,87,.25);color:var(--red);}
   .inc-bar-wrap{display:flex;align-items:center;gap:8px;font-size:.72rem;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-weight:700;}
   .inc-bar{flex:1;height:5px;border-radius:3px;background:var(--border);overflow:hidden;}
   .inc-bar-fill{height:100%;background:var(--green);border-radius:3px;transition:width .4s ease;}
-  .inc-cooldown{font-size:.7rem;color:var(--muted);text-align:center;margin-top:6px;font-family:'Barlow Condensed',sans-serif;min-height:1em;}
 
   /* Leaderboard */
   .leaderboard{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:16px;}
@@ -490,14 +493,15 @@ function renderIncidentList() {
         ${player  ? `<span class="inc-card-player">${player}</span>` : ''}
         ${outcome ? `<span class="inc-card-outcome">${outcome}</span>` : ''}
       </div>` : ''}
-      <div class="inc-vote-row">
-        <button class="inc-vote-btn correct${myVote==='correct'?' voted':''}" data-iid="${inc.id}" data-vote="correct" ${locked?'disabled':''}>
-          ✅ Correct ${v.correct ? `<span style="opacity:.6;font-size:.75em">(${v.correct})</span>` : ''}
-        </button>
-        <button class="inc-vote-btn wrong${myVote==='wrong'?' voted':''}" data-iid="${inc.id}" data-vote="wrong" ${locked?'disabled':''}>
-          ❌ Incorrect ${v.wrong ? `<span style="opacity:.6;font-size:.75em">(${v.wrong})</span>` : ''}
-        </button>
-      </div>
+      ${locked
+        ? `<div class="inc-voted-badge ${myVote}">
+            ${myVote === 'correct' ? '✅ You voted Correct' : '❌ You voted Incorrect'}
+           </div>`
+        : `<div class="inc-vote-row">
+            <button class="inc-vote-btn correct" data-iid="${inc.id}" data-vote="correct">✅ Correct</button>
+            <button class="inc-vote-btn wrong"   data-iid="${inc.id}" data-vote="wrong">❌ Incorrect</button>
+           </div>`
+      }
       ${total ? `<div class="inc-bar-wrap">
         <span style="color:var(--green)">${correctPct}%</span>
         <div class="inc-bar"><div class="inc-bar-fill" style="width:${correctPct}%"></div></div>
