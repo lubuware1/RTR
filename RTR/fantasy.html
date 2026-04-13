@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RefRater — Fantasy RTR</title>
+    <title>RefRater — Fantasy</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap"
@@ -486,13 +486,13 @@
 
       /* === PICK REF TAB === */
       .deadline-notice {
-        background: rgba(255, 71, 87, 0.07);
-        border: 1px solid rgba(255, 71, 87, 0.2);
+        background: rgba(0, 255, 133, 0.07);
+        border: 1px solid rgba(0, 255, 133, 0.25);
         border-radius: 8px;
         padding: 10px 14px;
         margin-bottom: 14px;
         font-size: 0.8rem;
-        color: rgba(255, 71, 87, 0.85);
+        color: rgba(0, 255, 133, 0.85);
         display: flex;
         align-items: center;
         gap: 8px;
@@ -1476,8 +1476,9 @@
     <div class="gw-banner">
       <div class="gw-banner-inner">
         <div>
-          <div class="gw-banner-title">
-            Fantasy RTR — <span>Matchweek 1</span>
+          <div class="gw-banner-title" style="display:flex;align-items:center;gap:10px;">
+            <img src="images/logos/RRLogo.svg" alt="RefRater" style="height:28px;width:auto;display:block;">
+            Fantasy — <span id="bannerGWLabel">Matchweek 1</span>
           </div>
           <div class="gw-banner-meta" id="gwBannerMeta">
             Deadline: <span id="deadlineText">—</span> &nbsp;·&nbsp;
@@ -1644,7 +1645,7 @@
             id="deadlineNotice"
             style="display: none"
           >
-            🔒 Deadline passed — picks are locked for Matchweek 1
+            🔒 Deadline passed — picks are locked for <span id="deadlineNoticeGW">Matchweek 1</span>
           </div>
           <div class="ref-pick-grid" id="refPickGrid">
             <!-- rendered by JS -->
@@ -1684,7 +1685,7 @@
         <div class="side-panel">
           <div class="panel-head">
             <div class="panel-head-text">
-              <h2>⚽ Matchweek 1</h2>
+              <h2>⚽ <span id="sidePanelGWLabel">Matchweek 1</span></h2>
               <p id="panelSubtext">Select a ref from the Pick tab</p>
             </div>
             <button class="panel-close-btn" id="panelCloseBtn" title="Close">✕</button>
@@ -1715,7 +1716,7 @@
 
           <!-- Tab: Ref Scores -->
           <div class="sp-tab-content" id="spTabRefs" style="display:none">
-            <div class="fl-header">🏅 Ref Scores — Matchweek 1</div>
+            <div class="fl-header">🏅 Ref Scores — <span id="refScoresGWLabel">Matchweek 1</span></div>
             <div class="ref-scores-col-header">
               <span></span>
               <span>GP</span>
@@ -1727,7 +1728,7 @@
 
           <!-- Tab: Leaderboard -->
           <div class="sp-tab-content" id="spTabLeague" style="display:none">
-            <div class="fl-header">🏆 Fantasy League — Matchweek 1</div>
+            <div class="fl-header">🏆 Fantasy League — <span id="leagueGWLabel">Matchweek 1</span></div>
             <div class="lb-toggle">
               <button class="lb-toggle-btn active" data-lb="gw">GW Points</button>
               <button class="lb-toggle-btn" data-lb="season">Season Points</button>
@@ -2944,6 +2945,13 @@
           (allBonuses[r.id] || []).forEach(b => { REF_SEASON_PTS[r.id] = (REF_SEASON_PTS[r.id] || 0) + b.pts; });
         });
         renderRefScores(); // re-render now that season pts are computed
+
+        // Update all matchweek labels with the live GW number
+        const gwLabel = `Matchweek ${FGW.gw}`;
+        ['bannerGWLabel','deadlineNoticeGW','sidePanelGWLabel','refScoresGWLabel','leagueGWLabel'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = gwLabel;
+        });
 
         // Show deadline notice only if locked
         document.getElementById("deadlineNotice").style.display =
