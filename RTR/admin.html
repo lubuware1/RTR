@@ -9,6 +9,10 @@
   :root{--bg:#0a0c10;--surface:#12151c;--surface2:#1a1e28;--border:#242836;--red:#ff4757;--yellow:#ffd32a;--green:#37ecba;--text:#e8eaf0;--muted:#6b7280;--pl-purple:#37003c;--pl-green:#00ff85;}
   *{margin:0;padding:0;box-sizing:border-box;}
   body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;padding:24px;}
+  .admin-topbar{display:flex;align-items:center;padding:12px 0 20px;margin-bottom:4px;}
+  .admin-topbar a{display:flex;align-items:center;text-decoration:none;}
+  .admin-topbar img{height:36px;width:auto;transition:filter .25s;}
+  .admin-topbar a:hover img{filter:drop-shadow(0 0 10px rgba(0,255,133,.7));}
   h1{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2rem;color:var(--pl-green);margin-bottom:4px;}
   .subtitle{color:var(--muted);font-size:.85rem;margin-bottom:28px;}
   .danger-badge{display:inline-block;background:rgba(255,71,87,.12);border:1px solid rgba(255,71,87,.4);color:var(--red);font-size:.65rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:4px;margin-left:8px;vertical-align:middle;}
@@ -69,6 +73,9 @@
 </div>
 
 <div id="adminPanel" style="display:none;max-width:900px;margin:0 auto;">
+  <div class="admin-topbar">
+    <a href="matches.html"><img src="images/logos/RRLogo.svg" alt="RefRater"></a>
+  </div>
   <h1>RTR Admin Panel <span class="danger-badge">Admin Only</span></h1>
   <p class="subtitle">Logged in as danawhiteware · Changes write to Supabase (source of truth) and are reflected immediately in the app.</p>
 
