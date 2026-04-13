@@ -1955,11 +1955,7 @@
       // ── HEADER ────────────────────────────────────────────────
       function initHeader() {
         const team = PL_TEAMS.find((t) => t.name === currentUser?.team);
-        document.getElementById("ucAvatar").textContent = (
-          currentUser?.username || "?"
-        )
-          .slice(0, 2)
-          .toUpperCase();
+        applyUserAvatar(document.getElementById("ucAvatar"), currentUser);
         document.getElementById("ucName").textContent =
           currentUser?.username || "Guest";
         document.getElementById("ucTeamEmoji").textContent = team?.emoji || "";

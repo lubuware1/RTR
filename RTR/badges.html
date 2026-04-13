@@ -132,6 +132,38 @@
     margin-top: 2px;
   }
 
+  /* ── SET AS ICON BUTTON ── */
+  .badge-set-btn {
+    margin-top: 4px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: .72rem; font-weight: 700;
+    letter-spacing: .5px; text-transform: uppercase;
+    background: none;
+    border: 1px solid rgba(0,255,133,.3);
+    color: rgba(0,255,133,.6);
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+    position: relative; z-index: 3;
+  }
+  .badge-set-btn:hover {
+    background: rgba(0,255,133,.12);
+    border-color: var(--pl-green);
+    color: var(--pl-green);
+  }
+  .badge-set-btn.active-icon {
+    background: rgba(0,255,133,.15);
+    border-color: var(--pl-green);
+    color: var(--pl-green);
+  }
+  .badge-active-pip {
+    position: absolute; top: 10px; left: 12px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--pl-green);
+    box-shadow: 0 0 6px rgba(0,255,133,.8);
+  }
+
   /* ── LOADING SKELETON ── */
   .badge-skeleton {
     background: var(--surface2);
@@ -250,7 +282,7 @@ function initHeader() {
   currentUser = user;
   if (!user) { window.location.href = 'login.html'; return; }
 
-  document.getElementById('ucAvatar').textContent = (user.username || 'U').slice(0,1).toUpperCase();
+  applyUserAvatar(document.getElementById('ucAvatar'), user);
   document.getElementById('ucName').textContent   = user.username || 'User';
   const team = WC_TEAMS.find(t => t.name === user.team);
   document.getElementById('ucTeamEmoji').textContent = team?.emoji || '';
@@ -280,8 +312,8 @@ function initHeader() {
 function renderBadges(earned) {
   const earnedKeys = new Set(earned.map(b => b.badge_key));
   const earnedMap  = Object.fromEntries(earned.map(b => [b.badge_key, b.awarded_at]));
+  const activeKey  = getAvatarBadge()?.key || null;
 
-  // Group by category
   const categories = ['Voting', 'Fantasy', 'Loyalty', 'Special'];
   let html = '';
 
@@ -295,14 +327,19 @@ function renderBadges(earned) {
 
     defs.forEach(def => {
       const isEarned = earnedKeys.has(def.key);
+      const isActive = def.key === activeKey;
       const dateStr  = isEarned ? earnedMap[def.key] : null;
       html += `
         <div class="badge-card ${isEarned ? 'earned' : 'locked'}">
           ${!isEarned ? '<span class="badge-lock">🔒</span>' : ''}
+          ${isActive  ? '<span class="badge-active-pip"></span>' : ''}
           <div class="badge-icon">${def.icon}</div>
           <div class="badge-name">${def.name}</div>
           <div class="badge-desc">${def.desc}</div>
           ${dateStr ? `<div class="badge-earned-date">Earned ${fmt(dateStr)}</div>` : ''}
+          ${isEarned ? `<button class="badge-set-btn ${isActive ? 'active-icon' : ''}" data-key="${def.key}" data-icon="${def.icon}">
+            ${isActive ? '✓ Using as icon' : 'Set as icon'}
+          </button>` : ''}
         </div>`;
     });
 
@@ -310,6 +347,27 @@ function renderBadges(earned) {
   });
 
   document.getElementById('badgeContent').innerHTML = html;
+
+  // Wire icon buttons
+  document.querySelectorAll('.badge-set-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key  = btn.dataset.key;
+      const icon = btn.dataset.icon;
+      const isActive = getAvatarBadge()?.key === key;
+      if (isActive) {
+        // Toggle off — revert to initials
+        setAvatarBadge(null);
+        toast('Icon removed — showing initials');
+      } else {
+        setAvatarBadge({ key, icon });
+        toast(`${icon} Set as your profile icon`);
+      }
+      // Update the header avatar live
+      applyUserAvatar(document.getElementById('ucAvatar'), currentUser);
+      // Re-render to update active states
+      renderBadges(earned);
+    });
+  });
 
   // Progress bar
   const total = BADGE_DEFS.length;

@@ -600,6 +600,31 @@ const SHARED_CSS = `
 `;
 (function(){const s=document.createElement('style');s.textContent=SHARED_CSS;document.head.appendChild(s);})();
 
+// ── AVATAR BADGE ─────────────────────────────────────────
+const _AVATAR_KEY = 'rr_avatar_badge';
+
+function getAvatarBadge() {
+  const s = localStorage.getItem(_AVATAR_KEY);
+  return s ? JSON.parse(s) : null; // { key, icon }
+}
+function setAvatarBadge(data) {
+  if (data) localStorage.setItem(_AVATAR_KEY, JSON.stringify(data));
+  else localStorage.removeItem(_AVATAR_KEY);
+}
+// Call this wherever the user-chip avatar is initialised
+function applyUserAvatar(el, user) {
+  const badge = getAvatarBadge();
+  if (badge) {
+    el.textContent    = badge.icon;
+    el.style.fontSize = '1.05rem';
+    el.style.background = 'rgba(0,255,133,.08)';
+  } else {
+    el.textContent    = (user?.username || '?').slice(0, 2).toUpperCase();
+    el.style.fontSize = '';
+    el.style.background = '';
+  }
+}
+
 // ── BADGE SYSTEM ──────────────────────────────────────────
 const BADGE_DEFS = [
   // Voting
@@ -683,7 +708,7 @@ async function checkProfileBadge(userId) {
 }
 
 // Called when fantasy leaderboard resolves to check top-3 finish
-async function checkPodiumBadge(userId, gw) {
+async function checkPodiumBadge(userId, _gw) {
   if (PREVIEW_MODE || !userId) return;
   // Load all picks for this GW and check if user is in top 3 by points
   // (Points calculation is done on the fantasy page — this is a helper

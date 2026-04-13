@@ -156,6 +156,7 @@
         <span style="color:var(--muted);font-size:.7rem;margin-left:2px">▾</span>
         <div class="user-dropdown" id="userDropdown">
           <div class="dd-head"><div class="dd-uname" id="ddName"></div><div class="dd-team" id="ddTeam"></div></div>
+          <div class="dd-item" onclick="location.href='badges.html'">🏅 Badges</div>
           <div class="dd-item" id="ddLogout">↩ Sign out</div>
         </div>
       </div>
@@ -216,7 +217,7 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 // Header init
 function initHeader(){
   const team=PL_TEAMS.find(t=>t.name===currentUser?.team);
-  document.getElementById('ucAvatar').textContent=(currentUser?.username||'?').slice(0,2).toUpperCase();
+  applyUserAvatar(document.getElementById('ucAvatar'), currentUser);
   document.getElementById('ucName').textContent=currentUser?.username||'Guest';
   document.getElementById('ucTeamEmoji').textContent=team?.emoji||'';
   document.getElementById('ddName').textContent=currentUser?.username||'Guest';
