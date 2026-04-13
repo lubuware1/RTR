@@ -435,7 +435,7 @@
     document.getElementById('incidentAdminList').addEventListener('click', async e => {
       const btn = e.target.closest('[data-del-inc]');
       if (!btn) return;
-      const id = +btn.dataset.delInc;
+      const id = btn.dataset.delInc;
       btn.disabled = true; btn.textContent = '…';
       // Delete directly with Supabase so we can log any error
       const { error } = await getSB().from('RTR Incidents').delete().eq('id', id);
