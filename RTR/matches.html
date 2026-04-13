@@ -119,27 +119,29 @@
   .inc-star{font-size:1.1rem;color:var(--border);}
   .inc-star.on{color:var(--yellow);}
 
-  /* ── INCIDENT LIST ── */
-  .inc-section-label{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  /* ── INCIDENT VOTING ── */
   .inc-pregame{text-align:center;padding:28px 16px;border:1px dashed var(--border);border-radius:10px;}
   .inc-pregame-icon{font-size:1.8rem;margin-bottom:8px;}
   .inc-pregame-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;margin-bottom:4px;}
   .inc-pregame-sub{font-size:.78rem;color:var(--muted);}
-  .inc-item{margin-bottom:6px;}
-  .inc-row{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;cursor:pointer;user-select:none;transition:border-color .15s;}
-  .inc-row:hover{border-color:rgba(255,255,255,.15);}
-  .inc-row.open{border-color:var(--pl-green);border-bottom-left-radius:0;border-bottom-right-radius:0;}
-  .inc-type{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;flex:1;}
+  /* Incorrect Decision button */
+  .inc-flag-btn{width:100%;background:rgba(255,71,87,.07);border:1.5px solid rgba(255,71,87,.3);border-radius:10px;padding:14px 16px;color:rgba(255,71,87,.9);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;}
+  .inc-flag-btn:hover{background:rgba(255,71,87,.14);border-color:rgba(255,71,87,.6);}
+  .inc-flag-btn:disabled{opacity:.45;cursor:not-allowed;}
+  /* Incident cards */
+  .inc-section-label{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+  .inc-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 14px 12px;margin-bottom:10px;transition:border-color .2s;}
+  .inc-card.voted{border-color:rgba(0,255,133,.2);}
+  .inc-card-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .inc-card-type{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.95rem;text-transform:uppercase;letter-spacing:.5px;color:var(--text);flex:1;}
   .inc-minute{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.75rem;color:var(--pl-green);background:rgba(0,255,133,.08);border:1px solid rgba(0,255,133,.2);border-radius:4px;padding:1px 6px;flex-shrink:0;}
-  .inc-row-tally{font-size:.72rem;color:var(--muted);font-family:'Barlow Condensed',sans-serif;white-space:nowrap;}
-  .inc-row-tally.voted-c{color:var(--green);}.inc-row-tally.voted-w{color:var(--red);}
-  .inc-chevron{font-size:.6rem;color:var(--muted);transition:transform .2s;flex-shrink:0;}
-  .inc-row.open .inc-chevron{transform:rotate(180deg);}
-  .inc-expand{display:none;padding:12px 12px 10px;background:var(--surface2);border:1px solid var(--pl-green);border-top:none;border-bottom-left-radius:8px;border-bottom-right-radius:8px;}
-  .inc-expand.open{display:block;}
-  .inc-desc{font-size:.78rem;color:var(--muted);margin-bottom:10px;line-height:1.4;}
+  .inc-card-detail{font-size:.82rem;color:#fff;margin-bottom:10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .inc-card-player{font-weight:600;}
+  .inc-card-outcome{color:var(--muted);}
+  .inc-card-outcome::before{content:'·';margin-right:6px;color:var(--border);}
+  .inc-empty{text-align:center;padding:24px 16px;color:var(--muted);font-size:.82rem;border:1px dashed var(--border);border-radius:8px;}
   .inc-vote-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
-  .inc-vote-btn{border:1.5px solid var(--border);border-radius:7px;padding:9px 10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .18s;background:var(--surface);color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px;}
+  .inc-vote-btn{border:1.5px solid var(--border);border-radius:7px;padding:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .18s;background:var(--surface);color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px;}
   .inc-vote-btn:hover:not(:disabled){transform:translateY(-1px);}
   .inc-vote-btn.correct:hover:not(:disabled),.inc-vote-btn.correct.voted{background:rgba(55,236,186,.1);border-color:var(--green);color:var(--green);}
   .inc-vote-btn.wrong:hover:not(:disabled),.inc-vote-btn.wrong.voted{background:rgba(255,71,87,.1);border-color:var(--red);color:var(--red);}
@@ -269,8 +271,9 @@
             <div class="inc-score-label" id="incScoreLabel">Community Ref Score</div>
             <div id="incScoreSec" style="margin-top:4px;min-height:1em;"></div>
           </div>
-          <!-- Incident cards -->
-          <div class="inc-section-label">Key Incidents</div>
+          <!-- Incorrect Decision button + Incidents panel -->
+          <button class="inc-flag-btn" id="incFlagBtn">⚑ Incorrect Decision</button>
+          <div class="inc-section-label" id="incSectionLabel" style="display:none">Decisions</div>
           <div id="incidentList"></div>
         </div>
       </div>
@@ -407,7 +410,9 @@ function renderList() {
 function closePanel() {
   selId=null;
   if (cooldownInterval) { clearInterval(cooldownInterval); cooldownInterval=null; }
-  matchIncidents=[]; incidentVoteTotals={}; myIncidentVotes={};
+  matchIncidents=[]; incidentVoteTotals={ neutral:{}, fan:{} }; myIncidentVotes={};
+  document.getElementById('incSectionLabel').style.display='none';
+  document.getElementById('incFlagBtn').disabled=false;
   document.getElementById('panelEmpty').style.display='block';
   document.getElementById('panelForm').style.display='none';
   document.getElementById('panelCloseBtn').classList.remove('visible');
@@ -461,7 +466,6 @@ function renderIncidentScore(incs, voteTotals) {
   const neutralScore = calcIncidentScore(incs, voteTotals.neutral);
   const fanScore     = calcIncidentScore(incs, voteTotals.fan);
 
-  // Primary score: show fan score if this is the user's team's match, else neutral
   const primary = isFan ? fanScore : neutralScore;
   const sc = primary >= 7 ? 'g' : primary >= 5 ? 'y' : 'r';
   document.getElementById('incScoreVal').textContent = primary.toFixed(1);
@@ -470,7 +474,6 @@ function renderIncidentScore(incs, voteTotals) {
   document.getElementById('incStarRow').innerHTML = Array.from({length:10},(_,i) =>
     `<span class="inc-star${i < filled ? ' on' : ''}">★</span>`).join('');
 
-  // Secondary score shown below
   const secEl = document.getElementById('incScoreSec');
   if (secEl) {
     if (isFan) {
@@ -484,91 +487,68 @@ function renderIncidentScore(incs, voteTotals) {
   }
 }
 
-// Synthetic ID for incident types not yet in DB
-function syntheticId(type) { return 'type_' + type.replace(/\s+/g, '_'); }
-
-// Merged list: always all 8 types, with DB record attached if admin added one
-function getMergedIncidents() {
-  return INCIDENT_TYPES.map(({ type, weight }) => {
-    const db = matchIncidents.find(i => i.type === type);
-    return db || { id: syntheticId(type), type, weight, minute: null, description: null, _virtual: true };
-  });
-}
-
 function renderIncidentList() {
   const el = document.getElementById('incidentList');
-  // Preserve which items are currently open
-  const openIds = new Set([...document.querySelectorAll('.inc-expand.open')].map(e => e.dataset.iid));
-
+  const labelEl = document.getElementById('incSectionLabel');
   const curMatch = MATCHES.find(x => x.id === selId);
   const viewingAsFan = curMatch && isFanMatch(curMatch, currentUser);
   const voteBucket = viewingAsFan ? incidentVoteTotals.fan : incidentVoteTotals.neutral;
 
-  el.innerHTML = getMergedIncidents().map(inc => {
+  if (!matchIncidents.length) {
+    labelEl.style.display = 'none';
+    el.innerHTML = '<div class="inc-empty">No decisions logged yet for this match</div>';
+    return;
+  }
+
+  labelEl.style.display = '';
+  el.innerHTML = matchIncidents.map(inc => {
+    const parts = (inc.description || '').split('||');
+    const player  = parts[0]?.trim() || '';
+    const outcome = parts[1]?.trim() || '';
     const v = voteBucket[inc.id] || { correct: 0, wrong: 0 };
     const total = v.correct + v.wrong;
     const correctPct = total ? Math.round((v.correct / total) * 100) : 50;
     const cooling = isCoolingDown(inc.id);
-    const myVote = myIncidentVotes[inc.id]?.vote || null;
-    const isOpen = openIds.has(String(inc.id));
+    const myVote  = myIncidentVotes[inc.id]?.vote || null;
 
-    // Tally badge shown in collapsed row
-    let tallyHtml = '', tallyClass = '';
-    if (myVote) {
-      tallyClass = myVote === 'correct' ? 'voted-c' : 'voted-w';
-      tallyHtml = myVote === 'correct' ? `✅ Voted Correct` : `❌ Voted Wrong`;
-    } else if (total) {
-      tallyHtml = `${v.correct}✅ ${v.wrong}❌`;
-    }
-
-    return `<div class="inc-item">
-      <div class="inc-row${isOpen?' open':''}" data-itype="${inc.id}">
-        <span class="inc-type">${inc.type}</span>
+    return `<div class="inc-card${myVote ? ' voted' : ''}">
+      <div class="inc-card-header">
+        <span class="inc-card-type">${inc.type}</span>
         ${inc.minute !== null ? `<span class="inc-minute">${inc.minute}'</span>` : ''}
-        ${tallyHtml ? `<span class="inc-row-tally ${tallyClass}">${tallyHtml}</span>` : ''}
-        <span class="inc-chevron">▼</span>
       </div>
-      <div class="inc-expand${isOpen?' open':''}" data-iid="${inc.id}">
-        ${inc.description ? `<div class="inc-desc">${inc.description}</div>` : ''}
-        <div class="inc-vote-row">
-          <button class="inc-vote-btn correct${myVote==='correct'?' voted':''}" data-iid="${inc.id}" data-vote="correct" ${cooling?'disabled':''}>
-            ✅ Correct ${v.correct ? `<span style="opacity:.6;font-size:.75em">(${v.correct})</span>` : ''}
-          </button>
-          <button class="inc-vote-btn wrong${myVote==='wrong'?' voted':''}" data-iid="${inc.id}" data-vote="wrong" ${cooling?'disabled':''}>
-            ❌ Wrong ${v.wrong ? `<span style="opacity:.6;font-size:.75em">(${v.wrong})</span>` : ''}
-          </button>
-        </div>
-        <div class="inc-bar-wrap">
-          <span style="color:var(--green)">${correctPct}%</span>
-          <div class="inc-bar"><div class="inc-bar-fill" style="width:${correctPct}%"></div></div>
-          <span style="color:var(--red)">${100 - correctPct}%</span>
-        </div>
-        <div class="inc-cooldown" id="inc-cd-${inc.id}">${cooling ? `Revote in ${fmtMs(cooldownRemaining(inc.id))}` : ''}</div>
+      ${(player || outcome) ? `<div class="inc-card-detail">
+        ${player  ? `<span class="inc-card-player">${player}</span>` : ''}
+        ${outcome ? `<span class="inc-card-outcome">${outcome}</span>` : ''}
+      </div>` : ''}
+      <div class="inc-vote-row">
+        <button class="inc-vote-btn correct${myVote==='correct'?' voted':''}" data-iid="${inc.id}" data-vote="correct" ${cooling||myVote?'disabled':''}>
+          ✅ Correct ${v.correct ? `<span style="opacity:.6;font-size:.75em">(${v.correct})</span>` : ''}
+        </button>
+        <button class="inc-vote-btn wrong${myVote==='wrong'?' voted':''}" data-iid="${inc.id}" data-vote="wrong" ${cooling||myVote?'disabled':''}>
+          ❌ Incorrect ${v.wrong ? `<span style="opacity:.6;font-size:.75em">(${v.wrong})</span>` : ''}
+        </button>
       </div>
+      ${total ? `<div class="inc-bar-wrap">
+        <span style="color:var(--green)">${correctPct}%</span>
+        <div class="inc-bar"><div class="inc-bar-fill" style="width:${correctPct}%"></div></div>
+        <span style="color:var(--red)">${100-correctPct}%</span>
+      </div>` : ''}
+      <div class="inc-cooldown" id="inc-cd-${inc.id}">${cooling ? `Revote in ${fmtMs(cooldownRemaining(inc.id))}` : ''}</div>
     </div>`;
   }).join('');
 }
 
-
-// Toggle accordion rows
-document.getElementById('incidentList').addEventListener('click', e => {
-  const row = e.target.closest('.inc-row');
-  if (!row || e.target.closest('.inc-vote-btn')) return;
-  const itemId = row.dataset.itype;
-  const expandEl = document.querySelector(`.inc-expand[data-iid="${itemId}"]`);
-  if (!expandEl) return;
-  const isOpen = expandEl.classList.contains('open');
-  // Collapse all
-  document.querySelectorAll('.inc-expand.open').forEach(el => el.classList.remove('open'));
-  document.querySelectorAll('.inc-row.open').forEach(el => el.classList.remove('open'));
-  // Open this one if it was closed
-  if (!isOpen) { expandEl.classList.add('open'); row.classList.add('open'); }
+// "Incorrect Decision" button — scrolls to incident panel
+document.getElementById('incFlagBtn').addEventListener('click', () => {
+  const el = document.getElementById('incidentList');
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  if (!matchIncidents.length) toast('No decisions logged yet for this match');
 });
 
 function startCooldownTick() {
   if (cooldownInterval) clearInterval(cooldownInterval);
   cooldownInterval = setInterval(() => {
-    getMergedIncidents().forEach(inc => {
+    matchIncidents.forEach(inc => {
       const cdEl = document.getElementById(`inc-cd-${inc.id}`);
       const btn1 = document.querySelector(`[data-iid="${inc.id}"][data-vote="correct"]`);
       const btn2 = document.querySelector(`[data-iid="${inc.id}"][data-vote="wrong"]`);
@@ -613,12 +593,14 @@ async function openPanel(mid) {
 
   // Block voting for upcoming matches
   if (m.status === 'upcoming') {
+    document.getElementById('incSectionLabel').style.display = 'none';
     document.getElementById('incidentList').innerHTML = `
       <div class="inc-pregame">
         <div class="inc-pregame-icon">🔒</div>
         <div class="inc-pregame-title">Match hasn't started yet</div>
         <div class="inc-pregame-sub">Voting opens once the game kicks off</div>
       </div>`;
+    document.getElementById('incFlagBtn').disabled = true;
     document.getElementById('incScoreVal').textContent = '–';
     document.getElementById('incStarRow').innerHTML = '';
     renderList();
@@ -638,7 +620,7 @@ async function openPanel(mid) {
 
   const isFan = isFanMatch(m, currentUser);
   document.getElementById('incScoreLabel').textContent = isFan ? 'Fan Score' : 'Neutral Score';
-  renderIncidentScore(getMergedIncidents(), incidentVoteTotals);
+  renderIncidentScore(matchIncidents, incidentVoteTotals);
   renderIncidentList();
   startCooldownTick();
   renderList();
@@ -677,30 +659,12 @@ document.getElementById('filterTabs').addEventListener('click',e=>{
 document.getElementById('incidentList').addEventListener('click', async e => {
   const btn = e.target.closest('.inc-vote-btn');
   if (!btn || btn.disabled) return;
-  let incidentId = btn.dataset.iid; // may be a synthetic string like "type_Red_Card"
+  const incidentId = +btn.dataset.iid;
   const vote = btn.dataset.vote; // 'correct' or 'wrong'
-  const isVirtual = incidentId.startsWith('type_');
 
-  // Determine if this is a fan vote
   const voteMatch = MATCHES.find(x => x.id === selId);
   const isFan = voteMatch && isFanMatch(voteMatch, currentUser);
   const bucket = isFan ? 'fan' : 'neutral';
-  // If voting on a virtual incident, auto-create DB record first
-  if (isVirtual) {
-    const typeName = INCIDENT_TYPES.find(t => syntheticId(t.type) === incidentId)?.type;
-    if (typeName) {
-      const newInc = await saveIncident(selId, typeName, null, null);
-      if (newInc) {
-        matchIncidents.push(newInc);
-        const oldId = incidentId;
-        incidentId = newInc.id;
-        // Migrate optimistic state from synthetic key
-        if (incidentVoteTotals.neutral[oldId]) { incidentVoteTotals.neutral[incidentId] = incidentVoteTotals.neutral[oldId]; delete incidentVoteTotals.neutral[oldId]; }
-        if (incidentVoteTotals.fan[oldId])     { incidentVoteTotals.fan[incidentId]     = incidentVoteTotals.fan[oldId];     delete incidentVoteTotals.fan[oldId]; }
-        if (myIncidentVotes[oldId]) { myIncidentVotes[incidentId] = myIncidentVotes[oldId]; delete myIncidentVotes[oldId]; }
-      }
-    }
-  }
 
   // Optimistic UI update
   btn.disabled = true;
@@ -709,17 +673,16 @@ document.getElementById('incidentList').addEventListener('click', async e => {
   myIncidentVotes[incidentId] = { vote, created_at: new Date().toISOString() };
   localStorage.setItem(getCooldownKey(incidentId), Date.now());
 
-  renderIncidentScore(getMergedIncidents(), incidentVoteTotals);
+  renderIncidentScore(matchIncidents, incidentVoteTotals);
   renderIncidentList();
   startCooldownTick();
 
   const ok = await saveIncidentVote(incidentId, currentUser?.id, vote, isFan);
   if (!ok) {
-    // Rollback
     incidentVoteTotals[bucket][incidentId][vote]--;
     delete myIncidentVotes[incidentId];
     localStorage.removeItem(getCooldownKey(incidentId));
-    renderIncidentScore(getMergedIncidents(), incidentVoteTotals);
+    renderIncidentScore(matchIncidents, incidentVoteTotals);
     renderIncidentList();
     toast('⚠ Vote failed — please try again');
     return;
@@ -728,13 +691,12 @@ document.getElementById('incidentList').addEventListener('click', async e => {
   // Update ref score in leaderboard
   const ref = REFS.find(r => r.id === +voteMatch.refId);
   if (ref) {
-    ref.neutralRating = calcIncidentScore(getMergedIncidents(), incidentVoteTotals.neutral);
-    ref.fanRating     = calcIncidentScore(getMergedIncidents(), incidentVoteTotals.fan);
+    ref.neutralRating = calcIncidentScore(matchIncidents, incidentVoteTotals.neutral);
+    ref.fanRating     = calcIncidentScore(matchIncidents, incidentVoteTotals.fan);
     renderLb();
   }
   toast(`${vote === 'correct' ? '✅' : '❌'} Vote recorded as ${isFan ? 'Fan' : 'Neutral'}!`);
 
-  // Check voting badges (fire-and-forget)
   if (currentUser?.id) checkVotingBadges(currentUser.id).catch(() => {});
 });
 document.getElementById('leaderboard').addEventListener('click',e=>{

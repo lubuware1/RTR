@@ -137,36 +137,32 @@
 
   <!-- KEY INCIDENTS -->
   <div class="section">
-    <div class="section-title">⚡ Key Incidents</div>
+    <div class="section-title">⚡ Decisions</div>
     <div class="row cols-4" style="margin-bottom:8px;">
       <div class="field-group">
         <label>Match</label>
         <select id="incMatchSel"><option value="">Select match…</option></select>
       </div>
       <div class="field-group">
-        <label>Incident Type</label>
-        <select id="incType">
-          <option value="">Select type…</option>
-          <option>Red Card</option>
-          <option>Yellow Card</option>
-          <option>Penalty Given</option>
-          <option>Penalty Missed</option>
-          <option>VAR Decision</option>
-          <option>Goal Disallowed</option>
-          <option>Foul Not Given</option>
-          <option>Offside Decision</option>
-        </select>
+        <label>Decision Type</label>
+        <input type="text" id="incType" placeholder="e.g. Foul, Penalty, Red Card">
       </div>
       <div class="field-group">
-        <label>Minute</label>
-        <input type="number" id="incMinute" min="1" max="120" placeholder="e.g. 45">
+        <label>Player</label>
+        <input type="text" id="incPlayer" placeholder="e.g. Romero">
       </div>
       <div class="field-group">
-        <label>Description (optional)</label>
-        <input type="text" id="incDesc" placeholder="e.g. Handball in box">
+        <label>Outcome</label>
+        <input type="text" id="incOutcome" placeholder="e.g. Yellow Card">
       </div>
     </div>
-    <button class="btn btn-green btn-sm" id="addIncidentBtn" style="margin-bottom:16px;">+ Add Incident</button>
+    <div class="row cols-4" style="margin-bottom:8px;">
+      <div class="field-group">
+        <label>Minute (optional)</label>
+        <input type="number" id="incMinute" min="1" max="120" placeholder="e.g. 45">
+      </div>
+    </div>
+    <button class="btn btn-green btn-sm" id="addIncidentBtn" style="margin-bottom:16px;">+ Add Decision</button>
     <hr class="divider">
     <div id="incidentAdminList"><div style="color:var(--muted);font-size:.85rem;">Select a match to view incidents.</div></div>
   </div>
@@ -399,33 +395,41 @@
       if (!matchId) { el.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">Select a match above.</div>'; return; }
       el.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">Loading…</div>';
       const incs = await loadIncidents(+matchId);
-      if (!incs.length) { el.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">No incidents yet for this match.</div>'; return; }
-      el.innerHTML = incs.map(inc => `
+      if (!incs.length) { el.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">No decisions yet for this match.</div>'; return; }
+      el.innerHTML = incs.map(inc => {
+        const parts = (inc.description||'').split('||');
+        const player  = parts[0]?.trim() || '';
+        const outcome = parts[1]?.trim() || '';
+        return `
         <div class="bonus-row" id="inc-admin-${inc.id}">
-          <span class="bonus-pts pos" style="min-width:40px;font-size:.8rem;">${inc.minute}'</span>
-          <span class="bonus-label"><strong>${inc.type}</strong>${inc.description ? ` — ${inc.description}` : ''}</span>
-          <span class="bonus-meta">weight ±${inc.weight}</span>
+          ${inc.minute ? `<span class="bonus-pts pos" style="min-width:40px;font-size:.8rem;">${inc.minute}'</span>` : ''}
+          <span class="bonus-label"><strong>${inc.type}</strong>${player ? ` — ${player}` : ''}${outcome ? ` → ${outcome}` : ''}</span>
           <button class="btn btn-red btn-sm" data-del-inc="${inc.id}">Delete</button>
-        </div>`).join('');
+        </div>`;
+      }).join('');
     }
 
     incMatchSel.addEventListener('change', () => renderIncidentAdminList(incMatchSel.value));
 
     document.getElementById('addIncidentBtn').addEventListener('click', async () => {
       const matchId = incMatchSel.value;
-      const type    = document.getElementById('incType').value;
+      const type    = document.getElementById('incType').value.trim();
+      const player  = document.getElementById('incPlayer').value.trim();
+      const outcome = document.getElementById('incOutcome').value.trim();
       const minute  = document.getElementById('incMinute').value;
-      const desc    = document.getElementById('incDesc').value.trim();
       if (!matchId) { toast('Select a match first', true); return; }
-      if (!type)    { toast('Select an incident type', true); return; }
-      if (!minute)  { toast('Enter the minute', true); return; }
-      const inc = await saveIncident(+matchId, type, +minute, desc);
+      if (!type)    { toast('Enter a decision type', true); return; }
+      // Pack player and outcome into description field
+      const desc = [player, outcome].filter(Boolean).join('||');
+      const inc = await saveIncident(+matchId, type, minute ? +minute : null, desc);
       if (inc) {
-        document.getElementById('incMinute').value = '';
-        document.getElementById('incDesc').value = '';
+        document.getElementById('incType').value    = '';
+        document.getElementById('incPlayer').value  = '';
+        document.getElementById('incOutcome').value = '';
+        document.getElementById('incMinute').value  = '';
         await renderIncidentAdminList(matchId);
-        toast(`✓ Incident added — ${type} ${minute}'`);
-      } else toast('Failed to add incident', true);
+        toast(`✓ Decision added — ${type}${player ? ' · ' + player : ''}`);
+      } else toast('Failed to add decision', true);
     });
 
     document.getElementById('incidentAdminList').addEventListener('click', async e => {
