@@ -132,13 +132,11 @@
   .inc-section-label{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
   .inc-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 14px 12px;margin-bottom:10px;transition:all .2s;}
   .inc-card.voted{opacity:.7;}
-  .inc-card-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .inc-card-header{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
   .inc-card-type{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.95rem;text-transform:uppercase;letter-spacing:.5px;color:var(--text);flex:1;}
+  .inc-card-player{font-size:.82rem;color:#fff;font-weight:600;margin-left:2px;}
   .inc-minute{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.75rem;color:var(--pl-green);background:rgba(0,255,133,.08);border:1px solid rgba(0,255,133,.2);border-radius:4px;padding:1px 6px;flex-shrink:0;}
-  .inc-card-detail{font-size:.82rem;color:#fff;margin-bottom:10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-  .inc-card-player{font-weight:600;}
-  .inc-card-outcome{color:var(--pl-green);}
-  .inc-card-outcome::before{content:'·';margin-right:6px;color:var(--border);}
+  .inc-card-outcome-row{text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;}
   .inc-empty{text-align:center;padding:24px 16px;color:var(--muted);font-size:.82rem;border:1px dashed var(--border);border-radius:8px;}
   .inc-vote-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
   .inc-vote-btn{border:1.5px solid var(--border);border-radius:7px;padding:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .18s;background:var(--surface);color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px;}
@@ -487,12 +485,10 @@ function renderIncidentList() {
     return `<div class="inc-card${locked ? ' voted' : ''}">
       <div class="inc-card-header">
         <span class="inc-card-type">${inc.type}</span>
+        ${player ? `<span class="inc-card-player">— ${player}</span>` : ''}
         ${inc.minute !== null ? `<span class="inc-minute">${inc.minute}'</span>` : ''}
       </div>
-      ${(player || outcome) ? `<div class="inc-card-detail">
-        ${player  ? `<span class="inc-card-player">${player}</span>` : ''}
-        ${outcome ? `<span class="inc-card-outcome" style="color:${outcomeColour}">${outcome}</span>` : ''}
-      </div>` : ''}
+      ${outcome ? `<div class="inc-card-outcome-row" style="color:${outcomeColour}">${outcome}</div>` : ''}
       <div class="inc-vote-row">
         <button class="inc-vote-btn correct${myVote==='correct'?' voted':''}" data-iid="${inc.id}" data-vote="correct" ${locked?'disabled':''}>✅ Correct</button>
         <button class="inc-vote-btn wrong${myVote==='wrong'?' voted':''}"   data-iid="${inc.id}" data-vote="wrong"   ${locked?'disabled':''}>Incorrect</button>
