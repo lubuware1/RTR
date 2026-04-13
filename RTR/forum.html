@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RefRater — Forum</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="shared.js"></script>
+<style>
+  body { background: var(--bg); }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 70% 50% at 20% 30%, rgba(55,0,60,.4) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 60% at 80% 70%, rgba(80,0,90,.25) 0%, transparent 65%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .page { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; padding: 28px 20px 80px; }
+
+  /* ── PAGE HEADER ── */
+  .forum-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px; gap: 12px; flex-wrap: wrap;
+  }
+  .forum-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 900; font-size: 2rem; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--pl-green);
+  }
+  .new-post-btn {
+    background: var(--pl-green); color: var(--pl-purple);
+    border: none; border-radius: 8px;
+    padding: 9px 18px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800; font-size: .9rem;
+    letter-spacing: .5px; text-transform: uppercase;
+    cursor: pointer; transition: opacity .15s;
+    white-space: nowrap;
+  }
+  .new-post-btn:hover { opacity: .85; }
+
+  /* ── CATEGORY TABS ── */
+  .cat-tabs {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .cat-tab {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: .85rem;
+    letter-spacing: .5px; text-transform: uppercase;
+    color: var(--muted); cursor: pointer;
+    transition: all .15s;
+  }
+  .cat-tab.active, .cat-tab:hover {
+    border-color: var(--pl-green);
+    color: var(--pl-green);
+    background: rgba(0,255,133,.07);
+  }
+
+  /* ── COMPOSE FORM ── */
+  .compose-box {
+    background: var(--surface2);
+    border: 1px solid rgba(0,255,133,.3);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 20px;
+    display: none;
+  }
+  .compose-box.open { display: block; }
+  .compose-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800; font-size: 1rem; text-transform: uppercase;
+    letter-spacing: .5px; color: var(--pl-green);
+    margin-bottom: 14px;
+  }
+  .compose-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .compose-select, .compose-input, .compose-textarea {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 9px 12px;
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-size: .85rem;
+    transition: border-color .15s;
+    outline: none;
+  }
+  .compose-select:focus, .compose-input:focus, .compose-textarea:focus {
+    border-color: rgba(0,255,133,.4);
+  }
+  .compose-select { min-width: 140px; }
+  .compose-input { flex: 1; min-width: 200px; }
+  .compose-textarea {
+    width: 100%; min-height: 90px; resize: vertical;
+    margin-bottom: 10px;
+  }
+  .compose-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .compose-cancel {
+    background: none; border: 1px solid var(--border);
+    border-radius: 7px; padding: 8px 16px;
+    color: var(--muted); font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: .82rem; letter-spacing: .5px;
+    text-transform: uppercase; cursor: pointer; transition: all .15s;
+  }
+  .compose-cancel:hover { border-color: var(--text); color: var(--text); }
+  .compose-submit {
+    background: var(--pl-green); color: var(--pl-purple);
+    border: none; border-radius: 7px;
+    padding: 8px 18px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800; font-size: .82rem; letter-spacing: .5px;
+    text-transform: uppercase; cursor: pointer; transition: opacity .15s;
+  }
+  .compose-submit:hover { opacity: .85; }
+  .compose-submit:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* ── POST CARDS ── */
+  .post-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .post-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color .2s;
+    cursor: pointer;
+  }
+  .post-card:hover { border-color: rgba(255,255,255,.12); }
+  .post-card.expanded { border-color: rgba(0,255,133,.25); cursor: default; }
+
+  .post-head {
+    padding: 14px 16px 12px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .post-meta-row {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .cat-pill {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: .68rem; letter-spacing: 1px;
+    text-transform: uppercase; padding: 2px 8px; border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .cat-pill.general  { background: rgba(107,114,128,.2); color: #9ca3af; }
+  .cat-pill.referee  { background: rgba(255,211,42,.12); color: var(--yellow); }
+  .cat-pill.game     { background: rgba(0,255,133,.1);   color: var(--pl-green); }
+  .cat-pill.decision { background: rgba(255,71,87,.1);   color: var(--red); }
+  .post-author {
+    font-size: .75rem; color: var(--muted);
+  }
+  .post-author strong { color: var(--text); }
+  .post-subject {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: 1.05rem; color: var(--text);
+    line-height: 1.3;
+  }
+  .post-preview {
+    font-size: .82rem; color: var(--muted);
+    line-height: 1.55; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  .post-footer {
+    display: flex; align-items: center; gap: 12px;
+    padding: 0 16px 12px;
+  }
+  .post-reply-count {
+    font-size: .75rem; color: var(--muted);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .post-reply-count svg { opacity: .6; }
+
+  /* ── EXPANDED BODY ── */
+  .post-body-full {
+    display: none;
+    padding: 0 16px 16px;
+    font-size: .86rem; color: #e0e0e0;
+    line-height: 1.7;
+    border-top: 1px solid var(--border);
+    margin-top: 4px; padding-top: 14px;
+  }
+  .post-card.expanded .post-body-full { display: block; }
+  .post-card.expanded .post-preview { display: none; }
+
+  /* ── REPLIES ── */
+  .replies-section {
+    display: none;
+    padding: 0 16px 16px;
+  }
+  .post-card.expanded .replies-section { display: block; }
+  .replies-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: .72rem; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 10px;
+    padding-top: 12px; border-top: 1px solid var(--border);
+  }
+  .reply-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+  }
+  .reply-meta {
+    font-size: .73rem; color: var(--muted);
+    margin-bottom: 5px;
+  }
+  .reply-meta strong { color: var(--text); }
+  .reply-body {
+    font-size: .83rem; color: #d0d0d0; line-height: 1.6;
+  }
+
+  /* ── REPLY BOX ── */
+  .reply-box {
+    margin-top: 10px;
+    display: flex; gap: 8px; align-items: flex-start;
+  }
+  .reply-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-size: .83rem;
+    resize: none; min-height: 38px;
+    outline: none; transition: border-color .15s;
+  }
+  .reply-input:focus { border-color: rgba(0,255,133,.35); }
+  .reply-send-btn {
+    background: rgba(0,255,133,.12);
+    border: 1px solid rgba(0,255,133,.3);
+    border-radius: 7px;
+    padding: 8px 14px;
+    color: var(--pl-green);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: .82rem; letter-spacing: .5px;
+    text-transform: uppercase; cursor: pointer;
+    transition: all .15s; white-space: nowrap;
+  }
+  .reply-send-btn:hover { background: rgba(0,255,133,.2); }
+  .reply-send-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* ── EMPTY / LOADING ── */
+  .forum-empty {
+    text-align: center; padding: 60px 20px;
+    color: var(--muted);
+  }
+  .forum-empty-icon { font-size: 2.4rem; margin-bottom: 12px; }
+  .forum-empty p {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600; font-size: 1rem;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .forum-loading {
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .post-skel {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; height: 100px;
+    animation: skelPulse 1.4s ease-in-out infinite;
+  }
+  @keyframes skelPulse { 0%,100%{opacity:.4} 50%{opacity:.7} }
+
+  @media (max-width: 600px) {
+    .forum-header { flex-direction: column; align-items: flex-start; }
+    .compose-row { flex-direction: column; }
+    .compose-select, .compose-input { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="matches.html"><img src="images/logos/RRLogo.svg" alt="RefRater" style="height:44px;width:auto;display:block;"></a>
+    <div class="header-right">
+      <nav>
+        <a href="matches.html">Matches</a>
+        <a href="referees.html">Referees</a>
+        <a href="fantasy.html">Fantasy</a>
+        <a href="badges.html">Badges</a>
+        <a href="forum.html" class="active">Forum</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+      <div class="user-chip" id="userChip">
+        <div class="uc-avatar" id="ucAvatar"></div>
+        <span class="uc-name" id="ucName"></span>
+        <span id="ucTeamEmoji"></span>
+        <span style="color:var(--muted);font-size:.7rem;margin-left:2px">▾</span>
+        <div class="user-dropdown" id="userDropdown">
+          <div class="dd-head">
+            <div class="dd-name" id="ddName"></div>
+            <div class="dd-team" id="ddTeam"></div>
+          </div>
+          <div class="dd-item" onclick="location.href='badges.html'">🏅 Badges</div>
+          <div class="dd-item danger" id="ddLogout">↩ Sign out</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-nav" id="mobileNav">
+  <a href="matches.html">Matches</a>
+  <a href="referees.html">Referees</a>
+  <a href="fantasy.html">Fantasy</a>
+  <a href="badges.html">Badges</a>
+  <a href="forum.html" class="active">Forum</a>
+</div>
+
+<div class="page">
+
+  <div class="forum-header">
+    <div class="forum-title">Forum</div>
+    <button class="new-post-btn" id="newPostBtn">+ New Post</button>
+  </div>
+
+  <!-- Compose form -->
+  <div class="compose-box" id="composeBox">
+    <div class="compose-title">New Post</div>
+    <div class="compose-row">
+      <select class="compose-select" id="compCat">
+        <option value="general">💬 General</option>
+        <option value="referee">🟡 Referee</option>
+        <option value="game">⚽ Game</option>
+        <option value="decision">⚖️ Decision</option>
+      </select>
+      <input class="compose-input" id="compSubject" type="text" placeholder="Subject…" maxlength="120">
+    </div>
+    <textarea class="compose-textarea" id="compBody" placeholder="Write your post…" maxlength="2000"></textarea>
+    <div class="compose-actions">
+      <button class="compose-cancel" id="compCancel">Cancel</button>
+      <button class="compose-submit" id="compSubmit">Post</button>
+    </div>
+  </div>
+
+  <!-- Category filter -->
+  <div class="cat-tabs">
+    <button class="cat-tab active" data-cat="all">All</button>
+    <button class="cat-tab" data-cat="referee">🟡 Referees</button>
+    <button class="cat-tab" data-cat="game">⚽ Games</button>
+    <button class="cat-tab" data-cat="decision">⚖️ Decisions</button>
+    <button class="cat-tab" data-cat="general">💬 General</button>
+  </div>
+
+  <!-- Post list -->
+  <div id="postList">
+    <div class="forum-loading">
+      <div class="post-skel"></div>
+      <div class="post-skel"></div>
+      <div class="post-skel"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── HELPERS ───────────────────────────────────────────────
+let currentUser = null;
+let activeCategory = 'all';
+let allPosts = []; // flat array: top-level + replies
+
+function toast(msg, dur = 3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+function timeAgo(dateStr) {
+  const sec = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+  if (sec < 60)   return 'just now';
+  if (sec < 3600) return `${Math.floor(sec/60)}m ago`;
+  if (sec < 86400) return `${Math.floor(sec/3600)}h ago`;
+  return `${Math.floor(sec/86400)}d ago`;
+}
+
+function catLabel(cat) {
+  return { general:'General', referee:'Referee', game:'Game', decision:'Decision' }[cat] || cat;
+}
+
+// ── SUPABASE ─────────────────────────────────────────────
+async function loadPosts() {
+  if (PREVIEW_MODE) return [];
+  const { data, error } = await getSB()
+    .from('RTR Forum')
+    .select('id, user_id, username, category, subject, body, reply_to, created_at')
+    .order('created_at', { ascending: false })
+    .limit(200);
+  if (error) { console.error('[RTR] loadPosts error:', error); return []; }
+  return data || [];
+}
+
+async function savePost(category, subject, body, replyTo) {
+  if (PREVIEW_MODE || !currentUser) return null;
+  const { data, error } = await getSB().from('RTR Forum').insert({
+    user_id: currentUser.id,
+    username: currentUser.username || 'User',
+    category,
+    subject: subject.trim(),
+    body: body.trim(),
+    reply_to: replyTo || null,
+    created_at: new Date().toISOString(),
+  }).select().single();
+  if (error) { console.error('[RTR] savePost error:', error); return null; }
+  return data;
+}
+
+// ── RENDER ────────────────────────────────────────────────
+let expandedId = null;
+
+function renderPosts() {
+  const el = document.getElementById('postList');
+  // top-level posts only (no reply_to), filtered by category
+  const topLevel = allPosts.filter(p =>
+    !p.reply_to &&
+    (activeCategory === 'all' || p.category === activeCategory)
+  );
+
+  if (!topLevel.length) {
+    el.innerHTML = `<div class="forum-empty">
+      <div class="forum-empty-icon">💬</div>
+      <p>No posts yet — be the first to start a discussion</p>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = topLevel.map(post => {
+    const replies = allPosts.filter(p => p.reply_to === post.id);
+    const isExpanded = expandedId === post.id;
+    const preview = post.body.length > 120 ? post.body.slice(0, 120) + '…' : post.body;
+
+    const repliesHtml = replies.map(r => `
+      <div class="reply-card">
+        <div class="reply-meta"><strong>${esc(r.username)}</strong> · ${timeAgo(r.created_at)}</div>
+        <div class="reply-body">${esc(r.body)}</div>
+      </div>`).join('');
+
+    return `
+      <div class="post-card${isExpanded ? ' expanded' : ''}" data-pid="${post.id}">
+        <div class="post-head">
+          <div class="post-meta-row">
+            <span class="cat-pill ${post.category}">${catLabel(post.category)}</span>
+            <span class="post-author">by <strong>${esc(post.username)}</strong> · ${timeAgo(post.created_at)}</span>
+          </div>
+          <div class="post-subject">${esc(post.subject)}</div>
+          <div class="post-preview">${esc(preview)}</div>
+        </div>
+        <div class="post-footer">
+          <span class="post-reply-count">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+            </svg>
+            ${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}
+          </span>
+        </div>
+        <div class="post-body-full">${esc(post.body)}</div>
+        <div class="replies-section">
+          ${replies.length ? `<div class="replies-label">${replies.length} ${replies.length === 1 ? 'Reply' : 'Replies'}</div>${repliesHtml}` : ''}
+          <div class="reply-box">
+            <textarea class="reply-input" data-rpid="${post.id}" placeholder="Write a reply…" rows="1" maxlength="1000"></textarea>
+            <button class="reply-send-btn" data-rpid="${post.id}">Reply</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Wire click-to-expand on post heads
+  el.querySelectorAll('.post-card').forEach(card => {
+    const pid = +card.dataset.pid;
+    // Click on head area (not on reply box or buttons inside)
+    card.querySelector('.post-head').addEventListener('click', () => {
+      expandedId = expandedId === pid ? null : pid;
+      renderPosts();
+    });
+    card.querySelector('.post-footer').addEventListener('click', () => {
+      expandedId = expandedId === pid ? null : pid;
+      renderPosts();
+    });
+  });
+
+  // Wire reply send buttons
+  el.querySelectorAll('.reply-send-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const pid = +btn.dataset.rpid;
+      const textarea = el.querySelector(`.reply-input[data-rpid="${pid}"]`);
+      const body = textarea?.value.trim();
+      if (!body) return;
+      btn.disabled = true;
+      const post = allPosts.find(p => p.id === pid);
+      const reply = await savePost(post?.category || 'general', post?.subject || '', body, pid);
+      if (reply) {
+        allPosts = [reply, ...allPosts];
+        renderPosts();
+        toast('Reply posted');
+      } else {
+        btn.disabled = false;
+        toast('Failed to post reply — please try again');
+      }
+    });
+  });
+
+  // Auto-expand reply textareas
+  el.querySelectorAll('.reply-input').forEach(ta => {
+    ta.addEventListener('input', () => {
+      ta.style.height = 'auto';
+      ta.style.height = ta.scrollHeight + 'px';
+    });
+  });
+}
+
+function esc(str) {
+  return String(str || '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/\n/g,'<br>');
+}
+
+// ── HEADER ────────────────────────────────────────────────
+function initHeader() {
+  if (!currentUser) { window.location.href = 'login.html'; return; }
+  applyUserAvatar(document.getElementById('ucAvatar'), currentUser);
+  document.getElementById('ucName').textContent   = currentUser.username || 'User';
+  const team = WC_TEAMS.find(t => t.name === currentUser.team);
+  document.getElementById('ucTeamEmoji').textContent = team?.emoji || '';
+  document.getElementById('ddName').textContent   = currentUser.username || 'User';
+  document.getElementById('ddTeam').textContent   = currentUser.team ? `${currentUser.team} fan` : 'No team set';
+
+  document.getElementById('userChip').addEventListener('click', () => {
+    document.getElementById('userDropdown').classList.toggle('open');
+  });
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#userChip')) document.getElementById('userDropdown').classList.remove('open');
+  });
+  document.getElementById('ddLogout').addEventListener('click', async () => {
+    await clearCurrentUser(); window.location.href = 'login.html';
+  });
+  document.getElementById('hamburger').addEventListener('click', () => {
+    document.getElementById('mobileNav').classList.toggle('open');
+  });
+}
+
+// ── CATEGORY TABS ─────────────────────────────────────────
+document.querySelectorAll('.cat-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeCategory = btn.dataset.cat;
+    document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    expandedId = null;
+    renderPosts();
+  });
+});
+
+// ── COMPOSE ───────────────────────────────────────────────
+document.getElementById('newPostBtn').addEventListener('click', () => {
+  document.getElementById('composeBox').classList.toggle('open');
+  if (document.getElementById('composeBox').classList.contains('open')) {
+    document.getElementById('compSubject').focus();
+  }
+});
+document.getElementById('compCancel').addEventListener('click', () => {
+  document.getElementById('composeBox').classList.remove('open');
+  document.getElementById('compSubject').value = '';
+  document.getElementById('compBody').value = '';
+});
+document.getElementById('compSubmit').addEventListener('click', async () => {
+  const cat     = document.getElementById('compCat').value;
+  const subject = document.getElementById('compSubject').value.trim();
+  const body    = document.getElementById('compBody').value.trim();
+  if (!subject) { toast('Please add a subject'); return; }
+  if (!body)    { toast('Please add some text'); return; }
+  const btn = document.getElementById('compSubmit');
+  btn.disabled = true;
+  const post = await savePost(cat, subject, body, null);
+  btn.disabled = false;
+  if (post) {
+    allPosts = [post, ...allPosts];
+    expandedId = null;
+    document.getElementById('composeBox').classList.remove('open');
+    document.getElementById('compSubject').value = '';
+    document.getElementById('compBody').value = '';
+    activeCategory = 'all';
+    document.querySelectorAll('.cat-tab').forEach(b => b.classList.toggle('active', b.dataset.cat==='all'));
+    renderPosts();
+    toast('Post published');
+  } else {
+    toast('Failed to post — please try again');
+  }
+});
+
+// ── MAIN ──────────────────────────────────────────────────
+(async function init() {
+  const authed = await checkAuth();
+  if (!authed) { window.location.href = 'login.html'; return; }
+  currentUser = getCurrentUser();
+  initHeader();
+  allPosts = await loadPosts();
+  renderPosts();
+})();
+</script>
+</body>
+</html>
