@@ -287,8 +287,8 @@
         <a href="matches.html">Matches</a>
         <a href="referees.html">Referees</a>
         <a href="fantasy.html">Fantasy</a>
-        <a href="badges.html">Badges</a>
-        <a href="forum.html" class="active">Forum</a>
+        <a href="badges.html" class="admin-only" style="display:none">Badges</a>
+        <a href="forum.html" class="active admin-only" style="display:none">Forum</a>
       </nav>
       <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
       <div class="user-chip" id="userChip">
@@ -313,8 +313,8 @@
   <a href="matches.html">Matches</a>
   <a href="referees.html">Referees</a>
   <a href="fantasy.html">Fantasy</a>
-  <a href="badges.html">Badges</a>
-  <a href="forum.html" class="active">Forum</a>
+  <a href="badges.html" class="admin-only" style="display:none">Badges</a>
+  <a href="forum.html" class="active admin-only" style="display:none">Forum</a>
 </div>
 
 <div class="page">
@@ -533,6 +533,7 @@ function initHeader() {
   if (!currentUser) { window.location.href = 'login.html'; return; }
   applyUserAvatar(document.getElementById('ucAvatar'), currentUser);
   document.getElementById('ucName').textContent   = currentUser.username || 'User';
+  if (isAdmin(currentUser)) document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
   const team = WC_TEAMS.find(t => t.name === currentUser.team);
   document.getElementById('ucTeamEmoji').textContent = team?.emoji || '';
   document.getElementById('ddName').textContent   = currentUser.username || 'User';

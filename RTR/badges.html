@@ -195,8 +195,8 @@
         <a href="matches.html">Matches</a>
         <a href="referees.html">Referees</a>
         <a href="fantasy.html">Fantasy</a>
-        <a href="badges.html" class="active">Badges</a>
-        <a href="forum.html">Forum</a>
+        <a href="badges.html" class="active admin-only" style="display:none">Badges</a>
+        <a href="forum.html" class="admin-only" style="display:none">Forum</a>
       </nav>
       <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
       <div class="user-chip" id="userChip">
@@ -221,8 +221,8 @@
   <a href="matches.html">Matches</a>
   <a href="referees.html">Referees</a>
   <a href="fantasy.html">Fantasy</a>
-  <a href="badges.html" class="active">Badges</a>
-  <a href="forum.html">Forum</a>
+  <a href="badges.html" class="active admin-only" style="display:none">Badges</a>
+  <a href="forum.html" class="admin-only" style="display:none">Forum</a>
 </div>
 
 <div class="page">
@@ -290,6 +290,7 @@ function initHeader() {
   document.getElementById('ucTeamEmoji').textContent = team?.emoji || '';
   document.getElementById('ddName').textContent   = user.username || 'User';
   document.getElementById('ddTeam').textContent   = user.team ? `${user.team} fan` : 'No team set';
+  if (isAdmin(user)) document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
 
   document.getElementById('userChip').addEventListener('click', () => {
     document.getElementById('userDropdown').classList.toggle('open');

@@ -213,8 +213,8 @@
         <a href="matches.html" class="active">Matches</a>
         <a href="referees.html">Referees</a>
         <a href="fantasy.html">Fantasy</a>
-        <a href="badges.html">Badges</a>
-        <a href="forum.html">Forum</a>
+        <a href="badges.html" class="admin-only" style="display:none">Badges</a>
+        <a href="forum.html" class="admin-only" style="display:none">Forum</a>
         <a href="history.html">History</a>
       </nav>
       <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
@@ -237,8 +237,8 @@
   <a href="matches.html" class="active">Matches</a>
   <a href="referees.html">Referees</a>
   <a href="fantasy.html">Fantasy</a>
-  <a href="badges.html">Badges</a>
-  <a href="forum.html">Forum</a>
+  <a href="badges.html" class="admin-only" style="display:none">Badges</a>
+  <a href="forum.html" class="admin-only" style="display:none">Forum</a>
   <a href="history.html">History</a>
 </div>
 
@@ -327,6 +327,7 @@ function initHeader() {
   const team = PL_TEAMS.find(t => t.name === currentUser?.team);
   applyUserAvatar(document.getElementById('ucAvatar'), currentUser);
   document.getElementById('ucName').textContent = currentUser?.username || 'Guest';
+  if (isAdmin(currentUser)) document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
   document.getElementById('ucTeamEmoji').innerHTML = team ? flagImg(team.emoji, 18) : '';
   document.getElementById('ddName').textContent = currentUser?.username || 'Guest';
   document.getElementById('ddTeam').innerHTML = team ? `${flagImg(team.emoji, 16)} ${team.name} supporter` : currentUser?.team ? `${currentUser.team} supporter` : 'No team selected';

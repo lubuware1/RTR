@@ -462,6 +462,11 @@ async function clearCurrentUser() {
   if (!PREVIEW_MODE) await getSB().auth.signOut();
 }
 function isLoggedIn() { return PREVIEW_MODE || !!getCurrentUser(); }
+const ADMIN_USERS = ['danawhiteware', 'jware89'];
+function isAdmin(user) {
+  const u = user || getCurrentUser();
+  return !!u && ADMIN_USERS.includes(u.username?.toLowerCase());
+}
 
 // ── FLAG IMAGE HELPER ─────────────────────────────────────
 function flagImg(emoji, size) {
