@@ -409,7 +409,6 @@ function renderList() {
 // ── PANEL ─────────────────────────────────────────────────
 function closePanel() {
   selId=null;
-  if (cooldownInterval) { clearInterval(cooldownInterval); cooldownInterval=null; }
   matchIncidents=[]; incidentVoteTotals={ neutral:{}, fan:{} }; myIncidentVotes={};
   document.getElementById('incSectionLabel').style.display='none';
   document.getElementById('incFlagBtn').disabled=false;
@@ -424,40 +423,9 @@ function closePanel() {
 document.getElementById('panelCloseBtn').addEventListener('click', closePanel);
 
 // ── INCIDENT VOTING STATE ─────────────────────────────────
-const COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
 let matchIncidents = []; // incidents for current open match
 let incidentVoteTotals = { neutral: {}, fan: {} }; // split by vote type
-let myIncidentVotes = {}; // { id: { vote, created_at } }
-let cooldownInterval = null;
-
-function getCooldownKey(incidentId) {
-  return `rtr_icd_${incidentId}_${currentUser?.id || 'guest'}`;
-}
-
-function getLastVoteTime(incidentId) {
-  // Check localStorage first (fast), then myIncidentVotes from DB
-  const ls = localStorage.getItem(getCooldownKey(incidentId));
-  if (ls) return +ls;
-  const db = myIncidentVotes[incidentId];
-  return db ? new Date(db.created_at).getTime() : null;
-}
-
-function isCoolingDown(incidentId) {
-  const t = getLastVoteTime(incidentId);
-  return t && (Date.now() - t) < COOLDOWN_MS;
-}
-
-function cooldownRemaining(incidentId) {
-  const t = getLastVoteTime(incidentId);
-  if (!t) return 0;
-  return Math.max(0, COOLDOWN_MS - (Date.now() - t));
-}
-
-function fmtMs(ms) {
-  const s = Math.ceil(ms / 1000);
-  const m = Math.floor(s / 60), sec = s % 60;
-  return `${m}:${String(sec).padStart(2,'0')}`;
-}
+let myIncidentVotes = {}; // { incidentId: { vote, created_at } }
 
 function renderIncidentScore(incs, voteTotals) {
   const m = MATCHES.find(x => x.id === selId);
@@ -508,10 +476,10 @@ function renderIncidentList() {
     const v = voteBucket[inc.id] || { correct: 0, wrong: 0 };
     const total = v.correct + v.wrong;
     const correctPct = total ? Math.round((v.correct / total) * 100) : 50;
-    const cooling = isCoolingDown(inc.id);
-    const myVote  = myIncidentVotes[inc.id]?.vote || null;
+    const myVote = myIncidentVotes[inc.id]?.vote || null;
+    const locked = !!myVote;
 
-    return `<div class="inc-card${myVote ? ' voted' : ''}">
+    return `<div class="inc-card${locked ? ' voted' : ''}">
       <div class="inc-card-header">
         <span class="inc-card-type">${inc.type}</span>
         ${inc.minute !== null ? `<span class="inc-minute">${inc.minute}'</span>` : ''}
@@ -521,10 +489,10 @@ function renderIncidentList() {
         ${outcome ? `<span class="inc-card-outcome">${outcome}</span>` : ''}
       </div>` : ''}
       <div class="inc-vote-row">
-        <button class="inc-vote-btn correct${myVote==='correct'?' voted':''}" data-iid="${inc.id}" data-vote="correct" ${cooling||myVote?'disabled':''}>
+        <button class="inc-vote-btn correct${myVote==='correct'?' voted':''}" data-iid="${inc.id}" data-vote="correct" ${locked?'disabled':''}>
           ✅ Correct ${v.correct ? `<span style="opacity:.6;font-size:.75em">(${v.correct})</span>` : ''}
         </button>
-        <button class="inc-vote-btn wrong${myVote==='wrong'?' voted':''}" data-iid="${inc.id}" data-vote="wrong" ${cooling||myVote?'disabled':''}>
+        <button class="inc-vote-btn wrong${myVote==='wrong'?' voted':''}" data-iid="${inc.id}" data-vote="wrong" ${locked?'disabled':''}>
           ❌ Incorrect ${v.wrong ? `<span style="opacity:.6;font-size:.75em">(${v.wrong})</span>` : ''}
         </button>
       </div>
@@ -533,7 +501,6 @@ function renderIncidentList() {
         <div class="inc-bar"><div class="inc-bar-fill" style="width:${correctPct}%"></div></div>
         <span style="color:var(--red)">${100-correctPct}%</span>
       </div>` : ''}
-      <div class="inc-cooldown" id="inc-cd-${inc.id}">${cooling ? `Revote in ${fmtMs(cooldownRemaining(inc.id))}` : ''}</div>
     </div>`;
   }).join('');
 }
@@ -545,27 +512,6 @@ document.getElementById('incFlagBtn').addEventListener('click', () => {
   if (!matchIncidents.length) toast('No decisions logged yet for this match');
 });
 
-function startCooldownTick() {
-  if (cooldownInterval) clearInterval(cooldownInterval);
-  cooldownInterval = setInterval(() => {
-    matchIncidents.forEach(inc => {
-      const cdEl = document.getElementById(`inc-cd-${inc.id}`);
-      const btn1 = document.querySelector(`[data-iid="${inc.id}"][data-vote="correct"]`);
-      const btn2 = document.querySelector(`[data-iid="${inc.id}"][data-vote="wrong"]`);
-      if (!cdEl) return;
-      const remaining = cooldownRemaining(inc.id);
-      if (remaining > 0) {
-        cdEl.textContent = `Revote in ${fmtMs(remaining)}`;
-        if (btn1) btn1.disabled = true;
-        if (btn2) btn2.disabled = true;
-      } else {
-        cdEl.textContent = '';
-        if (btn1 && !btn1.classList.contains('voted')) btn1.disabled = false;
-        if (btn2 && !btn2.classList.contains('voted')) btn2.disabled = false;
-      }
-    });
-  }, 1000);
-}
 
 async function openPanel(mid) {
   selId = mid;
@@ -622,7 +568,6 @@ async function openPanel(mid) {
   document.getElementById('incScoreLabel').textContent = isFan ? 'Fan Score' : 'Neutral Score';
   renderIncidentScore(matchIncidents, incidentVoteTotals);
   renderIncidentList();
-  startCooldownTick();
   renderList();
 }
 
@@ -671,17 +616,14 @@ document.getElementById('incidentList').addEventListener('click', async e => {
   if (!incidentVoteTotals[bucket][incidentId]) incidentVoteTotals[bucket][incidentId] = { correct: 0, wrong: 0 };
   incidentVoteTotals[bucket][incidentId][vote]++;
   myIncidentVotes[incidentId] = { vote, created_at: new Date().toISOString() };
-  localStorage.setItem(getCooldownKey(incidentId), Date.now());
 
   renderIncidentScore(matchIncidents, incidentVoteTotals);
   renderIncidentList();
-  startCooldownTick();
 
   const ok = await saveIncidentVote(incidentId, currentUser?.id, vote, isFan);
   if (!ok) {
     incidentVoteTotals[bucket][incidentId][vote]--;
     delete myIncidentVotes[incidentId];
-    localStorage.removeItem(getCooldownKey(incidentId));
     renderIncidentScore(matchIncidents, incidentVoteTotals);
     renderIncidentList();
     toast('⚠ Vote failed — please try again');
