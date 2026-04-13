@@ -155,6 +155,13 @@
         <label>Outcome</label>
         <input type="text" id="incOutcome" placeholder="e.g. Yellow Card">
       </div>
+      <div class="field-group">
+        <label>Outcome Colour</label>
+        <select id="incOutcomeColour">
+          <option value="green">Green</option>
+          <option value="purple">Purple</option>
+        </select>
+      </div>
     </div>
     <div class="row cols-4" style="margin-bottom:8px;">
       <div class="field-group">
@@ -416,17 +423,19 @@
       const type    = document.getElementById('incType').value.trim();
       const player  = document.getElementById('incPlayer').value.trim();
       const outcome = document.getElementById('incOutcome').value.trim();
+      const colour  = document.getElementById('incOutcomeColour').value;
       const minute  = document.getElementById('incMinute').value;
       if (!matchId) { toast('Select a match first', true); return; }
       if (!type)    { toast('Enter a decision type', true); return; }
-      // Pack player and outcome into description field
-      const desc = [player, outcome].filter(Boolean).join('||');
+      // Pack player, outcome and colour into description field
+      const desc = [player, outcome, colour].filter(Boolean).join('||');
       const inc = await saveIncident(+matchId, type, minute ? +minute : null, desc);
       if (inc) {
-        document.getElementById('incType').value    = '';
-        document.getElementById('incPlayer').value  = '';
-        document.getElementById('incOutcome').value = '';
-        document.getElementById('incMinute').value  = '';
+        document.getElementById('incType').value           = '';
+        document.getElementById('incPlayer').value         = '';
+        document.getElementById('incOutcome').value        = '';
+        document.getElementById('incOutcomeColour').value  = 'green';
+        document.getElementById('incMinute').value         = '';
         await renderIncidentAdminList(matchId);
         toast(`✓ Decision added — ${type}${player ? ' · ' + player : ''}`);
       } else toast('Failed to add decision', true);

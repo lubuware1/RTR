@@ -477,6 +477,7 @@ function renderIncidentList() {
     const parts = (inc.description || '').split('||');
     const player  = parts[0]?.trim() || '';
     const outcome = parts[1]?.trim() || '';
+    const outcomeColour = parts[2]?.trim() === 'purple' ? '#c064c0' : 'var(--pl-green)';
     const v = voteBucket[inc.id] || { correct: 0, wrong: 0 };
     const total = v.correct + v.wrong;
     const correctPct = total ? Math.round((v.correct / total) * 100) : 50;
@@ -490,7 +491,7 @@ function renderIncidentList() {
       </div>
       ${(player || outcome) ? `<div class="inc-card-detail">
         ${player  ? `<span class="inc-card-player">${player}</span>` : ''}
-        ${outcome ? `<span class="inc-card-outcome">${outcome}</span>` : ''}
+        ${outcome ? `<span class="inc-card-outcome" style="color:${outcomeColour}">${outcome}</span>` : ''}
       </div>` : ''}
       <div class="inc-vote-row">
         <button class="inc-vote-btn correct${myVote==='correct'?' voted':''}" data-iid="${inc.id}" data-vote="correct" ${locked?'disabled':''}>✅ Correct</button>
