@@ -149,8 +149,9 @@
   .inc-vote-btn.wrong.voted{background:rgba(255,71,87,.07);border-color:rgba(255,71,87,.3);color:rgba(255,71,87,.5);}
   .inc-vote-btn:disabled{opacity:.45;cursor:not-allowed;transform:none;}
   .inc-bar-wrap{display:flex;align-items:center;gap:8px;font-size:.72rem;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-weight:700;}
-  .inc-bar{flex:1;height:5px;border-radius:3px;background:var(--border);overflow:hidden;}
-  .inc-bar-fill{height:100%;background:var(--green);border-radius:3px;transition:width .4s ease;}
+  .inc-bar{flex:1;height:5px;border-radius:3px;background:var(--border);overflow:hidden;display:flex;}
+  .inc-bar-fill{height:100%;background:var(--green);transition:width .4s ease;}
+  .inc-bar-fill-wrong{height:100%;background:var(--red);transition:width .4s ease;}
 
   /* Leaderboard */
   .leaderboard{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:16px;}
@@ -497,7 +498,10 @@ function renderIncidentList() {
       </div>
       ${total ? `<div class="inc-bar-wrap">
         <span style="color:var(--green)">${correctPct}%</span>
-        <div class="inc-bar"><div class="inc-bar-fill" style="width:${correctPct}%"></div></div>
+        <div class="inc-bar">
+          <div class="inc-bar-fill" style="width:${correctPct}%"></div>
+          <div class="inc-bar-fill-wrong" style="width:${100-correctPct}%"></div>
+        </div>
         <span style="color:var(--red)">${100-correctPct}%</span>
       </div>` : ''}
     </div>`;
