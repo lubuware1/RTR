@@ -242,14 +242,14 @@ async function loadGWConfig() {
 // ── INCIDENTS ─────────────────────────────────────────────
 
 const INCIDENT_TYPES = [
-  { type: 'Red Card',        weight: 1.5 },
-  { type: 'Penalty Given',   weight: 1.2 },
-  { type: 'Goal Decision',   weight: 1.2 },
-  { type: 'Yellow Card',     weight: 0.8 },
-  { type: 'VAR Decision',    weight: 0.5 },
-  { type: 'Offside Decision',weight: 0.5 },
-  { type: 'Foul Not Given',  weight: 0.5 },
-  { type: 'Other',           weight: 0.5 },
+  { type: 'Red Card',        weight: 3.0 },
+  { type: 'Penalty Given',   weight: 2.5 },
+  { type: 'Goal Decision',   weight: 2.5 },
+  { type: 'Yellow Card',     weight: 2.0 },
+  { type: 'VAR Decision',    weight: 1.5 },
+  { type: 'Offside Decision',weight: 1.5 },
+  { type: 'Foul Not Given',  weight: 1.5 },
+  { type: 'Other',           weight: 1.5 },
 ];
 
 // Votes threshold config
