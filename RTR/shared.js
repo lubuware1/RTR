@@ -711,6 +711,10 @@ const BADGE_DEFS = [
   { key: 'wildcard_king', category: 'Fantasy',  icon: '🃏', name: 'Wildcard King',  desc: 'Use all your wildcards in a season' },
   { key: 'podium',        category: 'Fantasy',  icon: '🏆', name: 'Podium',         desc: 'Finish top 3 in a matchweek leaderboard' },
   { key: 'match_winner',  category: 'Fantasy',  icon: '🎯', name: 'Match Winner',   desc: 'Your picked ref scores 10+ points in a GW' },
+  // Fantasy - Wildcards
+  { key: 'wc_red_card',   category: 'Fantasy - Wildcards', img: 'images/badges/redcardbadge.png',       name: 'Red Card Wildcard',   desc: 'Use the Red Card wildcard and correctly predict a game with a red card' },
+  { key: 'wc_yellow_card',category: 'Fantasy - Wildcards', img: 'images/badges/yellowcardbadge.png',    name: 'Yellow Card Wildcard',desc: 'Use the Yellow Card wildcard and correctly predict a game with 4+ yellow cards' },
+  { key: 'wc_var_replay', category: 'Fantasy - Wildcards', img: 'images/badges/consultingvarbadge.png', name: 'VAR Replay Wildcard', desc: 'Use the VAR Replay wildcard and correctly predict a ref\'s perfect game' },
   // Loyalty
   { key: 'profile_setup', category: 'Loyalty',  icon: '👤', name: 'All Kitted Out', desc: 'Set your favourite team on your profile' },
   { key: 'early_adopter', category: 'Loyalty',  icon: '🌟', name: 'Early Adopter',  desc: 'Among the first 50 users to join RefRater' },
@@ -794,4 +798,22 @@ async function checkPodiumBadge(userId, _gw) {
 async function checkMatchWinnerBadge(userId) {
   if (PREVIEW_MODE || !userId) return;
   await awardBadge(userId, 'match_winner');
+}
+
+// Called at end of GW to check wildcard prediction badges
+// wildcards = user's wildcard object for that GW, matches = MATCHES array
+async function checkWildcardBadges(userId, wc, matches) {
+  if (PREVIEW_MODE || !userId || !wc) return;
+  if (wc.rc?.active && wc.rc.matchId) {
+    const m = matches.find(x => x.id === wc.rc.matchId);
+    if (m && (m.rc || 0) > 0) await awardBadge(userId, 'wc_red_card');
+  }
+  if (wc.yc?.active && wc.yc.matchId) {
+    const m = matches.find(x => x.id === wc.yc.matchId);
+    if (m && (m.yc || 0) >= 4) await awardBadge(userId, 'wc_yellow_card');
+  }
+  if (wc.var?.active && wc.var.matchId) {
+    const m = matches.find(x => x.id === wc.var.matchId);
+    if (m && m.perfectGame) await awardBadge(userId, 'wc_var_replay');
+  }
 }

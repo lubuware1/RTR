@@ -2121,6 +2121,7 @@
           if (curUser?.id) {
             const sw = await loadMySeasonWildcards(FGW.gw + 1);
             checkFantasyBadges(curUser.id, sw).catch(() => {});
+            checkWildcardBadges(curUser.id, wildcards, MATCHES).catch(() => {});
           }
         }
 

@@ -107,8 +107,15 @@
     line-height: 1;
     filter: drop-shadow(0 2px 8px rgba(0,255,133,.3));
   }
+  .badge-icon img {
+    width: 52px; height: 52px; object-fit: contain;
+    filter: drop-shadow(0 2px 8px rgba(0,255,133,.3));
+  }
   .badge-card.locked .badge-icon {
     filter: none;
+  }
+  .badge-card.locked .badge-icon img {
+    filter: grayscale(1) opacity(.4);
   }
   .badge-lock {
     position: absolute; top: 10px; right: 12px;
@@ -256,6 +263,14 @@
         <div class="badge-skeleton"></div>
       </div>
     </div>
+    <div class="badge-category">
+      <div class="badge-category-title">Fantasy - Wildcards</div>
+      <div class="badge-grid">
+        <div class="badge-skeleton"></div>
+        <div class="badge-skeleton"></div>
+        <div class="badge-skeleton"></div>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -317,7 +332,7 @@ function renderBadges(earned) {
   const earnedMap  = Object.fromEntries(earned.map(b => [b.badge_key, b.awarded_at]));
   const activeKey  = getAvatarBadge()?.key || null;
 
-  const categories = ['Voting', 'Fantasy', 'Loyalty', 'Special'];
+  const categories = ['Voting', 'Fantasy', 'Fantasy - Wildcards', 'Loyalty', 'Special'];
   let html = '';
 
   categories.forEach(cat => {
@@ -336,11 +351,11 @@ function renderBadges(earned) {
         <div class="badge-card ${isEarned ? 'earned' : 'locked'}">
           ${!isEarned ? '<span class="badge-lock">🔒</span>' : ''}
           ${isActive  ? '<span class="badge-active-pip"></span>' : ''}
-          <div class="badge-icon">${def.icon}</div>
+          <div class="badge-icon">${def.img ? `<img src="${def.img}" alt="${def.name}">` : def.icon}</div>
           <div class="badge-name">${def.name}</div>
           <div class="badge-desc">${def.desc}</div>
           ${dateStr ? `<div class="badge-earned-date">Earned ${fmt(dateStr)}</div>` : ''}
-          ${isEarned ? `<button class="badge-set-btn ${isActive ? 'active-icon' : ''}" data-key="${def.key}" data-icon="${def.icon}">
+          ${isEarned ? `<button class="badge-set-btn ${isActive ? 'active-icon' : ''}" data-key="${def.key}" data-icon="${def.img || def.icon}">
             ${isActive ? '✓ Using as icon' : 'Set as icon'}
           </button>` : ''}
         </div>`;
