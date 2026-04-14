@@ -244,7 +244,7 @@ document.getElementById('dbHowTo').addEventListener('click',()=>toast('See the �
 function renderRefs(){
   // Hero stats
   const totalVotes=REFS.reduce((s,r)=>s+r.neutralVotes+r.fanVotes,0);
-  const ratedRefs=REFS.filter(r=>r.neutralVotes>0);
+  const ratedRefs=REFS.filter(r=>r.neutralRating!=null);
   const avgScore=ratedRefs.length?ratedRefs.reduce((s,r)=>s+r.neutralRating,0)/ratedRefs.length:0;
   document.getElementById('statRefs').textContent=REFS.length;
   document.getElementById('statVotes').textContent=totalVotes>0?totalVotes:'–';
@@ -253,25 +253,25 @@ function renderRefs(){
   // Sort
   const sorted=[...REFS].sort((a,b)=>{
     if(refSort==='neutral'){
-      if(!a.neutralVotes&&!b.neutralVotes)return 0;if(!a.neutralVotes)return 1;if(!b.neutralVotes)return -1;
+      if(a.neutralRating==null&&b.neutralRating==null)return 0;if(a.neutralRating==null)return 1;if(b.neutralRating==null)return -1;
       return b.neutralRating-a.neutralRating;
     }
     if(refSort==='fan'){
-      if(!a.fanVotes&&!b.fanVotes)return 0;if(!a.fanVotes)return 1;if(!b.fanVotes)return -1;
+      if(a.fanRating==null&&b.fanRating==null)return 0;if(a.fanRating==null)return 1;if(b.fanRating==null)return -1;
       return b.fanRating-a.fanRating;
     }
     if(refSort==='games')return b.games-a.games;
     if(refSort==='votes')return(b.neutralVotes+b.fanVotes)-(a.neutralVotes+a.fanVotes);
     if(refSort==='bias'){
-      const gA=a.neutralVotes&&a.fanVotes?Math.abs(a.neutralRating-a.fanRating):0;
-      const gB=b.neutralVotes&&b.fanVotes?Math.abs(b.neutralRating-b.fanRating):0;
+      const gA=a.neutralRating!=null&&a.fanRating!=null?Math.abs(a.neutralRating-a.fanRating):0;
+      const gB=b.neutralRating!=null&&b.fanRating!=null?Math.abs(b.neutralRating-b.fanRating):0;
       return gB-gA;
     }
     return 0;
   });
 
   document.getElementById('refsGrid').innerHTML=sorted.map((ref,rank)=>{
-    const hasN=ref.neutralVotes>0, hasF=ref.fanVotes>0;
+    const hasN=ref.neutralRating!=null, hasF=ref.fanRating!=null;
     const biasGap=hasN&&hasF?ref.neutralRating-ref.fanRating:null;
     const gapAbs=biasGap!==null?Math.abs(biasGap):0;
     const gapDir=biasGap!==null?(biasGap>0.1?'Fans rate lower':biasGap<-0.1?'Fans rate higher':'No bias'):' ';
@@ -398,7 +398,7 @@ initHeader();
       ? `Live data · GW ${fdLive.gw} · ${fdLive.count} matches loaded · football-data.org`
       : 'Live data from Google Sheets · Updates automatically';
   }
-  await loadRatings();
+  await loadIncidentRatings();
   renderRefs();
 })();
 </script>

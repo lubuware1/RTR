@@ -339,6 +339,64 @@ async function saveIncident(matchId, type, minute, description) {
   return data || null;
 }
 
+// Populates ref.neutralRating, ref.fanRating, ref.neutralVotes, ref.fanVotes
+// from the incident voting tables. Called on any page that shows ref scores.
+async function loadIncidentRatings() {
+  if (PREVIEW_MODE) return;
+  const { data: incidents } = await getSB()
+    .from('RTR Incidents').select('id, match_id, type, weight');
+  if (!incidents?.length) return;
+
+  const ids = incidents.map(i => i.id);
+  const { data: votes } = await getSB()
+    .from('RTR Incident Votes').select('incident_id, vote, is_fan, weight')
+    .in('incident_id', ids);
+
+  const byMatch = {};
+  incidents.forEach(inc => {
+    if (!byMatch[inc.match_id]) byMatch[inc.match_id] = [];
+    byMatch[inc.match_id].push(inc);
+  });
+
+  const neutral = {}, fan = {};
+  ids.forEach(id => { neutral[id] = { correct:0, wrong:0 }; fan[id] = { correct:0, wrong:0 }; });
+  (votes||[]).forEach(v => {
+    const b = v.is_fan ? fan : neutral;
+    if (b[v.incident_id]) b[v.incident_id][v.vote] += v.weight || 1;
+  });
+
+  REFS.forEach(r => { r.neutralRating=null; r.neutralVotes=0; r.fanRating=null; r.fanVotes=0; });
+  const refNeutral = {}, refFan = {};
+  MATCHES.forEach(m => {
+    const incs = byMatch[m.id];
+    if (!incs) return;
+    const ref = REFS.find(r => r.id === +m.refId);
+    if (!ref) return;
+    if (!refNeutral[ref.id]) refNeutral[ref.id] = [];
+    if (!refFan[ref.id])     refFan[ref.id]     = [];
+    incs.forEach(inc => {
+      const nv = neutral[inc.id] || { correct:0, wrong:0 };
+      const fv = fan[inc.id]     || { correct:0, wrong:0 };
+      if (nv.correct + nv.wrong) refNeutral[ref.id].push({ ...inc, _v: nv });
+      if (fv.correct + fv.wrong) refFan[ref.id].push({ ...inc, _v: fv });
+    });
+  });
+  REFS.forEach(r => {
+    if (refNeutral[r.id]?.length) {
+      const vMap = Object.fromEntries(refNeutral[r.id].map(i => [i.id, i._v]));
+      const ns = calcIncidentScore(refNeutral[r.id], vMap);
+      if (ns !== null) r.neutralRating = ns;
+      r.neutralVotes = refNeutral[r.id].reduce((s,i) => s + i._v.correct + i._v.wrong, 0);
+    }
+    if (refFan[r.id]?.length) {
+      const vMap = Object.fromEntries(refFan[r.id].map(i => [i.id, i._v]));
+      const fs = calcIncidentScore(refFan[r.id], vMap);
+      if (fs !== null) r.fanRating = fs;
+      r.fanVotes = refFan[r.id].reduce((s,i) => s + i._v.correct + i._v.wrong, 0);
+    }
+  });
+}
+
 async function saveDecisionFlag(matchId, matchMinute) {
   if (PREVIEW_MODE) return true;
   const { data: { session } } = await getSB().auth.getSession();
