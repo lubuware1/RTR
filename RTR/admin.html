@@ -362,7 +362,9 @@
       const btn = document.getElementById('saveGWBtn');
       btn.disabled = true; btn.textContent = 'Saving…';
       const gw = +document.getElementById('cfgGW').value;
-      const deadline = new Date(document.getElementById('cfgDeadline').value).toISOString();
+      const deadlineRaw = document.getElementById('cfgDeadline').value;
+      if (!gw || !deadlineRaw) { toast('Enter a matchweek number and deadline', true); btn.disabled = false; btn.textContent = 'Save Matchweek Config'; return; }
+      const deadline = new Date(deadlineRaw).toISOString();
       const ok = await saveGWConfig(gw, deadline);
       btn.disabled = false; btn.textContent = 'Save Matchweek Config';
       toast(ok ? `✓ GW${gw} config saved` : 'Save failed', !ok);

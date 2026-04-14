@@ -159,7 +159,7 @@ async function saveMatchStat(stat) {
 
 async function saveGWConfig(gw, deadline) {
   if (PREVIEW_MODE) return true;
-  const { error } = await getSB().from('RTR Config').update({ gw, deadline }).eq('id', 1);
+  const { error } = await getSB().from('RTR Config').upsert({ id: 1, gw, deadline }, { onConflict: 'id' });
   if (error) console.error('[RTR] saveGWConfig error:', error);
   return !error;
 }
