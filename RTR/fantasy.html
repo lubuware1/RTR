@@ -2080,7 +2080,7 @@
         <div>
           <div class="rpc-name">${ref.name}</div>
           <div class="rpc-match">${m ? `${m.hE} ${m.home} v ${m.away} ${m.aE}` : "No match"}</div>
-          <a href="referees.html" class="rpc-stats-link" onclick="event.stopPropagation()">View stats →</a>
+          <a href="referees.html" class="rpc-stats-link" onclick="event.stopPropagation();sessionStorage.setItem('rr_open_ref',${ref.id})">View stats →</a>
         </div>
       </div>
     </div>`;

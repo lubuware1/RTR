@@ -406,6 +406,15 @@ initHeader();
   }
   await loadIncidentRatings();
   renderRefs();
+  const openRef = sessionStorage.getItem('rr_open_ref');
+  if (openRef) {
+    sessionStorage.removeItem('rr_open_ref');
+    const card = document.querySelector(`.rpc[data-ref-id="${openRef}"]`);
+    if (card) {
+      card.classList.add('open');
+      setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+    }
+  }
 })();
 </script>
 <script>twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });</script>
