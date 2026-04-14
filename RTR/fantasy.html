@@ -2379,7 +2379,7 @@
         const oppId = getOpponentId(myPick);
         const opp = gRef(oppId);
         const oppPts = REF_GW_PTS[oppId];
-        const live = isLiveBattle(battle);
+        const live = battle ? isLiveBattle(battle) : false;
 
         // Use boosted pts for result calculation
         const myEffPts = displayPts;
@@ -2596,8 +2596,6 @@
 
       // ── SEASON GW POINTS PER USER ─────────────────────────────
       function buildSeasonGWPointsLeague(allPicks, seasonRefTotals = {}) {
-        console.log('[RTR Season] allPicks count:', allPicks.length);
-        console.log('[RTR Season] MATCHES statuses:', MATCHES.map(m => `MW${m.matchweek} ${m.home}vs${m.away} → ${m.status}`));
         if (!allPicks.length) return;
         const userTotals = {};
         // Group picks by user then by matchweek
@@ -2607,11 +2605,9 @@
         });
         // For each matchweek, compute battles and assign win/draw/loss pts
         const gws = [...new Set(allPicks.map(p => p.matchweek))];
-        console.log('[RTR Season] GWs found in picks:', gws);
         gws.forEach(gw => {
           const gwPicks = allPicks.filter(p => p.matchweek === gw);
           const gwMatchList = MATCHES.filter(m => +m.matchweek === gw);
-          console.log(`[RTR Season] GW${gw}: ${gwPicks.length} picks, ${gwMatchList.length} matches, statuses:`, gwMatchList.map(m => m.status));
           // Build ref pts for this GW
           const gwRefPts = {};
           REFS.forEach(r => {
