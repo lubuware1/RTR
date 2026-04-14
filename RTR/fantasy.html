@@ -1607,7 +1607,7 @@
                 <div class="htp-score-row"><span class="htp-pts pos">+1</span> Per yellow card 🟨</div>
                 <div class="htp-score-row"><span class="htp-pts pos">+1</span> Per red card 🟥</div>
                 <div class="htp-score-row"><span class="htp-pts pos">+2</span> Correct VAR decision (penalty or red card)</div>
-                <div class="htp-score-row"><span class="htp-pts pos">+5</span> Perfect game — no VAR decisions</div>
+                <div class="htp-score-row"><span class="htp-pts pos">+3</span> Perfect game — no VAR decisions</div>
                 <div class="htp-score-row"><span class="htp-pts neg">−1</span> VAR overturns a penalty decision</div>
                 <div class="htp-score-row"><span class="htp-pts neg">−2</span> VAR overturns a red card decision</div>
               </div>
@@ -1668,7 +1668,7 @@
               <span class="sg-pts pos">+2</span> Correct VAR decision (penalty or red card)
             </div>
             <div class="sg-item">
-              <span class="sg-pts pos">+5</span> Perfect game — no VAR decisions
+              <span class="sg-pts pos">+3</span> Perfect game — no VAR decisions
             </div>
             <div class="sg-item">
               <span class="sg-pts neg">−1</span> VAR overturn penalty decision
@@ -2875,8 +2875,8 @@
             breakdown.push({ pts: p, label: `Correct VAR penalty${totalCorrectPen > 1 ? " ×" + totalCorrectPen : ""}` });
           }
           if (isPerfect) {
-            pts += 5;
-            breakdown.push({ pts: 5, label: "Perfect game" });
+            pts += 3;
+            breakdown.push({ pts: 3, label: "Perfect game" });
           }
           if (totalBadVarPen > 0) {
             const p = totalBadVarPen * -1;
