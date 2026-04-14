@@ -254,7 +254,7 @@ const INCIDENT_TYPES = [
 
 // Votes threshold config
 const VOTE_MULTIPLIER = 1;   // votes use stored weight column — no additional multiplier needed
-const MIN_VOTES = 25;        // effective votes needed before a decision affects the score
+const MIN_VOTES = 10;        // effective votes needed before a decision affects the score
 
 // Compute incident-driven score starting from 10.
 // Returns null if no decisions have cleared the vote threshold yet.
@@ -320,7 +320,7 @@ async function loadMyIncidentVotes(userId, incidentIds) {
 
 async function saveIncidentVote(incidentId, userId, vote, isFan) {
   if (PREVIEW_MODE) return true;
-  const weight = Math.floor(Math.random() * 21) + 10; // random 10–30
+  const weight = 5; // each user counts as 5 votes
   const { error } = await getSB().from('RTR Incident Votes').insert({
     incident_id: incidentId, user_id: userId, vote, is_fan: !!isFan,
     weight, created_at: new Date().toISOString()

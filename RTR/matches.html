@@ -647,7 +647,7 @@ document.getElementById('incidentList').addEventListener('click', async e => {
   const bucket = isFan ? 'fan' : 'neutral';
 
   // Optimistic UI update — use same random weight as will be saved
-  const voteWeight = Math.floor(Math.random() * 21) + 10;
+  const voteWeight = 5;
   btn.disabled = true;
   if (!incidentVoteTotals[bucket][incidentId]) incidentVoteTotals[bucket][incidentId] = { correct: 0, wrong: 0 };
   incidentVoteTotals[bucket][incidentId][vote] += voteWeight;
