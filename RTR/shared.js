@@ -394,18 +394,18 @@ const WC_TEAMS = [
 const PL_TEAMS = WC_TEAMS;
 
 let REFS = [
-  {id:1,  name:"Szymon Marciniak",      initials:"SM", games:0, neutralRating:0, neutralVotes:0, fanRating:0, fanVotes:0, nationality:"Polish",    age:43, fifaListed:"Yes", notes:"Refereed 2022 World Cup Final"},
-  {id:2,  name:"Daniele Orsato",        initials:"DO", games:0, neutralRating:0, neutralVotes:0, fanRating:0, fanVotes:0, nationality:"Italian",   age:49, fifaListed:"Yes", notes:"Experienced UEFA Champions League ref"},
-  {id:3,  name:"Anthony Taylor",        initials:"AT", games:0, neutralRating:0, neutralVotes:0, fanRating:0, fanVotes:0, nationality:"English",   age:45, fifaListed:"Yes", notes:"Premier League and UEFA ref"},
-  {id:4,  name:"Facundo Tello",         initials:"FT", games:0, neutralRating:0, neutralVotes:0, fanRating:0, fanVotes:0, nationality:"Argentine", age:38, fifaListed:"Yes", notes:"CONMEBOL top referee"},
-  {id:5,  name:"Fernando Rapallini",    initials:"FR", games:0, neutralRating:0, neutralVotes:0, fanRating:0, fanVotes:0, nationality:"Argentine", age:44, fifaListed:"Yes", notes:"2022 World Cup referee"},
-  {id:6,  name:"Felix Zwayer",          initials:"FZ", games:0, neutralRating:0, neutralVotes:0, fanRating:0, fanVotes:0, nationality:"German",    age:43, fifaListed:"Yes", notes:"Bundesliga top referee"},
-  {id:7,  name:"Ismail Elfath",         initials:"IE", games:0, neutralRating:0, neutralVotes:0, fanRating:0, fanVotes:0, nationality:"American",  age:41, fifaListed:"Yes", notes:"MLS and CONCACAF top referee"},
-  {id:8,  name:"Abdulrahman Al-Jassim", initials:"AJ", games:0, neutralRating:0, neutralVotes:0, fanRating:0, fanVotes:0, nationality:"Qatari",    age:38, fifaListed:"Yes", notes:"2022 World Cup host nation ref"},
-  {id:9,  name:"Slavko Vinčić",         initials:"SV", games:0, neutralRating:0, neutralVotes:0, fanRating:0, fanVotes:0, nationality:"Slovenian", age:43, fifaListed:"Yes", notes:"UEFA Europa League referee"},
-  {id:10, name:"Bakary Gassama",        initials:"BG", games:0, neutralRating:0, neutralVotes:0, fanRating:0, fanVotes:0, nationality:"Gambian",   age:44, fifaListed:"Yes", notes:"CAF top referee"},
-  {id:11, name:"Mustapha Ghorbal",      initials:"MG", games:0, neutralRating:0, neutralVotes:0, fanRating:0, fanVotes:0, nationality:"Algerian",  age:42, fifaListed:"Yes", notes:"CAF and FIFA referee"},
-  {id:12, name:"Ivan Barton",           initials:"IB", games:0, neutralRating:0, neutralVotes:0, fanRating:0, fanVotes:0, nationality:"Salvadoran",age:38, fifaListed:"Yes", notes:"CONCACAF FIFA referee"},
+  {id:1,  name:"Szymon Marciniak",      initials:"SM", games:0, neutralRating:null, neutralVotes:0, fanRating:null, fanVotes:0, nationality:"Polish",    age:43, fifaListed:"Yes", notes:"Refereed 2022 World Cup Final"},
+  {id:2,  name:"Daniele Orsato",        initials:"DO", games:0, neutralRating:null, neutralVotes:0, fanRating:null, fanVotes:0, nationality:"Italian",   age:49, fifaListed:"Yes", notes:"Experienced UEFA Champions League ref"},
+  {id:3,  name:"Anthony Taylor",        initials:"AT", games:0, neutralRating:null, neutralVotes:0, fanRating:null, fanVotes:0, nationality:"English",   age:45, fifaListed:"Yes", notes:"Premier League and UEFA ref"},
+  {id:4,  name:"Facundo Tello",         initials:"FT", games:0, neutralRating:null, neutralVotes:0, fanRating:null, fanVotes:0, nationality:"Argentine", age:38, fifaListed:"Yes", notes:"CONMEBOL top referee"},
+  {id:5,  name:"Fernando Rapallini",    initials:"FR", games:0, neutralRating:null, neutralVotes:0, fanRating:null, fanVotes:0, nationality:"Argentine", age:44, fifaListed:"Yes", notes:"2022 World Cup referee"},
+  {id:6,  name:"Felix Zwayer",          initials:"FZ", games:0, neutralRating:null, neutralVotes:0, fanRating:null, fanVotes:0, nationality:"German",    age:43, fifaListed:"Yes", notes:"Bundesliga top referee"},
+  {id:7,  name:"Ismail Elfath",         initials:"IE", games:0, neutralRating:null, neutralVotes:0, fanRating:null, fanVotes:0, nationality:"American",  age:41, fifaListed:"Yes", notes:"MLS and CONCACAF top referee"},
+  {id:8,  name:"Abdulrahman Al-Jassim", initials:"AJ", games:0, neutralRating:null, neutralVotes:0, fanRating:null, fanVotes:0, nationality:"Qatari",    age:38, fifaListed:"Yes", notes:"2022 World Cup host nation ref"},
+  {id:9,  name:"Slavko Vinčić",         initials:"SV", games:0, neutralRating:null, neutralVotes:0, fanRating:null, fanVotes:0, nationality:"Slovenian", age:43, fifaListed:"Yes", notes:"UEFA Europa League referee"},
+  {id:10, name:"Bakary Gassama",        initials:"BG", games:0, neutralRating:null, neutralVotes:0, fanRating:null, fanVotes:0, nationality:"Gambian",   age:44, fifaListed:"Yes", notes:"CAF top referee"},
+  {id:11, name:"Mustapha Ghorbal",      initials:"MG", games:0, neutralRating:null, neutralVotes:0, fanRating:null, fanVotes:0, nationality:"Algerian",  age:42, fifaListed:"Yes", notes:"CAF and FIFA referee"},
+  {id:12, name:"Ivan Barton",           initials:"IB", games:0, neutralRating:null, neutralVotes:0, fanRating:null, fanVotes:0, nationality:"Salvadoran",age:38, fifaListed:"Yes", notes:"CONCACAF FIFA referee"},
 ];
 
 // 2026 FIFA World Cup — Group Stage Matchday 1

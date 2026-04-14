@@ -387,7 +387,7 @@ function renderList() {
   el.innerHTML = list.map(m => {
     const ref = REFS.find(r=>r.id===+m.refId); if(!ref) return '';
     const live=m.status==='live', up=m.status==='upcoming', fan=isFanMatch(m,currentUser);
-    const hasN=ref.neutralVotes>0, hasF=ref.fanVotes>0;
+    const hasN=ref.neutralRating!=null, hasF=ref.fanRating!=null;
     const nSf=hasN?Math.round(ref.neutralRating/2):0;
     const fSf=hasF?Math.round(ref.fanRating/2):0;
     const nStars=Array.from({length:5},(_,i)=>`<span class="vb-star${i<nSf?' ln':''}">★</span>`).join('');
@@ -717,7 +717,7 @@ async function loadIncidentRatings() {
   });
 
   // Compute per-ref scores — accumulate across all matches for the same ref
-  REFS.forEach(r => { r.neutralRating=5; r.neutralVotes=0; r.fanRating=5; r.fanVotes=0; });
+  REFS.forEach(r => { r.neutralRating=null; r.neutralVotes=0; r.fanRating=null; r.fanVotes=0; });
   // Collect all incidents per ref across all matches
   const refNeutral = {}, refFan = {};
   MATCHES.forEach(m => {
