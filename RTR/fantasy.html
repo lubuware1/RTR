@@ -1812,57 +1812,7 @@
       // Populated after allPicks loads; used to override saved pick left counts
       const USER_WC_LEFT = {};
 
-      const FANTASY_LEAGUE = [
-        {
-          username: "FootballFan99",
-          team: "Brazil",
-          pts: 0,
-          gwPick: "—",
-          isMe: false,
-        },
-        {
-          username: "RefNerd21",
-          team: "Germany",
-          pts: 0,
-          gwPick: "—",
-          isMe: false,
-        },
-        {
-          username: "TackleKing",
-          team: "Argentina",
-          pts: 0,
-          gwPick: "—",
-          isMe: false,
-        },
-        {
-          username: "PremierPundit",
-          team: "France",
-          pts: 0,
-          gwPick: "—",
-          isMe: false,
-        },
-        {
-          username: "Preview User",
-          team: "England",
-          pts: 0,
-          gwPick: "—",
-          isMe: true,
-        },
-        {
-          username: "GoalLineGareth",
-          team: "Spain",
-          pts: 0,
-          gwPick: "—",
-          isMe: false,
-        },
-        {
-          username: "OffTheBall",
-          team: "Netherlands",
-          pts: 0,
-          gwPick: "—",
-          isMe: false,
-        },
-      ];
+      const FANTASY_LEAGUE = [];
 
       // ── WILDCARD STATE ────────────────────────────────────────
       // Each player gets 2 of each per season; stored in sessionStorage
@@ -2538,6 +2488,11 @@
 
       // ── LEAGUE TABLE ──────────────────────────────────────────
       function renderLeague() {
+        if (!FANTASY_LEAGUE.length) {
+          document.getElementById("fantasyLeague").innerHTML =
+            '<div style="padding:16px;color:var(--muted);font-size:.82rem;text-align:center">No picks made yet this matchweek</div>';
+          return;
+        }
         const sorted = [...FANTASY_LEAGUE].sort((a, b) => {
           if (b.pts !== a.pts) return b.pts - a.pts;
           // Tiebreaker: higher total ref points wins
