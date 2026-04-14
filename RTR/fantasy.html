@@ -2433,7 +2433,7 @@
           },
         ];
 
-        const gwMatches = MATCHES.filter(m => m.gw === FGW.gw);
+        const gwMatches = MATCHES.filter(m => +m.matchweek === FGW.gw);
 
         document.getElementById("wcGrid").innerHTML = wcs
           .map((w) => {
