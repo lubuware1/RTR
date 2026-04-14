@@ -1820,20 +1820,17 @@
 
 
       // Fantasy league standings
-      // Per-user wildcard left counts computed from full season history
-      // Populated after allPicks loads; used to override saved pick left counts
-      const USER_WC_LEFT = {};
 
       const FANTASY_LEAGUE = [];
 
       // ── WILDCARD STATE ────────────────────────────────────────
-      // Each player gets 2 of each per season; stored in sessionStorage
+      // Each player gets one wildcard pick per GW (resets each week)
       let wildcards = JSON.parse(
         sessionStorage.getItem("rtr_wc_1") ||
           JSON.stringify({
-            yc: { left: 1, active: false, matchId: null }, // Yellow Card
-            rc: { left: 1, active: false, matchId: null }, // Red Card
-            var: { left: 2, active: false, matchId: null }, // VAR Replay
+            yc: { active: false, matchId: null }, // Yellow Card
+            rc: { active: false, matchId: null }, // Red Card
+            var: { active: false, matchId: null }, // VAR Replay
           }),
       );
       function saveWC() {
@@ -2487,7 +2484,7 @@
             const anyActive = Object.values(wildcards).some(s => s.active);
             const isDisabled = state.active
               ? w.preDeadline && locked // active pre-deadline WC locked in once deadline passes
-              : state.left === 0 || (w.preDeadline && locked) || anyActive;
+              : (w.preDeadline && locked) || anyActive;
 
             // Match picker for YC/RC wildcards when active
             const myRefMatchId = myPick ? (gwMatches.find(m => +m.refId === myPick) || {}).id : null;
@@ -2518,7 +2515,7 @@
         ${
           state.active
             ? '<div class="wc-active-tag">ACTIVE</div>'
-            : `<div class="wc-uses-num">${state.left}</div><div class="wc-uses-label">left</div>`
+            : `<div class="wc-uses-label">Available</div>`
         }
       </div>
     </button>
@@ -2533,23 +2530,17 @@
             const wc = wildcards[key];
             if (wc.active) {
               wc.active = false;
-              wc.left++;
               if ('matchId' in wc) wc.matchId = null;
               toast(
                 `${key === "yc" ? "Yellow Card" : key === "rc" ? "Red Card" : "VAR Replay"} deactivated`,
               );
             } else {
-              if (wc.left <= 0) {
-                toast("No wildcards remaining");
-                return;
-              }
               const anyActive = Object.values(wildcards).some(s => s.active);
               if (anyActive) {
                 toast("You can only use one wildcard per GW");
                 return;
               }
               wc.active = true;
-              wc.left--;
               toast(
                 `${key === "yc" ? "🟨 Yellow Card" : key === "rc" ? "🟥 Red Card" : "📺 VAR Replay"} activated!`,
               );
@@ -2608,17 +2599,13 @@
             // For others use their saved DB pick wildcards
             const wc = p.isMe ? wildcards : (p.wildcards || {});
             const wcIcons = [
-              { key: 'yc', icon: '🟨', defaultLeft: 1 },
-              { key: 'rc', icon: '🟥', defaultLeft: 1 },
-              { key: 'var', icon: '📺', defaultLeft: 2 },
+              { key: 'yc', icon: '🟨' },
+              { key: 'rc', icon: '🟥' },
+              { key: 'var', icon: '📺' },
             ];
-            const seasonLeft = p.isMe ? null : USER_WC_LEFT[p.userId];
             const wcHtml = wcIcons.map(w => {
-              const startLeft = seasonLeft ? (seasonLeft[w.key] ?? w.defaultLeft) : (wc[w.key]?.left ?? w.defaultLeft);
-              const usedThisGW = !!wc[w.key]?.active;
-              const realLeft = usedThisGW ? Math.max(0, startLeft - 1) : startLeft;
-              const isUsed = realLeft < w.defaultLeft;
-              return `<span class="fl-wc-icon${isUsed ? ' used' : ''}" title="${w.icon}">${w.icon}<span class="fl-wc-left">${realLeft}</span></span>`;
+              const active = !!wc[w.key]?.active;
+              return `<span class="fl-wc-icon${active ? '' : ' used'}" title="${w.icon}">${w.icon}</span>`;
             }).join('');
             const battle = p.refId ? getBattleForRef(p.refId) : null;
             const oppId = battle ? (battle.r1 === p.refId ? battle.r2 : battle.r1) : null;
@@ -3022,7 +3009,6 @@
         }
 
         // Restore user's pick + wildcards from DB (overrides sessionStorage)
-        // Start from season wildcard totals (accounts for usage in previous GWs)
         const seasonWC = await loadMySeasonWildcards(FGW.gw);
         wildcards = seasonWC;
         const dbPick = await loadMyFantasyPick(FGW.gw);
@@ -3057,16 +3043,6 @@
         // Build season leaderboards across all GWs
         const allPicks = await loadAllFantasyPicks();
 
-        // Compute per-user wildcard left counts from full season history
-        const wcDefaults = { yc: 1, rc: 1, var: 2 };
-        allPicks.forEach(p => {
-          if (+p.matchweek >= FGW.gw) return; // only count previous GWs
-          const uid = p.user_id;
-          if (!USER_WC_LEFT[uid]) USER_WC_LEFT[uid] = { yc: wcDefaults.yc, rc: wcDefaults.rc, var: wcDefaults.var };
-          ['yc','rc','var'].forEach(k => {
-            if (p.wildcards?.[k]?.active) USER_WC_LEFT[uid][k] = Math.max(0, USER_WC_LEFT[uid][k] - 1);
-          });
-        });
         // Rebuild GW leaderboard from allPicks — catches any users missed by loadFantasyLeaderboard
         // (e.g. matchweek type mismatch). Uses numeric comparison to be safe.
         const gwPicks = allPicks.filter(p => +p.matchweek === FGW.gw);
