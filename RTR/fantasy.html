@@ -1618,21 +1618,21 @@
                   <span class="htp-wc-icon">🟨</span>
                   <div>
                     <div class="htp-wc-name">Yellow Card</div>
-                    <div class="htp-wc-desc">Pick any game this GW — if there's a red card in that match, you earn +1. Must be used before the deadline.</div>
+                    <div class="htp-wc-desc">Pick any game this GW — if the ref gives the most yellow cards of any game this GW, you earn +1. Must be used before the deadline.</div>
                   </div>
                 </div>
                 <div class="htp-score-row" style="margin-top:8px;">
                   <span class="htp-wc-icon">🟥</span>
                   <div>
                     <div class="htp-wc-name">Red Card</div>
-                    <div class="htp-wc-desc">Pick any game this GW (not your own ref's) — if the ref has a perfect game, you earn +3. Must be used before the deadline.</div>
+                    <div class="htp-wc-desc">Pick any game this GW — if there's a red card in it, you earn +1. Must be used before the deadline.</div>
                   </div>
                 </div>
                 <div class="htp-score-row" style="margin-top:8px;">
                   <span class="htp-wc-icon">📺</span>
                   <div>
                     <div class="htp-wc-name">VAR Replay</div>
-                    <div class="htp-wc-desc">+2 bonus added to your ref's score. Can be used after the game has finished!</div>
+                    <div class="htp-wc-desc">Pick any game this GW (not your own ref's) — if the ref has a perfect game, you earn +3. Can be used after the game has finished!</div>
                   </div>
                 </div>
               </div>
@@ -1821,7 +1821,7 @@
           JSON.stringify({
             yc: { left: 1, active: false, matchId: null }, // Yellow Card
             rc: { left: 1, active: false, matchId: null }, // Red Card
-            var: { left: 2, active: false }, // VAR Replay
+            var: { left: 2, active: false, matchId: null }, // VAR Replay
           }),
       );
       function saveWC() {
@@ -1853,6 +1853,14 @@
       function getMatchRC(matchId) {
         const m = MATCHES.find(x => x.id === matchId);
         return m ? (m.rc || 0) : 0;
+      }
+      function isTopYCMatch(matchId) {
+        const played = MATCHES.filter(m => (m.status==='complete'||m.status==='recent') && +m.matchweek===FGW.gw);
+        if (!played.length) return false;
+        const maxYC = Math.max(...played.map(m => m.yc||0));
+        if (maxYC === 0) return false;
+        const m = MATCHES.find(x => x.id === matchId);
+        return !!m && (m.yc||0) >= maxYC;
       }
 
       function getRefMatch(refId) {
@@ -1894,9 +1902,9 @@
 
         // Wildcards boost the REF's score, which may flip the battle result
         let boostedPts = rawPts;
-        if (wildcards.yc.active) boostedPts += getMatchRC(wildcards.yc.matchId) > 0 ? 1 : 0; // +1 if predicted match has a red card
-        if (wildcards.rc.active) boostedPts += (MATCHES.find(m=>m.id===wildcards.rc.matchId)?.perfectGame ? 3 : 0);
-        if (wildcards.var.active) boostedPts += 2;
+        if (wildcards.yc.active) boostedPts += isTopYCMatch(wildcards.yc.matchId) ? 1 : 0;
+        if (wildcards.rc.active) boostedPts += getMatchRC(wildcards.rc.matchId) > 0 ? 1 : 0;
+        if (wildcards.var.active) boostedPts += MATCHES.find(m=>m.id===wildcards.var.matchId)?.perfectGame ? 3 : 0;
 
         const won = boostedPts > oppPts;
         const drew = boostedPts === oppPts;
@@ -2308,8 +2316,9 @@
         const battle0 = getBattleForRef(myPick);
         const oppId0 = battle0 ? (battle0.r1 === myPick ? battle0.r2 : battle0.r1) : null;
         const wcBoost =
-          (wildcards.yc.active ? (getMatchRC(wildcards.yc.matchId) > 0 ? 1 : 0) : 0) +
-          (wildcards.rc.active ? (MATCHES.find(m=>m.id===wildcards.rc.matchId)?.perfectGame ? 3 : 0) : 0) + (wildcards.var.active ? 2 : 0);
+          (wildcards.yc.active ? (isTopYCMatch(wildcards.yc.matchId) ? 1 : 0) : 0) +
+          (wildcards.rc.active ? (getMatchRC(wildcards.rc.matchId) > 0 ? 1 : 0) : 0) +
+          (wildcards.var.active ? (MATCHES.find(m=>m.id===wildcards.var.matchId)?.perfectGame ? 3 : 0) : 0);
         const displayPts = rawPts !== null ? rawPts + wcBoost : null;
 
         // Ref card — show boosted score if wildcards are active
@@ -2380,7 +2389,11 @@
         const gwResult = live ? null : calcMyGWPts();
         const boostLine =
           wcBoost > 0
-            ? `<div class="gw-pts-bonus">${[wildcards.yc.active ? `🟨 Yellow Card +${getMatchRC(wildcards.yc.matchId)>0?1:0}${wildcards.yc.matchId?` (${(MATCHES.find(m=>m.id===wildcards.yc.matchId)||{}).home||'?'} vs ${(MATCHES.find(m=>m.id===wildcards.yc.matchId)||{}).away||'?'})`:''}` : "", wildcards.rc.active ? `🟥 Red Card +${MATCHES.find(m=>m.id===wildcards.rc.matchId)?.perfectGame?3:0}${wildcards.rc.matchId?` (${(MATCHES.find(m=>m.id===wildcards.rc.matchId)||{}).home||'?'} vs ${(MATCHES.find(m=>m.id===wildcards.rc.matchId)||{}).away||'?'})`:''}` : "", wildcards.var.active ? "📺 VAR +2 to ref" : ""].filter(Boolean).join(" · ")}</div>`
+            ? `<div class="gw-pts-bonus">${[
+                wildcards.yc.active ? `🟨 Yellow Card +${isTopYCMatch(wildcards.yc.matchId)?1:0}${wildcards.yc.matchId?` (${(MATCHES.find(m=>m.id===wildcards.yc.matchId)||{}).home||'?'} vs ${(MATCHES.find(m=>m.id===wildcards.yc.matchId)||{}).away||'?'})`:' — pick a match'}` : "",
+                wildcards.rc.active ? `🟥 Red Card +${getMatchRC(wildcards.rc.matchId)>0?1:0}${wildcards.rc.matchId?` (${(MATCHES.find(m=>m.id===wildcards.rc.matchId)||{}).home||'?'} vs ${(MATCHES.find(m=>m.id===wildcards.rc.matchId)||{}).away||'?'})`:' — pick a match'}` : "",
+                wildcards.var.active ? `📺 VAR +${MATCHES.find(m=>m.id===wildcards.var.matchId)?.perfectGame?3:0}${wildcards.var.matchId?` (${(MATCHES.find(m=>m.id===wildcards.var.matchId)||{}).home||'?'} vs ${(MATCHES.find(m=>m.id===wildcards.var.matchId)||{}).away||'?'})`:' — pick a match'}` : ""
+              ].filter(Boolean).join(" · ")}</div>`
             : "";
         document.getElementById("gwPtsBox").innerHTML = `
     <div class="gw-pts-num">${gwResult !== null ? gwResult.pts : "—"}</div>
@@ -2414,21 +2427,21 @@
             key: "yc",
             icon: "🟨",
             name: "Yellow Card",
-            desc: "Pick any game this GW — if there's a red card in it, you earn +1. Must use before deadline.",
+            desc: "Pick any game this GW — if the ref gives the most yellow cards of any game this GW, you earn +1. Must use before deadline.",
             preDeadline: true,
           },
           {
             key: "rc",
             icon: "🟥",
             name: "Red Card",
-            desc: "Pick any game this GW — if the ref has a perfect game, you earn +3. Must use before deadline.",
+            desc: "Pick any game this GW — if there's a red card in it, you earn +1. Must use before deadline.",
             preDeadline: true,
           },
           {
             key: "var",
             icon: "📺",
             name: "VAR Replay",
-            desc: "+2 bonus to your score. Can be used after the game!",
+            desc: "Pick any game this GW (not your own ref's) — if the ref has a perfect game, you earn +3. Can be used after the game!",
             preDeadline: false,
           },
         ];
@@ -2451,12 +2464,12 @@
               .join('');
             const pickerStyle = 'margin-top:8px;width:100%;background:var(--surface);border:1px solid var(--pl-green);border-radius:6px;color:var(--text);font-family:\'Barlow\',sans-serif;font-size:.8rem;padding:5px 8px;';
             const matchPicker =
-              (w.key === 'yc' || w.key === 'rc') && state.active && !locked
+              state.active && !locked
                 ? `<select id="${w.key}MatchPicker" style="${pickerStyle}">
                     <option value="">— Pick a match —</option>
-                    ${matchPickerOptions(w.key === 'rc' ? myRefMatchId : null)}
+                    ${matchPickerOptions(w.key === 'var' ? myRefMatchId : null)}
                   </select>`
-                : (w.key === 'yc' || w.key === 'rc') && state.active && state.matchId
+                : state.active && state.matchId
                   ? `<div style="margin-top:6px;font-size:.75rem;color:var(--pl-green);">📍 ${(gwMatches.find(m=>m.id===state.matchId)||{}).home||'?'} vs ${(gwMatches.find(m=>m.id===state.matchId)||{}).away||'?'}</div>`
                   : '';
 
@@ -2488,7 +2501,7 @@
             if (wc.active) {
               wc.active = false;
               wc.left++;
-              if (key === 'yc' || key === 'rc') wc.matchId = null;
+              if ('matchId' in wc) wc.matchId = null;
               toast(
                 `${key === "yc" ? "Yellow Card" : key === "rc" ? "Red Card" : "VAR Replay"} deactivated`,
               );
@@ -2513,8 +2526,8 @@
           });
         });
 
-        // YC / RC match picker change handlers
-        ['yc', 'rc'].forEach(key => {
+        // YC / RC / VAR match picker change handlers
+        ['yc', 'rc', 'var'].forEach(key => {
           const picker = document.getElementById(`${key}MatchPicker`);
           if (!picker) return;
           picker.addEventListener('change', (e) => {
@@ -2524,7 +2537,7 @@
             saveWC();
             renderSidebar();
             toast(val
-              ? (key === 'yc' ? '🟨 Red card prediction saved!' : '🟥 Perfect game prediction saved!')
+              ? (key === 'yc' ? '🟨 Most yellows prediction saved!' : key === 'rc' ? '🟥 Red card prediction saved!' : '📺 Perfect game prediction saved!')
               : 'Match prediction cleared');
           });
         });
@@ -2548,7 +2561,8 @@
             if (raw === null) return -1;
             const wc = p.wildcards || {};
             return raw + (wc.yc?.active ? (getMatchRC(wc.yc.matchId) > 0 ? 1 : 0) : 0)
-                       + (wc.rc?.active ? (MATCHES.find(m=>m.id===wc.rc.matchId)?.perfectGame ? 3 : 0) : 0) + (wc.var?.active ? 2 : 0);
+                       + (wc.rc?.active ? (getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0) : 0)
+                       + (wc.var?.active ? (MATCHES.find(m=>m.id===wc.var?.matchId)?.perfectGame ? 3 : 0) : 0);
           };
           return getRefPts(b) - getRefPts(a);
         });
@@ -2577,8 +2591,9 @@
             const oppId = battle ? (battle.r1 === p.refId ? battle.r2 : battle.r1) : null;
             const rawRefPts = p.refId != null ? (REF_GW_PTS[p.refId] ?? null) : null;
             const wcBoost = rawRefPts !== null
-              ? (wc.yc?.active ? (getMatchRC(wc.yc?.matchId) > 0 ? 1 : 0) : 0) +
-                (wc.rc?.active ? (MATCHES.find(m=>m.id===wc.rc?.matchId)?.perfectGame ? 3 : 0) : 0) + (wc.var?.active ? 2 : 0)
+              ? (wc.yc?.active ? (isTopYCMatch(wc.yc?.matchId) ? 1 : 0) : 0) +
+                (wc.rc?.active ? (getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0) : 0) +
+                (wc.var?.active ? (MATCHES.find(m=>m.id===wc.var?.matchId)?.perfectGame ? 3 : 0) : 0)
               : 0;
             const refPtsDisplay = rawRefPts !== null ? rawRefPts + wcBoost : null;
             return `<div class="fl-row${p.isMe ? " me" : ""}">
@@ -2633,8 +2648,9 @@
             if (myPts == null || oppPts == null) return;
             const wc = p.wildcards || {};
             let boosted = myPts;
-            if (wc.rc?.active) boosted += MATCHES.find(m=>m.id===wc.rc?.matchId)?.perfectGame ? 3 : 0;
-            if (wc.var?.active) boosted += 2;
+            if (wc.yc?.active) boosted += isTopYCMatch(wc.yc?.matchId) ? 1 : 0;
+            if (wc.rc?.active) boosted += getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0;
+            if (wc.var?.active) boosted += MATCHES.find(m=>m.id===wc.var?.matchId)?.perfectGame ? 3 : 0;
             userTotals[uid].total += boosted > oppPts ? 3 : boosted === oppPts ? 1 : 0;
           });
         });
@@ -2686,8 +2702,9 @@
             if (pts !== null) {
               const wc = p.wildcards || {};
               let boosted = pts;
-              if (wc.rc?.active) boosted += MATCHES.find(m=>m.id===wc.rc?.matchId)?.perfectGame ? 3 : 0;
-              if (wc.var?.active) boosted += 2;
+              if (wc.yc?.active) boosted += isTopYCMatch(wc.yc?.matchId) ? 1 : 0;
+              if (wc.rc?.active) boosted += getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0;
+              if (wc.var?.active) boosted += MATCHES.find(m=>m.id===wc.var?.matchId)?.perfectGame ? 3 : 0;
               userTotals[uid].total += boosted;
             }
           });
@@ -2766,8 +2783,9 @@
               const wc = p.wildcards || {};
               let boosted = rawPts;
               if (wc.yc?.active) boosted += getMatchRC(wc.yc?.matchId) > 0 ? 1 : 0;
-              if (wc.rc?.active) boosted += MATCHES.find(m=>m.id===wc.rc?.matchId)?.perfectGame ? 3 : 0;
-              if (wc.var?.active) boosted += 2;
+              if (wc.yc?.active) boosted += isTopYCMatch(wc.yc?.matchId) ? 1 : 0;
+              if (wc.rc?.active) boosted += getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0;
+              if (wc.var?.active) boosted += MATCHES.find(m=>m.id===wc.var?.matchId)?.perfectGame ? 3 : 0;
               const won = boosted > oppPts;
               const drew = boosted === oppPts;
               pts = won ? 3 : drew ? 1 : 0;
@@ -2984,6 +3002,7 @@
             });
             if (dbPick.wildcards.yc?.matchId) wildcards.yc.matchId = dbPick.wildcards.yc.matchId;
             if (dbPick.wildcards.rc?.matchId) wildcards.rc.matchId = dbPick.wildcards.rc.matchId;
+            if (dbPick.wildcards.var?.matchId) wildcards.var.matchId = dbPick.wildcards.var.matchId;
           }
           sessionStorage.setItem("rtr_pick_1", myPick);
           sessionStorage.setItem("rtr_wc_1", JSON.stringify(wildcards));
