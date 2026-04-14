@@ -1744,6 +1744,18 @@
 
     <div class="toast" id="toast"></div>
 
+    <!-- Wildcard reminder modal -->
+    <div id="wcReminderModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;">
+      <div style="background:var(--surface);border:1px solid var(--pl-green);border-radius:14px;padding:28px 28px 22px;max-width:360px;width:90%;box-shadow:0 8px 40px rgba(0,255,133,.15);">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;margin-bottom:8px;">Have you chosen your wildcard picks? 🃏</div>
+        <div style="font-size:.85rem;color:var(--muted);margin-bottom:20px;line-height:1.5;">You haven't activated a wildcard this GW. Wildcards can earn you bonus points — do you want to go back and pick one?</div>
+        <div style="display:flex;gap:10px;">
+          <button id="wcReminderBack" style="flex:1;background:rgba(0,255,133,.1);border:1px solid var(--pl-green);color:var(--pl-green);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;border-radius:8px;padding:10px;cursor:pointer;">Go back</button>
+          <button id="wcReminderContinue" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;border-radius:8px;padding:10px;cursor:pointer;">Confirm pick</button>
+        </div>
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="shared.js"></script>
     <script>
@@ -2098,27 +2110,52 @@
     </div>`;
         }).join("");
 
+        const modal = document.getElementById('wcReminderModal');
+        async function confirmRefPick(refId) {
+          myPick = refId;
+          sessionStorage.setItem("rtr_pick_1", myPick);
+          renderPickGrid();
+          renderBattles();
+          renderSidebar();
+          reparse();
+          const saved = await saveFantasyPick(FGW.gw, myPick, wildcards);
+          toast(
+            saved
+              ? `Picked ${gRef(myPick).name} for MW${FGW.gw}`
+              : `Picked ${gRef(myPick).name} (saved locally)`,
+          );
+          const curUser = getCurrentUser();
+          if (curUser?.id) {
+            const sw = await loadMySeasonWildcards(FGW.gw + 1);
+            checkFantasyBadges(curUser.id, sw).catch(() => {});
+          }
+        }
+
+        let pendingPickId = null;
+        document.getElementById('wcReminderContinue').addEventListener('click', () => {
+          modal.style.display = 'none';
+          if (pendingPickId) confirmRefPick(pendingPickId);
+          pendingPickId = null;
+        });
+        document.getElementById('wcReminderBack').addEventListener('click', () => {
+          modal.style.display = 'none';
+          pendingPickId = null;
+        });
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) { modal.style.display = 'none'; pendingPickId = null; }
+        });
+
         if (!FGW.deadlinePassed) {
           document.querySelectorAll(".ref-pick-card").forEach((card) => {
             card.addEventListener("click", async () => {
-              myPick = +card.dataset.rid;
-              sessionStorage.setItem("rtr_pick_1", myPick);
-              renderPickGrid();
-              renderBattles();
-              renderSidebar();
-              reparse();
-              const saved = await saveFantasyPick(FGW.gw, myPick, wildcards);
-              toast(
-                saved
-                  ? `Picked ${gRef(myPick).name} for MW${FGW.gw}`
-                  : `Picked ${gRef(myPick).name} (saved locally)`,
-              );
-              // Check fantasy badges (fire-and-forget)
-              const curUser = getCurrentUser();
-              if (curUser?.id) {
-                const sw = await loadMySeasonWildcards(FGW.gw + 1);
-                checkFantasyBadges(curUser.id, sw).catch(() => {});
+              const rid = +card.dataset.rid;
+              const anyActive = Object.values(wildcards).some(s => s.active);
+              if (!anyActive) {
+                pendingPickId = rid;
+                modal.style.display = 'flex';
+                return;
               }
+              confirmRefPick(rid);
             });
           });
         }
