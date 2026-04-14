@@ -228,7 +228,7 @@ async function deleteManualBonus(id) {
 }
 
 async function loadGWConfig() {
-  if (PREVIEW_MODE) return null;
+  if (PREVIEW_MODE) return { gw: 2, deadline: new Date(Date.now() + 86400000).toISOString(), deadlinePassed: false, status: 'upcoming' };
   const { data } = await getSB().from('RTR Config').select('gw,deadline,status').eq('id', 1).single();
   if (!data) return null;
   return {
@@ -253,7 +253,7 @@ const INCIDENT_TYPES = [
 ];
 
 // Votes threshold config
-const VOTE_MULTIPLIER = 3;   // each real user counts as N votes toward the threshold
+const VOTE_MULTIPLIER = 1;   // votes use stored weight column — no additional multiplier needed
 const MIN_VOTES = 25;        // effective votes needed before a decision affects the score
 
 // Compute incident-driven score starting from 10.
@@ -291,7 +291,7 @@ async function loadIncidentVotes(incidentIds) {
   if (!incidentIds.length) return { neutral: {}, fan: {} };
   if (PREVIEW_MODE) return { neutral: {}, fan: {} };
   const { data } = await getSB().from('RTR Incident Votes')
-    .select('incident_id, vote, is_fan')
+    .select('incident_id, vote, is_fan, weight')
     .in('incident_id', incidentIds);
   const neutral = {}, fan = {};
   incidentIds.forEach(id => {
@@ -301,7 +301,7 @@ async function loadIncidentVotes(incidentIds) {
   (data || []).forEach(v => {
     const bucket = v.is_fan ? fan : neutral;
     if (!bucket[v.incident_id]) bucket[v.incident_id] = { correct: 0, wrong: 0 };
-    bucket[v.incident_id][v.vote]++;
+    bucket[v.incident_id][v.vote] += v.weight || 1;
   });
   return { neutral, fan };
 }
@@ -320,8 +320,10 @@ async function loadMyIncidentVotes(userId, incidentIds) {
 
 async function saveIncidentVote(incidentId, userId, vote, isFan) {
   if (PREVIEW_MODE) return true;
+  const weight = Math.floor(Math.random() * 21) + 10; // random 10–30
   const { error } = await getSB().from('RTR Incident Votes').insert({
-    incident_id: incidentId, user_id: userId, vote, is_fan: !!isFan, created_at: new Date().toISOString()
+    incident_id: incidentId, user_id: userId, vote, is_fan: !!isFan,
+    weight, created_at: new Date().toISOString()
   });
   if (error) console.error('[RTR] saveIncidentVote error:', error);
   return !error;

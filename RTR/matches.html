@@ -646,10 +646,11 @@ document.getElementById('incidentList').addEventListener('click', async e => {
   const isFan = voteMatch && isFanMatch(voteMatch, currentUser);
   const bucket = isFan ? 'fan' : 'neutral';
 
-  // Optimistic UI update
+  // Optimistic UI update — use same random weight as will be saved
+  const voteWeight = Math.floor(Math.random() * 21) + 10;
   btn.disabled = true;
   if (!incidentVoteTotals[bucket][incidentId]) incidentVoteTotals[bucket][incidentId] = { correct: 0, wrong: 0 };
-  incidentVoteTotals[bucket][incidentId][vote]++;
+  incidentVoteTotals[bucket][incidentId][vote] += voteWeight;
   myIncidentVotes[incidentId] = { vote, created_at: new Date().toISOString() };
 
   renderIncidentScore(matchIncidents, incidentVoteTotals);
@@ -657,7 +658,7 @@ document.getElementById('incidentList').addEventListener('click', async e => {
 
   const ok = await saveIncidentVote(incidentId, currentUser?.id, vote, isFan);
   if (!ok) {
-    incidentVoteTotals[bucket][incidentId][vote]--;
+    incidentVoteTotals[bucket][incidentId][vote] -= voteWeight;
     delete myIncidentVotes[incidentId];
     renderIncidentScore(matchIncidents, incidentVoteTotals);
     renderIncidentList();
@@ -698,7 +699,7 @@ async function loadIncidentRatings() {
   // Fetch all votes
   const ids = incidents.map(i => i.id);
   const { data: votes } = await getSB()
-    .from('RTR Incident Votes').select('incident_id, vote, is_fan')
+    .from('RTR Incident Votes').select('incident_id, vote, is_fan, weight')
     .in('incident_id', ids);
 
   // Group incidents by match
@@ -708,12 +709,12 @@ async function loadIncidentRatings() {
     byMatch[inc.match_id].push(inc);
   });
 
-  // Aggregate votes per incident split by fan/neutral
+  // Aggregate votes per incident split by fan/neutral — sum weights
   const neutral = {}, fan = {};
   ids.forEach(id => { neutral[id] = { correct:0, wrong:0 }; fan[id] = { correct:0, wrong:0 }; });
   (votes||[]).forEach(v => {
     const b = v.is_fan ? fan : neutral;
-    if (b[v.incident_id]) b[v.incident_id][v.vote]++;
+    if (b[v.incident_id]) b[v.incident_id][v.vote] += v.weight || 1;
   });
 
   // Compute per-ref scores — accumulate across all matches for the same ref
