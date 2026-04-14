@@ -107,14 +107,18 @@
   <!-- MATCH MANAGER -->
   <div class="section">
     <div class="section-title">⚽ Match Manager</div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-      <div style="flex:1">
+    <div class="row cols-2" style="margin-bottom:14px;">
+      <div class="field-group">
         <label>Filter by Matchweek</label>
         <select id="matchGWFilter"><option value="all">All Matchweeks</option></select>
       </div>
+      <div class="field-group">
+        <label>Select Match</label>
+        <select id="matchSelect"><option value="">Select a match…</option></select>
+      </div>
     </div>
     <div id="matchList">
-      <div style="color:var(--muted);font-size:.85rem;">Loading matches…</div>
+      <div style="color:var(--muted);font-size:.85rem;">Select a match above to edit it.</div>
     </div>
   </div>
 
@@ -279,12 +283,25 @@
     return div;
   }
 
-  function renderMatchList(matches, overrides, gwFilter) {
-    const list = document.getElementById('matchList');
+  function populateMatchDropdown(matches, gwFilter) {
+    const sel = document.getElementById('matchSelect');
+    const prevVal = sel.value;
+    sel.innerHTML = '<option value="">Select a match…</option>';
     const filtered = gwFilter === 'all' ? matches : matches.filter(m => +m.matchweek === +gwFilter);
-    if (!filtered.length) { list.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">No matches found</div>'; return; }
-    list.innerHTML = '';
-    filtered.forEach(m => list.appendChild(renderMatchCard(m, overrides)));
+    filtered.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.id;
+      opt.textContent = `MW${m.matchweek} · ${m.home} vs ${m.away} (${m.status})`;
+      sel.appendChild(opt);
+    });
+    // Restore selection if still valid
+    if ([...sel.options].some(o => o.value === prevVal)) sel.value = prevVal;
+    else sel.value = '';
+    sel.dispatchEvent(new Event('change'));
+  }
+
+  function renderMatchList(matches, overrides, gwFilter) {
+    populateMatchDropdown(matches, gwFilter);
   }
 
   // ── BOOT ─────────────────────────────────────────────────
@@ -329,6 +346,16 @@
 
     renderMatchList(MATCHES, overrides, gwConfig?.gw || 'all');
     gwFilter.addEventListener('change', () => renderMatchList(MATCHES, overrides, gwFilter.value));
+
+    document.getElementById('matchSelect').addEventListener('change', e => {
+      const list = document.getElementById('matchList');
+      const mid = e.target.value;
+      if (!mid) { list.innerHTML = '<div style="color:var(--muted);font-size:.85rem;">Select a match above to edit it.</div>'; return; }
+      const m = MATCHES.find(x => String(x.id) === String(mid));
+      if (!m) return;
+      list.innerHTML = '';
+      list.appendChild(renderMatchCard(m, overrides));
+    });
 
     // ── SAVE GW CONFIG ────────────────────────────────────
     document.getElementById('saveGWBtn').addEventListener('click', async () => {
