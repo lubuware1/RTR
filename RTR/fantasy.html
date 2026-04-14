@@ -1618,7 +1618,7 @@
                   <span class="htp-wc-icon">🟨</span>
                   <div>
                     <div class="htp-wc-name">Yellow Card</div>
-                    <div class="htp-wc-desc">Pick any game this GW — if the ref gives the most yellow cards of any game this GW, you earn +1. Must be used before the deadline.</div>
+                    <div class="htp-wc-desc">Pick any game this GW — if there are 4+ yellow cards in it, you earn +1. Must be used before the deadline.</div>
                   </div>
                 </div>
                 <div class="htp-score-row" style="margin-top:8px;">
@@ -1866,13 +1866,9 @@
         const m = MATCHES.find(x => x.id === matchId);
         return m ? (m.rc || 0) : 0;
       }
-      function isTopYCMatch(matchId) {
-        const played = MATCHES.filter(m => (m.status==='complete'||m.status==='recent') && +m.matchweek===FGW.gw);
-        if (!played.length) return false;
-        const maxYC = Math.max(...played.map(m => m.yc||0));
-        if (maxYC === 0) return false;
+      function isHighYCMatch(matchId) {
         const m = MATCHES.find(x => x.id === matchId);
-        return !!m && (m.yc||0) >= maxYC;
+        return !!m && (m.yc||0) >= 4;
       }
 
       function getRefMatch(refId) {
@@ -1914,7 +1910,7 @@
 
         // Wildcards boost the REF's score, which may flip the battle result
         let boostedPts = rawPts;
-        if (wildcards.yc.active) boostedPts += isTopYCMatch(wildcards.yc.matchId) ? 1 : 0;
+        if (wildcards.yc.active) boostedPts += isHighYCMatch(wildcards.yc.matchId) ? 1 : 0;
         if (wildcards.rc.active) boostedPts += getMatchRC(wildcards.rc.matchId) > 0 ? 1 : 0;
         if (wildcards.var.active) boostedPts += MATCHES.find(m=>m.id===wildcards.var.matchId)?.perfectGame ? 3 : 0;
 
@@ -2353,7 +2349,7 @@
         const battle0 = getBattleForRef(myPick);
         const oppId0 = battle0 ? (battle0.r1 === myPick ? battle0.r2 : battle0.r1) : null;
         const wcBoost =
-          (wildcards.yc.active ? (isTopYCMatch(wildcards.yc.matchId) ? 1 : 0) : 0) +
+          (wildcards.yc.active ? (isHighYCMatch(wildcards.yc.matchId) ? 1 : 0) : 0) +
           (wildcards.rc.active ? (getMatchRC(wildcards.rc.matchId) > 0 ? 1 : 0) : 0) +
           (wildcards.var.active ? (MATCHES.find(m=>m.id===wildcards.var.matchId)?.perfectGame ? 3 : 0) : 0);
         const displayPts = rawPts !== null ? rawPts + wcBoost : null;
@@ -2427,7 +2423,7 @@
         const boostLine =
           wcBoost > 0
             ? `<div class="gw-pts-bonus">${[
-                wildcards.yc.active ? `🟨 Yellow Card +${isTopYCMatch(wildcards.yc.matchId)?1:0}${wildcards.yc.matchId?` (${(MATCHES.find(m=>m.id===wildcards.yc.matchId)||{}).home||'?'} vs ${(MATCHES.find(m=>m.id===wildcards.yc.matchId)||{}).away||'?'})`:' — pick a match'}` : "",
+                wildcards.yc.active ? `🟨 Yellow Card +${isHighYCMatch(wildcards.yc.matchId)?1:0}${wildcards.yc.matchId?` (${(MATCHES.find(m=>m.id===wildcards.yc.matchId)||{}).home||'?'} vs ${(MATCHES.find(m=>m.id===wildcards.yc.matchId)||{}).away||'?'})`:' — pick a match'}` : "",
                 wildcards.rc.active ? `🟥 Red Card +${getMatchRC(wildcards.rc.matchId)>0?1:0}${wildcards.rc.matchId?` (${(MATCHES.find(m=>m.id===wildcards.rc.matchId)||{}).home||'?'} vs ${(MATCHES.find(m=>m.id===wildcards.rc.matchId)||{}).away||'?'})`:' — pick a match'}` : "",
                 wildcards.var.active ? `📺 VAR +${MATCHES.find(m=>m.id===wildcards.var.matchId)?.perfectGame?3:0}${wildcards.var.matchId?` (${(MATCHES.find(m=>m.id===wildcards.var.matchId)||{}).home||'?'} vs ${(MATCHES.find(m=>m.id===wildcards.var.matchId)||{}).away||'?'})`:' — pick a match'}` : ""
               ].filter(Boolean).join(" · ")}</div>`
@@ -2464,7 +2460,7 @@
             key: "yc",
             icon: "🟨",
             name: "Yellow Card",
-            desc: "Pick any game this GW — if the ref gives the most yellow cards of any game this GW, you earn +1. Must use before deadline.",
+            desc: "Pick any game this GW — if there are 4+ yellow cards in it, you earn +1. Must use before deadline.",
             preDeadline: true,
           },
           {
@@ -2628,7 +2624,7 @@
             const oppId = battle ? (battle.r1 === p.refId ? battle.r2 : battle.r1) : null;
             const rawRefPts = p.refId != null ? (REF_GW_PTS[p.refId] ?? null) : null;
             const wcBoost = rawRefPts !== null
-              ? (wc.yc?.active ? (isTopYCMatch(wc.yc?.matchId) ? 1 : 0) : 0) +
+              ? (wc.yc?.active ? (isHighYCMatch(wc.yc?.matchId) ? 1 : 0) : 0) +
                 (wc.rc?.active ? (getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0) : 0) +
                 (wc.var?.active ? (MATCHES.find(m=>m.id===wc.var?.matchId)?.perfectGame ? 3 : 0) : 0)
               : 0;
@@ -2685,7 +2681,7 @@
             if (myPts == null || oppPts == null) return;
             const wc = p.wildcards || {};
             let boosted = myPts;
-            if (wc.yc?.active) boosted += isTopYCMatch(wc.yc?.matchId) ? 1 : 0;
+            if (wc.yc?.active) boosted += isHighYCMatch(wc.yc?.matchId) ? 1 : 0;
             if (wc.rc?.active) boosted += getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0;
             if (wc.var?.active) boosted += MATCHES.find(m=>m.id===wc.var?.matchId)?.perfectGame ? 3 : 0;
             userTotals[uid].total += boosted > oppPts ? 3 : boosted === oppPts ? 1 : 0;
@@ -2739,7 +2735,7 @@
             if (pts !== null) {
               const wc = p.wildcards || {};
               let boosted = pts;
-              if (wc.yc?.active) boosted += isTopYCMatch(wc.yc?.matchId) ? 1 : 0;
+              if (wc.yc?.active) boosted += isHighYCMatch(wc.yc?.matchId) ? 1 : 0;
               if (wc.rc?.active) boosted += getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0;
               if (wc.var?.active) boosted += MATCHES.find(m=>m.id===wc.var?.matchId)?.perfectGame ? 3 : 0;
               userTotals[uid].total += boosted;
@@ -2820,7 +2816,7 @@
               const wc = p.wildcards || {};
               let boosted = rawPts;
               if (wc.yc?.active) boosted += getMatchRC(wc.yc?.matchId) > 0 ? 1 : 0;
-              if (wc.yc?.active) boosted += isTopYCMatch(wc.yc?.matchId) ? 1 : 0;
+              if (wc.yc?.active) boosted += isHighYCMatch(wc.yc?.matchId) ? 1 : 0;
               if (wc.rc?.active) boosted += getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0;
               if (wc.var?.active) boosted += MATCHES.find(m=>m.id===wc.var?.matchId)?.perfectGame ? 3 : 0;
               const won = boosted > oppPts;
