@@ -2613,7 +2613,7 @@
           REFS.forEach(r => {
             const played = gwMatchList.filter(m => +m.refId === r.id && (m.status === 'complete' || m.status === 'recent'));
             if (!played.length) return;
-            let pts = played.reduce((s,m) => s + (m.yc||0) + (m.rc||0) + (m.pen||0)*2 - (m.incorrectVarPen||0) - (m.incorrectVarRed||0)*2 + (m.perfectGame?5:0), 0);
+            let pts = played.reduce((s,m) => s + (m.yc||0) + (m.rc||0) + (m.pen||0)*2 - (m.incorrectVarPen||0) - (m.incorrectVarRed||0)*2 + (m.perfectGame?3:0), 0);
             gwRefPts[r.id] = pts;
           });
           // Pair up refs into battles (same deterministic shuffle as buildBattlesFromMatches)
@@ -2667,7 +2667,7 @@
       function calcRefPtsForMatch(m) {
         if (!m || (m.status !== 'complete' && m.status !== 'recent')) return null;
         let pts = (m.yc||0) + (m.rc||0) + (m.pen||0)*2;
-        if (m.perfectGame) pts += 5;
+        if (m.perfectGame) pts += 3;
         pts -= (m.incorrectVarPen||0);
         pts -= (m.incorrectVarRed||0)*2;
         return pts;
@@ -2737,7 +2737,7 @@
           totals[refId] += (m.yc || 0);
           totals[refId] += (m.rc || 0);
           totals[refId] += (m.pen || 0) * 2;
-          if (m.perfectGame) totals[refId] += 5;
+          if (m.perfectGame) totals[refId] += 3;
           totals[refId] -= (m.incorrectVarPen || 0);
           totals[refId] -= (m.incorrectVarRed || 0) * 2;
         });
