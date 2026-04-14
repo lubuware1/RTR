@@ -1618,7 +1618,7 @@
                   <span class="htp-wc-icon">🟨</span>
                   <div>
                     <div class="htp-wc-name">Yellow Card</div>
-                    <div class="htp-wc-desc">Your ref gains +1 if the opposing ref issues a red card (first red card only). Must be used before the deadline.</div>
+                    <div class="htp-wc-desc">Pick any game this GW — if there's a red card in that match, you earn +1. Must be used before the deadline.</div>
                   </div>
                 </div>
                 <div class="htp-score-row" style="margin-top:8px;">
@@ -1819,7 +1819,7 @@
       let wildcards = JSON.parse(
         sessionStorage.getItem("rtr_wc_1") ||
           JSON.stringify({
-            yc: { left: 1, active: false }, // Yellow Card
+            yc: { left: 1, active: false, matchId: null }, // Yellow Card
             rc: { left: 1, active: false }, // Red Card
             var: { left: 2, active: false }, // VAR Replay
           }),
@@ -1849,6 +1849,10 @@
         return MATCHES
           .filter(m => +m.refId === refId && (m.status === 'complete' || m.status === 'recent'))
           .reduce((s, m) => s + (m.rc || 0), 0);
+      }
+      function getMatchRC(matchId) {
+        const m = MATCHES.find(x => x.id === matchId);
+        return m ? (m.rc || 0) : 0;
       }
 
       function getRefMatch(refId) {
@@ -1890,7 +1894,7 @@
 
         // Wildcards boost the REF's score, which may flip the battle result
         let boostedPts = rawPts;
-        if (wildcards.yc.active) boostedPts += getRefRC(oppId) > 0 ? 1 : 0; // +1 for first opp red card
+        if (wildcards.yc.active) boostedPts += getMatchRC(wildcards.yc.matchId) > 0 ? 1 : 0; // +1 if predicted match has a red card
         if (wildcards.rc.active) boostedPts += 1;
         if (wildcards.var.active) boostedPts += 2;
 
@@ -2304,7 +2308,7 @@
         const battle0 = getBattleForRef(myPick);
         const oppId0 = battle0 ? (battle0.r1 === myPick ? battle0.r2 : battle0.r1) : null;
         const wcBoost =
-          (wildcards.yc.active && oppId0 ? (getRefRC(oppId0) > 0 ? 1 : 0) : 0) +
+          (wildcards.yc.active ? (getMatchRC(wildcards.yc.matchId) > 0 ? 1 : 0) : 0) +
           (wildcards.rc.active ? 1 : 0) + (wildcards.var.active ? 2 : 0);
         const displayPts = rawPts !== null ? rawPts + wcBoost : null;
 
@@ -2376,7 +2380,7 @@
         const gwResult = live ? null : calcMyGWPts();
         const boostLine =
           wcBoost > 0
-            ? `<div class="gw-pts-bonus">${[wildcards.yc.active ? `🟨 Yellow Card +${wcBoost - (wildcards.rc.active?1:0) - (wildcards.var.active?2:0)} from opp RCs` : "", wildcards.rc.active ? "🟥 Red Card +1 to ref" : "", wildcards.var.active ? "📺 VAR +2 to ref" : ""].filter(Boolean).join(" · ")}</div>`
+            ? `<div class="gw-pts-bonus">${[wildcards.yc.active ? `🟨 Yellow Card +${getMatchRC(wildcards.yc.matchId)>0?1:0}${wildcards.yc.matchId?` (${(MATCHES.find(m=>m.id===wildcards.yc.matchId)||{}).home||'?'} vs ${(MATCHES.find(m=>m.id===wildcards.yc.matchId)||{}).away||'?'})`:''}` : "", wildcards.rc.active ? "🟥 Red Card +1 to ref" : "", wildcards.var.active ? "📺 VAR +2 to ref" : ""].filter(Boolean).join(" · ")}</div>`
             : "";
         document.getElementById("gwPtsBox").innerHTML = `
     <div class="gw-pts-num">${gwResult !== null ? gwResult.pts : "—"}</div>
@@ -2410,7 +2414,7 @@
             key: "yc",
             icon: "🟨",
             name: "Yellow Card",
-            desc: "Your ref gains +1 if the opposing ref issues a red card. Must use before deadline.",
+            desc: "Pick any game this GW — if there's a red card in it, you earn +1. Must use before deadline.",
             preDeadline: true,
           },
           {
@@ -2429,6 +2433,8 @@
           },
         ];
 
+        const gwMatches = MATCHES.filter(m => m.gw === FGW.gw);
+
         document.getElementById("wcGrid").innerHTML = wcs
           .map((w) => {
             const state = wildcards[w.key];
@@ -2436,11 +2442,24 @@
             const isDisabled = state.active
               ? w.preDeadline && locked // active pre-deadline WC locked in once deadline passes
               : state.left === 0 || (w.preDeadline && locked) || anyActive;
-            return `<button class="wc-btn${state.active ? " active" : ""}" data-wc="${w.key}"${isDisabled ? " disabled" : ""}>
+
+            // Match picker for YC wildcard when active
+            const matchPicker = w.key === 'yc' && state.active && !locked
+              ? `<select id="ycMatchPicker" style="margin-top:8px;width:100%;background:var(--surface);border:1px solid var(--pl-green);border-radius:6px;color:var(--text);font-family:'Barlow',sans-serif;font-size:.8rem;padding:5px 8px;">
+                  <option value="">— Pick a match —</option>
+                  ${gwMatches.map(m => `<option value="${m.id}"${state.matchId===m.id?' selected':''}>${m.hE||''} ${m.home} vs ${m.away} ${m.aE||''}</option>`).join('')}
+                </select>`
+              : w.key === 'yc' && state.active && state.matchId
+                ? `<div style="margin-top:6px;font-size:.75rem;color:var(--pl-green);">📍 ${(gwMatches.find(m=>m.id===state.matchId)||{}).home||'?'} vs ${(gwMatches.find(m=>m.id===state.matchId)||{}).away||'?'}</div>`
+                : '';
+
+            return `<div class="wc-btn-wrap">
+    <button class="wc-btn${state.active ? " active" : ""}" data-wc="${w.key}"${isDisabled ? " disabled" : ""}>
       <span class="wc-icon">${w.icon}</span>
       <div class="wc-info">
         <div class="wc-name">${w.name}</div>
         <div class="wc-desc">${w.desc}</div>
+        ${matchPicker}
       </div>
       <div class="wc-right">
         ${
@@ -2449,17 +2468,20 @@
             : `<div class="wc-uses-num">${state.left}</div><div class="wc-uses-label">left</div>`
         }
       </div>
-    </button>`;
+    </button>
+    </div>`;
           })
           .join("");
 
         document.querySelectorAll(".wc-btn:not([disabled])").forEach((btn) => {
-          btn.addEventListener("click", () => {
+          btn.addEventListener("click", (e) => {
+            if (e.target.tagName === 'SELECT' || e.target.closest('select')) return;
             const key = btn.dataset.wc;
             const wc = wildcards[key];
             if (wc.active) {
               wc.active = false;
               wc.left++;
+              if (key === 'yc') wc.matchId = null;
               toast(
                 `${key === "yc" ? "Yellow Card" : key === "rc" ? "Red Card" : "VAR Replay"} deactivated`,
               );
@@ -2483,6 +2505,19 @@
             renderSidebar();
           });
         });
+
+        // YC match picker change handler
+        const ycPicker = document.getElementById('ycMatchPicker');
+        if (ycPicker) {
+          ycPicker.addEventListener('change', (e) => {
+            e.stopPropagation();
+            const val = e.target.value;
+            wildcards.yc.matchId = val ? +val : null;
+            saveWC();
+            renderSidebar();
+            toast(val ? '🟨 Red card prediction saved!' : '🟨 Match prediction cleared');
+          });
+        }
       }
 
 
@@ -2502,7 +2537,7 @@
             const raw = p.refId != null ? (REF_GW_PTS[p.refId] ?? null) : null;
             if (raw === null) return -1;
             const wc = p.wildcards || {};
-            return raw + (wc.yc?.active && oppId ? (getRefRC(oppId) > 0 ? 1 : 0) : 0)
+            return raw + (wc.yc?.active ? (getMatchRC(wc.yc.matchId) > 0 ? 1 : 0) : 0)
                        + (wc.rc?.active ? 1 : 0) + (wc.var?.active ? 2 : 0);
           };
           return getRefPts(b) - getRefPts(a);
@@ -2532,7 +2567,7 @@
             const oppId = battle ? (battle.r1 === p.refId ? battle.r2 : battle.r1) : null;
             const rawRefPts = p.refId != null ? (REF_GW_PTS[p.refId] ?? null) : null;
             const wcBoost = rawRefPts !== null
-              ? (wc.yc?.active && oppId ? (getRefRC(oppId) > 0 ? 1 : 0) : 0) +
+              ? (wc.yc?.active ? (getMatchRC(wc.yc?.matchId) > 0 ? 1 : 0) : 0) +
                 (wc.rc?.active ? 1 : 0) + (wc.var?.active ? 2 : 0)
               : 0;
             const refPtsDisplay = rawRefPts !== null ? rawRefPts + wcBoost : null;
@@ -2720,7 +2755,7 @@
               // Apply this user's wildcards to boost their ref's score
               const wc = p.wildcards || {};
               let boosted = rawPts;
-              if (wc.yc?.active) boosted += getRefRC(oppId) > 0 ? 1 : 0;
+              if (wc.yc?.active) boosted += getMatchRC(wc.yc?.matchId) > 0 ? 1 : 0;
               if (wc.rc?.active) boosted += 1;
               if (wc.var?.active) boosted += 2;
               const won = boosted > oppPts;
@@ -2937,6 +2972,7 @@
             ['yc','rc','var'].forEach(k => {
               if (dbPick.wildcards[k]?.active) wildcards[k].active = true;
             });
+            if (dbPick.wildcards.yc?.matchId) wildcards.yc.matchId = dbPick.wildcards.yc.matchId;
           }
           sessionStorage.setItem("rtr_pick_1", myPick);
           sessionStorage.setItem("rtr_wc_1", JSON.stringify(wildcards));

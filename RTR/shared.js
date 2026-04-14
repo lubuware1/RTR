@@ -119,7 +119,7 @@ async function loadMyFantasyPick(matchweek) {
 
 async function loadMySeasonWildcards(currentMatchweek) {
   // Returns wildcards with left counts reduced by usage in all previous GWs
-  const defaults = { yc: { left: 1, active: false }, rc: { left: 1, active: false }, var: { left: 2, active: false } };
+  const defaults = { yc: { left: 1, active: false, matchId: null }, rc: { left: 1, active: false }, var: { left: 2, active: false } };
   if (PREVIEW_MODE) return defaults;
   const { data: { session } } = await getSB().auth.getSession();
   if (!session) return defaults;
@@ -137,7 +137,7 @@ async function loadMySeasonWildcards(currentMatchweek) {
     });
   });
   return {
-    yc:  { left: Math.max(0, defaults.yc.left  - used.yc),  active: false },
+    yc:  { left: Math.max(0, defaults.yc.left  - used.yc),  active: false, matchId: null },
     rc:  { left: Math.max(0, defaults.rc.left  - used.rc),  active: false },
     var: { left: Math.max(0, defaults.var.left - used.var), active: false },
   };
