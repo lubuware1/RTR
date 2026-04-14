@@ -53,15 +53,22 @@
   .refs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
 
   /* Referee profile card */
-  .rpc{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .2s,transform .15s;cursor:pointer;}
-  .rpc:hover{border-color:rgba(0,255,133,.3);transform:translateY(-2px);}
-  .rpc-head{background:linear-gradient(135deg,var(--pl-purple),#1a0028);padding:16px 18px;display:flex;align-items:center;gap:14px;}
+  .rpc{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .2s;}
+  .rpc.open{border-color:rgba(0,255,133,.3);}
+  .rpc-head{background:linear-gradient(135deg,var(--pl-purple),#1a0028);padding:16px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;user-select:none;}
+  .rpc-head:hover{filter:brightness(1.12);}
   .rpc-av{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#37003c,#8b008b);border:2px solid rgba(0,255,133,.35);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;color:var(--pl-green);flex-shrink:0;}
   .rpc-info{flex:1;min-width:0;}
   .rpc-name{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.15rem;}
   .rpc-meta{font-size:.74rem;color:rgba(255,255,255,.4);margin-top:3px;}
   .rpc-notes{font-size:.7rem;color:rgba(255,255,255,.3);margin-top:3px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .rpc-rank{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2.2rem;color:rgba(0,255,133,.18);line-height:1;flex-shrink:0;}
+  .rpc-chevron{font-size:.85rem;color:rgba(0,255,133,.5);flex-shrink:0;transition:transform .25s;}
+  .rpc.open .rpc-chevron{transform:rotate(180deg);}
+
+  .rpc-dropdown{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s ease;}
+  .rpc.open .rpc-dropdown{grid-template-rows:1fr;}
+  .rpc-dropdown-inner{overflow:hidden;}
 
   .rpc-body{padding:14px 18px;}
   .rpc-card-stats{display:flex;gap:6px;margin-bottom:14px;}
@@ -303,7 +310,9 @@ function renderRefs(){
           ${ref.notes?`<div class="rpc-notes">${ref.notes}</div>`:''}
         </div>
         <div class="rpc-rank">#${rank+1}</div>
+        <div class="rpc-chevron">▼</div>
       </div>
+      <div class="rpc-dropdown"><div class="rpc-dropdown-inner">
       <div class="rpc-body">
         <div class="rpc-card-stats">
           <div class="rpc-stat-pill"><div class="rpc-stat-val" style="color:#f5c518">${totalYC}</div><div class="rpc-stat-lbl">Yellow Cards</div></div>
@@ -347,6 +356,7 @@ function renderRefs(){
           ${hasN?(ref.neutralRating>=7?'▲ Performing well':ref.neutralRating>=5?'→ Average':'▼ Poor form'):'No data yet'}
         </span>
       </div>
+      </div></div>
     </div>`;
   }).join('');
 }
@@ -360,15 +370,11 @@ document.querySelector('.refs-controls').addEventListener('click',e=>{
   renderRefs();
 });
 
-// Click referee → go rate them on matches page
+// Click header → toggle dropdown
 document.getElementById('refsGrid').addEventListener('click',e=>{
-  const card=e.target.closest('[data-ref-id]');if(!card)return;
-  const refId=+card.dataset.refId;
-  const match=MATCHES.find(m=>m.refId===refId&&m.status!=='upcoming');
-  if(match){
-    sessionStorage.setItem('rr_open_match',match.id);
-    window.location.href='matches.html';
-  } else toast('No recent matches found for this referee');
+  const head=e.target.closest('.rpc-head');if(!head)return;
+  const card=head.closest('.rpc');
+  card.classList.toggle('open');
 });
 
 // ── SKELETONS ─────────────────────────────────────────────
