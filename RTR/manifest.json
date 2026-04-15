@@ -1,0 +1,20 @@
+{
+  "name": "RefRater",
+  "short_name": "RefRater",
+  "description": "Track Premier League referee performance, compare community ratings, and compete in the fantasy ref league.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0c10",
+  "theme_color": "#37003c",
+  "icons": [
+    {
+      "src": "images/logos/RRLogo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["sports", "games"],
+  "lang": "en-GB"
+}
