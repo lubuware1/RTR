@@ -1229,6 +1229,9 @@
         align-items: center;
         gap: 10px;
         padding: 10px 16px;
+      }
+      .fl-row.fl-row--no-av {
+        grid-template-columns: 28px 1fr auto;
         border-bottom: 1px solid var(--border);
         transition: background 0.15s;
       }
@@ -2792,7 +2795,7 @@
           const gamesPlayed = MATCHES.filter(m => +m.refId === r.id && (m.status === 'complete' || m.status === 'recent')).length;
           const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1;
           const isMyRef = r.id === myPick;
-          return `<div class="fl-row${isMyRef ? " me" : ""}">
+          return `<div class="fl-row fl-row--no-av${isMyRef ? " me" : ""}">
       <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
       <div>
         <div class="fl-name${isMyRef ? " me" : ""}">${r.name}${isMyRef ? " ★" : ""}</div>
