@@ -28,7 +28,8 @@ const PREVIEW_MODE = false;
 // ── SUPABASE ──────────────────────────────────────────────
 const SUPABASE_URL = 'https://sxufittkehlktlfvicom.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4dWZpdHRrZWhsa3RsZnZpY29tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3OTEwNDIsImV4cCI6MjA5MDM2NzA0Mn0.aItkjIGsik_v_T6n167bdwE23ncvvWgwJ4IveT5MFyU';
-const _USER_KEY = 'rr_user';
+const _USER_KEY    = 'rr_user';
+const _AVATAR_KEY  = 'rr_avatar_badge';
 
 let _sb = null;
 function getSB() {
@@ -40,12 +41,14 @@ async function checkAuth() {
   if (PREVIEW_MODE) return true;
   const { data: { session } } = await getSB().auth.getSession();
   if (!session) { localStorage.removeItem(_USER_KEY); return false; }
-  const { data: profile, error: profileError } = await getSB().from('RTR Profiles').select('username,team').eq('id', session.user.id).single();
+  const { data: profile, error: profileError } = await getSB().from('RTR Profiles').select('username,team,avatar_badge').eq('id', session.user.id).single();
   console.log('[RTR] profile fetch:', profile, 'error:', profileError);
   localStorage.setItem(_USER_KEY, JSON.stringify({
     id: session.user.id, email: session.user.email,
     username: profile?.username || 'User', team: profile?.team || null
   }));
+  // Sync avatar badge from DB to localStorage (so it persists across devices)
+  if (profile?.avatar_badge) localStorage.setItem(_AVATAR_KEY, profile.avatar_badge);
   // Force team selection only if profile loaded and team is explicitly missing
   if (profile && !profile.team) {
     window.location.href = 'login.html?onboard=1';
@@ -187,7 +190,7 @@ async function loadAllFantasyPicks() {
   const { data: picks } = await getSB().from('RTR Fantasy Picks').select('user_id, ref_id, matchweek, wildcards');
   if (!picks?.length) return [];
   const { data: profiles } = await getSB().from('RTR Profiles')
-    .select('id, username, team').in('id', picks.map(p => p.user_id));
+    .select('id, username, team, avatar_badge').in('id', picks.map(p => p.user_id));
   const pm = Object.fromEntries((profiles || []).map(p => [p.id, p]));
   return picks.map(p => ({ ...p, profile: pm[p.user_id] || null }));
 }
@@ -410,7 +413,7 @@ async function loadFantasyLeaderboard(matchweek) {
     .select('user_id, ref_id, wildcards').eq('matchweek', matchweek);
   if (!picks?.length) return [];
   const { data: profiles } = await getSB().from('RTR Profiles')
-    .select('id, username, team').in('id', picks.map(p => p.user_id));
+    .select('id, username, team, avatar_badge').in('id', picks.map(p => p.user_id));
   const pm = Object.fromEntries((profiles || []).map(p => [p.id, p]));
   return picks.map(p => ({ ...p, profile: pm[p.user_id] || null }));
 }
@@ -675,8 +678,6 @@ const SHARED_CSS = `
 (function(){const s=document.createElement('style');s.textContent=SHARED_CSS;document.head.appendChild(s);})();
 
 // ── AVATAR BADGE ─────────────────────────────────────────
-const _AVATAR_KEY = 'rr_avatar_badge';
-
 function getAvatarBadge() {
   const s = localStorage.getItem(_AVATAR_KEY);
   return s ? JSON.parse(s) : null; // { key, icon }
@@ -684,6 +685,27 @@ function getAvatarBadge() {
 function setAvatarBadge(data) {
   if (data) localStorage.setItem(_AVATAR_KEY, JSON.stringify(data));
   else localStorage.removeItem(_AVATAR_KEY);
+  // Persist to DB profile so other users can see it in leaderboards
+  const user = getCurrentUser();
+  if (user?.id) {
+    getSB().from('RTR Profiles')
+      .update({ avatar_badge: data ? JSON.stringify(data) : null })
+      .eq('id', user.id)
+      .then(() => {});
+  }
+}
+
+// Render a mini circular avatar for use in leaderboard rows
+function miniAvatarHtml(badge, username, size = 26) {
+  const isImg = badge?.icon && /\.(png|jpg|jpeg|svg|webp)$/i.test(badge.icon);
+  const initials = (username || '?').slice(0, 2).toUpperCase();
+  const base = `width:${size}px;height:${size}px;border-radius:50%;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;`;
+  if (isImg) {
+    return `<img src="${badge.icon}" style="${base}object-fit:cover;border:1.5px solid rgba(0,255,133,.3);" alt="">`;
+  } else if (badge?.icon) {
+    return `<span style="${base}background:rgba(0,255,133,.08);font-size:${Math.round(size * .55)}px;">${badge.icon}</span>`;
+  }
+  return `<span style="${base}background:linear-gradient(135deg,var(--pl-purple),#8b008b);color:var(--pl-green);font-size:${Math.round(size * .42)}px;font-weight:700;border:1.5px solid rgba(0,255,133,.2);">${initials}</span>`;
 }
 // Call this wherever the user-chip avatar is initialised
 function applyUserAvatar(el, user) {

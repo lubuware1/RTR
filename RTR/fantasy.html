@@ -1225,7 +1225,7 @@
       }
       .fl-row {
         display: grid;
-        grid-template-columns: 28px 1fr auto;
+        grid-template-columns: 28px 28px 1fr auto;
         align-items: center;
         gap: 10px;
         padding: 10px 16px;
@@ -1942,7 +1942,7 @@
         applyUserAvatar(document.getElementById("ucAvatar"), currentUser);
         document.getElementById("ucName").textContent =
           currentUser?.username || "Guest";
-        document.getElementById("ucTeamEmoji").textContent = team?.emoji || "";
+        document.getElementById("ucTeamEmoji").textContent = "";
         if (isAdmin(currentUser)) document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
         document.getElementById("ddName").textContent =
           currentUser?.username || "Guest";
@@ -2658,9 +2658,10 @@
             const refPtsDisplay = rawRefPts !== null ? rawRefPts + wcBoost : null;
             return `<div class="fl-row${p.isMe ? " me" : ""}">
       <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
-      <div style="flex:1;min-width:0;">
+      <div style="display:flex;align-items:center;">${miniAvatarHtml(p.avatarBadge, p.username)}</div>
+      <div style="min-width:0;">
         <div class="fl-name${p.isMe ? " me" : ""}">${p.username}${p.isMe ? " ★" : ""}</div>
-        <div class="fl-sub">${team?.emoji || ""} ${p.team}${FGW.deadlinePassed || p.isMe ? ` · picked ${p.gwPick}` : " · pick hidden"}</div>
+        <div class="fl-sub">${p.team}${FGW.deadlinePassed || p.isMe ? ` · picked ${p.gwPick}` : " · pick hidden"}</div>
         <div class="fl-wc-row">${wcHtml}</div>
       </div>
       <div class="fl-pts${p.isMe ? " me" : ""}">${p.pts} <span style="font-size:.75em;opacity:.65;font-weight:500">(${refPtsDisplay !== null ? refPtsDisplay : "—"} ref pts)</span></div>
@@ -2728,11 +2729,14 @@
           const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1;
           const me = row.uid === currentUser?.id;
           const refPts = seasonRefTotals[row.uid] ?? 0;
+          const seasonBadge = me ? getAvatarBadge() : (row.profile?.avatar_badge ? JSON.parse(row.profile.avatar_badge) : null);
+          const uname = row.profile?.username || "Unknown";
           return `<div class="fl-row${me ? " me" : ""}">
             <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
-            <div>
-              <div class="fl-name${me ? " me" : ""}">${row.profile?.username || "Unknown"}${me ? " ★" : ""}</div>
-              <div class="fl-sub">${team?.emoji || ""} ${row.profile?.team || ""}</div>
+            <div style="display:flex;align-items:center;">${miniAvatarHtml(seasonBadge, uname)}</div>
+            <div style="min-width:0;">
+              <div class="fl-name${me ? " me" : ""}">${uname}${me ? " ★" : ""}</div>
+              <div class="fl-sub">${row.profile?.team || ""}</div>
             </div>
             <div class="fl-pts${me ? " me" : ""}">${row.total} <span style="font-size:.75em;opacity:.65;font-weight:500">(${refPts} ref pts)</span></div>
           </div>`;
@@ -2852,6 +2856,9 @@
             }
           }
           const isMe = p.user_id === currentUser?.id;
+          const rawBadge = isMe
+            ? getAvatarBadge()
+            : (profile?.avatar_badge ? JSON.parse(profile.avatar_badge) : null);
           FANTASY_LEAGUE.push({
             username: profile?.username || (isMe ? currentUser.username : "Unknown"),
             team: profile?.team || (isMe ? currentUser.team : ""),
@@ -2861,6 +2868,7 @@
             refId,
             isMe,
             userId: p.user_id,
+            avatarBadge: rawBadge,
           });
         });
         renderRefScores();

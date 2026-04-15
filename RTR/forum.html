@@ -541,7 +541,7 @@ function initHeader() {
   document.getElementById('ucName').textContent   = currentUser.username || 'User';
   if (isAdmin(currentUser)) document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
   const team = WC_TEAMS.find(t => t.name === currentUser.team);
-  document.getElementById('ucTeamEmoji').textContent = team?.emoji || '';
+  document.getElementById('ucTeamEmoji').textContent = '';
   document.getElementById('ddName').textContent   = currentUser.username || 'User';
   document.getElementById('ddTeam').textContent   = currentUser.team ? `${currentUser.team} fan` : 'No team set';
 

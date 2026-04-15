@@ -309,7 +309,7 @@ function initHeader() {
   applyUserAvatar(document.getElementById('ucAvatar'), user);
   document.getElementById('ucName').textContent   = user.username || 'User';
   const team = WC_TEAMS.find(t => t.name === user.team);
-  document.getElementById('ucTeamEmoji').textContent = team?.emoji || '';
+  document.getElementById('ucTeamEmoji').textContent = '';
   document.getElementById('ddName').textContent   = user.username || 'User';
   document.getElementById('ddTeam').textContent   = user.team ? `${user.team} fan` : 'No team set';
   if (isAdmin(user)) document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');

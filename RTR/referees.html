@@ -235,7 +235,7 @@ function initHeader(){
   applyUserAvatar(document.getElementById('ucAvatar'), currentUser);
   document.getElementById('ucName').textContent=currentUser?.username||'Guest';
   if (isAdmin(currentUser)) document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
-  document.getElementById('ucTeamEmoji').textContent=team?.emoji||'';
+  document.getElementById('ucTeamEmoji').textContent='';
   document.getElementById('ddName').textContent=currentUser?.username||'Guest';
   document.getElementById('ddTeam').textContent=team?`${team.emoji} ${team.name} supporter`:currentUser?.team?`${currentUser.team} supporter`:'No team selected';
   if(PREVIEW_MODE){

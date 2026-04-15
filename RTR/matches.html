@@ -334,7 +334,7 @@ function initHeader() {
   applyUserAvatar(document.getElementById('ucAvatar'), currentUser);
   document.getElementById('ucName').textContent = currentUser?.username || 'Guest';
   if (isAdmin(currentUser)) document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
-  document.getElementById('ucTeamEmoji').innerHTML = team ? flagImg(team.emoji, 18) : '';
+  document.getElementById('ucTeamEmoji').innerHTML = '';
   document.getElementById('ddName').textContent = currentUser?.username || 'Guest';
   document.getElementById('ddTeam').innerHTML = team ? `${flagImg(team.emoji, 16)} ${team.name} supporter` : currentUser?.team ? `${currentUser.team} supporter` : 'No team selected';
   if (PREVIEW_MODE) {

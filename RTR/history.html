@@ -197,9 +197,9 @@ const gwCache = {}; // matchday → raw API response
 // ── HEADER ────────────────────────────────────────────────
 function initHeader() {
   const team = PL_TEAMS.find(t => t.name === currentUser?.team);
-  document.getElementById('ucAvatar').textContent = (currentUser?.username || '?').slice(0, 2).toUpperCase();
+  applyUserAvatar(document.getElementById('ucAvatar'), currentUser);
   document.getElementById('ucName').textContent   = currentUser?.username || 'Guest';
-  document.getElementById('ucTeamEmoji').textContent = team?.emoji || '';
+  document.getElementById('ucTeamEmoji').textContent = '';
   document.getElementById('ddName').textContent = currentUser?.username || 'Guest';
   document.getElementById('ddTeam').textContent = team ? `${team.emoji} ${team.name} supporter` : currentUser?.team ? `${currentUser.team} supporter` : 'No team selected';
   if (PREVIEW_MODE) {
