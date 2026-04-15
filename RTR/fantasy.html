@@ -1425,7 +1425,9 @@
         .panel-close-btn{display:block !important;}
         .gw-banner-inner{padding:12px 16px;}
         .gw-banner-title{font-size:1.1rem;}
+        #mobilePickBar.mpb-visible{display:flex !important;}
       }
+      @media(min-width:769px){#mobilePickBar{display:none !important;}}
     </style>
     <script
       src="https://cdn.jsdelivr.net/npm/twemoji@14/dist/twemoji.min.js"
@@ -1493,6 +1495,18 @@
     <div class="container">
       <!-- LEFT: Main Content -->
       <div>
+        <!-- Mobile: My Pick mini-bar (only visible on mobile when a pick is made) -->
+        <div id="mobilePickBar" style="display:none;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:12px;gap:10px;">
+          <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+            <div id="mpbAv" style="width:34px;height:34px;border-radius:50%;background:var(--pl-green);color:#000;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;"></div>
+            <div style="min-width:0;">
+              <div id="mpbName" style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+              <div style="font-size:.7rem;color:var(--pl-green);font-weight:700;letter-spacing:.5px;">MY PICK</div>
+            </div>
+          </div>
+          <button id="mpbBattleBtn" style="background:var(--pl-green);color:#000;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:.8rem;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;white-space:nowrap;flex-shrink:0;">Go to Battle ⚔️</button>
+        </div>
+
         <div class="view-tabs-row">
           <button class="htp-btn" id="htpBtn"><span style="color:#00e67a;">?</span> How to Play</button>
           <div class="view-tabs" id="viewTabs">
@@ -1747,11 +1761,11 @@
     <!-- Wildcard reminder modal -->
     <div id="wcReminderModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;">
       <div style="background:var(--surface);border:1px solid var(--pl-green);border-radius:14px;padding:28px 28px 22px;max-width:360px;width:90%;box-shadow:0 8px 40px rgba(0,255,133,.15);">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;margin-bottom:8px;">Have you chosen your wildcard picks? 🃏</div>
-        <div style="font-size:.85rem;color:var(--muted);margin-bottom:20px;line-height:1.5;">You haven't activated a wildcard this GW. Wildcards can earn you bonus points — do you want to go back and pick one?</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;margin-bottom:8px;">Choose your Gameweek Wildcard 🃏</div>
+        <div style="font-size:.85rem;color:var(--muted);margin-bottom:20px;line-height:1.5;">Now you've chosen your ref, choose your gameweek wildcard to earn a bonus.</div>
         <div style="display:flex;gap:10px;">
-          <button id="wcReminderBack" style="flex:1;background:rgba(0,255,133,.1);border:1px solid var(--pl-green);color:var(--pl-green);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;border-radius:8px;padding:10px;cursor:pointer;">Go back</button>
-          <button id="wcReminderContinue" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;border-radius:8px;padding:10px;cursor:pointer;">Confirm pick</button>
+          <button id="wcReminderBack" style="flex:1;background:rgba(0,255,133,.1);border:1px solid var(--pl-green);color:var(--pl-green);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;border-radius:8px;padding:10px;cursor:pointer;">Choose Wildcard</button>
+          <button id="wcReminderContinue" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;border-radius:8px;padding:10px;cursor:pointer;">Got it</button>
         </div>
       </div>
     </div>
@@ -2110,6 +2124,7 @@
           renderPickGrid();
           renderBattles();
           renderSidebar();
+          document.querySelector(".side-panel").classList.add("panel-open");
           reparse();
           const saved = await saveFantasyPick(FGW.gw, myPick, wildcards);
           toast(
@@ -2125,32 +2140,47 @@
           }
         }
 
-        let pendingPickId = null;
+        // "Got it" — just close the modal
         document.getElementById('wcReminderContinue').addEventListener('click', () => {
           modal.style.display = 'none';
-          if (pendingPickId) confirmRefPick(pendingPickId);
-          pendingPickId = null;
         });
+        // "Choose Wildcard" — close modal and open the My Pick panel (which has wildcards)
         document.getElementById('wcReminderBack').addEventListener('click', () => {
           modal.style.display = 'none';
-          pendingPickId = null;
+          renderSidebar();
+          document.querySelector('.side-panel').classList.add('panel-open');
+          document.querySelectorAll('.sp-tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.sp-tab-content').forEach(c => c.style.display = 'none');
+          document.querySelector('.sp-tab[data-sptab="pick"]').classList.add('active');
+          document.getElementById('spTabPick').style.display = '';
         });
         modal.addEventListener('click', (e) => {
-          if (e.target === modal) { modal.style.display = 'none'; pendingPickId = null; }
+          if (e.target === modal) modal.style.display = 'none';
         });
 
         if (!FGW.deadlinePassed) {
           document.querySelectorAll(".ref-pick-card").forEach((card) => {
             card.addEventListener("click", async () => {
               const rid = +card.dataset.rid;
+              await confirmRefPick(rid);
               const anyActive = Object.values(wildcards).some(s => s.active);
               if (!anyActive) {
-                pendingPickId = rid;
                 modal.style.display = 'flex';
-                return;
               }
-              confirmRefPick(rid);
             });
+          });
+        }
+
+        // Mobile "Go to Battle" button — opens side panel on My Pick tab
+        const mpbBtn = document.getElementById('mpbBattleBtn');
+        if (mpbBtn) {
+          mpbBtn.addEventListener('click', () => {
+            renderSidebar();
+            document.querySelector('.side-panel').classList.add('panel-open');
+            document.querySelectorAll('.sp-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.sp-tab-content').forEach(c => c.style.display = 'none');
+            document.querySelector('.sp-tab[data-sptab="pick"]').classList.add('active');
+            document.getElementById('spTabPick').style.display = '';
           });
         }
       }
@@ -2330,15 +2360,24 @@
           noPick.style.display = "block";
           hasPick.style.display = "none";
           document.getElementById("panelCloseBtn").classList.remove("visible");
-        document.querySelector(".side-panel").classList.remove("panel-open");
+          document.querySelector(".side-panel").classList.remove("panel-open");
+          const mpb = document.getElementById("mobilePickBar");
+          if (mpb) mpb.classList.remove("mpb-visible");
           return;
         }
         noPick.style.display = "none";
         hasPick.style.display = "block";
         document.getElementById("panelCloseBtn").classList.add("visible");
-        document.querySelector(".side-panel").classList.add("panel-open");
+        // Note: panel-open is only added on explicit pick or "Go to Battle" — not on page load
 
         const ref = gRef(myPick);
+        // Update mobile mini-pick bar
+        const mpb = document.getElementById("mobilePickBar");
+        if (mpb) {
+          document.getElementById("mpbAv").textContent = ref.initials;
+          document.getElementById("mpbName").textContent = ref.name;
+          mpb.classList.add("mpb-visible");
+        }
         const m = getRefMatch(myPick);
         const rawPts = REF_GW_PTS[myPick];
         const status = REF_STATUS[myPick];
