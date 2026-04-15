@@ -9,9 +9,15 @@
   "theme_color": "#37003c",
   "icons": [
     {
-      "src": "images/logos/RRLogo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "images/logos/RefRater192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "images/logos/RefRater512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ],
