@@ -114,7 +114,8 @@
     filter: drop-shadow(0 2px 8px rgba(0,255,133,.3));
   }
   .badge-icon img {
-    width: 52px; height: 52px; object-fit: contain;
+    width: 52px; height: 52px; object-fit: cover;
+    border-radius: 50%;
     filter: drop-shadow(0 2px 8px rgba(0,255,133,.3));
   }
   .badge-card.locked .badge-icon {
@@ -384,7 +385,8 @@ function renderBadges(earned) {
         toast('Icon removed — showing initials');
       } else {
         setAvatarBadge({ key, icon });
-        toast(`${icon} Set as your profile icon`);
+        const isImg = /\.(png|jpg|jpeg|svg|webp)$/i.test(icon);
+        toast(isImg ? 'Badge set as your profile icon' : `${icon} Set as your profile icon`);
       }
       // Update the header avatar live
       applyUserAvatar(document.getElementById('ucAvatar'), currentUser);

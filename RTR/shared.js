@@ -689,13 +689,24 @@ function setAvatarBadge(data) {
 function applyUserAvatar(el, user) {
   const badge = getAvatarBadge();
   if (badge) {
-    el.textContent    = badge.icon;
-    el.style.fontSize = '1.05rem';
-    el.style.background = 'rgba(0,255,133,.08)';
+    const isImg = badge.icon && /\.(png|jpg|jpeg|svg|webp)$/i.test(badge.icon);
+    if (isImg) {
+      el.innerHTML = `<img src="${badge.icon}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;">`;
+      el.style.fontSize   = '';
+      el.style.background = 'transparent';
+      el.style.padding    = '0';
+    } else {
+      el.innerHTML        = '';
+      el.textContent      = badge.icon;
+      el.style.fontSize   = '1.05rem';
+      el.style.background = 'rgba(0,255,133,.08)';
+    }
   } else {
-    el.textContent    = (user?.username || '?').slice(0, 2).toUpperCase();
-    el.style.fontSize = '';
+    el.innerHTML        = '';
+    el.textContent      = (user?.username || '?').slice(0, 2).toUpperCase();
+    el.style.fontSize   = '';
     el.style.background = '';
+    el.style.padding    = '';
   }
 }
 
