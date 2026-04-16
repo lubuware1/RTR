@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="RefRater">
 <link rel="apple-touch-icon" href="/images/logos/RRlogo192.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RefRater — Badges</title>
+<title>RefRater — Cards</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="shared.js"></script>
 <style>
@@ -208,8 +208,8 @@
       <nav>
         <a href="matches.html">Matches</a>
         <a href="referees.html">Referees</a>
-        <a href="fantasy.html">Fantasy</a>
-        <a href="badges.html" class="active admin-only" style="display:none">Badges</a>
+        <a href="fantasy.html"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="Fantasy" style="height:20px;width:auto;vertical-align:middle;"></a>
+        <a href="badges.html" class="active admin-only" style="display:none">Cards</a>
         <a href="forum.html" class="admin-only" style="display:none">Forum</a>
       </nav>
       <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
@@ -223,7 +223,7 @@
             <div class="dd-name" id="ddName"></div>
             <div class="dd-team" id="ddTeam"></div>
           </div>
-          <div class="dd-item" id="ddBadges">🏅 My Badges</div>
+          <div class="dd-item" id="ddBadges">🏅 My Cards</div>
           <div class="dd-item danger" id="ddLogout">↩ Sign out</div>
         </div>
       </div>
@@ -234,15 +234,15 @@
 <div class="mobile-nav" id="mobileNav">
   <a href="matches.html">Matches</a>
   <a href="referees.html">Referees</a>
-  <a href="fantasy.html">Fantasy</a>
-  <a href="badges.html" class="active admin-only" style="display:none">Badges</a>
+  <a href="fantasy.html"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="Fantasy" style="height:20px;width:auto;vertical-align:middle;"></a>
+  <a href="badges.html" class="active admin-only" style="display:none">Cards</a>
   <a href="forum.html" class="admin-only" style="display:none">Forum</a>
 </div>
 
 <div class="page">
 
   <div class="badges-hero">
-    <h1>Badges</h1>
+    <h1>Cards</h1>
     <p>Earn achievements by voting, playing fantasy, and staying active</p>
     <div class="badge-progress-bar">
       <div class="badge-progress-fill" id="progressFill"></div>
@@ -400,7 +400,7 @@ function renderBadges(earned) {
   const got   = earnedKeys.size;
   const pct   = total ? Math.round(got / total * 100) : 0;
   document.getElementById('progressFill').style.width = pct + '%';
-  document.getElementById('progressLabel').textContent = `${got} / ${total} earned`;
+  document.getElementById('progressLabel').textContent = `${got} / ${total} cards earned`;
 }
 
 // ── MAIN ──────────────────────────────────────────────────

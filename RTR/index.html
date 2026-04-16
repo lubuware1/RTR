@@ -15,7 +15,7 @@
 <style>
   :root{
     --bg:#f6f0ff;--surface:#ffffff;--surface2:#ede6ff;
-    --border:#cfc0ee;--text:#18082c;--muted:#6a58a0;
+    --border:#cfc0ee;--text:#6a58a0;--muted:#6a58a0;
     --pl-purple:#37003c;--pl-green:#00cc70;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
@@ -185,6 +185,12 @@
     font-size:.75rem;color:var(--muted);
     border-top:1px solid var(--border);
   }
+
+  /* ── LIGHT MODE OVERRIDES ───────────────────────────────── */
+  html:not([data-theme="dark"]) .nav-card-inner { background: var(--surface2); }
+  html:not([data-theme="dark"]) .nav-card { background: var(--surface); border-color: var(--border); }
+  html:not([data-theme="dark"]) .nav-card-desc { color: var(--muted); }
+  html:not([data-theme="dark"]) .nav-card-arrow { color: var(--pl-green); }
 
   @media(max-width:768px){
     .card-scene{max-width:100%;}

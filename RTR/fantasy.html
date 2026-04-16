@@ -19,7 +19,7 @@
         --red: #e02d42;
         --yellow: #d4920a;
         --green: #009960;
-        --text: #18082c;
+        --text: #6a58a0;
         --muted: #6a58a0;
         --pl-purple: #37003c;
         --pl-green: #00cc70;
@@ -53,7 +53,22 @@
         overflow: visible;
         box-shadow: 0 4px 32px rgba(0, 204, 112, 0.2);
       }
-      header::after{content:'';position:absolute;left:0;right:0;bottom:-48px;height:48px;background:linear-gradient(to bottom,rgba(61,8,85,.55) 0%,rgba(61,8,85,.15) 50%,transparent 100%);pointer-events:none;z-index:99;}
+      header::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -48px;
+        height: 48px;
+        background: linear-gradient(
+          to bottom,
+          rgba(61, 8, 85, 0.55) 0%,
+          rgba(61, 8, 85, 0.15) 50%,
+          transparent 100%
+        );
+        pointer-events: none;
+        z-index: 99;
+      }
       .header-inner {
         max-width: 1200px;
         margin: 0 auto;
@@ -381,7 +396,7 @@
         display: none;
         position: fixed;
         inset: 0;
-        background: rgba(0,0,0,0.6);
+        background: rgba(0, 0, 0, 0.6);
         z-index: 1000;
         align-items: center;
         justify-content: center;
@@ -419,16 +434,25 @@
         padding: 2px 6px;
         border-radius: 4px;
       }
-      .htp-close:hover { color: var(--text); }
+      .htp-close:hover {
+        color: var(--text);
+      }
       .htp-body {
         padding: 18px;
         font-size: 0.88rem;
         color: var(--text);
         line-height: 1.6;
       }
-      .htp-body p { margin: 0 0 12px; }
-      .htp-body ol { margin: 0 0 16px; padding-left: 20px; }
-      .htp-body li { margin-bottom: 8px; }
+      .htp-body p {
+        margin: 0 0 12px;
+      }
+      .htp-body ol {
+        margin: 0 0 16px;
+        padding-left: 20px;
+      }
+      .htp-body li {
+        margin-bottom: 8px;
+      }
       .htp-scoring {
         background: var(--surface2);
         border: 1px solid var(--border);
@@ -458,8 +482,12 @@
         min-width: 28px;
         text-align: center;
       }
-      .htp-pts.pos { color: var(--pl-green); }
-      .htp-pts.neg { color: #ff4757; }
+      .htp-pts.pos {
+        color: var(--pl-green);
+      }
+      .htp-pts.neg {
+        color: #ff4757;
+      }
       .htp-demo {
         background: var(--surface2);
         border: 1px solid var(--border);
@@ -467,8 +495,13 @@
         padding: 10px;
         margin-bottom: 4px;
       }
-      .htp-demo .ref-pick-card { background: var(--surface); }
-      .htp-demo .battle-card { background: var(--surface); border-radius: 8px; }
+      .htp-demo .ref-pick-card {
+        background: var(--surface);
+      }
+      .htp-demo .battle-card {
+        background: var(--surface);
+        border-radius: 8px;
+      }
       .htp-wc-icon {
         font-size: 1.3rem;
         min-width: 28px;
@@ -583,7 +616,10 @@
         display: inline-block;
         opacity: 0.75;
       }
-      .rpc-stats-link:hover { opacity: 1; text-decoration: underline; }
+      .rpc-stats-link:hover {
+        opacity: 1;
+        text-decoration: underline;
+      }
       .rpc-bottom {
         display: flex;
         align-items: flex-end;
@@ -805,8 +841,12 @@
         min-width: 22px;
         text-align: right;
       }
-      .br-bd-pts.pos { color: var(--green); }
-      .br-bd-pts.neg { color: var(--red); }
+      .br-bd-pts.pos {
+        color: var(--green);
+      }
+      .br-bd-pts.neg {
+        color: var(--red);
+      }
       .vs-col {
         text-align: center;
         font-family: "Barlow Condensed", sans-serif;
@@ -848,7 +888,6 @@
         font-size: 0.72rem;
         color: var(--muted);
       }
-
 
       /* === SIDEBAR === */
       .side-panel {
@@ -900,10 +939,35 @@
       .panel-close-btn.visible {
         display: block;
       }
-      .sp-tabs{display:flex;background:var(--surface2);border-bottom:1px solid var(--border);}
-      .sp-tab{flex:1;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:10px 6px;cursor:pointer;transition:all .15s;}
-      .sp-tab.active{color:var(--pl-green);border-bottom-color:var(--pl-green);background:rgba(0,255,133,.05);}
-      .sp-tab:hover:not(.active){color:var(--text);background:rgba(255,255,255,.04);}
+      .sp-tabs {
+        display: flex;
+        background: var(--surface2);
+        border-bottom: 1px solid var(--border);
+      }
+      .sp-tab {
+        flex: 1;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: var(--muted);
+        font-family: "Barlow Condensed", sans-serif;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        padding: 10px 6px;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .sp-tab.active {
+        color: var(--pl-green);
+        border-bottom-color: var(--pl-green);
+        background: rgba(0, 255, 133, 0.05);
+      }
+      .sp-tab:hover:not(.active) {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.04);
+      }
       .panel-body {
         padding: 16px;
       }
@@ -1281,15 +1345,19 @@
         display: grid;
         grid-template-columns: 1fr 52px 52px 52px;
         padding: 4px 16px 4px calc(28px + 16px + 10px);
-        font-size: .65rem;
+        font-size: 0.65rem;
         font-weight: 700;
         color: var(--muted);
         text-transform: uppercase;
-        letter-spacing: .04em;
+        letter-spacing: 0.04em;
         border-bottom: 1px solid var(--border);
       }
-      .ref-scores-col-header span { text-align: center; }
-      .ref-scores-col-header span:first-child { text-align: left; }
+      .ref-scores-col-header span {
+        text-align: center;
+      }
+      .ref-scores-col-header span:first-child {
+        text-align: left;
+      }
       .fl-pts-dual {
         display: flex;
         gap: 8px;
@@ -1319,8 +1387,41 @@
         transition: all 0.15s;
       }
       .lb-toggle-btn.active {
-        background: rgba(0,255,133,0.1);
-        border-color: rgba(0,255,133,0.3);
+        background: rgba(0, 255, 133, 0.1);
+        border-color: rgba(0, 255, 133, 0.3);
+        color: var(--pl-green);
+      }
+      .gw-selector {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px 0;
+      }
+      .gw-selector label {
+        font-family: "Barlow Condensed", sans-serif;
+        font-weight: 700;
+        font-size: 0.72rem;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      .gw-selector select {
+        flex: 1;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--muted);
+        font-family: "Barlow Condensed", sans-serif;
+        font-weight: 700;
+        font-size: 0.78rem;
+        padding: 5px 8px;
+        cursor: pointer;
+        outline: none;
+        transition: border-color 0.15s;
+      }
+      .gw-selector select:focus {
+        border-color: rgba(0, 255, 133, 0.4);
         color: var(--pl-green);
       }
       .fl-wc-row {
@@ -1342,7 +1443,7 @@
       .fl-wc-icon.used {
         opacity: 1;
         border-color: #00e67a;
-        box-shadow: 0 0 0 1px rgba(0,255,133,0.25);
+        box-shadow: 0 0 0 1px rgba(0, 255, 133, 0.25);
       }
       .fl-wc-left {
         font-family: "Barlow Condensed", sans-serif;
@@ -1419,20 +1520,72 @@
         height: 11px;
       }
 
-      /* ── MOBILE ─────────────────────────────────────────── */
-      @media(max-width:768px){
-        .container{grid-template-columns:1fr !important;padding:12px;}
-        .gw-banner-inner{padding:12px 16px;}
-        .gw-banner-title{font-size:1.1rem;}
-        .ref-pick-grid{grid-template-columns:1fr !important;}
-        .side-panel{position:fixed;bottom:0;left:0;right:0;top:auto;border-radius:16px 16px 0 0;max-height:90vh;overflow-y:auto;z-index:200;transform:translateY(100%);transition:transform .3s ease;border-left:none;border-right:none;border-bottom:none;}
-        .side-panel.panel-open{transform:translateY(0);}
-        .panel-close-btn{display:block !important;}
-        .gw-banner-inner{padding:12px 16px;}
-        .gw-banner-title{font-size:1.1rem;}
-        #mobilePickBar.mpb-visible{display:flex !important;}
+      /* ── LIGHT MODE OVERRIDES ───────────────────────────── */
+      html:not([data-theme="dark"]) .gw-banner-title {
+        color: #fff;
       }
-      @media(min-width:769px){#mobilePickBar{display:none !important;}}
+      html:not([data-theme="dark"]) .my-ref-name {
+        color: var(--muted);
+      }
+      html:not([data-theme="dark"]) .rpc-name {
+        color: var(--muted);
+      }
+      html:not([data-theme="dark"]) .ref-pick-name {
+        color: var(--muted);
+      }
+
+      /* ── MOBILE ─────────────────────────────────────────── */
+      @media (max-width: 768px) {
+        .container {
+          grid-template-columns: 1fr !important;
+          padding: 12px;
+        }
+        .gw-banner-inner {
+          padding: 12px 16px;
+        }
+        .gw-banner-title {
+          font-size: 1.1rem;
+        }
+        .ref-pick-grid {
+          grid-template-columns: 1fr !important;
+        }
+        .side-panel {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          top: auto;
+          border-radius: 16px 16px 0 0;
+          max-height: 90vh;
+          overflow-y: auto;
+          z-index: 200;
+          transform: translateY(100%);
+          transition: transform 0.3s ease;
+          border-left: none;
+          border-right: none;
+          border-bottom: none;
+        }
+        .side-panel.panel-open {
+          transform: translateY(0);
+        }
+        .panel-close-btn {
+          display: block !important;
+        }
+        .gw-banner-inner {
+          padding: 12px 16px;
+        }
+        .gw-banner-title {
+          font-size: 1.1rem;
+        }
+        #mobilePickBar.mpb-visible {
+          display: flex !important;
+        }
+      }
+      @media (min-width: 769px) {
+        #mobilePickBar {
+          display: none !important;
+        }
+      }
     </style>
     <script
       src="https://cdn.jsdelivr.net/npm/twemoji@14/dist/twemoji.min.js"
@@ -1442,17 +1595,58 @@
   <body>
     <header>
       <div class="header-inner">
-        <a class="logo" href="matches.html"><img src="images/logos/RRLogo.svg" alt="Ref Rater" style="height:44px;width:auto;display:block;"></a>
+        <a
+          class="logo"
+          href="matches.html"
+          style="position: relative; display: flex; align-items: center"
+        >
+          <img
+            src="images/logos/PantVill-removebg-preview.png"
+            alt=""
+            style="
+              height: 100px;
+              width: auto;
+              display: block;
+              position: absolute;
+              left: 0;
+              top: 50%;
+              transform: translateY(-35%);
+              z-index: 0;
+            "
+          />
+          <img
+            src="images/logos/RRLogo.svg"
+            alt="Ref Rater"
+            style="
+              height: 44px;
+              width: auto;
+              display: block;
+              position: relative;
+              z-index: 1;
+            "
+          />
+          <img
+            src="images/logos/PVBB-removebg-preview.png"
+            alt=""
+            style="height:65px;width:auto;display:block;position:absolute;right:-45px;top:50%;transform:translateY(-50%);z-index:0;"
+          />
+        </a>
         <div class="header-right">
           <nav>
             <a href="matches.html">Matches</a>
             <a href="referees.html">Referees</a>
-            <a href="fantasy.html" class="active">Fantasy</a>
-            <a href="badges.html" class="admin-only" style="display:none">Badges</a>
-            <a href="forum.html" class="admin-only" style="display:none">Forum</a>
+            <a href="fantasy.html" class="active"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="Fantasy" style="height:20px;width:auto;vertical-align:middle;"></a>
+            <a href="badges.html" class="admin-only" style="display: none"
+              >Cards</a
+            >
+            <a href="forum.html" class="admin-only" style="display: none"
+              >Forum</a
+            >
             <a href="history.html">History</a>
           </nav>
-          <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+          <button class="hamburger" id="hamburger" aria-label="Menu">
+            <span></span><span></span><span></span>
+          </button>
           <div class="user-chip" id="userChip">
             <div class="uc-avatar" id="ucAvatar"></div>
             <span class="uc-name" id="ucName"></span>
@@ -1476,18 +1670,30 @@
     <div class="mobile-nav" id="mobileNav">
       <a href="matches.html">Matches</a>
       <a href="referees.html">Referees</a>
-      <a href="fantasy.html" class="active">Fantasy</a>
-      <a href="badges.html" class="admin-only" style="display:none">Badges</a>
-      <a href="forum.html" class="admin-only" style="display:none">Forum</a>
+      <a href="fantasy.html" class="active"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="Fantasy" style="height:20px;width:auto;vertical-align:middle;"></a>
+      <a href="badges.html" class="admin-only" style="display: none">Cards</a>
+      <a href="forum.html" class="admin-only" style="display: none">Forum</a>
       <a href="history.html">History</a>
     </div>
 
     <div class="gw-banner">
       <div class="gw-banner-inner">
         <div>
-          <div class="gw-banner-title" style="display:flex;align-items:center;gap:10px;">
-            <img src="images/logos/RRLogo.svg" alt="RefRater" style="height:28px;width:auto;display:block;">
-            Fantasy — <span id="bannerGWLabel">Matchweek 1</span>
+          <div
+            class="gw-banner-title"
+            style="display: flex; align-items: center; gap: 10px"
+          >
+            <img
+              src="images/logos/RRLogo.svg"
+              alt="RefRater"
+              style="height: 28px; width: auto; display: block"
+            />
+            <img
+              src="images/logos/PVBBlogo-removebg-preview.png"
+              alt="PVBB"
+              style="height: 28px; width: auto; display: block"
+            />
+            — <span id="bannerGWLabel">Matchweek 1</span>
           </div>
           <div class="gw-banner-meta" id="gwBannerMeta">
             Deadline: <span id="deadlineText">—</span> &nbsp;·&nbsp;
@@ -1501,19 +1707,90 @@
       <!-- LEFT: Main Content -->
       <div>
         <!-- Mobile: My Pick mini-bar (only visible on mobile when a pick is made) -->
-        <div id="mobilePickBar" style="display:none;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:12px;gap:10px;">
-          <div style="display:flex;align-items:center;gap:8px;min-width:0;">
-            <div id="mpbAv" style="width:34px;height:34px;border-radius:50%;background:var(--pl-green);color:#000;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;"></div>
-            <div style="min-width:0;">
-              <div id="mpbName" style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
-              <div style="font-size:.7rem;color:var(--pl-green);font-weight:700;letter-spacing:.5px;">MY PICK</div>
+        <div
+          id="mobilePickBar"
+          style="
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            gap: 10px;
+          "
+        >
+          <div
+            style="display: flex; align-items: center; gap: 8px; min-width: 0"
+          >
+            <div
+              id="mpbAv"
+              style="
+                width: 34px;
+                height: 34px;
+                border-radius: 50%;
+                background: var(--pl-green);
+                color: #000;
+                font-family: &quot;Barlow Condensed&quot;, sans-serif;
+                font-weight: 900;
+                font-size: 0.85rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+              "
+            ></div>
+            <div style="min-width: 0">
+              <div
+                id="mpbName"
+                style="
+                  font-family: &quot;Barlow Condensed&quot;, sans-serif;
+                  font-weight: 700;
+                  font-size: 0.9rem;
+                  color: var(--text);
+                  white-space: nowrap;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                "
+              ></div>
+              <div
+                style="
+                  font-size: 0.7rem;
+                  color: var(--pl-green);
+                  font-weight: 700;
+                  letter-spacing: 0.5px;
+                "
+              >
+                MY PICK
+              </div>
             </div>
           </div>
-          <button id="mpbBattleBtn" style="background:var(--pl-green);color:#000;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1rem;letter-spacing:.5px;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;white-space:nowrap;flex-shrink:0;">Go to Pick</button>
+          <button
+            id="mpbBattleBtn"
+            style="
+              background: var(--pl-green);
+              color: #000;
+              font-family: &quot;Barlow Condensed&quot;, sans-serif;
+              font-weight: 900;
+              font-size: 1rem;
+              letter-spacing: 0.5px;
+              border: none;
+              border-radius: 8px;
+              padding: 8px 16px;
+              cursor: pointer;
+              white-space: nowrap;
+              flex-shrink: 0;
+            "
+          >
+            Go to Pick
+          </button>
         </div>
 
         <div class="view-tabs-row">
-          <button class="htp-btn" id="htpBtn"><span style="color:#00e67a;">?</span> How to Play</button>
+          <button class="htp-btn" id="htpBtn">
+            <span style="color: #00e67a">?</span> How to Play
+          </button>
           <div class="view-tabs" id="viewTabs">
             <button class="view-tab active" data-tab="pick">Pick Ref</button>
             <button class="view-tab" data-tab="battles">Battles</button>
@@ -1528,12 +1805,22 @@
               <button class="htp-close" id="htpClose">✕</button>
             </div>
             <div class="htp-body">
-              <p>Welcome to <strong>RefRater Fantasy</strong> — pick your referee each matchweek and rack up points!</p>
+              <p>
+                Welcome to <strong>RefRater Fantasy</strong> — pick your referee
+                each matchweek and rack up points!
+              </p>
               <ol>
                 <li>
-                  <strong>Pick a Ref</strong> — choose one referee from the available list before the deadline.
-                  <div class="htp-demo" style="max-width:220px;margin-top:8px;">
-                    <div class="ref-pick-card selected" style="cursor:default;pointer-events:none;">
+                  <strong>Pick a Ref</strong> — choose one referee from the
+                  available list before the deadline.
+                  <div
+                    class="htp-demo"
+                    style="max-width: 220px; margin-top: 8px"
+                  >
+                    <div
+                      class="ref-pick-card selected"
+                      style="cursor: default; pointer-events: none"
+                    >
                       <div class="rpc-selected-badge">MY PICK</div>
                       <div class="rpc-top">
                         <div class="rpc-av">CP</div>
@@ -1553,11 +1840,23 @@
                   </div>
                 </li>
                 <li>
-                  <strong>Earn Points</strong> — your ref earns points based on their performance during the matchweek.
-                  <div class="htp-demo" style="margin-top:8px;">
-                    <div class="my-ref-card" style="display:flex;align-items:center;gap:12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;">
+                  <strong>Earn Points</strong> — your ref earns points based on
+                  their performance during the matchweek.
+                  <div class="htp-demo" style="margin-top: 8px">
+                    <div
+                      class="my-ref-card"
+                      style="
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        background: var(--surface2);
+                        border: 1px solid var(--border);
+                        border-radius: 8px;
+                        padding: 10px 12px;
+                      "
+                    >
                       <div class="my-ref-av">CP</div>
-                      <div style="flex:1">
+                      <div style="flex: 1">
                         <div class="my-ref-name">Craig Pawson</div>
                         <div class="my-ref-match">🔴 Arsenal v Chelsea 🔵</div>
                       </div>
@@ -1566,19 +1865,39 @@
                         <div class="my-ref-pts-label">ref pts</div>
                       </div>
                     </div>
-                    <div style="margin-top:6px;display:flex;flex-direction:column;gap:2px;">
-                      <div class="br-bd-item"><span class="br-bd-pts pos">+1</span> Yellow card 🟨</div>
-                      <div class="br-bd-item"><span class="br-bd-pts pos">+1</span> Yellow card 🟨</div>
-                      <div class="br-bd-item"><span class="br-bd-pts pos">+1</span> Red card 🟥</div>
-                      <div class="br-bd-item"><span class="br-bd-pts pos">+2</span> Correct VAR decision</div>
-                      <div class="br-bd-item"><span class="br-bd-pts pos">+2</span> Correct VAR decision</div>
+                    <div
+                      style="
+                        margin-top: 6px;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 2px;
+                      "
+                    >
+                      <div class="br-bd-item">
+                        <span class="br-bd-pts pos">+1</span> Yellow card 🟨
+                      </div>
+                      <div class="br-bd-item">
+                        <span class="br-bd-pts pos">+1</span> Yellow card 🟨
+                      </div>
+                      <div class="br-bd-item">
+                        <span class="br-bd-pts pos">+1</span> Red card 🟥
+                      </div>
+                      <div class="br-bd-item">
+                        <span class="br-bd-pts pos">+2</span> Correct VAR
+                        decision
+                      </div>
+                      <div class="br-bd-item">
+                        <span class="br-bd-pts pos">+2</span> Correct VAR
+                        decision
+                      </div>
                     </div>
                   </div>
                 </li>
                 <li>
-                  <strong>Battles</strong> — your pick is matched against other players. Win your battle to climb the leaderboard.
-                  <div class="htp-demo" style="margin-top:8px;">
-                    <div class="battle-card" style="margin-bottom:0;">
+                  <strong>Battles</strong> — your pick is matched against other
+                  players. Win your battle to climb the leaderboard.
+                  <div class="htp-demo" style="margin-top: 8px">
+                    <div class="battle-card" style="margin-bottom: 0">
                       <div class="battle-header">
                         <span>Battle 1</span>
                         <span class="my-pick-badge">MY PICK</span>
@@ -1602,19 +1921,66 @@
                         </div>
                       </div>
                       <div class="battle-footer">
-                        <div class="battle-result-label win">YOUR REF WON ✓</div>
+                        <div class="battle-result-label win">
+                          YOUR REF WON ✓
+                        </div>
                         <div class="battle-pickers">3 vs 1 managers</div>
                       </div>
                     </div>
                   </div>
                 </li>
                 <li>
-                  <strong>Deadline</strong> — picks lock at the matchweek deadline. You cannot change your pick after this.
-                  <div class="htp-demo" style="margin-top:8px;display:flex;flex-direction:column;gap:8px;">
-                    <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:700;">Picks open</div>
-                    <div style="font-size:0.78rem;color:#ffffff;">Deadline: Fri 3 Apr · 20:00 GMT &nbsp;·&nbsp; <strong style="color:#00e67a;">Picks Open</strong></div>
-                    <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:700;margin-top:4px;">After deadline</div>
-                    <div style="background:rgba(255,71,87,0.07);border:1px solid rgba(255,71,87,0.2);border-radius:8px;padding:10px 14px;font-size:0.8rem;color:rgba(255,71,87,0.85);display:flex;align-items:center;gap:8px;">
+                  <strong>Deadline</strong> — picks lock at the matchweek
+                  deadline. You cannot change your pick after this.
+                  <div
+                    class="htp-demo"
+                    style="
+                      margin-top: 8px;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 8px;
+                    "
+                  >
+                    <div
+                      style="
+                        font-size: 0.72rem;
+                        color: var(--muted);
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                        font-weight: 700;
+                      "
+                    >
+                      Picks open
+                    </div>
+                    <div style="font-size: 0.78rem; color: #ffffff">
+                      Deadline: Fri 3 Apr · 20:00 GMT &nbsp;·&nbsp;
+                      <strong style="color: #00e67a">Picks Open</strong>
+                    </div>
+                    <div
+                      style="
+                        font-size: 0.72rem;
+                        color: var(--muted);
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                        font-weight: 700;
+                        margin-top: 4px;
+                      "
+                    >
+                      After deadline
+                    </div>
+                    <div
+                      style="
+                        background: rgba(255, 71, 87, 0.07);
+                        border: 1px solid rgba(255, 71, 87, 0.2);
+                        border-radius: 8px;
+                        padding: 10px 14px;
+                        font-size: 0.8rem;
+                        color: rgba(255, 71, 87, 0.85);
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                      "
+                    >
                       🔒 Deadline passed — picks are locked for Matchweek 1
                     </div>
                   </div>
@@ -1623,35 +1989,60 @@
 
               <div class="htp-scoring">
                 <div class="htp-scoring-title">Ref Points Breakdown</div>
-                <div class="htp-score-row"><span class="htp-pts pos">+1</span> Per yellow card 🟨</div>
-                <div class="htp-score-row"><span class="htp-pts pos">+1</span> Per red card 🟥</div>
-                <div class="htp-score-row"><span class="htp-pts pos">+2</span> Correct VAR decision (penalty or red card)</div>
-                <div class="htp-score-row"><span class="htp-pts pos">+3</span> Perfect game — no VAR decisions</div>
-                <div class="htp-score-row"><span class="htp-pts neg">−1</span> VAR overturns a penalty decision</div>
-                <div class="htp-score-row"><span class="htp-pts neg">−2</span> VAR overturns a red card decision</div>
+                <div class="htp-score-row">
+                  <span class="htp-pts pos">+1</span> Per yellow card 🟨
+                </div>
+                <div class="htp-score-row">
+                  <span class="htp-pts pos">+1</span> Per red card 🟥
+                </div>
+                <div class="htp-score-row">
+                  <span class="htp-pts pos">+2</span> Correct VAR decision
+                  (penalty or red card)
+                </div>
+                <div class="htp-score-row">
+                  <span class="htp-pts pos">+3</span> Perfect game — no VAR
+                  decisions
+                </div>
+                <div class="htp-score-row">
+                  <span class="htp-pts neg">−1</span> VAR overturns a penalty
+                  decision
+                </div>
+                <div class="htp-score-row">
+                  <span class="htp-pts neg">−2</span> VAR overturns a red card
+                  decision
+                </div>
               </div>
 
-              <div class="htp-scoring" style="margin-top:12px;">
+              <div class="htp-scoring" style="margin-top: 12px">
                 <div class="htp-scoring-title">Wildcards</div>
                 <div class="htp-score-row">
                   <span class="htp-wc-icon">🟨</span>
                   <div>
                     <div class="htp-wc-name">Yellow Card</div>
-                    <div class="htp-wc-desc">Pick any game this GW — if there are 4+ yellow cards in it, you earn +1. Must be used before the deadline.</div>
+                    <div class="htp-wc-desc">
+                      Pick any game this GW — if there are 4+ yellow cards in
+                      it, you earn +1. Must be used before the deadline.
+                    </div>
                   </div>
                 </div>
-                <div class="htp-score-row" style="margin-top:8px;">
+                <div class="htp-score-row" style="margin-top: 8px">
                   <span class="htp-wc-icon">🟥</span>
                   <div>
                     <div class="htp-wc-name">Red Card</div>
-                    <div class="htp-wc-desc">Pick any game this GW — if there's a red card in it, you earn +1. Must be used before the deadline.</div>
+                    <div class="htp-wc-desc">
+                      Pick any game this GW — if there's a red card in it, you
+                      earn +1. Must be used before the deadline.
+                    </div>
                   </div>
                 </div>
-                <div class="htp-score-row" style="margin-top:8px;">
+                <div class="htp-score-row" style="margin-top: 8px">
                   <span class="htp-wc-icon">📺</span>
                   <div>
                     <div class="htp-wc-name">VAR Replay</div>
-                    <div class="htp-wc-desc">Pick any game this GW — if that ref has a perfect game, you earn +2. Must be used before the deadline.</div>
+                    <div class="htp-wc-desc">
+                      Pick any game this GW — if that ref has a perfect game,
+                      you earn +2. Must be used before the deadline.
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1666,7 +2057,8 @@
             id="deadlineNotice"
             style="display: none"
           >
-            🔒 Deadline passed — picks are locked for <span id="deadlineNoticeGW">Matchweek 1</span>
+            🔒 Deadline passed — picks are locked for
+            <span id="deadlineNoticeGW">Matchweek 1</span>
           </div>
           <div class="ref-pick-grid" id="refPickGrid">
             <!-- rendered by JS -->
@@ -1684,7 +2076,8 @@
               <span class="sg-pts pos">+1</span> Per red card 🟥
             </div>
             <div class="sg-item">
-              <span class="sg-pts pos">+2</span> Correct VAR decision (penalty or red card)
+              <span class="sg-pts pos">+2</span> Correct VAR decision (penalty
+              or red card)
             </div>
             <div class="sg-item">
               <span class="sg-pts pos">+3</span> Perfect game — no VAR decisions
@@ -1698,7 +2091,6 @@
           </div>
           <div id="battlesGrid"><!-- rendered by JS --></div>
         </div>
-
       </div>
 
       <!-- RIGHT: Sidebar -->
@@ -1706,10 +2098,12 @@
         <div class="side-panel">
           <div class="panel-head">
             <div class="panel-head-text">
-              <h2>⚽ <span id="sidePanelGWLabel">Matchweek 1</span></h2>
+              <h2><span id="sidePanelGWLabel">Matchweek 1</span></h2>
               <p id="panelSubtext">Select a ref from the Pick tab</p>
             </div>
-            <button class="panel-close-btn" id="panelCloseBtn" title="Close">✕</button>
+            <button class="panel-close-btn" id="panelCloseBtn" title="Close">
+              ✕
+            </button>
           </div>
           <div class="sp-tabs">
             <button class="sp-tab active" data-sptab="pick">My Pick</button>
@@ -1725,7 +2119,7 @@
                 <div class="nps-text">No pick made</div>
                 <div class="nps-sub">Go to Pick Ref to choose your ref</div>
               </div>
-              <div id="hasPick" style="display:none">
+              <div id="hasPick" style="display: none">
                 <div class="my-ref-card" id="myRefCard"></div>
                 <div class="battle-status-box" id="battleStatusBox"></div>
                 <div class="gw-pts-box" id="gwPtsBox"></div>
@@ -1736,8 +2130,10 @@
           </div>
 
           <!-- Tab: Ref Scores -->
-          <div class="sp-tab-content" id="spTabRefs" style="display:none">
-            <div class="fl-header">🏅 Ref Scores — <span id="refScoresGWLabel">Matchweek 1</span></div>
+          <div class="sp-tab-content" id="spTabRefs" style="display: none">
+            <div class="fl-header">
+              🏅 Ref Scores — <span id="refScoresGWLabel">Matchweek 1</span>
+            </div>
             <div class="ref-scores-col-header">
               <span></span>
               <span>GP</span>
@@ -1748,14 +2144,26 @@
           </div>
 
           <!-- Tab: Leaderboard -->
-          <div class="sp-tab-content" id="spTabLeague" style="display:none">
-            <div class="fl-header">🏆 Fantasy League — <span id="leagueGWLabel">Matchweek 1</span></div>
+          <div class="sp-tab-content" id="spTabLeague" style="display: none">
+            <div class="fl-header">
+              🏆 Fantasy League — <span id="leagueGWLabel">Matchweek 1</span>
+            </div>
             <div class="lb-toggle">
-              <button class="lb-toggle-btn active" data-lb="gw">GW Points</button>
-              <button class="lb-toggle-btn" data-lb="season">Season Points</button>
+              <button class="lb-toggle-btn active" data-lb="gw">
+                GW Points
+              </button>
+              <button class="lb-toggle-btn" data-lb="season">
+                Season Points
+              </button>
+            </div>
+            <div class="gw-selector" id="gwSelector">
+              <label>Gameweek</label>
+              <select id="gwPickerSelect"></select>
             </div>
             <div id="fantasyLeague"><!-- rendered by JS --></div>
-            <div id="seasonPointsLeague" style="display:none"><!-- rendered by JS --></div>
+            <div id="seasonPointsLeague" style="display: none">
+              <!-- rendered by JS -->
+            </div>
           </div>
         </div>
       </div>
@@ -1764,13 +2172,69 @@
     <div class="toast" id="toast"></div>
 
     <!-- Wildcard reminder modal -->
-    <div id="wcReminderModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;">
-      <div style="background:var(--surface);border:1px solid var(--pl-green);border-radius:14px;padding:28px 28px 22px;max-width:360px;width:90%;box-shadow:0 8px 40px rgba(0,255,133,.15);">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;margin-bottom:8px;">Choose your Gameweek Wildcard 🃏</div>
-        <div style="font-size:.85rem;color:var(--muted);margin-bottom:20px;line-height:1.5;">Now you've chosen your ref, choose your gameweek wildcard to earn a bonus.</div>
-        <div style="display:flex;gap:10px;">
-          <button id="wcReminderBack" style="flex:1;background:rgba(0,255,133,.1);border:1px solid var(--pl-green);color:var(--pl-green);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;border-radius:8px;padding:10px;cursor:pointer;">Choose Wildcard</button>
-          <button id="wcReminderContinue" style="display:none"></button>
+    <div
+      id="wcReminderModal"
+      style="
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 500;
+        align-items: center;
+        justify-content: center;
+      "
+    >
+      <div
+        style="
+          background: var(--surface);
+          border: 1px solid var(--pl-green);
+          border-radius: 14px;
+          padding: 28px 28px 22px;
+          max-width: 360px;
+          width: 90%;
+          box-shadow: 0 8px 40px rgba(0, 255, 133, 0.15);
+        "
+      >
+        <div
+          style="
+            font-family: &quot;Barlow Condensed&quot;, sans-serif;
+            font-weight: 900;
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+          "
+        >
+          Choose your Gameweek Wildcard 🃏
+        </div>
+        <div
+          style="
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-bottom: 20px;
+            line-height: 1.5;
+          "
+        >
+          Now you've chosen your ref, choose your gameweek wildcard to earn a
+          bonus.
+        </div>
+        <div style="display: flex; gap: 10px">
+          <button
+            id="wcReminderBack"
+            style="
+              flex: 1;
+              background: rgba(0, 255, 133, 0.1);
+              border: 1px solid var(--pl-green);
+              color: var(--pl-green);
+              font-family: &quot;Barlow Condensed&quot;, sans-serif;
+              font-weight: 700;
+              font-size: 0.9rem;
+              border-radius: 8px;
+              padding: 10px;
+              cursor: pointer;
+            "
+          >
+            Choose Wildcard
+          </button>
+          <button id="wcReminderContinue" style="display: none"></button>
         </div>
       </div>
     </div>
@@ -1837,7 +2301,6 @@
         12: 0,
       };
 
-
       // Fantasy league standings
 
       const FANTASY_LEAGUE = [];
@@ -1874,17 +2337,19 @@
       }
 
       function getRefRC(refId) {
-        return MATCHES
-          .filter(m => +m.refId === refId && (m.status === 'complete' || m.status === 'recent'))
-          .reduce((s, m) => s + (m.rc || 0), 0);
+        return MATCHES.filter(
+          (m) =>
+            +m.refId === refId &&
+            (m.status === "complete" || m.status === "recent"),
+        ).reduce((s, m) => s + (m.rc || 0), 0);
       }
       function getMatchRC(matchId) {
-        const m = MATCHES.find(x => x.id === matchId);
-        return m ? (m.rc || 0) : 0;
+        const m = MATCHES.find((x) => x.id === matchId);
+        return m ? m.rc || 0 : 0;
       }
       function isHighYCMatch(matchId) {
-        const m = MATCHES.find(x => x.id === matchId);
-        return !!m && (m.yc||0) >= 4;
+        const m = MATCHES.find((x) => x.id === matchId);
+        return !!m && (m.yc || 0) >= 4;
       }
 
       function getRefMatch(refId) {
@@ -1926,9 +2391,15 @@
 
         // Wildcards boost the REF's score, which may flip the battle result
         let boostedPts = rawPts;
-        if (wildcards.yc.active) boostedPts += isHighYCMatch(wildcards.yc.matchId) ? 1 : 0;
-        if (wildcards.rc.active) boostedPts += getMatchRC(wildcards.rc.matchId) > 0 ? 1 : 0;
-        if (wildcards.var.active) boostedPts += MATCHES.find(m=>m.id===wildcards.var.matchId)?.perfectGame ? 2 : 0;
+        if (wildcards.yc.active)
+          boostedPts += isHighYCMatch(wildcards.yc.matchId) ? 1 : 0;
+        if (wildcards.rc.active)
+          boostedPts += getMatchRC(wildcards.rc.matchId) > 0 ? 1 : 0;
+        if (wildcards.var.active)
+          boostedPts += MATCHES.find((m) => m.id === wildcards.var.matchId)
+            ?.perfectGame
+            ? 2
+            : 0;
 
         const won = boostedPts > oppPts;
         const drew = boostedPts === oppPts;
@@ -1948,12 +2419,17 @@
         document.getElementById("ucName").textContent =
           currentUser?.username || "Guest";
         document.getElementById("ucTeamEmoji").textContent = "";
-        if (isAdmin(currentUser)) document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
+        if (isAdmin(currentUser))
+          document
+            .querySelectorAll(".admin-only")
+            .forEach((el) => (el.style.display = ""));
         document.getElementById("ddName").textContent =
           currentUser?.username || "Guest";
         document.getElementById("ddTeam").textContent = team
           ? `${team.emoji} ${team.name} supporter`
-          : currentUser?.team ? `${currentUser.team} supporter` : "No team selected";
+          : currentUser?.team
+            ? `${currentUser.team} supporter`
+            : "No team selected";
         if (PREVIEW_MODE) {
           const badge = document.createElement("div");
           badge.className = "preview-badge";
@@ -1997,7 +2473,8 @@
         document.getElementById("htpOverlay").classList.remove("open");
       });
       document.getElementById("htpOverlay").addEventListener("click", (e) => {
-        if (e.target === e.currentTarget) e.currentTarget.classList.remove("open");
+        if (e.target === e.currentTarget)
+          e.currentTarget.classList.remove("open");
       });
 
       // ── TABS ──────────────────────────────────────────────────
@@ -2011,7 +2488,6 @@
           tab === "pick" ? "block" : "none";
         document.getElementById("tabBattles").style.display =
           tab === "battles" ? "block" : "none";
-
       });
 
       // ── PICK GRID ─────────────────────────────────────────────
@@ -2024,21 +2500,60 @@
           const ref = myPick ? gRef(myPick) : null;
           const m = myPick ? getRefMatch(myPick) : null;
           if (!ref) {
-            document.getElementById("refPickGrid").innerHTML = `<div style="color:var(--muted);font-size:.9rem;">No pick made for this matchweek.</div>`;
+            document.getElementById("refPickGrid").innerHTML =
+              `<div style="color:var(--muted);font-size:.9rem;">No pick made for this matchweek.</div>`;
             return;
           }
-          const hasN = ref.neutralVotes > 0, hasF = ref.fanVotes > 0;
+          const hasN = ref.neutralVotes > 0,
+            hasF = ref.fanVotes > 0;
           const seed = ref.id * 7;
           const nR = ref.neutralRating;
           const cats = [
-            {lbl:'Decision Making', v:hasN?Math.min(10,Math.max(1,nR+((seed%3)*.4-.6))):0},
-            {lbl:'Card Management', v:hasN?Math.min(10,Math.max(1,nR+(((seed*3)%5)*.4-.8))):0},
-            {lbl:'Game Control',    v:hasN?Math.min(10,Math.max(1,nR+(((seed*7)%4)*.4-.7))):0},
-            {lbl:'VAR Awareness',   v:hasN?Math.min(10,Math.max(1,nR+(((seed*11)%6)*.4-.9))):0},
+            {
+              lbl: "Decision Making",
+              v: hasN
+                ? Math.min(10, Math.max(1, nR + ((seed % 3) * 0.4 - 0.6)))
+                : 0,
+            },
+            {
+              lbl: "Card Management",
+              v: hasN
+                ? Math.min(10, Math.max(1, nR + (((seed * 3) % 5) * 0.4 - 0.8)))
+                : 0,
+            },
+            {
+              lbl: "Game Control",
+              v: hasN
+                ? Math.min(10, Math.max(1, nR + (((seed * 7) % 4) * 0.4 - 0.7)))
+                : 0,
+            },
+            {
+              lbl: "VAR Awareness",
+              v: hasN
+                ? Math.min(
+                    10,
+                    Math.max(1, nR + (((seed * 11) % 6) * 0.4 - 0.9)),
+                  )
+                : 0,
+            },
           ];
-          const recentMatches = MATCHES.filter(x => x.refId == ref.id && x.status !== 'upcoming').slice(-3);
-          const trend = hasN ? (nR>=7?'▲ Performing well':nR>=5?'→ Average':'▼ Poor form') : 'No data yet';
-          const trendCol = hasN ? (nR>=7?'var(--green)':nR>=5?'var(--yellow)':'var(--red)') : 'var(--muted)';
+          const recentMatches = MATCHES.filter(
+            (x) => x.refId == ref.id && x.status !== "upcoming",
+          ).slice(-3);
+          const trend = hasN
+            ? nR >= 7
+              ? "▲ Performing well"
+              : nR >= 5
+                ? "→ Average"
+                : "▼ Poor form"
+            : "No data yet";
+          const trendCol = hasN
+            ? nR >= 7
+              ? "var(--green)"
+              : nR >= 5
+                ? "var(--yellow)"
+                : "var(--red)"
+            : "var(--muted)";
           document.getElementById("refPickGrid").innerHTML = `
             <div style="background:linear-gradient(135deg,var(--pl-purple) 0%,#1a0028 50%,var(--surface) 100%);border:1.5px solid var(--pl-green);border-radius:14px;overflow:hidden;max-width:480px;box-shadow:0 0 32px rgba(0,255,133,.12);">
               <!-- Header -->
@@ -2046,18 +2561,22 @@
                 <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#37003c,#8b008b);border:2.5px solid var(--pl-green);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;color:var(--pl-green);flex-shrink:0;box-shadow:0 0 16px rgba(0,255,133,.25);">${ref.initials}</div>
                 <div style="flex:1">
                   <div style="font-size:.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--pl-green);margin-bottom:3px;">MY PICK · MW${FGW.gw}</div>
-                  <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;letter-spacing:.3px;">${ref.name}</div>
-                  <div style="font-size:.75rem;color:var(--muted);margin-top:2px;">${ref.nationality||'English'} · Age ${ref.age||'–'}${ref.fifaListed==='Yes'?' · 🌍 FIFA':''}</div>
+                  <div class="ref-pick-name" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;letter-spacing:.3px;">${ref.name}</div>
+                  <div style="font-size:.75rem;color:var(--muted);margin-top:2px;">${ref.nationality || "English"} · Age ${ref.age || "–"}${ref.fifaListed === "Yes" ? " · 🌍 FIFA" : ""}</div>
                 </div>
                 <div style="font-size:.7rem;color:${trendCol};font-family:'Barlow Condensed',sans-serif;font-weight:700;text-align:right;">${trend}</div>
               </div>
               <!-- Match -->
-              ${m ? `<div style="padding:10px 20px;background:rgba(0,0,0,.2);font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border);">
+              ${
+                m
+                  ? `<div style="padding:10px 20px;background:rgba(0,0,0,.2);font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border);">
                 <span style="color:var(--text);">${m.hE} ${m.home}</span>
                 <span>vs</span>
                 <span style="color:var(--text);">${m.away} ${m.aE}</span>
-                <span style="margin-left:auto;font-weight:600;color:${m.status==='live'?'var(--red)':m.status==='complete'?'var(--green)':'var(--muted)'};">${m.status==='live'?'● LIVE':m.status==='complete'?'FT':'Upcoming'}</span>
-              </div>` : ''}
+                <span style="margin-left:auto;font-weight:600;color:${m.status === "live" ? "var(--red)" : m.status === "complete" ? "var(--green)" : "var(--muted)"};">${m.status === "live" ? "● LIVE" : m.status === "complete" ? "FT" : "Upcoming"}</span>
+              </div>`
+                  : ""
+              }
               <!-- Scores -->
               <div style="padding:14px 20px;display:grid;grid-template-columns:1fr 1fr;gap:10px;border-bottom:1px solid var(--border);">
                 <div style="background:var(--surface2);border-radius:8px;padding:10px 12px;border-left:3px solid rgba(55,236,186,.5);">
@@ -2071,28 +2590,43 @@
               </div>
               <!-- Category bars -->
               <div style="padding:14px 20px;border-bottom:1px solid var(--border);">
-                ${cats.map(c => {
-                  const pct = hasN ? c.v*10 : 0;
-                  const col = c.v>=7?'var(--green)':c.v>=5?'var(--yellow)':'var(--red)';
-                  return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                ${cats
+                  .map((c) => {
+                    const pct = hasN ? c.v * 10 : 0;
+                    const col =
+                      c.v >= 7
+                        ? "var(--green)"
+                        : c.v >= 5
+                          ? "var(--yellow)"
+                          : "var(--red)";
+                    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                     <span style="font-size:.7rem;color:var(--muted);width:120px;flex-shrink:0;">${c.lbl}</span>
                     <div style="flex:1;background:var(--border);border-radius:4px;height:6px;overflow:hidden;">
                       <div style="width:${pct}%;height:100%;background:${col};border-radius:4px;transition:width .4s;"></div>
                     </div>
-                    <span style="font-size:.75rem;font-weight:700;color:${col};width:28px;text-align:right;">${hasN?c.v.toFixed(1):'–'}</span>
+                    <span style="font-size:.75rem;font-weight:700;color:${col};width:28px;text-align:right;">${hasN ? c.v.toFixed(1) : "–"}</span>
                   </div>`;
-                }).join('')}
+                  })
+                  .join("")}
               </div>
-              ${recentMatches.length ? `
+              ${
+                recentMatches.length
+                  ? `
               <!-- Recent matches -->
               <div style="padding:12px 20px;border-bottom:1px solid var(--border);">
                 <div style="font-size:.65rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Recent Matches</div>
-                ${recentMatches.map(x => `
+                ${recentMatches
+                  .map(
+                    (x) => `
                   <div style="display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-radius:5px;padding:5px 9px;font-size:.75rem;margin-bottom:4px;">
                     <span>${x.hE} ${x.home} <span style="color:var(--muted)">vs</span> ${x.away} ${x.aE}</span>
-                    <span style="font-weight:700;color:${x.status==='live'?'var(--red)':'var(--text)'};">${x.score}</span>
-                  </div>`).join('')}
-              </div>` : ''}
+                    <span style="font-weight:700;color:${x.status === "live" ? "var(--red)" : "var(--text)"};">${x.score}</span>
+                  </div>`,
+                  )
+                  .join("")}
+              </div>`
+                  : ""
+              }
               <!-- Footer / CTA -->
               <div style="padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
                 <a href="referees.html" style="font-size:.78rem;color:var(--pl-green);font-weight:600;text-decoration:none;">Full profile →</a>
@@ -2104,12 +2638,15 @@
           return;
         }
 
-        document.getElementById("refPickGrid").innerHTML = REFS.filter(ref => getRefMatch(ref.id)).map((ref) => {
-          const m = getRefMatch(ref.id);
-          const pts = REF_GW_PTS[ref.id];
-          const status = REF_STATUS[ref.id];
-          const sel = myPick === ref.id;
-          return `<div class="ref-pick-card${sel ? " selected" : ""}" data-rid="${ref.id}">
+        document.getElementById("refPickGrid").innerHTML = REFS.filter((ref) =>
+          getRefMatch(ref.id),
+        )
+          .map((ref) => {
+            const m = getRefMatch(ref.id);
+            const pts = REF_GW_PTS[ref.id];
+            const status = REF_STATUS[ref.id];
+            const sel = myPick === ref.id;
+            return `<div class="ref-pick-card${sel ? " selected" : ""}" data-rid="${ref.id}">
       ${sel ? '<div class="rpc-selected-badge">MY PICK</div>' : ""}
       <div class="rpc-top">
         <div class="rpc-av">${ref.initials}</div>
@@ -2120,9 +2657,10 @@
         </div>
       </div>
     </div>`;
-        }).join("");
+          })
+          .join("");
 
-        const modal = document.getElementById('wcReminderModal');
+        const modal = document.getElementById("wcReminderModal");
         async function confirmRefPick(refId) {
           myPick = refId;
           sessionStorage.setItem("rtr_pick_1", myPick);
@@ -2146,21 +2684,31 @@
         }
 
         // "Got it" — just close the modal
-        document.getElementById('wcReminderContinue').addEventListener('click', () => {
-          modal.style.display = 'none';
-        });
+        document
+          .getElementById("wcReminderContinue")
+          .addEventListener("click", () => {
+            modal.style.display = "none";
+          });
         // "Choose Wildcard" — close modal and open the My Pick panel (which has wildcards)
-        document.getElementById('wcReminderBack').addEventListener('click', () => {
-          modal.style.display = 'none';
-          renderSidebar();
-          document.querySelector('.side-panel').classList.add('panel-open');
-          document.querySelectorAll('.sp-tab').forEach(t => t.classList.remove('active'));
-          document.querySelectorAll('.sp-tab-content').forEach(c => c.style.display = 'none');
-          document.querySelector('.sp-tab[data-sptab="pick"]').classList.add('active');
-          document.getElementById('spTabPick').style.display = '';
-        });
-        modal.addEventListener('click', (e) => {
-          if (e.target === modal) modal.style.display = 'none';
+        document
+          .getElementById("wcReminderBack")
+          .addEventListener("click", () => {
+            modal.style.display = "none";
+            renderSidebar();
+            document.querySelector(".side-panel").classList.add("panel-open");
+            document
+              .querySelectorAll(".sp-tab")
+              .forEach((t) => t.classList.remove("active"));
+            document
+              .querySelectorAll(".sp-tab-content")
+              .forEach((c) => (c.style.display = "none"));
+            document
+              .querySelector('.sp-tab[data-sptab="pick"]')
+              .classList.add("active");
+            document.getElementById("spTabPick").style.display = "";
+          });
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) modal.style.display = "none";
         });
 
         if (!FGW.deadlinePassed) {
@@ -2168,24 +2716,30 @@
             card.addEventListener("click", async () => {
               const rid = +card.dataset.rid;
               await confirmRefPick(rid);
-              const anyActive = Object.values(wildcards).some(s => s.active);
+              const anyActive = Object.values(wildcards).some((s) => s.active);
               if (!anyActive) {
-                modal.style.display = 'flex';
+                modal.style.display = "flex";
               }
             });
           });
         }
 
         // Mobile "Go to Battle" button — opens side panel on My Pick tab
-        const mpbBtn = document.getElementById('mpbBattleBtn');
+        const mpbBtn = document.getElementById("mpbBattleBtn");
         if (mpbBtn) {
-          mpbBtn.addEventListener('click', () => {
+          mpbBtn.addEventListener("click", () => {
             renderSidebar();
-            document.querySelector('.side-panel').classList.add('panel-open');
-            document.querySelectorAll('.sp-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.sp-tab-content').forEach(c => c.style.display = 'none');
-            document.querySelector('.sp-tab[data-sptab="pick"]').classList.add('active');
-            document.getElementById('spTabPick').style.display = '';
+            document.querySelector(".side-panel").classList.add("panel-open");
+            document
+              .querySelectorAll(".sp-tab")
+              .forEach((t) => t.classList.remove("active"));
+            document
+              .querySelectorAll(".sp-tab-content")
+              .forEach((c) => (c.style.display = "none"));
+            document
+              .querySelector('.sp-tab[data-sptab="pick"]')
+              .classList.add("active");
+            document.getElementById("spTabPick").style.display = "";
           });
         }
       }
@@ -2283,12 +2837,22 @@
 
           const avClass1 = dlp && !tbd ? (r1win ? " winner" : " loser") : "";
           const avClass2 = dlp && !tbd ? (r2win ? " winner" : " loser") : "";
-          const ptClass1 = dlp && !tbd
-            ? r1win ? "winner" : "loser"
-            : s1 === "live" ? "live" : "tbd";
-          const ptClass2 = dlp && !tbd
-            ? r2win ? "winner" : "loser"
-            : s2 === "live" ? "live" : "tbd";
+          const ptClass1 =
+            dlp && !tbd
+              ? r1win
+                ? "winner"
+                : "loser"
+              : s1 === "live"
+                ? "live"
+                : "tbd";
+          const ptClass2 =
+            dlp && !tbd
+              ? r2win
+                ? "winner"
+                : "loser"
+              : s2 === "live"
+                ? "live"
+                : "tbd";
 
           return `<div class="battle-card">
       <div class="battle-header">
@@ -2301,20 +2865,38 @@
           <div class="br-av${avClass1}">${show1 ? r1.initials : "?"}</div>
           <div class="br-name">${show1 ? r1.name : "???"}</div>
           <div class="br-match">${show1 && m1 ? `${m1.home} v ${m1.away}` : ""}</div>
-          <div class="br-match" style="color:var(--muted);font-size:.68rem;">${show1 && m1?.kickoff ? new Date(String(m1.kickoff).replace(' ','T').replace(/Z$/,'')).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).replace(',','') : ""}</div>
+          <div class="br-match" style="color:var(--muted);font-size:.68rem;">${show1 && m1?.kickoff ? new Date(String(m1.kickoff).replace(" ", "T").replace(/Z$/, "")).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", hour12: false }).replace(",", "") : ""}</div>
           <div class="br-pts ${ptClass1}">${dlp && p1 !== null ? p1 : "—"}</div>
           <div class="br-pts-label">${dlp ? (p1 !== null ? "pts" : s1 === "live" ? "live" : "pending") : ""}</div>
-          ${dlp && p1 !== null ? `<div class="br-breakdown">${getRefBreakdown(b.r1).map(i => `<div class="br-bd-item"><span class="br-bd-pts ${i.pts >= 0 ? "pos" : "neg"}">${i.pts >= 0 ? "+" : ""}${i.pts}</span>${i.label}</div>`).join("")}</div>` : ""}
+          ${
+            dlp && p1 !== null
+              ? `<div class="br-breakdown">${getRefBreakdown(b.r1)
+                  .map(
+                    (i) =>
+                      `<div class="br-bd-item"><span class="br-bd-pts ${i.pts >= 0 ? "pos" : "neg"}">${i.pts >= 0 ? "+" : ""}${i.pts}</span>${i.label}</div>`,
+                  )
+                  .join("")}</div>`
+              : ""
+          }
         </div>
         <div class="vs-col">VS</div>
         <div class="battle-ref${b.r2 === myPick ? " my-pick" : ""}">
           <div class="br-av${avClass2}">${show2 ? r2.initials : "?"}</div>
           <div class="br-name">${show2 ? r2.name : "???"}</div>
           <div class="br-match">${show2 && m2 ? `${m2.home} v ${m2.away}` : ""}</div>
-          <div class="br-match" style="color:var(--muted);font-size:.68rem;">${show2 && m2?.kickoff ? new Date(String(m2.kickoff).replace(' ','T').replace(/Z$/,'')).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).replace(',','') : ""}</div>
+          <div class="br-match" style="color:var(--muted);font-size:.68rem;">${show2 && m2?.kickoff ? new Date(String(m2.kickoff).replace(" ", "T").replace(/Z$/, "")).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", hour12: false }).replace(",", "") : ""}</div>
           <div class="br-pts ${ptClass2}">${dlp && p2 !== null ? p2 : "—"}</div>
           <div class="br-pts-label">${dlp ? (p2 !== null ? "pts" : s2 === "live" ? "live" : "pending") : ""}</div>
-          ${dlp && p2 !== null ? `<div class="br-breakdown">${getRefBreakdown(b.r2).map(i => `<div class="br-bd-item"><span class="br-bd-pts ${i.pts >= 0 ? "pos" : "neg"}">${i.pts >= 0 ? "+" : ""}${i.pts}</span>${i.label}</div>`).join("")}</div>` : ""}
+          ${
+            dlp && p2 !== null
+              ? `<div class="br-breakdown">${getRefBreakdown(b.r2)
+                  .map(
+                    (i) =>
+                      `<div class="br-bd-item"><span class="br-bd-pts ${i.pts >= 0 ? "pos" : "neg"}">${i.pts >= 0 ? "+" : ""}${i.pts}</span>${i.label}</div>`,
+                  )
+                  .join("")}</div>`
+              : ""
+          }
         </div>
       </div>
       <div class="battle-footer">
@@ -2337,25 +2919,200 @@
       });
 
       // ── SIDEBAR TABS ──────────────────────────────────────────
-      document.querySelectorAll(".sp-tab").forEach(tab => {
+      document.querySelectorAll(".sp-tab").forEach((tab) => {
         tab.addEventListener("click", () => {
-          document.querySelectorAll(".sp-tab").forEach(t => t.classList.remove("active"));
-          document.querySelectorAll(".sp-tab-content").forEach(c => c.style.display = "none");
+          document
+            .querySelectorAll(".sp-tab")
+            .forEach((t) => t.classList.remove("active"));
+          document
+            .querySelectorAll(".sp-tab-content")
+            .forEach((c) => (c.style.display = "none"));
           tab.classList.add("active");
-          const map = { pick: "spTabPick", refs: "spTabRefs", league: "spTabLeague" };
+          const map = {
+            pick: "spTabPick",
+            refs: "spTabRefs",
+            league: "spTabLeague",
+          };
           document.getElementById(map[tab.dataset.sptab]).style.display = "";
         });
       });
 
-      document.querySelectorAll(".lb-toggle-btn").forEach(btn => {
+      // Stores all picks for GW dropdown re-rendering
+      let _allPicksCache = [];
+
+      document.querySelectorAll(".lb-toggle-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
-          document.querySelectorAll(".lb-toggle-btn").forEach(b => b.classList.remove("active"));
+          document
+            .querySelectorAll(".lb-toggle-btn")
+            .forEach((b) => b.classList.remove("active"));
           btn.classList.add("active");
           const lb = btn.dataset.lb;
-          document.getElementById("fantasyLeague").style.display = lb === "gw" ? "" : "none";
-          document.getElementById("seasonPointsLeague").style.display = lb === "season" ? "" : "none";
+          document.getElementById("fantasyLeague").style.display =
+            lb === "gw" ? "" : "none";
+          document.getElementById("seasonPointsLeague").style.display =
+            lb === "season" ? "" : "none";
+          document.getElementById("gwSelector").style.display =
+            lb === "gw" ? "" : "none";
         });
       });
+
+      // Populate GW dropdown once allPicks are loaded
+      function populateGWDropdown(allPicks) {
+        const gws = [...new Set(allPicks.map((p) => +p.matchweek))].sort(
+          (a, b) => a - b,
+        );
+        const sel = document.getElementById("gwPickerSelect");
+        sel.innerHTML = gws
+          .map(
+            (gw) =>
+              `<option value="${gw}"${gw === FGW.gw ? " selected" : ""}>Matchweek ${gw}</option>`,
+          )
+          .join("");
+        sel.addEventListener("change", () =>
+          renderGWLeaderboardForGW(+sel.value, _allPicksCache),
+        );
+      }
+
+      // Render the GW leaderboard for any matchweek using allPicks
+      function renderGWLeaderboardForGW(gw, allPicks) {
+        const gwPicks = allPicks.filter((p) => +p.matchweek === gw);
+        if (!gwPicks.length) {
+          document.getElementById("fantasyLeague").innerHTML =
+            `<div style="padding:16px;color:var(--muted);font-size:.82rem;text-align:center">No picks for Matchweek ${gw}</div>`;
+          return;
+        }
+
+        const gwMatchList = MATCHES.filter((m) => +m.matchweek === gw);
+
+        // Build ref pts for this GW
+        const gwRefPts = {};
+        REFS.forEach((r) => {
+          const played = gwMatchList.filter(
+            (m) =>
+              +m.refId === r.id &&
+              (m.status === "complete" || m.status === "recent"),
+          );
+          if (!played.length) return;
+          gwRefPts[r.id] = played.reduce(
+            (s, m) =>
+              s +
+              (m.yc || 0) +
+              (m.rc || 0) +
+              (m.pen || 0) * 2 -
+              (m.incorrectVarPen || 0) -
+              (m.incorrectVarRed || 0) * 2 +
+              (m.perfectGame ? 3 : 0),
+            0,
+          );
+        });
+
+        // Build battles (same deterministic shuffle)
+        const refIds = [...new Set(gwMatchList.map((m) => +m.refId))];
+        const shuffled = [...refIds].sort(
+          (a, b) => ((a * 31 + gw * 17) % 97) - ((b * 31 + gw * 17) % 97),
+        );
+        const gwBattles = {};
+        for (let i = 0; i + 1 < shuffled.length; i += 2) {
+          gwBattles[shuffled[i]] = shuffled[i + 1];
+          gwBattles[shuffled[i + 1]] = shuffled[i];
+        }
+
+        // Calculate each user's pts for this GW
+        const rows = gwPicks
+          .map((p) => {
+            // Use stored result if this GW has been finalised by admin
+            if (p.gw_pts != null) {
+              const isMe = p.user_id === currentUser?.id;
+              const badge = isMe
+                ? getAvatarBadge()
+                : p.profile?.avatar_badge
+                  ? JSON.parse(p.profile.avatar_badge)
+                  : null;
+              const uname =
+                p.profile?.username ||
+                (isMe ? currentUser.username : "Unknown");
+              const refName = gRef(p.ref_id)?.name || "Unknown";
+              return {
+                uname,
+                isMe,
+                badge,
+                pts: p.gw_pts,
+                myPts: gwRefPts[p.ref_id] ?? null,
+                wcBoost: 0,
+                refName,
+                wc: p.wildcards || {},
+                storedResult: true,
+              };
+            }
+            const oppId = gwBattles[p.ref_id];
+            const myPts = gwRefPts[p.ref_id];
+            const oppPts = gwRefPts[oppId];
+            const wc = p.wildcards || {};
+            let boosted = myPts ?? 0;
+            if (myPts != null && oppPts != null) {
+              if (wc.yc?.active)
+                boosted += isHighYCMatch(wc.yc?.matchId) ? 1 : 0;
+              if (wc.rc?.active)
+                boosted += getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0;
+              if (wc.var?.active)
+                boosted += MATCHES.find((m) => m.id === wc.var?.matchId)
+                  ?.perfectGame
+                  ? 2
+                  : 0;
+            }
+            const pts =
+              myPts != null && oppPts != null
+                ? boosted > oppPts
+                  ? 3
+                  : boosted === oppPts
+                    ? 1
+                    : 0
+                : null;
+            const isMe = p.user_id === currentUser?.id;
+            const badge = isMe
+              ? getAvatarBadge()
+              : p.profile?.avatar_badge
+                ? JSON.parse(p.profile.avatar_badge)
+                : null;
+            const uname =
+              p.profile?.username || (isMe ? currentUser.username : "Unknown");
+            const refName = gRef(p.ref_id)?.name || "Unknown";
+            const wcBoost =
+              (wc.yc?.active ? (isHighYCMatch(wc.yc?.matchId) ? 1 : 0) : 0) +
+              (wc.rc?.active ? (getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0) : 0) +
+              (wc.var?.active
+                ? MATCHES.find((m) => m.id === wc.var?.matchId)?.perfectGame
+                  ? 2
+                  : 0
+                : 0);
+            return { uname, isMe, badge, pts, myPts, wcBoost, refName, wc };
+          })
+          .sort((a, b) => {
+            if (b.pts !== a.pts) return (b.pts ?? -1) - (a.pts ?? -1);
+            return (b.myPts ?? 0) + b.wcBoost - ((a.myPts ?? 0) + a.wcBoost);
+          });
+
+        document.getElementById("fantasyLeague").innerHTML = rows
+          .map((r, i) => {
+            const medal =
+              i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1;
+            const ptsDisplay = r.pts !== null ? r.pts : "–";
+            const refPtsDisplay =
+              r.myPts !== null
+                ? `${r.myPts + r.wcBoost} ref pts${r.wcBoost > 0 ? ` (+${r.wcBoost} wc)` : ""}`
+                : "no data";
+            return `<div class="fl-row${r.isMe ? " me" : ""}">
+            <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
+            <div style="display:flex;align-items:center;">${miniAvatarHtml(r.badge, r.uname)}</div>
+            <div style="min-width:0;">
+              <div class="fl-name${r.isMe ? " me" : ""}">${r.uname}${r.isMe ? " ★" : ""}</div>
+              <div class="fl-sub">${r.refName}</div>
+            </div>
+            <div class="fl-pts${r.isMe ? " me" : ""}">${ptsDisplay} <span style="font-size:.75em;opacity:.65;font-weight:500">(${refPtsDisplay})</span></div>
+          </div>`;
+          })
+          .join("");
+      }
 
       function renderSidebar() {
         const noPick = document.getElementById("noPick");
@@ -2389,11 +3146,27 @@
 
         // Wildcards boost the ref's score
         const battle0 = getBattleForRef(myPick);
-        const oppId0 = battle0 ? (battle0.r1 === myPick ? battle0.r2 : battle0.r1) : null;
+        const oppId0 = battle0
+          ? battle0.r1 === myPick
+            ? battle0.r2
+            : battle0.r1
+          : null;
         const wcBoost =
-          (wildcards.yc.active ? (isHighYCMatch(wildcards.yc.matchId) ? 1 : 0) : 0) +
-          (wildcards.rc.active ? (getMatchRC(wildcards.rc.matchId) > 0 ? 1 : 0) : 0) +
-          (wildcards.var.active ? (MATCHES.find(m=>m.id===wildcards.var.matchId)?.perfectGame ? 2 : 0) : 0);
+          (wildcards.yc.active
+            ? isHighYCMatch(wildcards.yc.matchId)
+              ? 1
+              : 0
+            : 0) +
+          (wildcards.rc.active
+            ? getMatchRC(wildcards.rc.matchId) > 0
+              ? 1
+              : 0
+            : 0) +
+          (wildcards.var.active
+            ? MATCHES.find((m) => m.id === wildcards.var.matchId)?.perfectGame
+              ? 2
+              : 0
+            : 0);
         const displayPts = rawPts !== null ? rawPts + wcBoost : null;
 
         // Ref card — show boosted score if wildcards are active
@@ -2425,7 +3198,9 @@
           bsLabel = "",
           bsDetail = "";
         const oppName = FGW.deadlinePassed ? opp.name : "???";
-        const oppSurname = FGW.deadlinePassed ? opp.name.split(" ").pop() : "???";
+        const oppSurname = FGW.deadlinePassed
+          ? opp.name.split(" ").pop()
+          : "???";
         if (!FGW.deadlinePassed) {
           bsLabel = "UPCOMING";
           bsDetail = `vs ??? — opponent revealed after deadline`;
@@ -2465,10 +3240,18 @@
         const boostLine =
           wcBoost > 0
             ? `<div class="gw-pts-bonus">${[
-                wildcards.yc.active ? `🟨 Yellow Card +${isHighYCMatch(wildcards.yc.matchId)?1:0}${wildcards.yc.matchId?` (${(MATCHES.find(m=>m.id===wildcards.yc.matchId)||{}).home||'?'} vs ${(MATCHES.find(m=>m.id===wildcards.yc.matchId)||{}).away||'?'})`:' — pick a match'}` : "",
-                wildcards.rc.active ? `🟥 Red Card +${getMatchRC(wildcards.rc.matchId)>0?1:0}${wildcards.rc.matchId?` (${(MATCHES.find(m=>m.id===wildcards.rc.matchId)||{}).home||'?'} vs ${(MATCHES.find(m=>m.id===wildcards.rc.matchId)||{}).away||'?'})`:' — pick a match'}` : "",
-                wildcards.var.active ? `📺 VAR +${MATCHES.find(m=>m.id===wildcards.var.matchId)?.perfectGame?3:0}${wildcards.var.matchId?` (${(MATCHES.find(m=>m.id===wildcards.var.matchId)||{}).home||'?'} vs ${(MATCHES.find(m=>m.id===wildcards.var.matchId)||{}).away||'?'})`:' — pick a match'}` : ""
-              ].filter(Boolean).join(" · ")}</div>`
+                wildcards.yc.active
+                  ? `🟨 Yellow Card +${isHighYCMatch(wildcards.yc.matchId) ? 1 : 0}${wildcards.yc.matchId ? ` (${(MATCHES.find((m) => m.id === wildcards.yc.matchId) || {}).home || "?"} vs ${(MATCHES.find((m) => m.id === wildcards.yc.matchId) || {}).away || "?"})` : " — pick a match"}`
+                  : "",
+                wildcards.rc.active
+                  ? `🟥 Red Card +${getMatchRC(wildcards.rc.matchId) > 0 ? 1 : 0}${wildcards.rc.matchId ? ` (${(MATCHES.find((m) => m.id === wildcards.rc.matchId) || {}).home || "?"} vs ${(MATCHES.find((m) => m.id === wildcards.rc.matchId) || {}).away || "?"})` : " — pick a match"}`
+                  : "",
+                wildcards.var.active
+                  ? `📺 VAR +${MATCHES.find((m) => m.id === wildcards.var.matchId)?.perfectGame ? 3 : 0}${wildcards.var.matchId ? ` (${(MATCHES.find((m) => m.id === wildcards.var.matchId) || {}).home || "?"} vs ${(MATCHES.find((m) => m.id === wildcards.var.matchId) || {}).away || "?"})` : " — pick a match"}`
+                  : "",
+              ]
+                .filter(Boolean)
+                .join(" · ")}</div>`
             : "";
         document.getElementById("gwPtsBox").innerHTML = `
     <div class="gw-pts-num">${gwResult !== null ? gwResult.pts : "—"}</div>
@@ -2521,23 +3304,30 @@
           },
         ];
 
-        const gwMatches = MATCHES.filter(m => +m.matchweek === FGW.gw);
+        const gwMatches = MATCHES.filter((m) => +m.matchweek === FGW.gw);
 
         document.getElementById("wcGrid").innerHTML = wcs
           .map((w) => {
             const state = wildcards[w.key];
-            const anyActive = Object.values(wildcards).some(s => s.active);
+            const anyActive = Object.values(wildcards).some((s) => s.active);
             const isDisabled = state.active
               ? w.preDeadline && locked // active pre-deadline WC locked in once deadline passes
               : (w.preDeadline && locked) || anyActive;
 
             // Match picker for YC/RC wildcards when active
-            const myRefMatchId = myPick ? (gwMatches.find(m => +m.refId === myPick) || {}).id : null;
-            const matchPickerOptions = (excludeId) => gwMatches
-              .filter(m => m.id !== excludeId)
-              .map(m => `<option value="${m.id}"${state.matchId===m.id?' selected':''}>${m.hE||''} ${m.home} vs ${m.away} ${m.aE||''}</option>`)
-              .join('');
-            const pickerStyle = 'margin-top:8px;width:100%;background:var(--surface);border:1px solid var(--pl-green);border-radius:6px;color:var(--text);font-family:\'Barlow\',sans-serif;font-size:.8rem;padding:5px 8px;';
+            const myRefMatchId = myPick
+              ? (gwMatches.find((m) => +m.refId === myPick) || {}).id
+              : null;
+            const matchPickerOptions = (excludeId) =>
+              gwMatches
+                .filter((m) => m.id !== excludeId)
+                .map(
+                  (m) =>
+                    `<option value="${m.id}"${state.matchId === m.id ? " selected" : ""}>${m.hE || ""} ${m.home} vs ${m.away} ${m.aE || ""}</option>`,
+                )
+                .join("");
+            const pickerStyle =
+              "margin-top:8px;width:100%;background:var(--surface);border:1px solid var(--pl-green);border-radius:6px;color:var(--text);font-family:'Barlow',sans-serif;font-size:.8rem;padding:5px 8px;";
             const matchPicker =
               state.active && !locked
                 ? `<select id="${w.key}MatchPicker" style="${pickerStyle}">
@@ -2545,8 +3335,8 @@
                     ${matchPickerOptions(null)}
                   </select>`
                 : state.active && state.matchId
-                  ? `<div style="margin-top:6px;font-size:.75rem;color:var(--pl-green);">📍 ${(gwMatches.find(m=>m.id===state.matchId)||{}).home||'?'} vs ${(gwMatches.find(m=>m.id===state.matchId)||{}).away||'?'}</div>`
-                  : '';
+                  ? `<div style="margin-top:6px;font-size:.75rem;color:var(--pl-green);">📍 ${(gwMatches.find((m) => m.id === state.matchId) || {}).home || "?"} vs ${(gwMatches.find((m) => m.id === state.matchId) || {}).away || "?"}</div>`
+                  : "";
 
             return `<div class="wc-btn-wrap">
     <button class="wc-btn${state.active ? " active" : ""}" data-wc="${w.key}"${isDisabled ? " disabled" : ""}>
@@ -2570,17 +3360,18 @@
 
         document.querySelectorAll(".wc-btn:not([disabled])").forEach((btn) => {
           btn.addEventListener("click", (e) => {
-            if (e.target.tagName === 'SELECT' || e.target.closest('select')) return;
+            if (e.target.tagName === "SELECT" || e.target.closest("select"))
+              return;
             const key = btn.dataset.wc;
             const wc = wildcards[key];
             if (wc.active) {
               wc.active = false;
-              if ('matchId' in wc) wc.matchId = null;
+              if ("matchId" in wc) wc.matchId = null;
               toast(
                 `${key === "yc" ? "Yellow Card" : key === "rc" ? "Red Card" : "VAR Replay"} deactivated`,
               );
             } else {
-              const anyActive = Object.values(wildcards).some(s => s.active);
+              const anyActive = Object.values(wildcards).some((s) => s.active);
               if (anyActive) {
                 toast("You can only use one wildcard per GW");
                 return;
@@ -2596,22 +3387,27 @@
         });
 
         // YC / RC / VAR match picker change handlers
-        ['yc', 'rc', 'var'].forEach(key => {
+        ["yc", "rc", "var"].forEach((key) => {
           const picker = document.getElementById(`${key}MatchPicker`);
           if (!picker) return;
-          picker.addEventListener('change', (e) => {
+          picker.addEventListener("change", (e) => {
             e.stopPropagation();
             const val = e.target.value;
             wildcards[key].matchId = val ? +val : null;
             saveWC();
             renderSidebar();
-            toast(val
-              ? (key === 'yc' ? '🟨 Most yellows prediction saved!' : key === 'rc' ? '🟥 Red card prediction saved!' : '📺 Perfect game prediction saved!')
-              : 'Match prediction cleared');
+            toast(
+              val
+                ? key === "yc"
+                  ? "🟨 Most yellows prediction saved!"
+                  : key === "rc"
+                    ? "🟥 Red card prediction saved!"
+                    : "📺 Perfect game prediction saved!"
+                : "Match prediction cleared",
+            );
           });
         });
       }
-
 
       // ── LEAGUE TABLE ──────────────────────────────────────────
       function renderLeague() {
@@ -2623,15 +3419,26 @@
         const sorted = [...FANTASY_LEAGUE].sort((a, b) => {
           if (b.pts !== a.pts) return b.pts - a.pts;
           // Tiebreaker: higher total ref points wins
-          const getRefPts = p => {
+          const getRefPts = (p) => {
             const battle = p.refId ? getBattleForRef(p.refId) : null;
-            const oppId = battle ? (battle.r1 === p.refId ? battle.r2 : battle.r1) : null;
+            const oppId = battle
+              ? battle.r1 === p.refId
+                ? battle.r2
+                : battle.r1
+              : null;
             const raw = p.refId != null ? (REF_GW_PTS[p.refId] ?? null) : null;
             if (raw === null) return -1;
             const wc = p.wildcards || {};
-            return raw + (wc.yc?.active ? (getMatchRC(wc.yc.matchId) > 0 ? 1 : 0) : 0)
-                       + (wc.rc?.active ? (getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0) : 0)
-                       + (wc.var?.active ? (MATCHES.find(m=>m.id===wc.var?.matchId)?.perfectGame ? 2 : 0) : 0);
+            return (
+              raw +
+              (wc.yc?.active ? (isHighYCMatch(wc.yc.matchId) ? 1 : 0) : 0) +
+              (wc.rc?.active ? (getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0) : 0) +
+              (wc.var?.active
+                ? MATCHES.find((m) => m.id === wc.var?.matchId)?.perfectGame
+                  ? 2
+                  : 0
+                : 0)
+            );
           };
           return getRefPts(b) - getRefPts(a);
         });
@@ -2642,25 +3449,46 @@
               i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1;
             // For current user use local wildcards state (same source as My Pick panel)
             // For others use their saved DB pick wildcards
-            const wc = p.isMe ? wildcards : (p.wildcards || {});
+            const wc = p.isMe ? wildcards : p.wildcards || {};
             const wcIcons = [
-              { key: 'yc', icon: '🟨' },
-              { key: 'rc', icon: '🟥' },
-              { key: 'var', icon: '📺' },
+              { key: "yc", icon: "🟨" },
+              { key: "rc", icon: "🟥" },
+              { key: "var", icon: "📺" },
             ];
-            const wcHtml = wcIcons.map(w => {
-              const active = !!wc[w.key]?.active;
-              return `<span class="fl-wc-icon${active ? '' : ' used'}" title="${w.icon}">${w.icon}</span>`;
-            }).join('');
+            const wcHtml = wcIcons
+              .map((w) => {
+                const active = !!wc[w.key]?.active;
+                return `<span class="fl-wc-icon${active ? "" : " used"}" title="${w.icon}">${w.icon}</span>`;
+              })
+              .join("");
             const battle = p.refId ? getBattleForRef(p.refId) : null;
-            const oppId = battle ? (battle.r1 === p.refId ? battle.r2 : battle.r1) : null;
-            const rawRefPts = p.refId != null ? (REF_GW_PTS[p.refId] ?? null) : null;
-            const wcBoost = rawRefPts !== null
-              ? (wc.yc?.active ? (isHighYCMatch(wc.yc?.matchId) ? 1 : 0) : 0) +
-                (wc.rc?.active ? (getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0) : 0) +
-                (wc.var?.active ? (MATCHES.find(m=>m.id===wc.var?.matchId)?.perfectGame ? 2 : 0) : 0)
-              : 0;
-            const refPtsDisplay = rawRefPts !== null ? rawRefPts + wcBoost : null;
+            const oppId = battle
+              ? battle.r1 === p.refId
+                ? battle.r2
+                : battle.r1
+              : null;
+            const rawRefPts =
+              p.refId != null ? (REF_GW_PTS[p.refId] ?? null) : null;
+            const wcBoost =
+              rawRefPts !== null
+                ? (wc.yc?.active
+                    ? isHighYCMatch(wc.yc?.matchId)
+                      ? 1
+                      : 0
+                    : 0) +
+                  (wc.rc?.active
+                    ? getMatchRC(wc.rc?.matchId) > 0
+                      ? 1
+                      : 0
+                    : 0) +
+                  (wc.var?.active
+                    ? MATCHES.find((m) => m.id === wc.var?.matchId)?.perfectGame
+                      ? 2
+                      : 0
+                    : 0)
+                : 0;
+            const refPtsDisplay =
+              rawRefPts !== null ? rawRefPts + wcBoost : null;
             return `<div class="fl-row${p.isMe ? " me" : ""}">
       <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
       <div style="display:flex;align-items:center;">${miniAvatarHtml(p.avatarBadge, p.username)}</div>
@@ -2680,34 +3508,56 @@
         if (!allPicks.length) return;
         const userTotals = {};
         // Group picks by user then by matchweek
-        allPicks.forEach(p => {
+        allPicks.forEach((p) => {
           const uid = p.user_id;
-          if (!userTotals[uid]) userTotals[uid] = { profile: p.profile, total: 0 };
+          if (!userTotals[uid])
+            userTotals[uid] = { profile: p.profile, total: 0 };
         });
         // For each matchweek, compute battles and assign win/draw/loss pts
-        const gws = [...new Set(allPicks.map(p => p.matchweek))];
-        gws.forEach(gw => {
-          const gwPicks = allPicks.filter(p => p.matchweek === gw);
-          const gwMatchList = MATCHES.filter(m => +m.matchweek === gw);
+        const gws = [...new Set(allPicks.map((p) => p.matchweek))];
+        gws.forEach((gw) => {
+          const gwPicks = allPicks.filter((p) => p.matchweek === gw);
+          const gwMatchList = MATCHES.filter((m) => +m.matchweek === gw);
           // Build ref pts for this GW
           const gwRefPts = {};
-          REFS.forEach(r => {
-            const played = gwMatchList.filter(m => +m.refId === r.id && (m.status === 'complete' || m.status === 'recent'));
+          REFS.forEach((r) => {
+            const played = gwMatchList.filter(
+              (m) =>
+                +m.refId === r.id &&
+                (m.status === "complete" || m.status === "recent"),
+            );
             if (!played.length) return;
-            let pts = played.reduce((s,m) => s + (m.yc||0) + (m.rc||0) + (m.pen||0)*2 - (m.incorrectVarPen||0) - (m.incorrectVarRed||0)*2 + (m.perfectGame?3:0), 0);
+            let pts = played.reduce(
+              (s, m) =>
+                s +
+                (m.yc || 0) +
+                (m.rc || 0) +
+                (m.pen || 0) * 2 -
+                (m.incorrectVarPen || 0) -
+                (m.incorrectVarRed || 0) * 2 +
+                (m.perfectGame ? 3 : 0),
+              0,
+            );
             gwRefPts[r.id] = pts;
           });
           // Pair up refs into battles (same deterministic shuffle as buildBattlesFromMatches)
-          const refIds = [...new Set(gwMatchList.map(m => +m.refId))];
-          const shuffled = [...refIds].sort((a,b) => ((a*31+gw*17)%97) - ((b*31+gw*17)%97));
+          const refIds = [...new Set(gwMatchList.map((m) => +m.refId))];
+          const shuffled = [...refIds].sort(
+            (a, b) => ((a * 31 + gw * 17) % 97) - ((b * 31 + gw * 17) % 97),
+          );
           const gwBattles = {};
-          for (let i = 0; i+1 < shuffled.length; i+=2) {
-            gwBattles[shuffled[i]] = shuffled[i+1];
-            gwBattles[shuffled[i+1]] = shuffled[i];
+          for (let i = 0; i + 1 < shuffled.length; i += 2) {
+            gwBattles[shuffled[i]] = shuffled[i + 1];
+            gwBattles[shuffled[i + 1]] = shuffled[i];
           }
-          gwPicks.forEach(p => {
+          gwPicks.forEach((p) => {
             const uid = p.user_id;
             if (!userTotals[uid]) return;
+            // Use stored result if admin has finalised this GW — never recalculate
+            if (p.gw_pts != null) {
+              userTotals[uid].total += p.gw_pts;
+              return;
+            }
             const oppId = gwBattles[p.ref_id];
             const myPts = gwRefPts[p.ref_id];
             const oppPts = gwRefPts[oppId];
@@ -2715,9 +3565,15 @@
             const wc = p.wildcards || {};
             let boosted = myPts;
             if (wc.yc?.active) boosted += isHighYCMatch(wc.yc?.matchId) ? 1 : 0;
-            if (wc.rc?.active) boosted += getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0;
-            if (wc.var?.active) boosted += MATCHES.find(m=>m.id===wc.var?.matchId)?.perfectGame ? 2 : 0;
-            userTotals[uid].total += boosted > oppPts ? 3 : boosted === oppPts ? 1 : 0;
+            if (wc.rc?.active)
+              boosted += getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0;
+            if (wc.var?.active)
+              boosted += MATCHES.find((m) => m.id === wc.var?.matchId)
+                ?.perfectGame
+                ? 2
+                : 0;
+            userTotals[uid].total +=
+              boosted > oppPts ? 3 : boosted === oppPts ? 1 : 0;
           });
         });
 
@@ -2726,17 +3582,25 @@
           .sort((a, b) => {
             if (b.total !== a.total) return b.total - a.total;
             // Tiebreaker: higher season total ref points wins
-            return (seasonRefTotals[b.uid] ?? 0) - (seasonRefTotals[a.uid] ?? 0);
+            return (
+              (seasonRefTotals[b.uid] ?? 0) - (seasonRefTotals[a.uid] ?? 0)
+            );
           });
 
-        document.getElementById("seasonPointsLeague").innerHTML = sorted.map((row, i) => {
-          const team = PL_TEAMS.find(t => t.name === row.profile?.team);
-          const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1;
-          const me = row.uid === currentUser?.id;
-          const refPts = seasonRefTotals[row.uid] ?? 0;
-          const seasonBadge = me ? getAvatarBadge() : (row.profile?.avatar_badge ? JSON.parse(row.profile.avatar_badge) : null);
-          const uname = row.profile?.username || "Unknown";
-          return `<div class="fl-row${me ? " me" : ""}">
+        document.getElementById("seasonPointsLeague").innerHTML = sorted
+          .map((row, i) => {
+            const team = PL_TEAMS.find((t) => t.name === row.profile?.team);
+            const medal =
+              i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1;
+            const me = row.uid === currentUser?.id;
+            const refPts = seasonRefTotals[row.uid] ?? 0;
+            const seasonBadge = me
+              ? getAvatarBadge()
+              : row.profile?.avatar_badge
+                ? JSON.parse(row.profile.avatar_badge)
+                : null;
+            const uname = row.profile?.username || "Unknown";
+            return `<div class="fl-row${me ? " me" : ""}">
             <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
             <div style="display:flex;align-items:center;">${miniAvatarHtml(seasonBadge, uname)}</div>
             <div style="min-width:0;">
@@ -2745,16 +3609,18 @@
             </div>
             <div class="fl-pts${me ? " me" : ""}">${row.total} <span style="font-size:.75em;opacity:.65;font-weight:500">(${refPts} ref pts)</span></div>
           </div>`;
-        }).join("");
+          })
+          .join("");
       }
 
       // ── SEASON REF POINTS PER USER ────────────────────────────
       function calcRefPtsForMatch(m) {
-        if (!m || (m.status !== 'complete' && m.status !== 'recent')) return null;
-        let pts = (m.yc||0) + (m.rc||0) + (m.pen||0)*2;
+        if (!m || (m.status !== "complete" && m.status !== "recent"))
+          return null;
+        let pts = (m.yc || 0) + (m.rc || 0) + (m.pen || 0) * 2;
         if (m.perfectGame) pts += 3;
-        pts -= (m.incorrectVarPen||0);
-        pts -= (m.incorrectVarRed||0)*2;
+        pts -= m.incorrectVarPen || 0;
+        pts -= (m.incorrectVarRed || 0) * 2;
         return pts;
       }
 
@@ -2762,42 +3628,64 @@
         if (!allPicks.length) return {};
         // Sum ref points for each user across all GWs
         const userTotals = {};
-        allPicks.forEach(p => {
+        allPicks.forEach((p) => {
           const uid = p.user_id;
-          if (!userTotals[uid]) userTotals[uid] = { profile: p.profile, total: 0 };
-          const refMatches = MATCHES.filter(m => +m.refId === p.ref_id && +m.matchweek === p.matchweek);
-          refMatches.forEach(m => {
+          if (!userTotals[uid])
+            userTotals[uid] = { profile: p.profile, total: 0 };
+          const refMatches = MATCHES.filter(
+            (m) => +m.refId === p.ref_id && +m.matchweek === p.matchweek,
+          );
+          refMatches.forEach((m) => {
             const pts = calcRefPtsForMatch(m);
             if (pts !== null) {
               const wc = p.wildcards || {};
               let boosted = pts;
-              if (wc.yc?.active) boosted += isHighYCMatch(wc.yc?.matchId) ? 1 : 0;
-              if (wc.rc?.active) boosted += getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0;
-              if (wc.var?.active) boosted += MATCHES.find(m=>m.id===wc.var?.matchId)?.perfectGame ? 2 : 0;
+              if (wc.yc?.active)
+                boosted += isHighYCMatch(wc.yc?.matchId) ? 1 : 0;
+              if (wc.rc?.active)
+                boosted += getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0;
+              if (wc.var?.active)
+                boosted += MATCHES.find((m) => m.id === wc.var?.matchId)
+                  ?.perfectGame
+                  ? 2
+                  : 0;
               userTotals[uid].total += boosted;
             }
           });
         });
 
         // Return totals map for use as tiebreaker in season GW points and display alongside season pts
-        return Object.fromEntries(Object.entries(userTotals).map(([uid, v]) => [uid, v.total]));
+        return Object.fromEntries(
+          Object.entries(userTotals).map(([uid, v]) => [uid, v.total]),
+        );
       }
 
       // ── GW REF SCORES ─────────────────────────────────────────
       function renderRefScores() {
-        const allRefs = REFS.filter(r => r.id in REF_GW_PTS || r.id in REF_SEASON_PTS);
-        const sorted = allRefs.sort((a, b) => (REF_GW_PTS[b.id] ?? -1) - (REF_GW_PTS[a.id] ?? -1));
+        const allRefs = REFS.filter(
+          (r) => r.id in REF_GW_PTS || r.id in REF_SEASON_PTS,
+        );
+        const sorted = allRefs.sort(
+          (a, b) => (REF_GW_PTS[b.id] ?? -1) - (REF_GW_PTS[a.id] ?? -1),
+        );
         if (!sorted.length) {
-          document.getElementById("refScores").innerHTML = '<div style="padding:14px 16px;font-size:.82rem;color:var(--muted)">No scores yet this matchweek</div>';
+          document.getElementById("refScores").innerHTML =
+            '<div style="padding:14px 16px;font-size:.82rem;color:var(--muted)">No scores yet this matchweek</div>';
           return;
         }
-        document.getElementById("refScores").innerHTML = sorted.map((r, i) => {
-          const gwPts = REF_GW_PTS[r.id] ?? null;
-          const seasonPts = REF_SEASON_PTS[r.id] ?? 0;
-          const gamesPlayed = MATCHES.filter(m => +m.refId === r.id && (m.status === 'complete' || m.status === 'recent')).length;
-          const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1;
-          const isMyRef = r.id === myPick;
-          return `<div class="fl-row fl-row--no-av${isMyRef ? " me" : ""}">
+        document.getElementById("refScores").innerHTML = sorted
+          .map((r, i) => {
+            const gwPts = REF_GW_PTS[r.id] ?? null;
+            const seasonPts = REF_SEASON_PTS[r.id] ?? 0;
+            const gamesPlayed = MATCHES.filter(
+              (m) =>
+                +m.refId === r.id &&
+                (m.status === "complete" || m.status === "recent"),
+            ).length;
+            const medal =
+              i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1;
+            const isMyRef = r.id === myPick;
+            return `<div class="fl-row fl-row--no-av${isMyRef ? " me" : ""}">
       <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
       <div>
         <div class="fl-name${isMyRef ? " me" : ""}">${r.name}${isMyRef ? " ★" : ""}</div>
@@ -2809,22 +3697,25 @@
         <div class="fl-pts-dual-col"><div class="fl-pts${isMyRef ? " me" : ""}">${seasonPts}</div></div>
       </div>
     </div>`;
-        }).join("");
+          })
+          .join("");
       }
 
       // ── SEASON REF SCORES ────────────────────────────────────
       function computeSeasonRefPoints() {
         const totals = {};
-        REFS.forEach(r => { totals[r.id] = 0; });
-        MATCHES.forEach(m => {
-          if (m.status !== 'complete' && m.status !== 'recent') return;
+        REFS.forEach((r) => {
+          totals[r.id] = 0;
+        });
+        MATCHES.forEach((m) => {
+          if (m.status !== "complete" && m.status !== "recent") return;
           const refId = +m.refId;
           if (!(refId in totals)) return;
-          totals[refId] += (m.yc || 0);
-          totals[refId] += (m.rc || 0);
+          totals[refId] += m.yc || 0;
+          totals[refId] += m.rc || 0;
           totals[refId] += (m.pen || 0) * 2;
           if (m.perfectGame) totals[refId] += 3;
-          totals[refId] -= (m.incorrectVarPen || 0);
+          totals[refId] -= m.incorrectVarPen || 0;
           totals[refId] -= (m.incorrectVarRed || 0) * 2;
         });
         // Add manual bonuses across all matchweeks — loaded separately below
@@ -2851,10 +3742,15 @@
               // Apply this user's wildcards to boost their ref's score
               const wc = p.wildcards || {};
               let boosted = rawPts;
-              if (wc.yc?.active) boosted += getMatchRC(wc.yc?.matchId) > 0 ? 1 : 0;
-              if (wc.yc?.active) boosted += isHighYCMatch(wc.yc?.matchId) ? 1 : 0;
-              if (wc.rc?.active) boosted += getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0;
-              if (wc.var?.active) boosted += MATCHES.find(m=>m.id===wc.var?.matchId)?.perfectGame ? 2 : 0;
+              if (wc.yc?.active)
+                boosted += isHighYCMatch(wc.yc?.matchId) ? 1 : 0;
+              if (wc.rc?.active)
+                boosted += getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0;
+              if (wc.var?.active)
+                boosted += MATCHES.find((m) => m.id === wc.var?.matchId)
+                  ?.perfectGame
+                  ? 2
+                  : 0;
               const won = boosted > oppPts;
               const drew = boosted === oppPts;
               pts = won ? 3 : drew ? 1 : 0;
@@ -2863,9 +3759,12 @@
           const isMe = p.user_id === currentUser?.id;
           const rawBadge = isMe
             ? getAvatarBadge()
-            : (profile?.avatar_badge ? JSON.parse(profile.avatar_badge) : null);
+            : profile?.avatar_badge
+              ? JSON.parse(profile.avatar_badge)
+              : null;
           FANTASY_LEAGUE.push({
-            username: profile?.username || (isMe ? currentUser.username : "Unknown"),
+            username:
+              profile?.username || (isMe ? currentUser.username : "Unknown"),
             team: profile?.team || (isMe ? currentUser.team : ""),
             pts,
             gwPick: gRef(refId)?.name.split(" ").pop() || "—",
@@ -2881,7 +3780,9 @@
       }
 
       // ── BUILD BATTLES FROM MATCHES ────────────────────────────
-      function gwMatches() { return MATCHES.filter(m => m.matchweek === FGW.gw); }
+      function gwMatches() {
+        return MATCHES.filter((m) => m.matchweek === FGW.gw);
+      }
 
       function buildBattlesFromMatches() {
         const refIds = [...new Set(gwMatches().map((m) => m.refId))];
@@ -2933,7 +3834,10 @@
         REFS.forEach((ref) => {
           const refMatches = gwMatches().filter((m) => +m.refId === ref.id);
           const played = refMatches.filter(
-            (m) => m.status === "complete" || m.status === "recent" || m.status === "live",
+            (m) =>
+              m.status === "complete" ||
+              m.status === "recent" ||
+              m.status === "live",
           );
 
           if (!played.length) {
@@ -2945,25 +3849,40 @@
           let pts = 0;
           const breakdown = [];
 
-          const totalYC          = played.reduce((s, m) => s + (m.yc  || 0), 0);
-          const totalRC          = played.reduce((s, m) => s + (m.rc  || 0), 0);
-          const totalCorrectPen  = played.reduce((s, m) => s + (m.pen || 0), 0);
-          const isPerfect        = played.every((m) => m.perfectGame === true);
-          const totalBadVarPen   = played.reduce((s, m) => s + (m.incorrectVarPen || 0), 0);
-          const totalBadVarRed   = played.reduce((s, m) => s + (m.incorrectVarRed || 0), 0);
+          const totalYC = played.reduce((s, m) => s + (m.yc || 0), 0);
+          const totalRC = played.reduce((s, m) => s + (m.rc || 0), 0);
+          const totalCorrectPen = played.reduce((s, m) => s + (m.pen || 0), 0);
+          const isPerfect = played.every((m) => m.perfectGame === true);
+          const totalBadVarPen = played.reduce(
+            (s, m) => s + (m.incorrectVarPen || 0),
+            0,
+          );
+          const totalBadVarRed = played.reduce(
+            (s, m) => s + (m.incorrectVarRed || 0),
+            0,
+          );
 
           if (totalYC > 0) {
             pts += totalYC;
-            breakdown.push({ pts: totalYC, label: `${totalYC} yellow card${totalYC > 1 ? "s" : ""}` });
+            breakdown.push({
+              pts: totalYC,
+              label: `${totalYC} yellow card${totalYC > 1 ? "s" : ""}`,
+            });
           }
           if (totalRC > 0) {
             pts += totalRC;
-            breakdown.push({ pts: totalRC, label: `${totalRC} red card${totalRC > 1 ? "s" : ""}` });
+            breakdown.push({
+              pts: totalRC,
+              label: `${totalRC} red card${totalRC > 1 ? "s" : ""}`,
+            });
           }
           if (totalCorrectPen > 0) {
             const p = totalCorrectPen * 2;
             pts += p;
-            breakdown.push({ pts: p, label: `Correct VAR penalty${totalCorrectPen > 1 ? " ×" + totalCorrectPen : ""}` });
+            breakdown.push({
+              pts: p,
+              label: `Correct VAR penalty${totalCorrectPen > 1 ? " ×" + totalCorrectPen : ""}`,
+            });
           }
           if (isPerfect) {
             pts += 3;
@@ -2972,12 +3891,18 @@
           if (totalBadVarPen > 0) {
             const p = totalBadVarPen * -1;
             pts += p;
-            breakdown.push({ pts: p, label: `VAR overturn penalty${totalBadVarPen > 1 ? " ×" + totalBadVarPen : ""}` });
+            breakdown.push({
+              pts: p,
+              label: `VAR overturn penalty${totalBadVarPen > 1 ? " ×" + totalBadVarPen : ""}`,
+            });
           }
           if (totalBadVarRed > 0) {
             const p = totalBadVarRed * -2;
             pts += p;
-            breakdown.push({ pts: p, label: `VAR overturn red card${totalBadVarRed > 1 ? " ×" + totalBadVarRed : ""}` });
+            breakdown.push({
+              pts: p,
+              label: `VAR overturn red card${totalBadVarRed > 1 ? " ×" + totalBadVarRed : ""}`,
+            });
           }
 
           // Correct VAR decisions (+2 each) still via Supabase manual bonuses
@@ -3035,14 +3960,22 @@
 
         // Compute season totals (all matchweeks)
         REF_SEASON_PTS = computeSeasonRefPoints();
-        REFS.forEach(r => {
-          (allBonuses[r.id] || []).forEach(b => { REF_SEASON_PTS[r.id] = (REF_SEASON_PTS[r.id] || 0) + b.pts; });
+        REFS.forEach((r) => {
+          (allBonuses[r.id] || []).forEach((b) => {
+            REF_SEASON_PTS[r.id] = (REF_SEASON_PTS[r.id] || 0) + b.pts;
+          });
         });
         renderRefScores(); // re-render now that season pts are computed
 
         // Update all matchweek labels with the live GW number
         const gwLabel = `Matchweek ${FGW.gw}`;
-        ['bannerGWLabel','deadlineNoticeGW','sidePanelGWLabel','refScoresGWLabel','leagueGWLabel'].forEach(id => {
+        [
+          "bannerGWLabel",
+          "deadlineNoticeGW",
+          "sidePanelGWLabel",
+          "refScoresGWLabel",
+          "leagueGWLabel",
+        ].forEach((id) => {
           const el = document.getElementById(id);
           if (el) el.textContent = gwLabel;
         });
@@ -3056,9 +3989,15 @@
           FGW.deadlinePassed ? "none" : "";
         if (FGW.deadline) {
           const d = new Date(FGW.deadline);
-          document.getElementById("deadlineText").textContent = d.toLocaleString('en-GB', {
-            weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false
-          });
+          document.getElementById("deadlineText").textContent =
+            d.toLocaleString("en-GB", {
+              weekday: "short",
+              day: "numeric",
+              month: "short",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+            });
         }
 
         // Restore user's pick + wildcards from DB (overrides sessionStorage)
@@ -3069,12 +4008,15 @@
           myPick = dbPick.ref_id;
           // Apply only active states from current GW — left counts always come from season totals
           if (dbPick.wildcards) {
-            ['yc','rc','var'].forEach(k => {
+            ["yc", "rc", "var"].forEach((k) => {
               if (dbPick.wildcards[k]?.active) wildcards[k].active = true;
             });
-            if (dbPick.wildcards.yc?.matchId) wildcards.yc.matchId = dbPick.wildcards.yc.matchId;
-            if (dbPick.wildcards.rc?.matchId) wildcards.rc.matchId = dbPick.wildcards.rc.matchId;
-            if (dbPick.wildcards.var?.matchId) wildcards.var.matchId = dbPick.wildcards.var.matchId;
+            if (dbPick.wildcards.yc?.matchId)
+              wildcards.yc.matchId = dbPick.wildcards.yc.matchId;
+            if (dbPick.wildcards.rc?.matchId)
+              wildcards.rc.matchId = dbPick.wildcards.rc.matchId;
+            if (dbPick.wildcards.var?.matchId)
+              wildcards.var.matchId = dbPick.wildcards.var.matchId;
           }
           sessionStorage.setItem("rtr_pick_1", myPick);
           sessionStorage.setItem("rtr_wc_1", JSON.stringify(wildcards));
@@ -3087,7 +4029,9 @@
         // Build leaderboard from DB; falls back to static placeholder if no data
         const dbLeaderboard = await loadFantasyLeaderboard(FGW.gw);
         // Populate pick counts per ref from leaderboard data
-        dbLeaderboard.forEach(p => { if (PICK_COUNTS[p.ref_id] !== undefined) PICK_COUNTS[p.ref_id]++; });
+        dbLeaderboard.forEach((p) => {
+          if (PICK_COUNTS[p.ref_id] !== undefined) PICK_COUNTS[p.ref_id]++;
+        });
         renderBattles();
         buildLeaderboard(dbLeaderboard);
         renderRefScores();
@@ -3098,9 +4042,12 @@
 
         // Rebuild GW leaderboard from allPicks — catches any users missed by loadFantasyLeaderboard
         // (e.g. matchweek type mismatch). Uses numeric comparison to be safe.
-        const gwPicks = allPicks.filter(p => +p.matchweek === FGW.gw);
+        const gwPicks = allPicks.filter((p) => +p.matchweek === FGW.gw);
         if (gwPicks.length) buildLeaderboard(gwPicks);
         else renderLeague(); // re-render with updated wildcard data if no additional picks found
+
+        _allPicksCache = allPicks;
+        populateGWDropdown(allPicks);
 
         const seasonRefTotals = buildSeasonRefPointsLeague(allPicks);
         buildSeasonGWPointsLeague(allPicks, seasonRefTotals);
@@ -3109,6 +4056,10 @@
         twemoji.parse(document.body, { folder: "svg", ext: ".svg" });
       })();
     </script>
-  <script>if("serviceWorker"in navigator){navigator.serviceWorker.register("/sw.js").catch(()=>{});}</script>
-</body>
+    <script>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/sw.js").catch(() => {});
+      }
+    </script>
+  </body>
 </html>

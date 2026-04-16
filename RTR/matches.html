@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#f6f0ff;--surface:#ffffff;--surface2:#ede6ff;--border:#cfc0ee;--accent2:#f5a623;--red:#e02d42;--yellow:#d4920a;--green:#009960;--text:#18082c;--muted:#6a58a0;--pl-purple:#37003c;--pl-green:#00cc70;}
+  :root{--bg:#f6f0ff;--surface:#ffffff;--surface2:#ede6ff;--border:#cfc0ee;--accent2:#f5a623;--red:#e02d42;--yellow:#d4920a;--green:#009960;--text:#6a58a0;--muted:#6a58a0;--pl-purple:#37003c;--pl-green:#00cc70;}
   *{margin:0;padding:0;box-sizing:border-box;}
   body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;}
 
@@ -193,6 +193,41 @@
   .skel-circle{border-radius:50%;flex-shrink:0;}
   .skel-line{height:11px;}
 
+  /* ── VIDEO BUTTONS ──────────────────────────────────────── */
+  .match-video-btns{display:flex;gap:6px;padding:0 16px 10px;flex-wrap:wrap;}
+  .vid-btn{display:inline-flex;align-items:center;gap:5px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.5px;text-transform:uppercase;border-radius:5px;padding:5px 10px;cursor:pointer;border:1px solid;transition:all .15s;background:none;}
+  .vid-btn.highlights{color:#ff6b35;border-color:rgba(255,107,53,.35);}
+  .vid-btn.highlights:hover{background:rgba(255,107,53,.1);border-color:rgba(255,107,53,.7);}
+  .vid-btn.var{color:#00b4d8;border-color:rgba(0,180,216,.35);}
+  .vid-btn.var:hover{background:rgba(0,180,216,.1);border-color:rgba(0,180,216,.7);}
+  .vid-btn.highlights.active{background:rgba(255,107,53,.15);border-color:#ff6b35;}
+  .vid-btn.var.active{background:rgba(0,180,216,.15);border-color:#00b4d8;}
+
+  /* ── INLINE VIDEO PLAYER ─────────────────────────────────── */
+  .match-video-player{
+    overflow:hidden;
+    max-height:0;
+    transition:max-height .4s cubic-bezier(.4,0,.2,1);
+  }
+  .match-video-player.open{ max-height:400px; }
+  .match-video-player-inner{
+    margin:0 10px 10px;
+    border-radius:8px;
+    overflow:hidden;
+    background:#000;
+    position:relative;
+    padding-bottom:56.25%;
+    height:0;
+  }
+  .match-video-player-inner iframe{
+    position:absolute;inset:0;width:100%;height:100%;border:none;
+  }
+
+  /* ── LIGHT MODE OVERRIDES ───────────────────────────────── */
+  html:not([data-theme="dark"]) .team span { color: var(--muted); }
+  html:not([data-theme="dark"]) .ref-name { color: var(--muted); }
+  html:not([data-theme="dark"]) .lb-ref-name { color: var(--muted); }
+
   /* ── MOBILE ─────────────────────────────────────────────── */
   @media(max-width:768px){
     .container{grid-template-columns:1fr;padding:12px;}
@@ -218,8 +253,8 @@
       <nav>
         <a href="matches.html" class="active">Matches</a>
         <a href="referees.html">Referees</a>
-        <a href="fantasy.html">Fantasy</a>
-        <a href="badges.html" class="admin-only" style="display:none">Badges</a>
+        <a href="fantasy.html"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="Fantasy" style="height:20px;width:auto;vertical-align:middle;"></a>
+        <a href="badges.html" class="admin-only" style="display:none">Cards</a>
         <a href="forum.html" class="admin-only" style="display:none">Forum</a>
         <a href="history.html">History</a>
       </nav>
@@ -231,7 +266,7 @@
         <span style="color:var(--muted);font-size:.7rem;margin-left:2px">▾</span>
         <div class="user-dropdown" id="userDropdown">
           <div class="dd-head"><div class="dd-uname" id="ddName"></div><div class="dd-team" id="ddTeam"></div></div>
-          <div class="dd-item" onclick="location.href='badges.html'">🏅 Badges</div>
+          <div class="dd-item" onclick="location.href='badges.html'">🏅 Cards</div>
           <div class="dd-item danger" id="ddLogout">↩ Sign out</div>
         </div>
       </div>
@@ -242,25 +277,22 @@
 <div class="mobile-nav" id="mobileNav">
   <a href="matches.html" class="active">Matches</a>
   <a href="referees.html">Referees</a>
-  <a href="fantasy.html">Fantasy</a>
-  <a href="badges.html" class="admin-only" style="display:none">Badges</a>
+  <a href="fantasy.html"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="Fantasy" style="height:20px;width:auto;vertical-align:middle;"></a>
+  <a href="badges.html" class="admin-only" style="display:none">Cards</a>
   <a href="forum.html" class="admin-only" style="display:none">Forum</a>
   <a href="history.html">History</a>
 </div>
 
 <div class="container">
   <div>
-    <div id="fanBanner" class="fan-banner" style="display:none">
-      <span id="fanBannerEmoji" style="font-size:1.3rem"></span>
-      <div>Ratings for <strong id="fanBannerTeam"></strong> matches show <span style="color:var(--green)">neutral</span> and <span style="color:var(--yellow)">fan</span> scores separately</div>
-    </div>
+
     <div class="view-tabs" id="filterTabs">
       <button class="view-tab active" data-filter="all">All</button>
       <button class="view-tab" data-filter="upcoming">Upcoming</button>
       <button class="view-tab" data-filter="live">Live</button>
       <button class="view-tab" data-filter="recent">Recent</button>
     </div>
-    <div class="section-title">Group Stage · Matchday 1 · 11 Jun 2026</div>
+    <div class="section-title" id="matchSectionTitle">Premier League · Matchweek 1</div>
     <div id="matchList"></div>
   </div>
   <div>
@@ -300,7 +332,7 @@
       </div>
     </div>
     <div class="leaderboard">
-      <div class="lb-header"><span>⭐ Ref Rankings · 2026 World Cup</span>
+      <div class="lb-header"><span>⭐ Ref Rankings · Premier League</span>
         <div class="lb-tabs">
           <button class="lb-tab active" id="lbN">Neutral</button>
           <button class="lb-tab ft" id="lbF">Fan</button>
@@ -343,9 +375,6 @@ function initHeader() {
     document.getElementById('userChip').insertBefore(badge, document.getElementById('userChip').firstChild);
   }
   if (currentUser?.team) {
-    document.getElementById('fanBanner').style.display='flex';
-    document.getElementById('fanBannerEmoji').innerHTML = team ? flagImg(team.emoji, 20) : '';
-    document.getElementById('fanBannerTeam').textContent = currentUser.team;
   }
 }
 
@@ -386,6 +415,7 @@ function flagImg(emoji) {
 
 // ── MATCH LIST ────────────────────────────────────────────
 function renderList() {
+  document.getElementById('matchSectionTitle').textContent = `Premier League · Matchweek ${currentGW}`;
   const el = document.getElementById('matchList');
   const gwFiltered = MATCHES.filter(m => m.matchweek === currentGW);
   const list = filter==='all' ? gwFiltered : gwFiltered.filter(m=>m.status===(filter==='recent'?'complete':filter));
@@ -401,18 +431,25 @@ function renderList() {
     return `<div class="match-card${selId===m.id?' selected':''}${fan?' fan-match':''}" data-mid="${m.id}">
       <div class="match-header">
         <span>${live?'<span class="live-dot"></span>LIVE':up?'UPCOMING':'FULL TIME'}</span>
-        <span>${fan?'<span class="my-team-tag">MY TEAM</span> ':''}2026 World Cup · Group ${m.group||'?'}</span>
+        <span>${fan?'<span class="my-team-tag">MY TEAM</span> ':''}Premier League · Matchweek ${m.matchweek||currentGW}</span>
       </div>
       <div class="match-body">
-        <div class="team home"><div class="team-badge">${flagImg(m.hE)}</div><span>${m.home}</span></div>
+        <div class="team home"><div class="team-badge"><img src="images/logos/RRLogo.svg" style="width:22px;height:22px;opacity:.7;"></div><span>${m.home}</span></div>
         <div class="score-block">${m.score}<span class="time"${live?' style="color:var(--red)"':''}>${live?'LIVE':up?(m.kickoff?new Date(String(m.kickoff).replace(' ','T').replace(/Z$/,'')).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).replace(',',''):'TBC'):'FT'}</span></div>
-        <div class="team away"><div class="team-badge">${flagImg(m.aE)}</div><span>${m.away}</span></div>
+        <div class="team away"><div class="team-badge"><img src="images/logos/RRLogo.svg" style="width:22px;height:22px;opacity:.7;"></div><span>${m.away}</span></div>
       </div>
       ${!up?`<div class="card-stats" style="padding:0 16px 6px">
         <span class="stat-pill yc"><span class="icon">🟨</span>${m.yc}</span>
         ${m.rc?`<span class="stat-pill rc"><span class="icon">🟥</span>${m.rc}</span>`:''}
-        ${m.pen?`<span class="stat-pill"><span class="icon">⚽</span>${m.pen > 1 ? m.pen + 'x ' : ''}PEN</span>`:''}
+        ${m.pen?`<span class="stat-pill">${m.pen > 1 ? m.pen + 'x ' : ''}PEN</span>`:''}
         ${m.var?`<span class="stat-pill"><span class="icon">📺</span>VAR×${m.var}</span>`:''}
+      </div>`:''}
+      ${(m.highlightVideoId||m.varVideoId)&&!up?`<div class="match-video-btns">
+        ${m.highlightVideoId?`<button class="vid-btn highlights" data-vid="${m.highlightVideoId}" data-type="highlights">▶ Highlights</button>`:''}
+        ${m.varVideoId?`<button class="vid-btn var" data-vid="${m.varVideoId}" data-type="var">📺 VAR Decisions</button>`:''}
+      </div>
+      <div class="match-video-player" id="vp-${m.id}">
+        <div class="match-video-player-inner" id="vpi-${m.id}"></div>
       </div>`:''}
       <div class="match-footer">
         <div class="ref-row">
@@ -564,10 +601,10 @@ async function openPanel(mid) {
   const ref = REFS.find(r => r.id === +m.refId);
 
   document.getElementById('panelMatchInfo').innerHTML = `
-    <div style="font-size:1.3rem">${m.hE}⚔️${m.aE}</div>
+    <div style="font-size:1.3rem">${m.hE} vs ${m.aE}</div>
     <div>
       <div class="sel-match-teams">${m.home} vs ${m.away}</div>
-      <div class="sel-match-date">2026 World Cup · Group ${m.group||'?'} · MD1</div>
+      <div class="sel-match-date">Premier League · Matchweek ${m.matchweek||currentGW}</div>
     </div>
     ${m.score !== '–' ? `<div style="margin-left:auto;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem">${m.score}</div>` : ''}`;
 
@@ -739,6 +776,52 @@ initHeader();
     renderList();
     renderLb();
   }, 60 * 1000);
+})();
+</script>
+<script>
+(function(){
+  let activePlayer = null; // { mid, type } — tracks what's currently open
+
+  document.getElementById('matchList').addEventListener('click', e => {
+    const btn = e.target.closest('.vid-btn');
+    if (!btn) return;
+    e.stopPropagation(); // don't open the rating panel
+
+    const card   = btn.closest('.match-card');
+    const mid    = card?.dataset.mid;
+    const type   = btn.dataset.type;
+    const vid    = btn.dataset.vid;
+    const player = document.getElementById(`vp-${mid}`);
+    const inner  = document.getElementById(`vpi-${mid}`);
+    if (!player || !inner) return;
+
+    const isSame = activePlayer?.mid === mid && activePlayer?.type === type;
+
+    // Close any currently open player
+    if (activePlayer) {
+      const prevPlayer = document.getElementById(`vp-${activePlayer.mid}`);
+      const prevInner  = document.getElementById(`vpi-${activePlayer.mid}`);
+      if (prevPlayer) prevPlayer.classList.remove('open');
+      if (prevInner)  { prevInner.innerHTML = ''; } // stops playback
+      document.querySelectorAll('.vid-btn').forEach(b => b.classList.remove('active'));
+      activePlayer = null;
+    }
+
+    // If clicking the same button again — just close (toggle off)
+    if (isSame) return;
+
+    // Open the new player
+    inner.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${vid}?autoplay=1&rel=0"
+      allowfullscreen
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+    </iframe>`;
+    player.classList.add('open');
+    btn.classList.add('active');
+    activePlayer = { mid, type };
+
+    // Scroll the card into view smoothly
+    setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+  });
 })();
 </script>
 <script>twemoji.parse(document.body, { folder: 'svg', ext: '.svg' });</script>

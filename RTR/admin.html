@@ -12,7 +12,7 @@
 <title>RTR Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#f6f0ff;--surface:#ffffff;--surface2:#ede6ff;--border:#cfc0ee;--red:#e02d42;--yellow:#d4920a;--green:#009960;--text:#18082c;--muted:#6a58a0;--pl-purple:#37003c;--pl-green:#00cc70;}
+  :root{--bg:#f6f0ff;--surface:#ffffff;--surface2:#ede6ff;--border:#cfc0ee;--red:#e02d42;--yellow:#d4920a;--green:#009960;--text:#6a58a0;--muted:#6a58a0;--pl-purple:#37003c;--pl-green:#00cc70;}
   *{margin:0;padding:0;box-sizing:border-box;}
   body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;padding:24px;}
   .admin-topbar{display:flex;align-items:center;padding:12px 0 20px;margin-bottom:4px;}
@@ -112,7 +112,7 @@
 
   <!-- MATCH MANAGER -->
   <div class="section">
-    <div class="section-title">⚽ Match Manager</div>
+    <div class="section-title">Match Manager</div>
     <div class="row cols-2" style="margin-bottom:14px;">
       <div class="field-group">
         <label>Filter by Matchweek</label>
@@ -189,6 +189,23 @@
     <button class="btn btn-green btn-sm" id="addIncidentBtn" style="margin-bottom:16px;">+ Add Decision</button>
     <hr class="divider">
     <div id="incidentAdminList"><div style="color:var(--muted);font-size:.85rem;">Select a match to view incidents.</div></div>
+  </div>
+
+  <!-- FINALISE GW -->
+  <div class="section">
+    <div class="section-title">🔒 Finalise Gameweek Points</div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px;line-height:1.6;">
+      Calculates each user's GW battle result (with wildcard boosts) and locks it into the database.
+      Once stored, the season leaderboard always uses these values — even if match data changes later.
+    </p>
+    <div class="row cols-2" style="margin-bottom:14px;">
+      <div class="field-group">
+        <label>Matchweek to Finalise</label>
+        <select id="finaliseGWSelect"><option value="">Select matchweek…</option></select>
+      </div>
+    </div>
+    <div id="finalisePreview" style="margin-bottom:14px;font-size:.82rem;color:var(--muted);"></div>
+    <button class="btn btn-green" id="finaliseGWBtn" disabled>Lock in GW Points</button>
   </div>
 </div>
 
@@ -609,6 +626,152 @@
     }
 
     hmMatchSel.addEventListener('change', () => renderHeatmap(hmMatchSel.value));
+
+    // ── FINALISE GW ───────────────────────────────────────
+    // Populate dropdown with all matchweeks that have picks
+    const allPicks = await loadAllFantasyPicks();
+    const pickedGWs = [...new Set(allPicks.map(p => +p.matchweek))].sort((a,b)=>a-b);
+    const finalSel = document.getElementById('finaliseGWSelect');
+    pickedGWs.forEach(gw => {
+      const opt = document.createElement('option');
+      opt.value = gw;
+      // Flag already-finalised GWs (all picks in that GW already have gw_pts stored)
+      const gwPicks = allPicks.filter(p => +p.matchweek === gw);
+      const alreadyDone = gwPicks.length > 0 && gwPicks.every(p => p.gw_pts != null);
+      opt.textContent = `Matchweek ${gw}${alreadyDone ? ' ✓ finalised' : ''}`;
+      finalSel.appendChild(opt);
+    });
+
+    function isHighYCMatchAdmin(matchId) {
+      const m = MATCHES.find(x => +x.id === +matchId);
+      return !!m && (m.yc || 0) >= 4;
+    }
+    function getMatchRCAdmin(matchId) {
+      const m = MATCHES.find(x => +x.id === +matchId);
+      return m ? (m.rc || 0) : 0;
+    }
+
+    function calcFinalisePreview(gw) {
+      const gwPicks = allPicks.filter(p => +p.matchweek === gw);
+      if (!gwPicks.length) return [];
+      const gwMatchList = MATCHES.filter(m => +m.matchweek === gw);
+      // Build ref raw pts
+      const gwRefPts = {};
+      REFS.forEach(r => {
+        const played = gwMatchList.filter(m => +m.refId === r.id && (m.status === 'complete' || m.status === 'recent'));
+        if (!played.length) return;
+        gwRefPts[r.id] = played.reduce((s, m) =>
+          s + (m.yc||0) + (m.rc||0) + (m.pen||0)*2 - (m.incorrectVarPen||0) - (m.incorrectVarRed||0)*2 + (m.perfectGame?3:0), 0);
+      });
+      // Build battles
+      const refIds = [...new Set(gwMatchList.map(m => +m.refId))];
+      const shuffled = [...refIds].sort((a,b) => ((a*31+gw*17)%97) - ((b*31+gw*17)%97));
+      const gwBattles = {};
+      for (let i = 0; i+1 < shuffled.length; i+=2) {
+        gwBattles[shuffled[i]] = shuffled[i+1];
+        gwBattles[shuffled[i+1]] = shuffled[i];
+      }
+      return gwPicks.map(p => {
+        const wc = p.wildcards || {};
+        const myRaw = gwRefPts[p.ref_id];
+        const oppId = gwBattles[p.ref_id];
+        const oppPts = gwRefPts[oppId];
+        const oppRefName = REFS.find(r => r.id === oppId)?.name || '—';
+        if (myRaw == null || oppPts == null) return { user_id: p.user_id, matchweek: gw, gw_pts: null, username: p.profile?.username || p.user_id, status: 'no data' };
+        // Calculate wildcard boost breakdown
+        const wcDetails = [];
+        let boosted = myRaw;
+        if (wc.yc?.active) {
+          const bonus = isHighYCMatchAdmin(wc.yc?.matchId) ? 1 : 0;
+          const matchName = wc.yc?.matchId ? (MATCHES.find(m=>+m.id===+wc.yc.matchId) || {}) : {};
+          wcDetails.push({ icon: '🟨', label: `YC — ${matchName.home||'?'} vs ${matchName.away||'?'}`, bonus, fired: bonus > 0 });
+          boosted += bonus;
+        }
+        if (wc.rc?.active) {
+          const bonus = getMatchRCAdmin(wc.rc?.matchId) > 0 ? 1 : 0;
+          const matchName = wc.rc?.matchId ? (MATCHES.find(m=>+m.id===+wc.rc.matchId) || {}) : {};
+          wcDetails.push({ icon: '🟥', label: `RC — ${matchName.home||'?'} vs ${matchName.away||'?'}`, bonus, fired: bonus > 0 });
+          boosted += bonus;
+        }
+        if (wc.var?.active) {
+          const bonus = MATCHES.find(m=>+m.id===wc.var?.matchId)?.perfectGame ? 2 : 0;
+          const matchName = wc.var?.matchId ? (MATCHES.find(m=>+m.id===+wc.var.matchId) || {}) : {};
+          wcDetails.push({ icon: '📺', label: `VAR — ${matchName.home||'?'} vs ${matchName.away||'?'}`, bonus, fired: bonus > 0 });
+          boosted += bonus;
+        }
+        const wcBoost = boosted - myRaw;
+        const pts = boosted > oppPts ? 3 : boosted === oppPts ? 1 : 0;
+        const refName = REFS.find(r => r.id === p.ref_id)?.name || `Ref ${p.ref_id}`;
+        return {
+          user_id: p.user_id, matchweek: gw, gw_pts: pts,
+          username: p.profile?.username || p.user_id,
+          refName, oppRefName, myRaw, boosted, wcBoost, wcDetails, oppPts,
+          status: pts === 3 ? 'WIN' : pts === 1 ? 'DRAW' : 'LOSS',
+          alreadyStored: p.gw_pts != null,
+          storedPts: p.gw_pts,
+        };
+      });
+    }
+
+    finalSel.addEventListener('change', () => {
+      const gw = +finalSel.value;
+      const preview = document.getElementById('finalisePreview');
+      const btn = document.getElementById('finaliseGWBtn');
+      if (!gw) { preview.innerHTML = ''; btn.disabled = true; return; }
+      const rows = calcFinalisePreview(gw);
+      if (!rows.length) { preview.innerHTML = '<span style="color:var(--muted)">No picks found for this matchweek.</span>'; btn.disabled = true; return; }
+      preview.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:.8rem;">
+        <thead><tr style="color:var(--muted);text-align:left;">
+          <th style="padding:4px 8px">User</th>
+          <th style="padding:4px 8px">Ref (vs Opponent)</th>
+          <th style="padding:4px 8px">Raw</th>
+          <th style="padding:4px 8px">Wildcard Used</th>
+          <th style="padding:4px 8px">+Bonus</th>
+          <th style="padding:4px 8px">Boosted</th>
+          <th style="padding:4px 8px">Opp Pts</th>
+          <th style="padding:4px 8px">Result</th>
+          <th style="padding:4px 8px">GW Pts</th>
+          <th style="padding:4px 8px">Stored</th>
+        </tr></thead>
+        <tbody>${rows.map(r => {
+          const wcHtml = r.wcDetails?.length
+            ? r.wcDetails.map(w => `<span title="${w.label}" style="opacity:${w.fired?1:.4}">${w.icon}${w.fired ? ` +${w.bonus}` : ' ✗'}</span>`).join(' ')
+            : '<span style="color:var(--muted)">none</span>';
+          return `<tr>
+            <td style="padding:4px 8px">${r.username}</td>
+            <td style="padding:4px 8px">${r.refName || '—'}<br><span style="opacity:.6;font-size:.75em">vs ${r.oppRefName||'—'} (${r.oppPts ?? '—'} pts)</span></td>
+            <td style="padding:4px 8px">${r.myRaw ?? '—'}</td>
+            <td style="padding:4px 8px">${wcHtml}</td>
+            <td style="padding:4px 8px;font-weight:700;color:${(r.wcBoost??0)>0?'var(--pl-green)':'var(--muted)'}">+${r.wcBoost ?? 0}</td>
+            <td style="padding:4px 8px">${r.boosted ?? '—'}</td>
+            <td style="padding:4px 8px">${r.oppPts ?? '—'}</td>
+            <td style="padding:4px 8px;font-weight:700;color:${r.status==='WIN'?'var(--pl-green)':r.status==='DRAW'?'var(--accent2)':'var(--red)'}">${r.status}</td>
+            <td style="padding:4px 8px">${r.gw_pts ?? '—'}</td>
+            <td style="padding:4px 8px">${r.alreadyStored ? `<span style="color:var(--pl-green)">✓ ${r.storedPts}pts</span>` : '<span style="color:var(--muted)">pending</span>'}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`;
+      btn.disabled = rows.every(r => r.gw_pts == null && r.status === 'no data');
+    });
+
+    document.getElementById('finaliseGWBtn').addEventListener('click', async () => {
+      const gw = +finalSel.value;
+      if (!gw) return;
+      const rows = calcFinalisePreview(gw).filter(r => r.gw_pts != null);
+      if (!rows.length) { toast('No calculable results — check match stats are entered and complete', true); return; }
+      const btn = document.getElementById('finaliseGWBtn');
+      btn.disabled = true; btn.textContent = 'Saving…';
+      const ok = await saveGWPointsBatch(rows);
+      btn.disabled = false; btn.textContent = 'Lock in GW Points';
+      if (ok) {
+        // Refresh stored status in preview
+        rows.forEach(r => { const p = allPicks.find(x => x.user_id === r.user_id && +x.matchweek === gw); if (p) p.gw_pts = r.gw_pts; });
+        finalSel.dispatchEvent(new Event('change'));
+        toast(`✓ GW${gw} points locked in for ${rows.length} users`);
+      } else {
+        toast('Save failed — check console', true);
+      }
+    });
 
   })();
 </script>

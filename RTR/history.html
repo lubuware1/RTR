@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#f6f0ff;--surface:#ffffff;--surface2:#ede6ff;--border:#cfc0ee;--accent2:#f5a623;--red:#e02d42;--yellow:#d4920a;--green:#009960;--text:#18082c;--muted:#6a58a0;--pl-purple:#37003c;--pl-green:#00cc70;}
+  :root{--bg:#f6f0ff;--surface:#ffffff;--surface2:#ede6ff;--border:#cfc0ee;--accent2:#f5a623;--red:#e02d42;--yellow:#d4920a;--green:#009960;--text:#6a58a0;--muted:#6a58a0;--pl-purple:#37003c;--pl-green:#00cc70;}
   *{margin:0;padding:0;box-sizing:border-box;}
   body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;}
 
@@ -133,7 +133,7 @@
       <nav>
         <a href="matches.html">Matches</a>
         <a href="referees.html">Referees</a>
-        <a href="fantasy.html">Fantasy</a>
+        <a href="fantasy.html"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="Fantasy" style="height:20px;width:auto;vertical-align:middle;"></a>
         <a href="history.html" class="active">History</a>
       </nav>
       <div class="user-chip" id="userChip">
@@ -310,8 +310,8 @@ function renderGWContent(gw, data, details) {
     const d   = details.get(m.id);
     const yc  = d?.bookings?.filter(b => b.card === 'YELLOW').length ?? '–';
     const rc  = d?.bookings?.filter(b => b.card === 'RED' || b.card === 'YELLOW_RED').length ?? '–';
-    const home = TEAM_LOOKUP[m.homeTeam.name] || { short: m.homeTeam.shortName, emoji: '⚽' };
-    const away = TEAM_LOOKUP[m.awayTeam.name] || { short: m.awayTeam.shortName, emoji: '⚽' };
+    const home = TEAM_LOOKUP[m.homeTeam.name] || { short: m.homeTeam.shortName, emoji: '' };
+    const away = TEAM_LOOKUP[m.awayTeam.name] || { short: m.awayTeam.shortName, emoji: '' };
 
     // Look up rating from our REFS store
     const knownRef = ref ? REFS.find(r =>
@@ -333,7 +333,7 @@ function renderGWContent(gw, data, details) {
         </div>
       </div>
       <div class="gw-summary-pills">
-        <div class="summary-pill">⚽ <span>${totalGoals}</span> goals</div>
+        <div class="summary-pill"><span>${totalGoals}</span> goals</div>
         <div class="summary-pill">🟨 <span>${totalYC}</span> yellow cards</div>
         <div class="summary-pill">🟥 <span>${totalRC}</span> red cards</div>
         ${totalPen ? `<div class="summary-pill">Penalty <span>${totalPen}</span></div>` : ''}
@@ -342,8 +342,8 @@ function renderGWContent(gw, data, details) {
 
     <div class="match-grid" id="matchGrid">
       ${matches.map(m => {
-        const home   = TEAM_LOOKUP[m.homeTeam.name] || { short: m.homeTeam.shortName, emoji: '⚽' };
-        const away   = TEAM_LOOKUP[m.awayTeam.name] || { short: m.awayTeam.shortName, emoji: '⚽' };
+        const home   = TEAM_LOOKUP[m.homeTeam.name] || { short: m.homeTeam.shortName, emoji: '' };
+        const away   = TEAM_LOOKUP[m.awayTeam.name] || { short: m.awayTeam.shortName, emoji: '' };
         const hs     = m.score?.fullTime?.home, as_ = m.score?.fullTime?.away;
         const scoreStr = (hs != null && m.status !== 'TIMED' && m.status !== 'SCHEDULED') ? `${hs}–${as_}` : null;
         const st     = statusLabel(m.status);
@@ -385,7 +385,7 @@ function renderGWContent(gw, data, details) {
             <div class="mc-stats">
               ${yc ? `<span class="mc-stat">🟨 ${yc}</span>` : ''}
               ${rc ? `<span class="mc-stat">🟥 ${rc}</span>` : ''}
-              ${pen ? `<span class="mc-stat">⚽ ${pen} pen</span>` : ''}
+              ${pen ? `<span class="mc-stat">${pen} pen</span>` : ''}
               ${!yc && !rc && !pen ? '<span class="mc-stat" style="color:var(--border)">No cards</span>' : ''}
             </div>` : `<div class="mc-kickoff">${fmtKickoff(m.utcDate)}</div>`}
           </div>

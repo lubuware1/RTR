@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#f6f0ff;--surface:#ffffff;--surface2:#ede6ff;--border:#cfc0ee;--accent2:#f5a623;--red:#e02d42;--yellow:#d4920a;--green:#009960;--text:#18082c;--muted:#6a58a0;--pl-purple:#37003c;--pl-green:#00cc70;}
+  :root{--bg:#f6f0ff;--surface:#ffffff;--surface2:#ede6ff;--border:#cfc0ee;--accent2:#f5a623;--red:#e02d42;--yellow:#d4920a;--green:#009960;--text:#6a58a0;--muted:#6a58a0;--pl-purple:#37003c;--pl-green:#00cc70;}
   *{margin:0;padding:0;box-sizing:border-box;}
   body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;}
 
@@ -43,7 +43,7 @@
   .section-title{font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
 
   .refs-hero{background:linear-gradient(135deg,var(--pl-purple) 0%,#1a0028 60%,var(--surface) 100%);border:1px solid rgba(0,255,133,.15);border-radius:12px;padding:28px 32px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;}
-  .refs-hero h1{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2rem;text-transform:uppercase;letter-spacing:.5px;}
+  .refs-hero h1{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2rem;text-transform:uppercase;letter-spacing:.5px;color:#fff;}
   .refs-hero p{font-size:.85rem;color:rgba(255,255,255,.5);margin-top:6px;max-width:500px;line-height:1.6;}
   .refs-hero-stats{display:flex;gap:24px;flex-shrink:0;}
   .hero-stat .val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2.2rem;color:var(--pl-green);line-height:1;}
@@ -59,13 +59,13 @@
   .refs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
 
   /* Referee profile card */
-  .rpc{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .2s;}
+  .rpc{background:#0d0f14;border:1px solid rgba(255,255,255,.1);border-radius:12px;overflow:hidden;transition:border-color .2s;}
   .rpc.open{border-color:rgba(0,255,133,.3);}
   .rpc-head{background:linear-gradient(135deg,var(--pl-purple),#1a0028);padding:16px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;user-select:none;}
   .rpc-head:hover{filter:brightness(1.12);}
   .rpc-av{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#37003c,#8b008b);border:2px solid rgba(0,255,133,.35);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;color:var(--pl-green);flex-shrink:0;}
   .rpc-info{flex:1;min-width:0;}
-  .rpc-name{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.15rem;}
+  .rpc-name{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.15rem;color:#fff;}
   .rpc-meta{font-size:.74rem;color:rgba(255,255,255,.4);margin-top:3px;}
   .rpc-notes{font-size:.7rem;color:rgba(255,255,255,.3);margin-top:3px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .rpc-rank{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2.2rem;color:rgba(0,255,133,.18);line-height:1;flex-shrink:0;}
@@ -76,48 +76,48 @@
   .rpc.open .rpc-dropdown{grid-template-rows:1fr;}
   .rpc-dropdown-inner{overflow:hidden;}
 
-  .rpc-body{padding:14px 18px;}
+  .rpc-body{padding:14px 18px;background:#0d0f14;}
   .rpc-card-stats{display:flex;gap:6px;margin-bottom:14px;}
-  .rpc-stat-pill{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 8px;text-align:center;}
-  .rpc-stat-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.05rem;}
-  .rpc-stat-lbl{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:1px;}
+  .rpc-stat-pill{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:6px 8px;text-align:center;}
+  .rpc-stat-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.05rem;color:#fff;}
+  .rpc-stat-lbl{font-size:.6rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.04em;margin-top:1px;}
 
   .rpc-scores{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
-  .score-box{background:var(--surface2);border-radius:8px;padding:10px 12px;}
+  .score-box{background:rgba(255,255,255,.05);border-radius:8px;padding:10px 12px;}
   .score-box.nb{border-left:3px solid rgba(55,236,186,.5);}
   .score-box.fb{border-left:3px solid rgba(255,211,42,.5);}
   .score-lbl{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
-  .score-lbl.nl{color:var(--green);}.score-lbl.fl{color:var(--yellow);}
+  .score-lbl.nl{color:#37ecba;}.score-lbl.fl{color:#ffd32a;}
   .score-val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.8rem;line-height:1;}
-  .score-val.nv{color:var(--green);}.score-val.fv{color:var(--yellow);}.score-val.none{color:var(--muted);font-size:1rem;}
-  .score-votes{font-size:.68rem;color:var(--muted);margin-top:2px;}
+  .score-val.nv{color:#37ecba;}.score-val.fv{color:#ffd32a;}.score-val.none{color:rgba(255,255,255,.3);font-size:1rem;}
+  .score-votes{font-size:.68rem;color:rgba(255,255,255,.35);margin-top:2px;}
 
-  .bias-gap-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:8px 10px;background:var(--surface2);border-radius:6px;}
-  .bg-label{font-size:.72rem;color:var(--muted);flex-shrink:0;}
-  .bg-track{flex:1;background:var(--border);border-radius:4px;height:6px;overflow:hidden;}
+  .bias-gap-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:8px 10px;background:rgba(255,255,255,.05);border-radius:6px;}
+  .bg-label{font-size:.72rem;color:rgba(255,255,255,.4);flex-shrink:0;}
+  .bg-track{flex:1;background:rgba(255,255,255,.1);border-radius:4px;height:6px;overflow:hidden;}
   .bg-fill{height:100%;border-radius:4px;transition:width .4s ease;}
   .bg-val{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.78rem;flex-shrink:0;}
-  .bg-val.pos{color:var(--green);}.bg-val.neg{color:var(--red);}.bg-val.zero{color:var(--muted);}
+  .bg-val.pos{color:#37ecba;}.bg-val.neg{color:#ff4757;}.bg-val.zero{color:rgba(255,255,255,.35);}
 
   .cat-bars{margin-bottom:14px;}
   .bar-row{display:grid;grid-template-columns:112px 1fr 32px;align-items:center;gap:8px;margin-bottom:6px;}
-  .bar-lbl{font-size:.72rem;color:var(--muted);}
-  .bar-track{background:var(--surface2);border-radius:4px;height:6px;overflow:hidden;}
+  .bar-lbl{font-size:.72rem;color:rgba(255,255,255,.4);}
+  .bar-track{background:rgba(255,255,255,.08);border-radius:4px;height:6px;overflow:hidden;}
   .bar-fill{height:100%;border-radius:4px;transition:width .4s ease;}
-  .bar-fill.g{background:var(--green);}.bar-fill.y{background:var(--yellow);}.bar-fill.r{background:var(--red);}
-  .bar-val{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:700;text-align:right;color:var(--muted);}
+  .bar-fill.g{background:#37ecba;}.bar-fill.y{background:#ffd32a;}.bar-fill.r{background:#ff4757;}
+  .bar-val{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:700;text-align:right;color:rgba(255,255,255,.4);}
 
-  .recent-matches-title{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px;}
-  .recent-match-row{background:var(--surface2);border-radius:5px;padding:5px 9px;display:flex;align-items:center;justify-content:space-between;font-size:.75rem;margin-bottom:4px;}
-  .rm-teams{font-family:'Barlow Condensed',sans-serif;font-weight:600;}
-  .rm-score{font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--muted);}
-  .rm-score.live{color:var(--red);}
+  .recent-matches-title{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.35);margin-bottom:6px;}
+  .recent-match-row{background:rgba(255,255,255,.05);border-radius:5px;padding:5px 9px;display:flex;align-items:center;justify-content:space-between;font-size:.75rem;margin-bottom:4px;}
+  .rm-teams{font-family:'Barlow Condensed',sans-serif;font-weight:600;color:#fff;}
+  .rm-score{font-family:'Barlow Condensed',sans-serif;font-weight:700;color:rgba(255,255,255,.4);}
+  .rm-score.live{color:#ff4757;}
 
-  .rpc-footer{padding:10px 18px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-  .rpc-games{font-size:.75rem;color:var(--muted);}
-  .rpc-games strong{color:var(--text);}
+  .rpc-footer{padding:10px 18px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;background:#0d0f14;}
+  .rpc-games{font-size:.75rem;color:rgba(255,255,255,.4);}
+  .rpc-games strong{color:#fff;}
   .rpc-trend{display:flex;align-items:center;gap:4px;font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:700;}
-  .rpc-trend.up{color:var(--green);}.rpc-trend.down{color:var(--red);}.rpc-trend.flat{color:var(--muted);}
+  .rpc-trend.up{color:#37ecba;}.rpc-trend.down{color:#ff4757;}.rpc-trend.flat{color:rgba(255,255,255,.35);}
 
   .data-banner{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;font-size:.78rem;gap:12px;flex-wrap:wrap;}
   .db-left{display:flex;align-items:center;gap:8px;color:var(--muted);}
@@ -157,8 +157,8 @@
       <nav>
         <a href="matches.html">Matches</a>
         <a href="referees.html" class="active">Referees</a>
-        <a href="fantasy.html">Fantasy</a>
-        <a href="badges.html" class="admin-only" style="display:none">Badges</a>
+        <a href="fantasy.html"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="Fantasy" style="height:20px;width:auto;vertical-align:middle;"></a>
+        <a href="badges.html" class="admin-only" style="display:none">Cards</a>
         <a href="forum.html" class="admin-only" style="display:none">Forum</a>
         <a href="history.html">History</a>
       </nav>
@@ -170,7 +170,7 @@
         <span style="color:var(--muted);font-size:.7rem;margin-left:2px">▾</span>
         <div class="user-dropdown" id="userDropdown">
           <div class="dd-head"><div class="dd-uname" id="ddName"></div><div class="dd-team" id="ddTeam"></div></div>
-          <div class="dd-item" onclick="location.href='badges.html'">🏅 Badges</div>
+          <div class="dd-item" onclick="location.href='badges.html'">🏅 Cards</div>
           <div class="dd-item" id="ddLogout">↩ Sign out</div>
         </div>
       </div>
@@ -181,8 +181,8 @@
 <div class="mobile-nav" id="mobileNav">
   <a href="matches.html">Matches</a>
   <a href="referees.html" class="active">Referees</a>
-  <a href="fantasy.html">Fantasy</a>
-  <a href="badges.html" class="admin-only" style="display:none">Badges</a>
+  <a href="fantasy.html"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="Fantasy" style="height:20px;width:auto;vertical-align:middle;"></a>
+  <a href="badges.html" class="admin-only" style="display:none">Cards</a>
   <a href="forum.html" class="admin-only" style="display:none">Forum</a>
   <a href="history.html">History</a>
 </div>

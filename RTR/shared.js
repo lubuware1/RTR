@@ -191,12 +191,29 @@ async function loadManualBonuses(matchweek) {
 
 async function loadAllFantasyPicks() {
   if (PREVIEW_MODE) return [];
-  const { data: picks } = await getSB().from('RTR Fantasy Picks').select('user_id, ref_id, matchweek, wildcards');
+  const { data: picks } = await getSB().from('RTR Fantasy Picks').select('user_id, ref_id, matchweek, wildcards, gw_pts');
   if (!picks?.length) return [];
   const { data: profiles } = await getSB().from('RTR Profiles')
     .select('id, username, team, avatar_badge').in('id', picks.map(p => p.user_id));
   const pm = Object.fromEntries((profiles || []).map(p => [p.id, p]));
   return picks.map(p => ({ ...p, profile: pm[p.user_id] || null }));
+}
+
+async function saveGWPointsBatch(results) {
+  // results: [{ user_id, matchweek, gw_pts }]
+  // Uses individual updates so only gw_pts is written — existing pick/wildcards are untouched.
+  if (PREVIEW_MODE || !results.length) return true;
+  const sb = getSB();
+  const updates = results.map(r =>
+    sb.from('RTR Fantasy Picks')
+      .update({ gw_pts: r.gw_pts })
+      .eq('user_id', r.user_id)
+      .eq('matchweek', r.matchweek)
+  );
+  const settled = await Promise.all(updates);
+  const failed = settled.filter(r => r.error);
+  if (failed.length) console.error('[RTR] saveGWPointsBatch errors:', failed.map(r => r.error));
+  return failed.length === 0;
 }
 
 async function saveManualBonus(matchweek, refId, pts, label) {
@@ -587,12 +604,14 @@ async function loadFromSheets() {
         if (parsed.length) MATCHES = parsed.map(m => ({
           ...m,
           matchweek: +m.matchweek || 1,
-          hE: m.homeEmoji || '⚽', aE: m.awayEmoji || '⚽',
+          hE: m.homeEmoji || '', aE: m.awayEmoji || '',
           yc: +m.yellowCards || 0, rc: +m.redCards || 0,
           pen: +m.penaltiesGiven || 0, var: +m.varDecisions || 0,
           perfectGame:     m.perfectGame === 'yes',
           incorrectVarPen: +m.incorrectVarPen || 0,
           incorrectVarRed: +m.incorrectVarRed || 0,
+          highlightVideoId: m.highlightVideoId || null,
+          varVideoId:       m.varVideoId       || null,
         }));
       }
     }
@@ -630,7 +649,7 @@ async function loadFromSheets() {
 // ── SHARED CSS VARIABLES (injected into each page) ────────
 const SHARED_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap');
-  :root{--bg:#f6f0ff;--surface:#ffffff;--surface2:#ede6ff;--border:#cfc0ee;--accent2:#f5a623;--red:#e02d42;--yellow:#d4920a;--green:#009960;--text:#18082c;--muted:#6a58a0;--pl-purple:#37003c;--pl-green:#00cc70;}
+  :root{--bg:#f6f0ff;--surface:#ffffff;--surface2:#ede6ff;--border:#cfc0ee;--accent2:#f5a623;--red:#e02d42;--yellow:#d4920a;--green:#009960;--text:#6a58a0;--muted:#6a58a0;--pl-purple:#37003c;--pl-green:#00cc70;}
   *{margin:0;padding:0;box-sizing:border-box;}
   body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;}
   /* Header */
@@ -686,6 +705,123 @@ const SHARED_CSS = `
   html[data-theme="dark"] .mobile-nav{background:linear-gradient(135deg,#37003c 0%,#1a0020 100%);}
   html[data-theme="dark"] .gw-banner{background:linear-gradient(90deg,rgba(55,0,60,.9),rgba(10,12,16,1)) !important;}
   html[data-theme="dark"] body::before{background:radial-gradient(ellipse 70% 50% at 20% 30%,rgba(55,0,60,.45) 0%,transparent 70%),radial-gradient(ellipse 60% 60% at 80% 70%,rgba(80,0,90,.3) 0%,transparent 65%) !important;}
+
+  /* ── BADGE UNLOCK ANIMATION ─────────────────────────────── */
+  .bu-backdrop{
+    position:fixed;inset:0;z-index:9999;
+    display:flex;align-items:flex-end;justify-content:center;
+    padding-bottom:48px;
+    pointer-events:none;
+    animation:buBgIn .35s ease forwards;
+  }
+  .bu-backdrop.bu-out{animation:buBgOut .45s ease forwards;}
+  @keyframes buBgIn{from{background:rgba(0,0,0,0)}to{background:rgba(0,0,0,.55)}}
+  @keyframes buBgOut{from{background:rgba(0,0,0,.55)}to{background:rgba(0,0,0,0)}}
+
+  .bu-outer{
+    pointer-events:auto;
+    animation:buSlideUp .55s cubic-bezier(.22,1,.36,1) forwards;
+  }
+  .bu-outer.bu-out{animation:buSlideDown .4s cubic-bezier(.55,0,.78,0) forwards;}
+  @keyframes buSlideUp{from{opacity:0;transform:translateY(120px) scale(.88)}to{opacity:1;transform:translateY(0) scale(1)}}
+  @keyframes buSlideDown{from{opacity:1;transform:translateY(0) scale(1)}to{opacity:0;transform:translateY(80px) scale(.9)}}
+
+  .bu-card{
+    background:linear-gradient(145deg,#1a0030 0%,#0d0f14 60%,#1a1e28 100%);
+    border:1.5px solid rgba(0,255,133,.45);
+    border-radius:20px;
+    padding:32px 36px 28px;
+    text-align:center;
+    min-width:280px;max-width:340px;
+    position:relative;
+    box-shadow:0 0 60px rgba(0,255,133,.18),0 24px 60px rgba(0,0,0,.7);
+    transform-style:preserve-3d;
+    will-change:transform;
+    overflow:hidden;
+  }
+  .bu-card::before{
+    content:'';position:absolute;inset:0;
+    background:radial-gradient(ellipse 60% 40% at 50% 0%,rgba(0,255,133,.15) 0%,transparent 70%);
+    pointer-events:none;
+  }
+  .bu-new-label{
+    font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:.72rem;
+    letter-spacing:.18em;text-transform:uppercase;color:var(--pl-green);
+    background:rgba(0,255,133,.1);border:1px solid rgba(0,255,133,.3);
+    border-radius:20px;padding:3px 12px;display:inline-block;margin-bottom:14px;
+    animation:buBlink 1.4s ease-in-out infinite;
+  }
+  @keyframes buBlink{0%,100%{opacity:1}50%{opacity:.5}}
+  .bu-icon-wrap{
+    width:80px;height:80px;border-radius:50%;
+    background:linear-gradient(135deg,rgba(55,0,60,.8),rgba(0,255,133,.12));
+    border:2px solid rgba(0,255,133,.4);
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 16px;
+    font-size:2.6rem;line-height:1;
+    animation:buGlowPulse 2s ease-in-out infinite;
+    position:relative;z-index:2;
+  }
+  .bu-icon-wrap img{width:100%;height:100%;border-radius:50%;object-fit:cover;}
+  @keyframes buGlowPulse{0%,100%{box-shadow:0 0 0 0 rgba(0,255,133,.4)}50%{box-shadow:0 0 0 10px rgba(0,255,133,0)}}
+  .bu-title{
+    font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.55rem;
+    text-transform:uppercase;letter-spacing:.5px;color:#fff;margin-bottom:6px;
+  }
+  .bu-desc{font-size:.82rem;color:rgba(255,255,255,.6);line-height:1.55;margin-bottom:20px;}
+  .bu-dismiss{
+    font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.8rem;
+    letter-spacing:.12em;text-transform:uppercase;
+    color:rgba(0,255,133,.5);background:none;border:none;cursor:pointer;padding:4px 0;
+    transition:color .15s;
+  }
+  .bu-dismiss:hover{color:var(--pl-green);}
+  .bu-smoke{
+    position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+    pointer-events:none;z-index:1;
+  }
+  .bu-particle{
+    position:absolute;bottom:0;
+    border-radius:50%;
+    background:radial-gradient(circle,rgba(0,255,133,.55) 0%,rgba(0,255,133,0) 70%);
+    animation:buSmokePuff var(--dur) ease-out var(--delay) forwards;
+    opacity:0;
+    pointer-events:none;
+  }
+  @keyframes buSmokePuff{
+    0%  {opacity:.7;transform:translateX(var(--dx)) translateY(0)   scale(.4);}
+    60% {opacity:.35;transform:translateX(calc(var(--dx)*1.4)) translateY(var(--rise)) scale(1.1);}
+    100%{opacity:0; transform:translateX(calc(var(--dx)*1.8)) translateY(calc(var(--rise)*1.6)) scale(1.4);}
+  }
+
+  /* ── AVATAR CARD POPUP ───────────────────────────────────── */
+  .rr-av-tip{cursor:pointer;display:inline-flex;}
+  .rr-av-popup{
+    position:fixed;z-index:8000;
+    background:linear-gradient(145deg,#1a0030 0%,#0d0f14 70%);
+    border:1.5px solid rgba(0,255,133,.35);
+    border-radius:14px;
+    padding:16px 18px 14px;
+    min-width:200px;max-width:260px;
+    box-shadow:0 8px 40px rgba(0,0,0,.7),0 0 0 1px rgba(0,255,133,.08);
+    animation:avPopIn .18s cubic-bezier(.22,1,.36,1);
+    pointer-events:auto;
+  }
+  @keyframes avPopIn{from{opacity:0;transform:scale(.88) translateY(6px)}to{opacity:1;transform:scale(1) translateY(0)}}
+  .rr-av-popup-icon{
+    width:52px;height:52px;border-radius:50%;
+    background:linear-gradient(135deg,rgba(55,0,60,.8),rgba(0,255,133,.1));
+    border:2px solid rgba(0,255,133,.3);
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.7rem;margin:0 auto 10px;
+  }
+  .rr-av-popup-icon img{width:100%;height:100%;border-radius:50%;object-fit:cover;}
+  .rr-av-popup-user{font-size:.7rem;color:rgba(0,255,133,.6);font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:.12em;text-transform:uppercase;text-align:center;margin-bottom:6px;}
+  .rr-av-popup-name{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;letter-spacing:.3px;color:#fff;text-align:center;margin-bottom:4px;}
+  .rr-av-popup-cat{font-size:.65rem;color:rgba(0,255,133,.5);font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:.1em;text-transform:uppercase;text-align:center;margin-bottom:8px;}
+  .rr-av-popup-desc{font-size:.78rem;color:rgba(255,255,255,.55);line-height:1.5;text-align:center;border-top:1px solid rgba(255,255,255,.07);padding-top:8px;}
+  .rr-av-popup-close{position:absolute;top:8px;right:10px;background:none;border:none;color:rgba(255,255,255,.25);font-size:.85rem;cursor:pointer;padding:2px 4px;line-height:1;}
+  .rr-av-popup-close:hover{color:rgba(255,255,255,.6);}
 `;
 (function(){const s=document.createElement('style');s.textContent=SHARED_CSS;document.head.appendChild(s);})();
 
@@ -710,14 +846,24 @@ function setAvatarBadge(data) {
 // Render a mini circular avatar for use in leaderboard rows
 function miniAvatarHtml(badge, username, size = 26) {
   const isImg = badge?.icon && /\.(png|jpg|jpeg|svg|webp)$/i.test(badge.icon);
+  const isImgBadge = badge?.img || isImg;
   const initials = (username || '?').slice(0, 2).toUpperCase();
   const base = `width:${size}px;height:${size}px;border-radius:50%;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;`;
+
+  let inner;
   if (isImg) {
-    return `<img src="${badge.icon}" style="${base}object-fit:cover;border:1.5px solid rgba(0,255,133,.3);" alt="">`;
+    inner = `<img src="${badge.icon}" style="${base}object-fit:cover;border:1.5px solid rgba(0,255,133,.3);" alt="">`;
   } else if (badge?.icon) {
-    return `<span style="${base}background:rgba(0,255,133,.08);font-size:${Math.round(size * .55)}px;">${badge.icon}</span>`;
+    inner = `<span style="${base}background:rgba(0,255,133,.08);font-size:${Math.round(size * .55)}px;">${badge.icon}</span>`;
+  } else {
+    inner = `<span style="${base}background:linear-gradient(135deg,var(--pl-purple),#8b008b);color:var(--pl-green);font-size:${Math.round(size * .42)}px;font-weight:700;border:1.5px solid rgba(0,255,133,.2);">${initials}</span>`;
   }
-  return `<span style="${base}background:linear-gradient(135deg,var(--pl-purple),#8b008b);color:var(--pl-green);font-size:${Math.round(size * .42)}px;font-weight:700;border:1.5px solid rgba(0,255,133,.2);">${initials}</span>`;
+
+  // Wrap in clickable span only if there's a badge to show info for
+  if (badge?.key) {
+    return `<span class="rr-av-tip" data-badge-key="${badge.key}" data-username="${username || ''}" style="display:inline-flex;">${inner}</span>`;
+  }
+  return inner;
 }
 // Call this wherever the user-chip avatar is initialised
 function applyUserAvatar(el, user) {
@@ -744,6 +890,65 @@ function applyUserAvatar(el, user) {
   }
 }
 
+// ── AVATAR CARD POPUP ─────────────────────────────────────
+(function() {
+  let popup = null;
+
+  function closePopup() {
+    if (popup) { popup.remove(); popup = null; }
+  }
+
+  function openPopup(badgeKey, username, anchorEl) {
+    closePopup();
+    // BADGE_DEFS may not be defined yet at call time — look it up lazily
+    const def = (typeof BADGE_DEFS !== 'undefined') && BADGE_DEFS.find(b => b.key === badgeKey);
+    if (!def) return;
+
+    const isImg = def.img || (def.icon && /\.(png|jpg|jpeg|svg|webp)$/i.test(def.icon));
+    const iconSrc = def.img || def.icon;
+    const iconHtml = isImg
+      ? `<img src="${iconSrc}" alt="${def.name}">`
+      : `<span>${iconSrc || '🏅'}</span>`;
+
+    popup = document.createElement('div');
+    popup.className = 'rr-av-popup';
+    popup.innerHTML = `
+      <button class="rr-av-popup-close">✕</button>
+      <div class="rr-av-popup-icon">${iconHtml}</div>
+      ${username ? `<div class="rr-av-popup-user">${username}</div>` : ''}
+      <div class="rr-av-popup-name">${def.name}</div>
+      <div class="rr-av-popup-cat">${def.category}</div>
+      <div class="rr-av-popup-desc">${def.desc}</div>`;
+    document.body.appendChild(popup);
+
+    // Position near the anchor element, keeping it on screen
+    const rect = anchorEl.getBoundingClientRect();
+    const pw = popup.offsetWidth || 220;
+    const ph = popup.offsetHeight || 160;
+    let left = rect.left + rect.width / 2 - pw / 2;
+    let top  = rect.bottom + 8;
+    if (left + pw > window.innerWidth - 8)  left = window.innerWidth - pw - 8;
+    if (left < 8) left = 8;
+    if (top + ph > window.innerHeight - 8)  top = rect.top - ph - 8;
+    popup.style.left = left + 'px';
+    popup.style.top  = top  + 'px';
+
+    popup.querySelector('.rr-av-popup-close').addEventListener('click', e => {
+      e.stopPropagation(); closePopup();
+    });
+  }
+
+  document.addEventListener('click', e => {
+    const tip = e.target.closest('.rr-av-tip');
+    if (tip) {
+      e.stopPropagation();
+      openPopup(tip.dataset.badgeKey, tip.dataset.username, tip);
+      return;
+    }
+    if (popup && !popup.contains(e.target)) closePopup();
+  });
+})();
+
 // ── BADGE SYSTEM ──────────────────────────────────────────
 const BADGE_DEFS = [
   // Voting
@@ -752,7 +957,7 @@ const BADGE_DEFS = [
   { key: 'centurion',     category: 'Voting',   icon: '💯', name: 'Centurion',      desc: 'Vote on 100 incidents' },
   { key: 'voting_streak', category: 'Voting',   icon: '📈', name: 'On a Roll',      desc: 'Vote in 3 consecutive matchweeks' },
   // Fantasy
-  { key: 'first_pick',    category: 'Fantasy',  icon: '⚽', name: 'First Pick',     desc: 'Make your first fantasy pick' },
+  { key: 'first_pick',    category: 'Fantasy',  icon: '🎯', name: 'First Pick',     desc: 'Make your first fantasy pick' },
   { key: 'wildcard_king', category: 'Fantasy',  icon: '🃏', name: 'Wildcard King',  desc: 'Use all your wildcards in a season' },
   { key: 'podium',        category: 'Fantasy',  icon: '🏆', name: 'Podium',         desc: 'Finish top 3 in a matchweek leaderboard' },
   { key: 'match_winner',  category: 'Fantasy',  icon: '🎯', name: 'Match Winner',   desc: 'Your picked ref scores 10+ points in a GW' },
@@ -775,7 +980,90 @@ async function awardBadge(userId, badgeKey) {
   });
   // error code 23505 = unique violation (already earned) — that's fine
   if (error && error.code !== '23505') console.warn('[RTR] awardBadge error:', error);
-  return !error;
+  const isNew = !error;
+  if (isNew) {
+    const def = BADGE_DEFS.find(b => b.key === badgeKey);
+    if (def) showBadgeUnlock(def);
+  }
+  return isNew;
+}
+
+function showBadgeUnlock(def) {
+  // icon: image path or emoji
+  const isImg = def.img || (def.icon && /\.(png|jpg|jpeg|svg|webp)$/i.test(def.icon));
+  const iconSrc = def.img || def.icon;
+  const iconHtml = isImg
+    ? `<img src="${iconSrc}" alt="${def.name}">`
+    : `<span>${def.icon || '🏅'}</span>`;
+
+  const backdrop = document.createElement('div');
+  backdrop.className = 'bu-backdrop';
+  backdrop.innerHTML = `
+    <div class="bu-outer">
+      <div class="bu-card" id="buCard">
+        <div class="bu-smoke" id="buSmoke"></div>
+        <div class="bu-new-label">New Card Unlocked</div>
+        <div class="bu-icon-wrap">${iconHtml}</div>
+        <div class="bu-title">${def.name}</div>
+        <div class="bu-desc">${def.desc}</div>
+        <button class="bu-dismiss" id="buDismiss">Tap to dismiss</button>
+      </div>
+    </div>`;
+  document.body.appendChild(backdrop);
+
+  // ── smoke particles ──────────────────────────────────────
+  const smokeEl = backdrop.querySelector('#buSmoke');
+  for (let i = 0; i < 12; i++) {
+    const p = document.createElement('div');
+    p.className = 'bu-particle';
+    const size  = 28 + Math.random() * 48;           // 28–76 px
+    const dx    = (Math.random() - .5) * 120;        // ±60 px horizontal drift
+    const rise  = -(60 + Math.random() * 100);       // 60–160 px upward
+    const dur   = (.8 + Math.random() * .9).toFixed(2) + 's';
+    const delay = (Math.random() * .5).toFixed(2)    + 's';
+    p.style.cssText = `width:${size}px;height:${size}px;--dx:${dx}px;--rise:${rise}px;--dur:${dur};--delay:${delay};left:50%;margin-left:${-size/2}px;`;
+    smokeEl.appendChild(p);
+  }
+
+  // ── 3D tilt ──────────────────────────────────────────────
+  const card = backdrop.querySelector('#buCard');
+  let rafId = null;
+  let targetRX = 0, targetRY = 0, currentRX = 0, currentRY = 0;
+
+  function applyTilt() {
+    currentRX += (targetRX - currentRX) * .12;
+    currentRY += (targetRY - currentRY) * .12;
+    card.style.transform = `perspective(700px) rotateX(${currentRX}deg) rotateY(${currentRY}deg)`;
+    rafId = requestAnimationFrame(applyTilt);
+  }
+  rafId = requestAnimationFrame(applyTilt);
+
+  function onPointerMove(e) {
+    const rect = card.getBoundingClientRect();
+    const cx = rect.left + rect.width  / 2;
+    const cy = rect.top  + rect.height / 2;
+    const px = (e.touches ? e.touches[0].clientX : e.clientX);
+    const py = (e.touches ? e.touches[0].clientY : e.clientY);
+    targetRY =  ((px - cx) / (rect.width  / 2)) * 12;
+    targetRX = -((py - cy) / (rect.height / 2)) * 10;
+  }
+  window.addEventListener('mousemove', onPointerMove);
+  window.addEventListener('touchmove', onPointerMove, { passive: true });
+
+  // ── dismiss ──────────────────────────────────────────────
+  function dismiss() {
+    cancelAnimationFrame(rafId);
+    window.removeEventListener('mousemove', onPointerMove);
+    window.removeEventListener('touchmove', onPointerMove);
+    backdrop.classList.add('bu-out');
+    backdrop.querySelector('.bu-outer').classList.add('bu-out');
+    setTimeout(() => backdrop.remove(), 500);
+  }
+
+  backdrop.querySelector('#buDismiss').addEventListener('click', dismiss);
+  backdrop.addEventListener('click', e => { if (e.target === backdrop) dismiss(); });
+  // auto-dismiss after 7 s
+  setTimeout(dismiss, 7000);
 }
 
 async function loadMyBadges(userId) {
