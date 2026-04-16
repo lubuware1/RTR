@@ -30,6 +30,10 @@ const SUPABASE_URL = 'https://sxufittkehlktlfvicom.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4dWZpdHRrZWhsa3RsZnZpY29tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3OTEwNDIsImV4cCI6MjA5MDM2NzA0Mn0.aItkjIGsik_v_T6n167bdwE23ncvvWgwJ4IveT5MFyU';
 const _USER_KEY    = 'rr_user';
 const _AVATAR_KEY  = 'rr_avatar_badge';
+const _THEME_KEY   = 'rr_theme';
+
+// Apply theme immediately before any rendering to prevent flash
+(function(){ document.documentElement.setAttribute('data-theme', localStorage.getItem(_THEME_KEY) || 'light'); })();
 
 let _sb = null;
 function getSB() {
@@ -626,11 +630,12 @@ async function loadFromSheets() {
 // ── SHARED CSS VARIABLES (injected into each page) ────────
 const SHARED_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap');
-  :root{--bg:#0a0c10;--surface:#12151c;--surface2:#1a1e28;--border:#242836;--accent2:#f5a623;--red:#ff4757;--yellow:#ffd32a;--green:#37ecba;--text:#e8eaf0;--muted:#6b7280;--pl-purple:#37003c;--pl-green:#00ff85;}
+  :root{--bg:#f6f0ff;--surface:#ffffff;--surface2:#ede6ff;--border:#cfc0ee;--accent2:#f5a623;--red:#e02d42;--yellow:#d4920a;--green:#009960;--text:#18082c;--muted:#6a58a0;--pl-purple:#37003c;--pl-green:#00cc70;}
   *{margin:0;padding:0;box-sizing:border-box;}
   body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;}
   /* Header */
-  header{background:linear-gradient(135deg,#37003c 0%,#1a0020 60%,#0a0c10 100%);border-bottom:2px solid var(--pl-green);padding:0 24px;position:sticky;top:0;z-index:100;box-shadow:0 4px 32px rgba(0,255,133,.12);}
+  header{background:linear-gradient(135deg,#37003c 0%,#5a1070 60%,#3d0855 100%);border-bottom:2px solid var(--pl-green);padding:0 24px;position:sticky;top:0;z-index:100;box-shadow:0 4px 32px rgba(0,204,112,.2);overflow:visible;}
+  header::after{content:'';position:absolute;left:0;right:0;bottom:-48px;height:48px;background:linear-gradient(to bottom,rgba(61,8,85,.55) 0%,rgba(61,8,85,.15) 50%,transparent 100%);pointer-events:none;z-index:99;}
   .header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:60px;}
   .logo{display:flex;align-items:center;gap:10px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.6rem;text-decoration:none;color:var(--text);}
   .logo-badge{background:var(--pl-green);color:var(--pl-purple);width:34px;height:34px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
@@ -674,6 +679,13 @@ const SHARED_CSS = `
     .header-inner{padding:0;}
     header{padding:0 16px;}
   }
+  /* ── DARK MODE ──────────────────────────────────────── */
+  html[data-theme="dark"]{--bg:#0a0c10;--surface:#12151c;--surface2:#1a1e28;--border:#242836;--red:#ff4757;--yellow:#ffd32a;--green:#37ecba;--text:#e8eaf0;--muted:#6b7280;--pl-green:#00ff85;--gold:#f5a623;}
+  html[data-theme="dark"] header{background:linear-gradient(135deg,#37003c 0%,#1a0020 60%,#0a0c10 100%);box-shadow:0 4px 32px rgba(0,255,133,.12);}
+  html[data-theme="dark"] header::after{background:linear-gradient(to bottom,rgba(0,0,0,.55) 0%,transparent 100%);}
+  html[data-theme="dark"] .mobile-nav{background:linear-gradient(135deg,#37003c 0%,#1a0020 100%);}
+  html[data-theme="dark"] .gw-banner{background:linear-gradient(90deg,rgba(55,0,60,.9),rgba(10,12,16,1)) !important;}
+  html[data-theme="dark"] body::before{background:radial-gradient(ellipse 70% 50% at 20% 30%,rgba(55,0,60,.45) 0%,transparent 70%),radial-gradient(ellipse 60% 60% at 80% 70%,rgba(80,0,90,.3) 0%,transparent 65%) !important;}
 `;
 (function(){const s=document.createElement('style');s.textContent=SHARED_CSS;document.head.appendChild(s);})();
 
@@ -850,3 +862,29 @@ async function checkWildcardBadges(userId, wc, matches) {
     if (m && m.perfectGame) await awardBadge(userId, 'wc_var_replay');
   }
 }
+
+// ── THEME TOGGLE ──────────────────────────────────────────
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const next = isDark ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem(_THEME_KEY, next);
+  _refreshThemeBtn();
+}
+function _refreshThemeBtn() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const btn = document.getElementById('ddThemeToggle');
+  if (btn) btn.textContent = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const dropdown = document.getElementById('userDropdown');
+  if (dropdown && !document.getElementById('ddThemeToggle')) {
+    const btn = document.createElement('div');
+    btn.className = 'dd-item';
+    btn.id = 'ddThemeToggle';
+    btn.addEventListener('click', e => { e.stopPropagation(); toggleTheme(); });
+    const head = dropdown.querySelector('.dd-head');
+    if (head) head.after(btn); else dropdown.prepend(btn);
+    _refreshThemeBtn();
+  }
+});

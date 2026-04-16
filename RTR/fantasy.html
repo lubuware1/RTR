@@ -11,19 +11,19 @@
     />
     <style>
       :root {
-        --bg: #0a0c10;
-        --surface: #12151c;
-        --surface2: #1a1e28;
-        --border: #242836;
+        --bg: #f6f0ff;
+        --surface: #ffffff;
+        --surface2: #ede6ff;
+        --border: #cfc0ee;
         --accent2: #f5a623;
-        --red: #ff4757;
-        --yellow: #ffd32a;
-        --green: #37ecba;
-        --text: #e8eaf0;
-        --muted: #6b7280;
+        --red: #e02d42;
+        --yellow: #d4920a;
+        --green: #009960;
+        --text: #18082c;
+        --muted: #6a58a0;
         --pl-purple: #37003c;
-        --pl-green: #00ff85;
-        --gold: #f5a623;
+        --pl-green: #00cc70;
+        --gold: #c47f00;
       }
       * {
         margin: 0;
@@ -42,16 +42,18 @@
         background: linear-gradient(
           135deg,
           #37003c 0%,
-          #1a0020 60%,
-          #0a0c10 100%
+          #5a1070 60%,
+          #3d0855 100%
         );
         border-bottom: 2px solid var(--pl-green);
         padding: 0 24px;
         position: sticky;
         top: 0;
         z-index: 100;
-        box-shadow: 0 4px 32px rgba(0, 255, 133, 0.12);
+        overflow: visible;
+        box-shadow: 0 4px 32px rgba(0, 204, 112, 0.2);
       }
+      header::after{content:'';position:absolute;left:0;right:0;bottom:-48px;height:48px;background:linear-gradient(to bottom,rgba(61,8,85,.55) 0%,rgba(61,8,85,.15) 50%,transparent 100%);pointer-events:none;z-index:99;}
       .header-inner {
         max-width: 1200px;
         margin: 0 auto;
@@ -215,8 +217,8 @@
       .gw-banner {
         background: linear-gradient(
           90deg,
-          rgba(55, 0, 60, 0.9),
-          rgba(10, 12, 16, 1)
+          rgba(55, 0, 60, 0.95),
+          rgba(90, 16, 112, 0.9)
         );
         border-bottom: 1px solid var(--border);
         padding: 11px 24px;
