@@ -3665,9 +3665,19 @@
         const allRefs = REFS.filter(
           (r) => r.id in REF_GW_PTS || r.id in REF_SEASON_PTS,
         );
-        const sorted = allRefs.sort(
-          (a, b) => (REF_GW_PTS[b.id] ?? -1) - (REF_GW_PTS[a.id] ?? -1),
-        );
+        const sorted = allRefs.sort((a, b) => {
+          const aGW = REF_GW_PTS[a.id];
+          const bGW = REF_GW_PTS[b.id];
+          // Refs with GW pts come before those without
+          if (aGW !== null && aGW !== undefined && (bGW === null || bGW === undefined)) return -1;
+          if (bGW !== null && bGW !== undefined && (aGW === null || aGW === undefined)) return 1;
+          // Both have GW pts — sort descending
+          if (aGW !== null && aGW !== undefined && bGW !== null && bGW !== undefined) {
+            if (bGW !== aGW) return bGW - aGW;
+          }
+          // Tiebreak (or both null) — sort by season pts descending
+          return (REF_SEASON_PTS[b.id] ?? 0) - (REF_SEASON_PTS[a.id] ?? 0);
+        });
         if (!sorted.length) {
           document.getElementById("refScores").innerHTML =
             '<div style="padding:14px 16px;font-size:.82rem;color:var(--muted)">No scores yet this matchweek</div>';
