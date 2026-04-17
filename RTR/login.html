@@ -191,17 +191,23 @@ function setLoading(btnId, loading) {
   btn.textContent = loading ? 'Please wait…' : btnId === 'loginBtn' ? 'Sign In' : 'Create Account →';
 }
 
-// Check for password-reset recovery link (hash contains type=recovery)
+function showRecoveryForm() {
+  document.querySelector('.auth-tabs').style.display       = 'none';
+  document.getElementById('loginForm').style.display       = 'none';
+  document.getElementById('signupForm').style.display      = 'none';
+  document.getElementById('forgotForm').style.display      = 'none';
+  document.getElementById('newPasswordForm').style.display = 'block';
+}
+
+// Primary: listen for PASSWORD_RECOVERY event (works for both hash and code-exchange flows)
+sb.auth.onAuthStateChange((event) => {
+  if (event === 'PASSWORD_RECOVERY') showRecoveryForm();
+});
+
+// Fallback: hash-based detection for immediate page-load case
 (function detectRecovery() {
   const hash = window.location.hash;
-  if (!hash.includes('type=recovery')) return;
-  // Hide tabs and all forms, show only the new-password form
-  document.querySelector('.auth-tabs').style.display = 'none';
-  document.getElementById('loginForm').style.display      = 'none';
-  document.getElementById('signupForm').style.display     = 'none';
-  document.getElementById('forgotForm').style.display     = 'none';
-  document.getElementById('newPasswordForm').style.display = 'block';
-  // Supabase auto-picks up the session from the hash — no extra call needed
+  if (hash.includes('type=recovery')) showRecoveryForm();
 })();
 
 // If already have a valid session, skip to app (unless onboard=1 param present or recovery)
