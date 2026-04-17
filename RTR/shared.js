@@ -448,10 +448,27 @@ const PREVIEW_USER = {
 
 // ── STATIC DATA ───────────────────────────────────────────
 const WC_TEAMS = [
-  {name:"Arsenal",        emoji:"🔴"},{name:"Chelsea",        emoji:"🔵"},
-  {name:"Leeds United",   emoji:"⚪"},{name:"Liverpool",      emoji:"🔴"},
-  {name:"Manchester City",emoji:"🔵"},{name:"Port Vale",      emoji:"⚫"},
-  {name:"Southampton",    emoji:"🔴"},{name:"West Ham",       emoji:"⚒️"},
+  {name:"Arsenal",               emoji:"🔴"},
+  {name:"Aston Villa",           emoji:"🟣"},
+  {name:"Bournemouth",           emoji:"⚫"},
+  {name:"Brentford",             emoji:"🔴"},
+  {name:"Brighton",              emoji:"🔵"},
+  {name:"Chelsea",               emoji:"🔵"},
+  {name:"Crystal Palace",        emoji:"🔴"},
+  {name:"Everton",               emoji:"🔵"},
+  {name:"Fulham",                emoji:"⚪"},
+  {name:"Ipswich Town",          emoji:"🔵"},
+  {name:"Leicester City",        emoji:"🔵"},
+  {name:"Liverpool",             emoji:"🔴"},
+  {name:"Manchester City",       emoji:"🩵"},
+  {name:"Manchester United",     emoji:"🔴"},
+  {name:"Newcastle United",      emoji:"⚫"},
+  {name:"Nottingham Forest",     emoji:"🔴"},
+  {name:"Port Vale",             emoji:"⚫"},
+  {name:"Southampton",           emoji:"🔴"},
+  {name:"Tottenham Hotspur",     emoji:"⚪"},
+  {name:"West Ham United",       emoji:"🟣"},
+  {name:"Wolverhampton",         emoji:"🟡"},
 ];
 // Keep alias so any page still referencing PL_TEAMS doesn't break
 const PL_TEAMS = WC_TEAMS;
