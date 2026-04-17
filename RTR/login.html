@@ -159,11 +159,12 @@
   <div class="onboard-box">
     <div class="onboard-head">
       <div class="onboard-step">Step 2 of 2 — Almost there!</div>
-      <h2>Pick Your Nation 🌍</h2>
-      <p>Your vote on your own nation's matches will be tracked separately to keep ratings unbiased</p>
+      <h2>Pick Your Team</h2>
+      <img src="images/logos/RRLogo.svg" alt="RefRater" style="width:100%;max-width:100%;height:auto;display:block;margin:12px 0 4px;">
+      <p>Your vote on your own team's matches will be tracked separately to keep ratings unbiased</p>
     </div>
     <div class="onboard-body">
-      <p class="team-hint">Choose the nation you support (you can change this later in your profile)</p>
+      <p class="team-hint">Choose the team you support (you can change this later in your profile)</p>
       <div class="team-grid" id="teamGrid"></div>
       <button class="onboard-btn" id="onboardDone" disabled>Let's Go →</button>
     </div>
@@ -182,19 +183,18 @@ const PL_TEAMS = [
   {name:"Bournemouth",           emoji:"⚫"},
   {name:"Brentford",             emoji:"🔴"},
   {name:"Brighton",              emoji:"🔵"},
+  {name:"Burnley",               emoji:"🟣"},
   {name:"Chelsea",               emoji:"🔵"},
   {name:"Crystal Palace",        emoji:"🔴"},
   {name:"Everton",               emoji:"🔵"},
   {name:"Fulham",                emoji:"⚪"},
-  {name:"Ipswich Town",          emoji:"🔵"},
-  {name:"Leicester City",        emoji:"🔵"},
+  {name:"Leeds United",          emoji:"⚪"},
   {name:"Liverpool",             emoji:"🔴"},
   {name:"Manchester City",       emoji:"🩵"},
   {name:"Manchester United",     emoji:"🔴"},
   {name:"Newcastle United",      emoji:"⚫"},
   {name:"Nottingham Forest",     emoji:"🔴"},
-  {name:"Port Vale",             emoji:"⚫"},
-  {name:"Southampton",           emoji:"🔴"},
+  {name:"Sunderland",            emoji:"🔴"},
   {name:"Tottenham Hotspur",     emoji:"⚪"},
   {name:"West Ham United",       emoji:"🟣"},
   {name:"Wolverhampton",         emoji:"🟡"},
@@ -384,7 +384,7 @@ function showOnboarding() {
 function renderGrid() {
   document.getElementById('teamGrid').innerHTML = PL_TEAMS.map(t =>
     `<div class="team-tile${pickedTeam===t.name?' picked':''}" data-team="${t.name}">
-      <span class="t-emoji">${t.emoji}</span><span class="t-name">${t.name}</span>
+      <span class="t-name">${t.name}</span>
     </div>`
   ).join('');
   twemoji.parse(document.getElementById('teamGrid'), { folder: 'svg', ext: '.svg' });
