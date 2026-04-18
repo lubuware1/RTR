@@ -1190,5 +1190,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const head = dropdown.querySelector('.dd-head');
     if (head) head.after(btn); else dropdown.prepend(btn);
     _refreshThemeBtn();
+
+    // Inject Admin button for admin users
+    if (isAdmin()) {
+      const adminBtn = document.createElement('div');
+      adminBtn.className = 'dd-item';
+      adminBtn.id = 'ddAdminLink';
+      adminBtn.innerHTML = '⚙️ Admin Panel';
+      adminBtn.style.color = 'var(--pl-green)';
+      adminBtn.style.fontWeight = '600';
+      adminBtn.addEventListener('click', () => { window.location.href = 'admin.html'; });
+      btn.after(adminBtn);
+    }
   }
 });

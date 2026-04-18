@@ -1794,6 +1794,7 @@
           <div class="view-tabs" id="viewTabs">
             <button class="view-tab active" data-tab="pick">Pick Ref</button>
             <button class="view-tab" data-tab="battles">Battles</button>
+            <button class="view-tab" data-tab="leaderboard">Leaderboard</button>
           </div>
         </div>
 
@@ -2488,6 +2489,16 @@
           tab === "pick" ? "block" : "none";
         document.getElementById("tabBattles").style.display =
           tab === "battles" ? "block" : "none";
+        if (tab === "leaderboard") {
+          // Switch side panel to the League tab and scroll to it
+          document.querySelectorAll(".sp-tab").forEach(b =>
+            b.classList.toggle("active", b.dataset.sptab === "league")
+          );
+          document.getElementById("spTabPick").style.display  = "none";
+          document.getElementById("spTabRefs").style.display  = "none";
+          document.getElementById("spTabLeague").style.display = "";
+          document.getElementById("spTabLeague").scrollIntoView({ behavior: "smooth", block: "start" });
+        }
       });
 
       // ── PICK GRID ─────────────────────────────────────────────
