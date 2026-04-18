@@ -60,6 +60,8 @@ async function checkAuth() {
   }
   // Award profile_setup badge if team is set
   if (profile?.team) checkProfileBadge(session.user.id).catch(() => {});
+  // Award Founder badge to users who signed up on or before 2026-04-18
+  checkFounderBadge(session.user.id, session.user.created_at).catch(() => {});
   return true;
 }
 
@@ -982,6 +984,7 @@ const BADGE_DEFS = [
   { key: 'wc_yellow_card',category: 'Fantasy - Wildcards', img: 'images/badges/yellowcardbadge.png',    name: 'Yellow Card Wildcard',desc: 'Use the Yellow Card wildcard and correctly predict a game with 4+ yellow cards' },
   { key: 'wc_var_replay', category: 'Fantasy - Wildcards', img: 'images/badges/consultingvarbadge.png', name: 'VAR Replay Wildcard', desc: 'Use the VAR Replay wildcard and correctly predict a ref\'s perfect game' },
   // Loyalty
+  { key: 'founder',       category: 'Loyalty',  icon: '👑', name: 'Founder',        desc: 'A founding member of RefRater' },
   { key: 'profile_setup', category: 'Loyalty',  icon: '👤', name: 'All Kitted Out', desc: 'Set your favourite team on your profile' },
   { key: 'early_adopter', category: 'Loyalty',  icon: '🌟', name: 'Early Adopter',  desc: 'Among the first 50 users to join RefRater' },
   // Special
@@ -1132,6 +1135,14 @@ async function checkFantasyBadges(userId, seasonWildcards) {
 async function checkProfileBadge(userId) {
   if (PREVIEW_MODE || !userId) return;
   await awardBadge(userId, 'profile_setup');
+}
+
+// Awarded to founding members — users whose account was created on or before 2026-04-18
+async function checkFounderBadge(userId, createdAt) {
+  if (PREVIEW_MODE || !userId || !createdAt) return;
+  const signUpDate = new Date(createdAt);
+  const cutoff = new Date('2026-04-18T23:59:59.999Z');
+  if (signUpDate <= cutoff) await awardBadge(userId, 'founder');
 }
 
 // Called when fantasy leaderboard resolves to check top-3 finish
