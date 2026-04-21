@@ -46,6 +46,14 @@
   .fan-banner{background:linear-gradient(90deg,rgba(0,255,133,.06),transparent);border:1px solid rgba(0,255,133,.15);border-radius:8px;padding:9px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;font-size:.82rem;}
   .fan-banner strong{color:var(--pl-green);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;}
 
+  /* Ad Banners */
+  .ad-banner{background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:10px;height:72px;position:relative;overflow:hidden;}
+  .ad-banner-label{position:absolute;top:4px;left:8px;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:.5;z-index:1;}
+  .ad-banner-scroll{position:absolute;inset:0;overflow:hidden;display:flex;align-items:center;}
+  .ad-banner-track{display:flex;align-items:center;gap:56px;animation:adScroll 22s linear infinite;flex-shrink:0;}
+  .ad-banner-track img{height:26px;width:auto;opacity:.65;flex-shrink:0;}
+  @keyframes adScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
   /* Match Cards */
   .match-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden;transition:border-color .2s,transform .15s;cursor:pointer;}
   .match-card:hover{border-color:rgba(0,255,133,.3);transform:translateY(-1px);}
@@ -149,6 +157,17 @@
   .inc-minute{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.75rem;color:var(--pl-green);background:rgba(0,255,133,.08);border:1px solid rgba(0,255,133,.2);border-radius:4px;padding:1px 6px;flex-shrink:0;}
   .inc-card-outcome-row{text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;}
   .inc-empty{text-align:center;padding:24px 16px;color:var(--muted);font-size:.82rem;border:1px dashed var(--border);border-radius:8px;}
+  /* Match discussion box */
+  .match-discuss{margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
+  .match-discuss-label{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  .match-discuss-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:'Barlow',sans-serif;font-size:.85rem;resize:none;min-height:70px;box-sizing:border-box;transition:border-color .2s;}
+  .match-discuss-input:focus{outline:none;border-color:rgba(0,255,133,.4);}
+  .match-discuss-send{margin-top:8px;background:var(--pl-green);color:var(--pl-purple);border:none;border-radius:7px;padding:9px 18px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.85rem;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:opacity .15s;}
+  .match-discuss-send:hover{opacity:.85;}
+  .match-discuss-send:disabled{opacity:.45;cursor:not-allowed;}
+  .match-discuss-link{margin-top:8px;font-size:.75rem;color:var(--muted);}
+  .match-discuss-link a{color:var(--pl-green);text-decoration:none;}
+  .match-discuss-link a:hover{text-decoration:underline;}
   .inc-vote-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
   .inc-vote-btn{border:1.5px solid var(--border);border-radius:7px;padding:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .18s;background:var(--surface);color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px;}
   .inc-vote-btn:hover:not(:disabled){transform:translateY(-1px);}
@@ -256,7 +275,6 @@
         <a href="fantasy.html"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="Fantasy" style="height:20px;width:auto;vertical-align:middle;"></a>
         <a href="badges.html">Cards</a>
         <a href="forum.html" class="admin-only" style="display:none">Forum</a>
-        <a href="history.html">History</a>
       </nav>
       <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
       <div class="user-chip" id="userChip">
@@ -292,6 +310,7 @@
       <button class="view-tab" data-filter="live">Live</button>
       <button class="view-tab" data-filter="recent">Recent</button>
     </div>
+    <div class="ad-banner" style="margin-top:10px;"><span class="ad-banner-label">Advertisement</span><img src="images/badges/redcardbadge.png" alt="Red Card" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:.85;"></div>
     <div class="section-title" id="matchSectionTitle">Premier League · Matchweek 1</div>
     <div id="matchList"></div>
   </div>
@@ -328,6 +347,13 @@
           <button class="inc-flag-btn" id="incFlagBtn">⚑ Incorrect Decision</button>
           <div class="inc-section-label" id="incSectionLabel" style="display:none">Decisions</div>
           <div id="incidentList"></div>
+          <!-- Match discussion -->
+          <div class="match-discuss" id="matchDiscuss" style="display:none">
+            <div class="match-discuss-label">💬 Match Discussion</div>
+            <textarea class="match-discuss-input" id="matchDiscussInput" placeholder="Share your thoughts on this match…" rows="3" maxlength="1000"></textarea>
+            <button class="match-discuss-send" id="matchDiscussSend">Post to Forum</button>
+            <div class="match-discuss-link" id="matchDiscussLink"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -348,6 +374,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="shared.js"></script>
 <script>
+// ── TEST FLAG — remove this block when done testing ───────
+const TEST_FAN_VOTES = true; // random weight 13–27, unlimited re-votes
+// ──────────────────────────────────────────────────────────
+
 // ── INIT ──────────────────────────────────────────────────
 let currentUser = getCurrentUser();
 if (!PREVIEW_MODE && !currentUser) { window.location.href = 'login.html'; }
@@ -420,7 +450,10 @@ function renderList() {
   const gwFiltered = MATCHES.filter(m => m.matchweek === currentGW);
   const list = filter==='all' ? gwFiltered : gwFiltered.filter(m=>m.status===(filter==='recent'?'complete':filter));
   if (!list.length) { el.innerHTML='<div class="empty-state"><div class="icon">📋</div><p>No matches</p></div>'; return; }
-  el.innerHTML = list.map(m => {
+  const logoSrc = 'images/logos/ref_rater_logo_green_a.svg';
+  const logoRepeat = Array(8).fill(`<img src="${logoSrc}" alt="RefRater">`).join('');
+  const adBanner = `<div class="ad-banner"><span class="ad-banner-label">Advertisement</span><div class="ad-banner-scroll"><div class="ad-banner-track">${logoRepeat}${logoRepeat}</div></div></div>`;
+  const cards = list.map(m => {
     const ref = REFS.find(r=>r.id===+m.refId); if(!ref) return '';
     const live=m.status==='live', up=m.status==='upcoming', fan=isFanMatch(m,currentUser);
     const hasN=ref.neutralRating!=null, hasF=ref.fanRating!=null;
@@ -462,7 +495,11 @@ function renderList() {
         </div>`:''}
       </div>
     </div>`;
-  }).join('');
+  });
+  // Inject ad banners after card 3 and card 7 (if the list is long enough)
+  if (cards.length > 3)  cards.splice(3,  0, adBanner);
+  if (cards.length > 8)  cards.splice(8,  0, adBanner);
+  el.innerHTML = cards.join('');
 }
 
 // ── PANEL ─────────────────────────────────────────────────
@@ -471,6 +508,8 @@ function closePanel() {
   matchIncidents=[]; incidentVoteTotals={ neutral:{}, fan:{} }; myIncidentVotes={};
   document.getElementById('incSectionLabel').style.display='none';
   document.getElementById('incFlagBtn').disabled=false;
+  const _dd = document.getElementById('matchDiscuss');
+  if (_dd) { _dd.style.display='none'; document.getElementById('matchDiscussInput').value=''; document.getElementById('matchDiscussLink').innerHTML=''; }
   document.getElementById('panelEmpty').style.display='block';
   document.getElementById('panelForm').style.display='none';
   document.getElementById('panelCloseBtn').classList.remove('visible');
@@ -613,8 +652,8 @@ async function openPanel(mid) {
     <div><div class="rcard-name">${ref.name}</div><div class="rcard-meta">${ref.nationality} · FIFA Listed</div></div>
     <div class="rcard-badge">FIFA</div>`;
 
-  // Block voting for upcoming matches
-  if (m.status === 'upcoming') {
+  // Block voting for upcoming matches (bypassed when TEST_FAN_VOTES is on)
+  if (m.status === 'upcoming' && !TEST_FAN_VOTES) {
     document.getElementById('incSectionLabel').style.display = 'none';
     document.getElementById('incidentList').innerHTML = `
       <div class="inc-pregame">
@@ -639,7 +678,7 @@ async function openPanel(mid) {
   const ids = matchIncidents.map(i => i.id);
   const [voteSplit, myVotes] = await Promise.all([
     loadIncidentVotes(ids),
-    loadMyIncidentVotes(currentUser?.id, ids),
+    TEST_FAN_VOTES ? Promise.resolve({}) : loadMyIncidentVotes(currentUser?.id, ids),
   ]);
   incidentVoteTotals = voteSplit;
   myIncidentVotes = myVotes;
@@ -647,6 +686,22 @@ async function openPanel(mid) {
   renderIncidentScore(matchIncidents, incidentVoteTotals);
   renderIncidentList();
   renderList();
+
+  // Show match discussion box
+  const discussBox = document.getElementById('matchDiscuss');
+  const discussLink = document.getElementById('matchDiscussLink');
+  if (discussBox) {
+    discussBox.style.display = '';
+    discussBox.dataset.matchTitle = `${m.home} v ${m.away}`;
+    // Check if a thread already exists and show a link to it
+    findMatchForumThread(`${m.home} v ${m.away}`).then(thread => {
+      if (thread && discussLink) {
+        discussLink.innerHTML = `Thread exists — <a href="forum.html">view in Forum</a>`;
+      } else if (discussLink) {
+        discussLink.innerHTML = `Posts here will create a thread in <a href="forum.html">Forum → Games</a>`;
+      }
+    });
+  }
 }
 
 // ── LEADERBOARD ───────────────────────────────────────────
@@ -689,17 +744,17 @@ document.getElementById('incidentList').addEventListener('click', async e => {
   const isFan = voteMatch && isFanMatch(voteMatch, currentUser);
   const bucket = isFan ? 'fan' : 'neutral';
 
-  // Optimistic UI update — use same random weight as will be saved
-  const voteWeight = 5;
-  btn.disabled = true;
+  // Optimistic UI update — use same weight as will be saved
+  const voteWeight = TEST_FAN_VOTES ? Math.floor(Math.random() * 15) + 13 : 5;
+  if (!TEST_FAN_VOTES) btn.disabled = true;
   if (!incidentVoteTotals[bucket][incidentId]) incidentVoteTotals[bucket][incidentId] = { correct: 0, wrong: 0 };
   incidentVoteTotals[bucket][incidentId][vote] += voteWeight;
-  myIncidentVotes[incidentId] = { vote, created_at: new Date().toISOString() };
+  if (!TEST_FAN_VOTES) myIncidentVotes[incidentId] = { vote, created_at: new Date().toISOString() };
 
   renderIncidentScore(matchIncidents, incidentVoteTotals);
   renderIncidentList();
 
-  const ok = await saveIncidentVote(incidentId, currentUser?.id, vote, isFan);
+  const ok = await saveIncidentVote(incidentId, currentUser?.id, vote, isFan, voteWeight);
   if (!ok) {
     incidentVoteTotals[bucket][incidentId][vote] -= voteWeight;
     delete myIncidentVotes[incidentId];
@@ -722,6 +777,27 @@ document.getElementById('incidentList').addEventListener('click', async e => {
 
   if (currentUser?.id) checkVotingBadges(currentUser.id).catch(() => {});
 });
+// ── MATCH DISCUSSION ──────────────────────────────────────
+document.getElementById('matchDiscussSend').addEventListener('click', async () => {
+  const btn = document.getElementById('matchDiscussSend');
+  const input = document.getElementById('matchDiscussInput');
+  const linkEl = document.getElementById('matchDiscussLink');
+  const body = input.value.trim();
+  if (!body) return;
+  if (!currentUser?.id) { toast('Sign in to post'); return; }
+  const matchTitle = document.getElementById('matchDiscuss').dataset.matchTitle;
+  btn.disabled = true;
+  const result = await postMatchComment(matchTitle, body, currentUser.id, currentUser.username || 'User');
+  if (result) {
+    input.value = '';
+    toast('💬 Posted to Forum!');
+    linkEl.innerHTML = `Thread live — <a href="forum.html">view in Forum → Games</a>`;
+  } else {
+    toast('⚠ Failed to post — please try again');
+  }
+  btn.disabled = false;
+});
+
 document.getElementById('leaderboard').addEventListener('click',e=>{
   const r=e.target.closest('[data-lref]');if(!r)return;
   const m=MATCHES.find(m=>m.refId===+r.dataset.lref&&m.status!=='upcoming');if(m)openPanel(m.id);

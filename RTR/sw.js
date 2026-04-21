@@ -9,7 +9,6 @@ const SHELL = [
   '/fantasy.html',
   '/badges.html',
   '/login.html',
-  '/history.html',
   '/shared.js',
   '/images/logos/RRLogo.svg',
   '/images/logos/ref_rater_logo_green_a.svg',

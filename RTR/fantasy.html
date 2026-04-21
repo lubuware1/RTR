@@ -1432,15 +1432,20 @@
       .fl-wc-icon {
         display: inline-flex;
         align-items: center;
-        gap: 2px;
+        gap: 4px;
         font-size: 0.75rem;
         background: var(--surface2);
-        border: 1px solid var(--border);
+        border: 1px solid #00e67a;
         border-radius: 4px;
-        padding: 1px 5px;
-        opacity: 0.5;
+        padding: 2px 6px;
+        box-shadow: 0 0 0 1px rgba(0, 255, 133, 0.2);
       }
-      .fl-wc-icon.used {
+      .fl-wc-match {
+        font-size: 0.65rem;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      .fl-wc-icon.active {
         opacity: 1;
         border-color: #00e67a;
         box-shadow: 0 0 0 1px rgba(0, 255, 133, 0.25);
@@ -1586,6 +1591,15 @@
           display: none !important;
         }
       }
+      /* Ad Banners */
+      .ad-banner{background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:10px;height:72px;position:relative;overflow:hidden;}
+      .ad-banner.ad-square{height:auto;aspect-ratio:1/1;}
+      .ad-banner-label{position:absolute;top:4px;left:8px;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);opacity:.5;z-index:1;}
+      .ad-banner img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:.85;}
+      .ad-banner-scroll{position:absolute;inset:0;overflow:hidden;display:flex;align-items:center;}
+      .ad-banner-track{display:flex;align-items:center;gap:56px;animation:adScroll 22s linear infinite;flex-shrink:0;}
+      .ad-banner-track img{position:static;width:auto;height:26px;object-fit:unset;opacity:.65;}
+      @keyframes adScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
     </style>
     <script
       src="https://cdn.jsdelivr.net/npm/twemoji@14/dist/twemoji.min.js"
@@ -1640,7 +1654,6 @@
             <a href="forum.html" class="admin-only" style="display: none"
               >Forum</a
             >
-            <a href="history.html">History</a>
           </nav>
           <button class="hamburger" id="hamburger" aria-label="Menu">
             <span></span><span></span><span></span>
@@ -1671,7 +1684,6 @@
       <a href="fantasy.html" class="active"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="Fantasy" style="height:20px;width:auto;vertical-align:middle;"></a>
       <a href="badges.html">Cards</a>
       <a href="forum.html" class="admin-only" style="display: none">Forum</a>
-      <a href="history.html">History</a>
     </div>
 
     <div class="gw-banner">
@@ -1794,6 +1806,11 @@
             <button class="view-tab" data-tab="battles">Battles</button>
             <button class="view-tab" data-tab="leaderboard">Leaderboard</button>
           </div>
+        </div>
+
+        <div class="ad-banner" style="margin-top:10px;">
+          <span class="ad-banner-label">Advertisement</span>
+          <img src="images/badges/redcardbadge.png" alt="">
         </div>
 
         <!-- HOW TO PLAY MODAL -->
@@ -2350,6 +2367,11 @@
         const m = MATCHES.find((x) => x.id === matchId);
         return !!m && (m.yc || 0) >= 4;
       }
+      // VAR Replay wildcard: pays off if ref had a decision overturned by VAR
+      function varWildcardTriggered(matchId) {
+        const m = MATCHES.find((x) => x.id === matchId);
+        return !!m && ((m.incorrectVarPen || 0) > 0 || (m.incorrectVarRed || 0) > 0);
+      }
 
       function getRefMatch(refId) {
         return gwMatches().find((m) => +m.refId === refId);
@@ -2395,10 +2417,7 @@
         if (wildcards.rc.active)
           boostedPts += getMatchRC(wildcards.rc.matchId) > 0 ? 1 : 0;
         if (wildcards.var.active)
-          boostedPts += MATCHES.find((m) => m.id === wildcards.var.matchId)
-            ?.perfectGame
-            ? 2
-            : 0;
+          boostedPts += varWildcardTriggered(wildcards.var.matchId) ? 2 : 0;
 
         const won = boostedPts > oppPts;
         const drew = boostedPts === oppPts;
@@ -2409,6 +2428,65 @@
           boostedRefPts: boostedPts,
           rawRefPts: rawPts,
         };
+      }
+
+      // ── BATTLE RESULT POPUP ───────────────────────────────────
+      function showBattleResultCard(result, refName, refScore, gwPtsEarned, seasonTotal) {
+        const storageKey = `rr_battle_notif_gw_${FGW.gw}`;
+        if (localStorage.getItem(storageKey)) return;
+        localStorage.setItem(storageKey, "1");
+
+        const isWin  = result === "W";
+        const isDraw = result === "D";
+
+        if (!isWin && !isDraw) return; // no popup for a loss
+
+        const accentColor = isWin ? "#00ff85" : "#f9c642";
+        const accentRgb   = isWin ? "0,255,133" : "249,198,66";
+        const titleText   = isWin ? "YOUR REF WON!" : "BATTLE DRAWN!";
+        const ptLine      = isWin ? `+3 points added to your season` : `+1 point added to your season`;
+        const seasonLine  = `Season total: <strong>${seasonTotal} pts</strong>`;
+
+        const backdrop = document.createElement("div");
+        backdrop.className = "bu-backdrop";
+        backdrop.style.cssText = `background:rgba(0,0,0,.55);`;
+        backdrop.innerHTML = `
+          <div class="bu-outer">
+            <div class="bu-card" style="border-color:rgba(${accentRgb},.45);box-shadow:0 0 60px rgba(${accentRgb},.18),0 24px 60px rgba(0,0,0,.7);">
+              <div class="bu-card__before" style="background:radial-gradient(ellipse 60% 40% at 50% 0%,rgba(${accentRgb},.15) 0%,transparent 70%);position:absolute;inset:0;pointer-events:none;border-radius:inherit;"></div>
+              <div class="bu-new-label" style="color:${accentColor};background:rgba(${accentRgb},.1);border-color:rgba(${accentRgb},.3);">BATTLE RESULT</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:3.4rem;line-height:1;color:${accentColor};margin:8px 0 4px;animation:buGlowPulse 2s ease-in-out infinite;">${refScore}pts</div>
+              <div class="bu-title" style="font-size:1.55rem;margin-bottom:6px;">${titleText}</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.05rem;color:rgba(255,255,255,.6);letter-spacing:.04em;margin-bottom:14px;">${refName}</div>
+              <div style="font-size:.88rem;color:${accentColor};font-weight:600;margin-bottom:4px;">${ptLine}</div>
+              <div class="bu-desc" style="margin-bottom:16px;">${seasonLine}</div>
+              <button class="bu-dismiss" style="color:rgba(${accentRgb},.5);" onclick="
+                this.closest('.bu-backdrop').querySelector('.bu-outer').classList.add('bu-out');
+                this.closest('.bu-backdrop').classList.add('bu-out');
+                setTimeout(()=>this.closest('.bu-backdrop').remove(),450);
+              ">Dismiss</button>
+            </div>
+          </div>`;
+
+        // Smoke particles
+        const card = backdrop.querySelector(".bu-card");
+        for (let i = 0; i < 8; i++) {
+          const p = document.createElement("div");
+          p.className = "bu-particle";
+          const size = 30 + Math.random() * 50;
+          p.style.cssText = `width:${size}px;height:${size}px;left:${10+Math.random()*80}%;--dx:${(Math.random()-.5)*60}px;--rise:-${60+Math.random()*80}px;--dur:${1.2+Math.random()*.8}s;--delay:${Math.random()*.6}s;background:radial-gradient(circle,rgba(${accentRgb},.45) 0%,rgba(${accentRgb},0) 70%);`;
+          card.appendChild(p);
+        }
+
+        backdrop.addEventListener("click", (e) => {
+          if (e.target === backdrop) {
+            backdrop.querySelector(".bu-outer").classList.add("bu-out");
+            backdrop.classList.add("bu-out");
+            setTimeout(() => backdrop.remove(), 450);
+          }
+        });
+
+        document.body.appendChild(backdrop);
       }
 
       // ── HEADER ────────────────────────────────────────────────
@@ -2770,7 +2848,6 @@
       <div class="battle-header">
         <span>Battle ${b.id}</span>
         ${showMyPick ? '<span class="my-pick-badge">MY PICK</span>' : ""}
-        <span>UPCOMING</span>
       </div>
       <div class="battle-body">
         <div class="battle-ref${showMyPick ? " my-pick" : ""}">
@@ -2790,7 +2867,7 @@
         </div>
       </div>
       <div class="battle-footer">
-        <div class="battle-result-label tbd">UPCOMING</div>
+        <div class="battle-result-label tbd"></div>
         <div class="battle-pickers">Revealed after deadline</div>
       </div>
     </div>`;
@@ -2800,7 +2877,7 @@
           return;
         }
 
-        document.getElementById("battlesGrid").innerHTML = BATTLES.map((b) => {
+        const battleCards = BATTLES.map((b) => {
           const r1 = gRef(b.r1),
             r2 = gRef(b.r2);
           const m1 = getRefMatch(b.r1),
@@ -2812,6 +2889,7 @@
           const res = getBattleResult(b);
           const live = isLiveBattle(b);
           const myBattle = myPick && (b.r1 === myPick || b.r2 === myPick);
+          const bothComplete = s1 === "complete" && s2 === "complete";
 
           // After deadline: show everything
           const show1 = true;
@@ -2819,18 +2897,18 @@
 
           const r1win = res === "r1",
             r2win = res === "r2",
-            tbd = res === "tbd";
+            tbd = res === "tbd" || !bothComplete;
 
           let resLabel = "",
             resClass = "tbd";
           if (!dlp) {
-            resLabel = "UPCOMING";
+            resLabel = "";
             resClass = "tbd";
-          } else if (tbd && live) {
+          } else if (live) {
             resLabel = '<span class="live-dot"></span> LIVE';
             resClass = "live";
           } else if (tbd) {
-            resLabel = "UPCOMING";
+            resLabel = "";
           } else if (res === "draw") {
             resLabel = "DRAW";
             resClass = "draw";
@@ -2846,10 +2924,10 @@
             resClass = "win";
           }
 
-          const avClass1 = dlp && !tbd ? (r1win ? " winner" : " loser") : "";
-          const avClass2 = dlp && !tbd ? (r2win ? " winner" : " loser") : "";
+          const avClass1 = dlp && bothComplete ? (r1win ? " winner" : " loser") : "";
+          const avClass2 = dlp && bothComplete ? (r2win ? " winner" : " loser") : "";
           const ptClass1 =
-            dlp && !tbd
+            dlp && bothComplete
               ? r1win
                 ? "winner"
                 : "loser"
@@ -2857,7 +2935,7 @@
                 ? "live"
                 : "tbd";
           const ptClass2 =
-            dlp && !tbd
+            dlp && bothComplete
               ? r2win
                 ? "winner"
                 : "loser"
@@ -2869,7 +2947,7 @@
       <div class="battle-header">
         <span>Battle ${b.id}</span>
         ${myBattle ? '<span class="my-pick-badge">MY PICK</span>' : ""}
-        <span>${!dlp ? "UPCOMING" : tbd && !live ? "UPCOMING" : live ? '<span class="live-dot"></span> LIVE' : "COMPLETE"}</span>
+        <span>${live ? '<span class="live-dot"></span> LIVE' : ""}</span>
       </div>
       <div class="battle-body">
         <div class="battle-ref${b.r1 === myPick ? " my-pick" : ""}">
@@ -2915,7 +2993,11 @@
         <div class="battle-pickers">${dlp ? `${PICK_COUNTS[b.r1]} vs ${PICK_COUNTS[b.r2]} managers` : "Revealed after deadline"}</div>
       </div>
     </div>`;
-        }).join("");
+        });
+        const _logos = Array(16).fill(`<img src="images/logos/ref_rater_logo_green_a.svg" alt="RefRater">`).join('');
+        const adHtml = `<div class="ad-banner"><span class="ad-banner-label">Advertisement</span><div class="ad-banner-scroll"><div class="ad-banner-track">${_logos}</div></div></div>`;
+        if (battleCards.length > 3) battleCards.splice(3, 0, adHtml);
+        document.getElementById("battlesGrid").innerHTML = battleCards.join("");
         reparse();
       }
 
@@ -3043,12 +3125,14 @@
                 p.profile?.username ||
                 (isMe ? currentUser.username : "Unknown");
               const refName = gRef(p.ref_id)?.name || "Unknown";
+              const storedOppId = gwBattles[p.ref_id];
               return {
                 uname,
                 isMe,
                 badge,
                 pts: p.gw_pts,
                 myPts: gwRefPts[p.ref_id] ?? null,
+                oppPts: gwRefPts[storedOppId] ?? null,
                 wcBoost: 0,
                 refName,
                 wc: p.wildcards || {},
@@ -3066,10 +3150,7 @@
               if (wc.rc?.active)
                 boosted += getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0;
               if (wc.var?.active)
-                boosted += MATCHES.find((m) => m.id === wc.var?.matchId)
-                  ?.perfectGame
-                  ? 2
-                  : 0;
+                boosted += varWildcardTriggered(wc.var?.matchId) ? 2 : 0;
             }
             const pts =
               myPts != null && oppPts != null
@@ -3092,26 +3173,27 @@
               (wc.yc?.active ? (isHighYCMatch(wc.yc?.matchId) ? 1 : 0) : 0) +
               (wc.rc?.active ? (getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0) : 0) +
               (wc.var?.active
-                ? MATCHES.find((m) => m.id === wc.var?.matchId)?.perfectGame
+                ? varWildcardTriggered(wc.var?.matchId)
                   ? 2
                   : 0
                 : 0);
-            return { uname, isMe, badge, pts, myPts, wcBoost, refName, wc };
+            return { uname, isMe, badge, pts, myPts, oppPts: oppPts ?? null, wcBoost, refName, wc };
           })
           .sort((a, b) => {
-            if (b.pts !== a.pts) return (b.pts ?? -1) - (a.pts ?? -1);
-            return (b.myPts ?? 0) + b.wcBoost - ((a.myPts ?? 0) + a.wcBoost);
+            const aScore = (a.myPts ?? -1) + a.wcBoost;
+            const bScore = (b.myPts ?? -1) + b.wcBoost;
+            if (bScore !== aScore) return bScore - aScore;
+            return (b.pts ?? -1) - (a.pts ?? -1);
           });
 
         document.getElementById("fantasyLeague").innerHTML = rows
           .map((r, i) => {
             const medal =
               i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1;
-            const ptsDisplay = r.pts !== null ? r.pts : "–";
-            const refPtsDisplay =
-              r.myPts !== null
-                ? `${r.myPts + r.wcBoost} ref pts${r.wcBoost > 0 ? ` (+${r.wcBoost} wc)` : ""}`
-                : "no data";
+            const myScore = r.myPts !== null ? r.myPts + r.wcBoost : null;
+            const gwScoreHtml = myScore !== null
+              ? `<span style="color:var(--pl-green)">${myScore}</span>${r.oppPts !== null ? `<span style="font-weight:400;font-size:.78em;color:var(--text);opacity:.65;"> v ${r.oppPts}</span>` : ""}`
+              : "–";
             return `<div class="fl-row${r.isMe ? " me" : ""}">
             <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
             <div style="display:flex;align-items:center;">${miniAvatarHtml(r.badge, r.uname)}</div>
@@ -3119,7 +3201,7 @@
               <div class="fl-name${r.isMe ? " me" : ""}">${r.uname}${r.isMe ? " ★" : ""}</div>
               <div class="fl-sub">${r.refName}</div>
             </div>
-            <div class="fl-pts${r.isMe ? " me" : ""}">${ptsDisplay} <span style="font-size:.75em;opacity:.65;font-weight:500">(${refPtsDisplay})</span></div>
+            <div class="fl-pts">${gwScoreHtml}</div>
           </div>`;
           })
           .join("");
@@ -3174,7 +3256,7 @@
               : 0
             : 0) +
           (wildcards.var.active
-            ? MATCHES.find((m) => m.id === wildcards.var.matchId)?.perfectGame
+            ? varWildcardTriggered(wildcards.var.matchId)
               ? 2
               : 0
             : 0);
@@ -3258,7 +3340,7 @@
                   ? `🟥 Red Card +${getMatchRC(wildcards.rc.matchId) > 0 ? 1 : 0}${wildcards.rc.matchId ? ` (${(MATCHES.find((m) => m.id === wildcards.rc.matchId) || {}).home || "?"} vs ${(MATCHES.find((m) => m.id === wildcards.rc.matchId) || {}).away || "?"})` : " — pick a match"}`
                   : "",
                 wildcards.var.active
-                  ? `📺 VAR +${MATCHES.find((m) => m.id === wildcards.var.matchId)?.perfectGame ? 3 : 0}${wildcards.var.matchId ? ` (${(MATCHES.find((m) => m.id === wildcards.var.matchId) || {}).home || "?"} vs ${(MATCHES.find((m) => m.id === wildcards.var.matchId) || {}).away || "?"})` : " — pick a match"}`
+                  ? `📺 VAR +${varWildcardTriggered(wildcards.var.matchId) ? 2 : 0}${wildcards.var.matchId ? ` (${(MATCHES.find((m) => m.id === wildcards.var.matchId) || {}).home || "?"} vs ${(MATCHES.find((m) => m.id === wildcards.var.matchId) || {}).away || "?"})` : " — pick a match"}`
                   : "",
               ]
                 .filter(Boolean)
@@ -3310,7 +3392,7 @@
             key: "var",
             icon: "📺",
             name: "VAR Replay",
-            desc: "Pick any game this GW — if that ref has a perfect game, you earn +2. Must use before deadline.",
+            desc: "Pick any game this GW — if the ref has a penalty or red card decision overturned by VAR, you earn +2. Must use before deadline.",
             preDeadline: true,
           },
         ];
@@ -3413,7 +3495,7 @@
                   ? "🟨 Most yellows prediction saved!"
                   : key === "rc"
                     ? "🟥 Red card prediction saved!"
-                    : "📺 Perfect game prediction saved!"
+                    : "📺 VAR overrule prediction saved!"
                 : "Match prediction cleared",
             );
           });
@@ -3427,51 +3509,47 @@
             '<div style="padding:16px;color:var(--muted);font-size:.82rem;text-align:center">No picks made yet this matchweek</div>';
           return;
         }
+        const getRefPtsWithWC = (p) => {
+          const raw = p.refId != null ? (REF_GW_PTS[p.refId] ?? null) : null;
+          if (raw === null) return -1;
+          const wc = p.isMe ? wildcards : p.wildcards || {};
+          return (
+            raw +
+            (wc.yc?.active ? (isHighYCMatch(wc.yc?.matchId) ? 1 : 0) : 0) +
+            (wc.rc?.active ? (getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0) : 0) +
+            (wc.var?.active
+              ? varWildcardTriggered(wc.var?.matchId) ? 2 : 0
+              : 0)
+          );
+        };
         const sorted = [...FANTASY_LEAGUE].sort((a, b) => {
-          if (b.pts !== a.pts) return b.pts - a.pts;
-          // Tiebreaker: higher total ref points wins
-          const getRefPts = (p) => {
-            const battle = p.refId ? getBattleForRef(p.refId) : null;
-            const oppId = battle
-              ? battle.r1 === p.refId
-                ? battle.r2
-                : battle.r1
-              : null;
-            const raw = p.refId != null ? (REF_GW_PTS[p.refId] ?? null) : null;
-            if (raw === null) return -1;
-            const wc = p.wildcards || {};
-            return (
-              raw +
-              (wc.yc?.active ? (isHighYCMatch(wc.yc.matchId) ? 1 : 0) : 0) +
-              (wc.rc?.active ? (getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0) : 0) +
-              (wc.var?.active
-                ? MATCHES.find((m) => m.id === wc.var?.matchId)?.perfectGame
-                  ? 2
-                  : 0
-                : 0)
-            );
-          };
-          return getRefPts(b) - getRefPts(a);
+          const aScore = getRefPtsWithWC(a);
+          const bScore = getRefPtsWithWC(b);
+          if (bScore !== aScore) return bScore - aScore;
+          return b.pts - a.pts; // tiebreak by battle result
         });
         document.getElementById("fantasyLeague").innerHTML = sorted
           .map((p, i) => {
-            const team = PL_TEAMS.find((t) => t.name === p.team);
             const medal =
               i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1;
             // For current user use local wildcards state (same source as My Pick panel)
             // For others use their saved DB pick wildcards
             const wc = p.isMe ? wildcards : p.wildcards || {};
-            const wcIcons = [
-              { key: "yc", icon: "🟨" },
-              { key: "rc", icon: "🟥" },
-              { key: "var", icon: "📺" },
+            const wcDefs = [
+              { key: "yc", icon: "🟨", label: "Yellow Card" },
+              { key: "rc", icon: "🟥", label: "Red Card" },
+              { key: "var", icon: "📺", label: "VAR Replay" },
             ];
-            const wcHtml = wcIcons
-              .map((w) => {
-                const active = !!wc[w.key]?.active;
-                return `<span class="fl-wc-icon${active ? "" : " used"}" title="${w.icon}">${w.icon}</span>`;
-              })
-              .join("");
+            const wcHtml = FGW.deadlinePassed
+              ? wcDefs
+                  .filter((w) => !!wc[w.key]?.active)
+                  .map((w) => {
+                    const match = MATCHES.find((m) => m.id === wc[w.key]?.matchId);
+                    const matchLabel = match ? `${match.home} v ${match.away}` : "";
+                    return `<span class="fl-wc-icon active" title="${w.label}">${w.icon}${matchLabel ? `<span class="fl-wc-match">${matchLabel}</span>` : ""}</span>`;
+                  })
+                  .join("")
+              : "";
             const battle = p.refId ? getBattleForRef(p.refId) : null;
             const oppId = battle
               ? battle.r1 === p.refId
@@ -3493,22 +3571,26 @@
                       : 0
                     : 0) +
                   (wc.var?.active
-                    ? MATCHES.find((m) => m.id === wc.var?.matchId)?.perfectGame
+                    ? varWildcardTriggered(wc.var?.matchId)
                       ? 2
                       : 0
                     : 0)
                 : 0;
             const refPtsDisplay =
               rawRefPts !== null ? rawRefPts + wcBoost : null;
+            const oppPtsDisplay = oppId != null ? (REF_GW_PTS[oppId] ?? null) : null;
+            const scoreHtml = refPtsDisplay !== null
+              ? `<span style="color:var(--pl-green)">${refPtsDisplay}</span>${oppPtsDisplay !== null ? `<span style="font-weight:400;font-size:.78em;color:var(--text);opacity:.65;"> v ${oppPtsDisplay}</span>` : ""}`
+              : "—";
             return `<div class="fl-row${p.isMe ? " me" : ""}">
       <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
       <div style="display:flex;align-items:center;">${miniAvatarHtml(p.avatarBadge, p.username)}</div>
       <div style="min-width:0;">
         <div class="fl-name${p.isMe ? " me" : ""}">${p.username}${p.isMe ? " ★" : ""}</div>
-        <div class="fl-sub">${p.team}${FGW.deadlinePassed || p.isMe ? ` · picked ${p.gwPick}` : " · pick hidden"}</div>
-        <div class="fl-wc-row">${wcHtml}</div>
+        <div class="fl-sub">${FGW.deadlinePassed || p.isMe ? `picked ${p.gwPick}` : "pick hidden"}</div>
+        ${wcHtml ? `<div class="fl-wc-row">${wcHtml}</div>` : ""}
       </div>
-      <div class="fl-pts${p.isMe ? " me" : ""}">${p.pts} <span style="font-size:.75em;opacity:.65;font-weight:500">(${refPtsDisplay !== null ? refPtsDisplay : "—"} ref pts)</span></div>
+      <div class="fl-pts">${scoreHtml}</div>
     </div>`;
           })
           .join("");
@@ -3600,7 +3682,6 @@
 
         document.getElementById("seasonPointsLeague").innerHTML = sorted
           .map((row, i) => {
-            const team = PL_TEAMS.find((t) => t.name === row.profile?.team);
             const medal =
               i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1;
             const me = row.uid === currentUser?.id;
@@ -3616,7 +3697,7 @@
             <div style="display:flex;align-items:center;">${miniAvatarHtml(seasonBadge, uname)}</div>
             <div style="min-width:0;">
               <div class="fl-name${me ? " me" : ""}">${uname}${me ? " ★" : ""}</div>
-              <div class="fl-sub">${row.profile?.team || ""}</div>
+              <div class="fl-sub"></div>
             </div>
             <div class="fl-pts${me ? " me" : ""}">${row.total} <span style="font-size:.75em;opacity:.65;font-weight:500">(${refPts} ref pts)</span></div>
           </div>`;
@@ -3656,10 +3737,7 @@
               if (wc.rc?.active)
                 boosted += getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0;
               if (wc.var?.active)
-                boosted += MATCHES.find((m) => m.id === wc.var?.matchId)
-                  ?.perfectGame
-                  ? 2
-                  : 0;
+                boosted += varWildcardTriggered(wc.var?.matchId) ? 2 : 0;
               userTotals[uid].total += boosted;
             }
           });
@@ -3694,8 +3772,7 @@
             '<div style="padding:14px 16px;font-size:.82rem;color:var(--muted)">No scores yet this matchweek</div>';
           return;
         }
-        document.getElementById("refScores").innerHTML = sorted
-          .map((r, i) => {
+        const refRows = sorted.map((r, i) => {
             const gwPts = REF_GW_PTS[r.id] ?? null;
             const seasonPts = REF_SEASON_PTS[r.id] ?? 0;
             const gamesPlayed = MATCHES.filter(
@@ -3718,8 +3795,10 @@
         <div class="fl-pts-dual-col"><div class="fl-pts${isMyRef ? " me" : ""}">${seasonPts}</div></div>
       </div>
     </div>`;
-          })
-          .join("");
+          });
+        const refAdHtml = `<div class="ad-banner ad-square"><span class="ad-banner-label">Advertisement</span><img src="images/badges/redcardbadge.png" alt=""></div>`;
+        if (refRows.length > 4) refRows.splice(4, 0, refAdHtml);
+        document.getElementById("refScores").innerHTML = refRows.join("");
       }
 
       // ── SEASON REF SCORES ────────────────────────────────────
@@ -3768,10 +3847,7 @@
               if (wc.rc?.active)
                 boosted += getMatchRC(wc.rc?.matchId) > 0 ? 1 : 0;
               if (wc.var?.active)
-                boosted += MATCHES.find((m) => m.id === wc.var?.matchId)
-                  ?.perfectGame
-                  ? 2
-                  : 0;
+                boosted += varWildcardTriggered(wc.var?.matchId) ? 2 : 0;
               const won = boosted > oppPts;
               const drew = boosted === oppPts;
               pts = won ? 3 : drew ? 1 : 0;
@@ -4072,6 +4148,47 @@
 
         const seasonRefTotals = buildSeasonRefPointsLeague(allPicks);
         buildSeasonGWPointsLeague(allPicks, seasonRefTotals);
+
+        // Battle result popup — show once per GW when user's battle is decided
+        if (myPick && FGW.deadlinePassed) {
+          const myBattle = getBattleForRef(myPick);
+          if (myBattle) {
+            const s1 = REF_STATUS[myBattle.r1], s2 = REF_STATUS[myBattle.r2];
+            if (s1 === "complete" && s2 === "complete") {
+              const gwData = calcMyGWPts();
+              if (gwData) {
+                // Compute season total for current user from allPicks
+                const myUserId = currentUser?.id;
+                let mySeasonTotal = 0;
+                if (myUserId) {
+                  const myPicksAll = allPicks.filter((p) => p.user_id === myUserId);
+                  myPicksAll.forEach((p) => {
+                    if (p.gw_pts != null) { mySeasonTotal += p.gw_pts; return; }
+                    if (+p.matchweek === FGW.gw) return; // current GW handled separately below
+                    const gwMatchList2 = MATCHES.filter((m) => +m.matchweek === p.matchweek);
+                    const refIds2 = [...new Set(gwMatchList2.map((m) => +m.refId))];
+                    const shuffled2 = [...refIds2].sort((a,b) => ((a*31+p.matchweek*17)%97) - ((b*31+p.matchweek*17)%97));
+                    const battles2 = {};
+                    for (let i = 0; i+1 < shuffled2.length; i+=2) { battles2[shuffled2[i]] = shuffled2[i+1]; battles2[shuffled2[i+1]] = shuffled2[i]; }
+                    const oppId2 = battles2[p.ref_id];
+                    const mPts2 = gwMatchList2.filter((m) => +m.refId === p.ref_id && (m.status==="complete"||m.status==="recent")).reduce((s,m) => s+(m.yc||0)+(m.rc||0)+(m.pen||0)*2-(m.incorrectVarPen||0)-(m.incorrectVarRed||0)*2+(m.perfectGame?3:0),0);
+                    const oPts2 = gwMatchList2.filter((m) => +m.refId === oppId2 && (m.status==="complete"||m.status==="recent")).reduce((s,m) => s+(m.yc||0)+(m.rc||0)+(m.pen||0)*2-(m.incorrectVarPen||0)-(m.incorrectVarRed||0)*2+(m.perfectGame?3:0),0);
+                    if (oppId2 != null && mPts2 != null && oPts2 != null) mySeasonTotal += mPts2 > oPts2 ? 3 : mPts2 === oPts2 ? 1 : 0;
+                  });
+                  mySeasonTotal += gwData.pts; // add current GW result
+                }
+                const ref = gRef(myPick);
+                setTimeout(() => showBattleResultCard(
+                  gwData.result,
+                  ref?.name || "Your Ref",
+                  gwData.boostedRefPts,
+                  gwData.pts,
+                  mySeasonTotal
+                ), 800);
+              }
+            }
+          }
+        }
 
         // Re-run twemoji after all async renders so flag emojis display correctly
         twemoji.parse(document.body, { folder: "svg", ext: ".svg" });

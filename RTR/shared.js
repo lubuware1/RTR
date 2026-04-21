@@ -6,7 +6,7 @@
 
 // ── FOOTBALL-DATA.ORG API ────────────────────────────────
 // Disabled for World Cup format — no live API used.
-const FOOTBALL_DATA_KEY = '';
+const FOOTBALL_DATA_KEY = '15b079ce9d02424994eae82a3e5f4a31';
 const FD_API_BASE = 'https://api.football-data.org/v4';
 
 // No live API for World Cup format — always uses static match data.
@@ -323,9 +323,8 @@ async function loadMyIncidentVotes(userId, incidentIds) {
   return map;
 }
 
-async function saveIncidentVote(incidentId, userId, vote, isFan) {
+async function saveIncidentVote(incidentId, userId, vote, isFan, weight = 5) {
   if (PREVIEW_MODE) return true;
-  const weight = 5; // each user counts as 5 votes
   const { error } = await getSB().from('RTR Incident Votes').insert({
     incident_id: incidentId, user_id: userId, vote, is_fan: !!isFan,
     weight, created_at: new Date().toISOString()
@@ -400,6 +399,52 @@ async function loadIncidentRatings() {
       r.fanVotes = refFan[r.id].reduce((s,i) => s + i._v.correct + i._v.wrong, 0);
     }
   });
+}
+
+// Find an existing "game" forum thread for a given match title
+async function findMatchForumThread(matchTitle) {
+  if (PREVIEW_MODE) return null;
+  const { data } = await getSB().from('RTR Forum')
+    .select('id, subject')
+    .eq('category', 'game')
+    .is('reply_to', null)
+    .eq('subject', matchTitle)
+    .limit(1)
+    .maybeSingle();
+  return data || null;
+}
+
+// Post a comment to a match's forum thread, creating the thread if it doesn't exist yet
+async function postMatchComment(matchTitle, body, userId, username) {
+  if (PREVIEW_MODE || !userId) return null;
+  const sb = getSB();
+  // Find or create the thread
+  let thread = await findMatchForumThread(matchTitle);
+  if (!thread) {
+    const { data, error } = await sb.from('RTR Forum').insert({
+      user_id: userId,
+      username,
+      category: 'game',
+      subject: matchTitle,
+      body,
+      reply_to: null,
+      created_at: new Date().toISOString(),
+    }).select('id').single();
+    if (error) { console.error('[RTR] postMatchComment create thread error:', error); return null; }
+    return data;
+  }
+  // Thread exists — add as a reply
+  const { data, error } = await sb.from('RTR Forum').insert({
+    user_id: userId,
+    username,
+    category: 'game',
+    subject: matchTitle,
+    body,
+    reply_to: thread.id,
+    created_at: new Date().toISOString(),
+  }).select('id').single();
+  if (error) { console.error('[RTR] postMatchComment reply error:', error); return null; }
+  return data;
 }
 
 async function saveDecisionFlag(matchId, matchMinute) {
@@ -748,7 +793,7 @@ const SHARED_CSS = `
     background:linear-gradient(145deg,#1a0030 0%,#0d0f14 60%,#1a1e28 100%);
     border:1.5px solid rgba(0,255,133,.45);
     border-radius:20px;
-    padding:32px 36px 28px;
+    padding:24px 28px 28px;
     text-align:center;
     min-width:280px;max-width:340px;
     position:relative;
@@ -771,17 +816,17 @@ const SHARED_CSS = `
   }
   @keyframes buBlink{0%,100%{opacity:1}50%{opacity:.5}}
   .bu-icon-wrap{
-    width:80px;height:80px;border-radius:50%;
+    width:200px;height:230px;
+    clip-path:polygon(50% 0%,100% 20%,100% 68%,50% 100%,0% 68%,0% 20%);
     background:linear-gradient(135deg,rgba(55,0,60,.8),rgba(0,255,133,.12));
-    border:2px solid rgba(0,255,133,.4);
     display:flex;align-items:center;justify-content:center;
     margin:0 auto 16px;
     font-size:2.6rem;line-height:1;
     animation:buGlowPulse 2s ease-in-out infinite;
     position:relative;z-index:2;
   }
-  .bu-icon-wrap img{width:100%;height:100%;border-radius:50%;object-fit:cover;}
-  @keyframes buGlowPulse{0%,100%{box-shadow:0 0 0 0 rgba(0,255,133,.4)}50%{box-shadow:0 0 0 10px rgba(0,255,133,0)}}
+  .bu-icon-wrap img{width:78%;height:78%;border-radius:0;clip-path:polygon(50% 0%,100% 20%,100% 68%,50% 100%,0% 68%,0% 20%);object-fit:cover;}
+  @keyframes buGlowPulse{0%,100%{filter:drop-shadow(0 0 0px rgba(0,255,133,.4))}50%{filter:drop-shadow(0 0 12px rgba(0,255,133,.7))}}
   .bu-title{
     font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.55rem;
     text-transform:uppercase;letter-spacing:.5px;color:#fff;margin-bottom:6px;
@@ -827,13 +872,13 @@ const SHARED_CSS = `
   }
   @keyframes avPopIn{from{opacity:0;transform:scale(.88) translateY(6px)}to{opacity:1;transform:scale(1) translateY(0)}}
   .rr-av-popup-icon{
-    width:52px;height:52px;border-radius:50%;
+    width:52px;height:60px;
+    clip-path:polygon(50% 0%,100% 20%,100% 68%,50% 100%,0% 68%,0% 20%);
     background:linear-gradient(135deg,rgba(55,0,60,.8),rgba(0,255,133,.1));
-    border:2px solid rgba(0,255,133,.3);
     display:flex;align-items:center;justify-content:center;
     font-size:1.7rem;margin:0 auto 10px;
   }
-  .rr-av-popup-icon img{width:100%;height:100%;border-radius:50%;object-fit:cover;}
+  .rr-av-popup-icon img{width:78%;height:78%;border-radius:0;clip-path:polygon(50% 0%,100% 20%,100% 68%,50% 100%,0% 68%,0% 20%);object-fit:cover;}
   .rr-av-popup-user{font-size:.7rem;color:rgba(0,255,133,.6);font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:.12em;text-transform:uppercase;text-align:center;margin-bottom:6px;}
   .rr-av-popup-name{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;text-transform:uppercase;letter-spacing:.3px;color:#fff;text-align:center;margin-bottom:4px;}
   .rr-av-popup-cat{font-size:.65rem;color:rgba(0,255,133,.5);font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:.1em;text-transform:uppercase;text-align:center;margin-bottom:8px;}
@@ -862,17 +907,38 @@ function setAvatarBadge(data) {
 }
 
 // Render a mini circular avatar for use in leaderboard rows
+const SHIELD_PATH = 'polygon(50% 0%,100% 20%,100% 68%,50% 100%,0% 68%,0% 20%)';
+function shieldBorderHtml(imgSrc, size, badgeKey) {
+  const def = (typeof BADGE_DEFS !== 'undefined') ? BADGE_DEFS.find(b => b.key === badgeKey) : null;
+  const borderBg = def?.bronze
+    ? 'linear-gradient(160deg,#e8a84b,#cd7f32,#8b4513)'
+    : def?.gold
+      ? 'linear-gradient(160deg,#FFE44D,#DAA520,#9A6B00)'
+      : 'linear-gradient(135deg,rgba(0,255,133,.8),rgba(0,180,90,.5))';
+  const bdr = 2;
+  const h = Math.round(size * 1.15);
+  const outerW = size + bdr * 2, outerH = h + bdr * 2;
+  return `<div style="width:${outerW}px;height:${outerH}px;clip-path:${SHIELD_PATH};background:${borderBg};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;vertical-align:middle;">` +
+    `<img src="${imgSrc}" style="width:${size}px;height:${h}px;clip-path:${SHIELD_PATH};object-fit:cover;display:block;" alt=""></div>`;
+}
+
 function miniAvatarHtml(badge, username, size = 26) {
-  const isImg = badge?.icon && /\.(png|jpg|jpeg|svg|webp)$/i.test(badge.icon);
-  const isImgBadge = badge?.img || isImg;
+  const imgSrc = badge?.img || (badge?.icon && /\.(png|jpg|jpeg|svg|webp)$/i.test(badge.icon) ? badge.icon : null);
   const initials = (username || '?').slice(0, 2).toUpperCase();
   const base = `width:${size}px;height:${size}px;border-radius:50%;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;`;
 
   let inner;
-  if (isImg) {
-    inner = `<img src="${badge.icon}" style="${base}object-fit:cover;border:1.5px solid rgba(0,255,133,.3);" alt="">`;
+  if (imgSrc) {
+    inner = shieldBorderHtml(imgSrc, size, badge?.key);
   } else if (badge?.icon) {
-    inner = `<span style="${base}background:rgba(0,255,133,.08);font-size:${Math.round(size * .55)}px;">${badge.icon}</span>`;
+    const def2 = (typeof BADGE_DEFS !== 'undefined') ? BADGE_DEFS.find(b => b.key === badge?.key) : null;
+    if (def2?.gold || def2?.bronze) {
+      const borderBg = def2.gold ? 'linear-gradient(160deg,#FFE44D,#DAA520,#9A6B00)' : 'linear-gradient(160deg,#e8a84b,#cd7f32,#8b4513)';
+      const shieldH2 = Math.round(size * 1.15);
+      inner = `<div style="width:${size}px;height:${shieldH2}px;clip-path:${SHIELD_PATH};background:${borderBg};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;vertical-align:middle;font-size:${Math.round(size * .5)}px;">${badge.icon}</div>`;
+    } else {
+      inner = `<span style="${base}background:rgba(0,255,133,.08);font-size:${Math.round(size * .55)}px;">${badge.icon}</span>`;
+    }
   } else {
     inner = `<span style="${base}background:linear-gradient(135deg,var(--pl-purple),#8b008b);color:var(--pl-green);font-size:${Math.round(size * .42)}px;font-weight:700;border:1.5px solid rgba(0,255,133,.2);">${initials}</span>`;
   }
@@ -887,12 +953,28 @@ function miniAvatarHtml(badge, username, size = 26) {
 function applyUserAvatar(el, user) {
   const badge = getAvatarBadge();
   if (badge) {
-    const isImg = badge.icon && /\.(png|jpg|jpeg|svg|webp)$/i.test(badge.icon);
-    if (isImg) {
-      el.innerHTML = `<img src="${badge.icon}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;">`;
-      el.style.fontSize   = '';
-      el.style.background = 'transparent';
-      el.style.padding    = '0';
+    const imgSrc = badge.img || (badge.icon && /\.(png|jpg|jpeg|svg|webp)$/i.test(badge.icon) ? badge.icon : null);
+    if (imgSrc) {
+      const def = (typeof BADGE_DEFS !== 'undefined') ? BADGE_DEFS.find(b => b.key === badge?.key) : null;
+      const borderBg = def?.bronze
+        ? 'linear-gradient(160deg,#e8a84b,#cd7f32,#8b4513)'
+        : def?.gold
+          ? 'linear-gradient(160deg,#FFE44D,#DAA520,#9A6B00)'
+          : 'linear-gradient(135deg,rgba(0,255,133,.8),rgba(0,180,90,.5))';
+      const chipW = 26, chipH = 30;
+      const imgW = chipW - 4, imgH = chipH - 4;
+      el.innerHTML = `<img src="${imgSrc}" style="width:${imgW}px;height:${imgH}px;clip-path:${SHIELD_PATH};object-fit:cover;display:block;" alt="">`;
+      el.style.background   = borderBg;
+      el.style.clipPath     = SHIELD_PATH;
+      el.style.borderRadius = '0';
+      el.style.border       = 'none';
+      el.style.width        = `${chipW}px`;
+      el.style.height       = `${chipH}px`;
+      el.style.display      = 'flex';
+      el.style.alignItems   = 'center';
+      el.style.justifyContent = 'center';
+      el.style.fontSize     = '';
+      el.style.padding      = '0';
     } else {
       el.innerHTML        = '';
       el.textContent      = badge.icon;
@@ -924,15 +1006,23 @@ function applyUserAvatar(el, user) {
 
     const isImg = def.img || (def.icon && /\.(png|jpg|jpeg|svg|webp)$/i.test(def.icon));
     const iconSrc = def.img || def.icon;
+    const shieldBg = def.bronze ? 'linear-gradient(160deg,#e8a84b,#cd7f32,#8b4513)' : def.gold ? 'linear-gradient(160deg,#FFE44D,#DAA520,#9A6B00)' : null;
     const iconHtml = isImg
-      ? `<img src="${iconSrc}" alt="${def.name}">`
+      ? (shieldBg
+        ? `<div style="width:54px;height:62px;position:relative;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 3px 8px ${def.gold ? 'rgba(255,215,0,.6)' : 'rgba(205,127,50,.6)'});flex-shrink:0;">
+             <div style="position:absolute;inset:0;background:${shieldBg};clip-path:polygon(50% 0%,100% 20%,100% 68%,50% 100%,0% 68%,0% 20%);"></div>
+             <img src="${iconSrc}" alt="${def.name}" style="position:relative;z-index:1;width:76%;height:76%;object-fit:cover;clip-path:polygon(50% 0%,100% 20%,100% 68%,50% 100%,0% 68%,0% 20%);">
+           </div>`
+        : `<img src="${iconSrc}" alt="${def.name}" style="width:100%;height:100%;object-fit:cover;clip-path:polygon(50% 0%,100% 20%,100% 68%,50% 100%,0% 68%,0% 20%);">`)
       : `<span>${iconSrc || '🏅'}</span>`;
+
+    const finalIconHtml = def.key === 'founder' ? platinumWingsHtml(iconHtml, 54, 62) : iconHtml;
 
     popup = document.createElement('div');
     popup.className = 'rr-av-popup';
     popup.innerHTML = `
       <button class="rr-av-popup-close">✕</button>
-      <div class="rr-av-popup-icon">${iconHtml}</div>
+      <div class="rr-av-popup-icon">${finalIconHtml}</div>
       ${username ? `<div class="rr-av-popup-user">${username}</div>` : ''}
       <div class="rr-av-popup-name">${def.name}</div>
       <div class="rr-av-popup-cat">${def.category}</div>
@@ -980,11 +1070,15 @@ const BADGE_DEFS = [
   { key: 'podium',        category: 'Fantasy',  icon: '🏆', name: 'Podium',         desc: 'Finish top 3 in a matchweek leaderboard' },
   { key: 'match_winner',  category: 'Fantasy',  icon: '🎯', name: 'Match Winner',   desc: 'Your picked ref scores 10+ points in a GW' },
   // Fantasy - Wildcards
-  { key: 'wc_red_card',   category: 'Fantasy - Wildcards', img: 'images/badges/redcardbadge.png',       name: 'Red Card Wildcard',   desc: 'Use the Red Card wildcard and correctly predict a game with a red card' },
-  { key: 'wc_yellow_card',category: 'Fantasy - Wildcards', img: 'images/badges/yellowcardbadge.png',    name: 'Yellow Card Wildcard',desc: 'Use the Yellow Card wildcard and correctly predict a game with 4+ yellow cards' },
-  { key: 'wc_var_replay', category: 'Fantasy - Wildcards', img: 'images/badges/consultingvarbadge.png', name: 'VAR Replay Wildcard', desc: 'Use the VAR Replay wildcard and correctly predict a ref\'s perfect game' },
+  { key: 'wc_red_card',      category: 'Fantasy - Wildcards', img: 'images/badges/redcardbadge.png',       name: 'Red Card Wildcard',        desc: 'Use the Red Card wildcard and correctly predict a game with a red card' },
+  { key: 'wc_yellow_card',   category: 'Fantasy - Wildcards', img: 'images/badges/yellowcardbadge.png',    name: 'Yellow Card Wildcard',     desc: 'Use the Yellow Card wildcard and correctly predict a game with 4+ yellow cards' },
+  { key: 'wc_var_replay',    category: 'Fantasy - Wildcards', img: 'images/badges/consultingvarbadge.png', name: 'VAR Replay Wildcard',      desc: 'Pick a game — if the ref has a penalty or red card overturned by VAR, earn +2 pts' },
+  // Fantasy - Wildcard Mastery (bronze — 10 correct uses)
+  { key: 'wc_red_card_x10',  category: 'Fantasy - Wildcards', img: 'images/badges/redcardbadge.png',       name: 'Red Card Master',          desc: 'Correctly fire the Red Card wildcard 10 times',    bronze: true },
+  { key: 'wc_yellow_card_x10',category:'Fantasy - Wildcards', img: 'images/badges/yellowcardbadge.png',    name: 'Yellow Card Master',       desc: 'Correctly fire the Yellow Card wildcard 10 times', bronze: true },
+  { key: 'wc_var_replay_x10',category: 'Fantasy - Wildcards', img: 'images/badges/consultingvarbadge.png', name: 'VAR Replay Master',        desc: 'Correctly fire the VAR Replay wildcard 10 times',  bronze: true },
   // Loyalty
-  { key: 'founder',       category: 'Loyalty',  icon: '👑', name: 'Founder',        desc: 'A founding member of RefRater' },
+  { key: 'founder',       category: 'Loyalty',  img: 'images/logos/RRlogo192.png', name: 'Founder', desc: 'A founding member of RefRater', gold: true },
   { key: 'profile_setup', category: 'Loyalty',  icon: '👤', name: 'All Kitted Out', desc: 'Set your favourite team on your profile' },
   { key: 'early_adopter', category: 'Loyalty',  icon: '🌟', name: 'Early Adopter',  desc: 'Among the first 50 users to join RefRater' },
   // Special
@@ -1007,13 +1101,42 @@ async function awardBadge(userId, badgeKey) {
   return isNew;
 }
 
+// Wraps a shield HTML string with platinum wings — used for Founder badge
+function platinumWingsHtml(innerHtml, shieldW, shieldH) {
+  const wingW = Math.round(shieldW * 0.42);
+  const wingH = Math.round(shieldH * 0.82);
+  const platGrad = 'linear-gradient(160deg,#f8f8f8,#c0c0c0,#e8e8e8,#808080,#d0d0d0)';
+  const lClip = 'polygon(100% 15%,28% 0%,0% 18%,14% 42%,0% 62%,28% 86%,100% 78%,70% 50%)';
+  const rClip = 'polygon(0% 15%,72% 0%,100% 18%,86% 42%,100% 62%,72% 86%,0% 78%,30% 50%)';
+  return `<div style="display:flex;align-items:center;justify-content:center;">` +
+    `<div style="width:${wingW}px;height:${wingH}px;background:${platGrad};clip-path:${lClip};margin-right:-5px;filter:drop-shadow(-1px 0 5px rgba(210,210,210,.7));flex-shrink:0;"></div>` +
+    innerHtml +
+    `<div style="width:${wingW}px;height:${wingH}px;background:${platGrad};clip-path:${rClip};margin-left:-5px;filter:drop-shadow(1px 0 5px rgba(210,210,210,.7));flex-shrink:0;"></div>` +
+    `</div>`;
+}
+
 function showBadgeUnlock(def) {
   // icon: image path or emoji
   const isImg = def.img || (def.icon && /\.(png|jpg|jpeg|svg|webp)$/i.test(def.icon));
   const iconSrc = def.img || def.icon;
+  const shieldBg = def.bronze
+    ? 'linear-gradient(160deg,#e8a84b,#cd7f32,#8b4513)'
+    : def.gold
+      ? 'linear-gradient(160deg,#FFE44D,#DAA520,#9A6B00)'
+      : null;
+  const shadowColor = def.gold ? 'rgba(255,215,0,.7)' : 'rgba(205,127,50,.7)';
   const iconHtml = isImg
-    ? `<img src="${iconSrc}" alt="${def.name}">`
-    : `<span>${def.icon || '🏅'}</span>`;
+    ? (shieldBg
+      ? `<div style="width:200px;height:230px;position:relative;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 4px 12px ${shadowColor});">
+           <div style="position:absolute;inset:0;background:${shieldBg};clip-path:polygon(50% 0%,100% 20%,100% 68%,50% 100%,0% 68%,0% 20%);"></div>
+           <img src="${iconSrc}" alt="${def.name}" style="position:relative;z-index:1;width:76%;height:76%;object-fit:cover;clip-path:polygon(50% 0%,100% 20%,100% 68%,50% 100%,0% 68%,0% 20%);">
+         </div>`
+      : `<img src="${iconSrc}" alt="${def.name}" style="width:78%;height:78%;object-fit:cover;clip-path:polygon(50% 0%,100% 20%,100% 68%,50% 100%,0% 68%,0% 20%);">`)
+    : def.gold
+      ? `<div style="width:200px;height:230px;clip-path:polygon(50% 0%,100% 20%,100% 68%,50% 100%,0% 68%,0% 20%);background:linear-gradient(160deg,#FFE44D,#DAA520,#9A6B00);display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 4px 12px rgba(255,215,0,.7));font-size:5rem;">${def.icon || '🏅'}</div>`
+      : `<span style="font-size:4rem;">${def.icon || '🏅'}</span>`;
+
+  const finalIconHtml = def.key === 'founder' ? platinumWingsHtml(iconHtml, 200, 230) : iconHtml;
 
   const backdrop = document.createElement('div');
   backdrop.className = 'bu-backdrop';
@@ -1022,7 +1145,7 @@ function showBadgeUnlock(def) {
       <div class="bu-card" id="buCard">
         <div class="bu-smoke" id="buSmoke"></div>
         <div class="bu-new-label">New Card Unlocked</div>
-        <div class="bu-icon-wrap">${iconHtml}</div>
+        <div class="bu-icon-wrap">${finalIconHtml}</div>
         <div class="bu-title">${def.name}</div>
         <div class="bu-desc">${def.desc}</div>
         <button class="bu-dismiss" id="buDismiss">Tap to dismiss</button>
@@ -1174,8 +1297,37 @@ async function checkWildcardBadges(userId, wc, matches) {
   }
   if (wc.var?.active && wc.var.matchId) {
     const m = matches.find(x => x.id === wc.var.matchId);
-    if (m && m.perfectGame) await awardBadge(userId, 'wc_var_replay');
+    if (m && ((m.incorrectVarPen || 0) > 0 || (m.incorrectVarRed || 0) > 0)) await awardBadge(userId, 'wc_var_replay');
   }
+}
+
+// Check wildcard mastery badges (10 correct uses each) — call after GW finalisation
+async function checkWildcardMasteryBadges(userId, matches) {
+  if (PREVIEW_MODE || !userId || !matches?.length) return;
+  const { data: picks } = await getSB().from('RTR Fantasy Picks')
+    .select('wildcards').eq('user_id', userId);
+  if (!picks?.length) return;
+
+  let rcCorrect = 0, ycCorrect = 0, varCorrect = 0;
+  picks.forEach(p => {
+    const wc = p.wildcards || {};
+    if (wc.rc?.active && wc.rc.matchId) {
+      const m = matches.find(x => x.id === wc.rc.matchId);
+      if (m && (m.rc || 0) > 0) rcCorrect++;
+    }
+    if (wc.yc?.active && wc.yc.matchId) {
+      const m = matches.find(x => x.id === wc.yc.matchId);
+      if (m && (m.yc || 0) >= 4) ycCorrect++;
+    }
+    if (wc.var?.active && wc.var.matchId) {
+      const m = matches.find(x => x.id === wc.var.matchId);
+      if (m && m.perfectGame) varCorrect++;
+    }
+  });
+
+  if (rcCorrect  >= 10) await awardBadge(userId, 'wc_red_card_x10');
+  if (ycCorrect  >= 10) await awardBadge(userId, 'wc_yellow_card_x10');
+  if (varCorrect >= 10) await awardBadge(userId, 'wc_var_replay_x10');
 }
 
 // ── THEME TOGGLE ──────────────────────────────────────────

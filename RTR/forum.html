@@ -24,7 +24,63 @@
     pointer-events: none; z-index: 0;
   }
 
-  .page { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; padding: 28px 20px 80px; }
+  .page { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 28px 20px 80px; }
+  .forum-layout { display: flex; gap: 20px; align-items: flex-start; }
+  .forum-sidebar {
+    width: 210px; flex-shrink: 0;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 0;
+    position: sticky; top: 80px;
+    max-height: calc(100vh - 100px); overflow-y: auto;
+  }
+  .sidebar-heading {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800; font-size: .72rem; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--muted);
+    padding: 0 14px 10px; border-bottom: 1px solid var(--border);
+    margin-bottom: 6px;
+  }
+  .sidebar-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 7px 14px; cursor: pointer;
+    transition: background .12s; border-left: 2px solid transparent;
+    text-decoration: none;
+  }
+  .sidebar-item:hover { background: rgba(255,255,255,.04); }
+  .sidebar-item.active { border-left-color: var(--pl-green); background: rgba(0,255,133,.06); }
+  .sidebar-item .sidebar-label,
+  .sidebar-item:hover .sidebar-label,
+  .sidebar-item.active .sidebar-label { color: var(--text); }
+  .sidebar-dot {
+    width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 5px;
+  }
+  .sidebar-dot.general  { background: #9ca3af; }
+  .sidebar-dot.referee  { background: var(--yellow); }
+  .sidebar-dot.game     { background: var(--pl-green); }
+  .sidebar-dot.decision { background: var(--red); }
+  .sidebar-label {
+    font-size: .78rem; color: var(--text); line-height: 1.35;
+    overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  }
+  .sidebar-cat-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 14px; cursor: pointer;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: .78rem; letter-spacing: .5px; text-transform: uppercase;
+    color: var(--muted); transition: color .12s;
+    user-select: none;
+  }
+  .sidebar-cat-header:hover { color: var(--text); }
+  .sidebar-cat-header .cat-arrow { font-size: .6rem; transition: transform .2s; }
+  .sidebar-cat-header.open .cat-arrow { transform: rotate(90deg); }
+  .sidebar-cat-threads { display: none; }
+  .sidebar-cat-threads.open { display: block; }
+  .sidebar-cat-threads .sidebar-item { padding-left: 22px; }
+  .forum-main { flex: 1; min-width: 0; }
+  @media (max-width: 700px) {
+    .forum-layout { flex-direction: column; }
+    .forum-sidebar { width: 100%; position: static; max-height: none; }
+  }
 
   /* ── PAGE HEADER ── */
   .forum-header {
@@ -154,7 +210,7 @@
     text-transform: uppercase; padding: 2px 8px; border-radius: 4px;
     flex-shrink: 0;
   }
-  .cat-pill.general  { background: rgba(107,114,128,.2); color: #9ca3af; }
+  .cat-pill.general  { background: rgba(107,114,128,.2); color: var(--muted); }
   .cat-pill.referee  { background: rgba(255,211,42,.12); color: var(--yellow); }
   .cat-pill.game     { background: rgba(0,255,133,.1);   color: var(--pl-green); }
   .cat-pill.decision { background: rgba(255,71,87,.1);   color: var(--red); }
@@ -186,7 +242,7 @@
   .post-body-full {
     display: none;
     padding: 0 16px 16px;
-    font-size: .86rem; color: #e0e0e0;
+    font-size: .86rem; color: var(--text);
     line-height: 1.7;
     border-top: 1px solid var(--border);
     margin-top: 4px; padding-top: 14px;
@@ -220,7 +276,7 @@
   }
   .reply-meta strong { color: var(--text); }
   .reply-body {
-    font-size: .83rem; color: #d0d0d0; line-height: 1.6;
+    font-size: .83rem; color: var(--text); line-height: 1.6;
   }
 
   /* ── REPLY BOX ── */
@@ -349,22 +405,34 @@
     </div>
   </div>
 
-  <!-- Category filter -->
-  <div class="cat-tabs">
-    <button class="cat-tab active" data-cat="all">All</button>
-    <button class="cat-tab" data-cat="referee">🟡 Referees</button>
-    <button class="cat-tab" data-cat="game">Games</button>
-    <button class="cat-tab" data-cat="decision">⚖️ Decisions</button>
-    <button class="cat-tab" data-cat="general">💬 General</button>
-  </div>
+  <div class="forum-layout">
 
-  <!-- Post list -->
-  <div id="postList">
-    <div class="forum-loading">
-      <div class="post-skel"></div>
-      <div class="post-skel"></div>
-      <div class="post-skel"></div>
+    <!-- Sidebar -->
+    <div class="forum-sidebar" id="forumSidebar">
+      <div class="sidebar-heading">Threads</div>
     </div>
+
+    <!-- Main -->
+    <div class="forum-main">
+      <!-- Category filter -->
+      <div class="cat-tabs">
+        <button class="cat-tab active" data-cat="all">All</button>
+        <button class="cat-tab" data-cat="referee">🟡 Referees</button>
+        <button class="cat-tab" data-cat="game">Games</button>
+        <button class="cat-tab" data-cat="decision">⚖️ Decisions</button>
+        <button class="cat-tab" data-cat="general">💬 General</button>
+      </div>
+
+      <!-- Post list -->
+      <div id="postList">
+        <div class="forum-loading">
+          <div class="post-skel"></div>
+          <div class="post-skel"></div>
+          <div class="post-skel"></div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
 </div>
@@ -389,6 +457,12 @@ function timeAgo(dateStr) {
   if (sec < 3600) return `${Math.floor(sec/60)}m ago`;
   if (sec < 86400) return `${Math.floor(sec/3600)}h ago`;
   return `${Math.floor(sec/86400)}d ago`;
+}
+
+function fmtDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 function catLabel(cat) {
@@ -424,6 +498,7 @@ async function savePost(category, subject, body, replyTo) {
 
 // ── RENDER ────────────────────────────────────────────────
 let expandedId = null;
+const openSidebarCats = new Set(['game', 'decision', 'referee', 'general']); // all open by default
 
 function renderPosts() {
   const el = document.getElementById('postList');
@@ -432,6 +507,49 @@ function renderPosts() {
     !p.reply_to &&
     (activeCategory === 'all' || p.category === activeCategory)
   );
+
+  // ── Sidebar (grouped by category) ────────────────────
+  const sidebar = document.getElementById('forumSidebar');
+  sidebar.innerHTML = '<div class="sidebar-heading">Threads</div>';
+  const CAT_ORDER = ['game', 'decision', 'referee', 'general'];
+  const CAT_LABELS = { game: '⚽ Games', decision: '⚖️ Decisions', referee: '🟡 Referees', general: '💬 General' };
+  // Use all top-level posts (unfiltered by activeCategory) so sidebar always shows all cats
+  const allTopLevel = allPosts.filter(p => !p.reply_to);
+  CAT_ORDER.forEach(cat => {
+    const posts = allTopLevel.filter(p => p.category === cat);
+    if (!posts.length) return;
+    const isOpen = openSidebarCats.has(cat);
+    const header = document.createElement('div');
+    header.className = 'sidebar-cat-header' + (isOpen ? ' open' : '');
+    header.innerHTML = `<span>${CAT_LABELS[cat]}</span><span class="cat-arrow">▶</span>`;
+    header.addEventListener('click', () => {
+      if (openSidebarCats.has(cat)) openSidebarCats.delete(cat);
+      else openSidebarCats.add(cat);
+      renderPosts();
+    });
+    sidebar.appendChild(header);
+    const group = document.createElement('div');
+    group.className = 'sidebar-cat-threads' + (isOpen ? ' open' : '');
+    posts.forEach(post => {
+      const item = document.createElement('div');
+      item.className = 'sidebar-item' + (expandedId === post.id ? ' active' : '');
+      item.innerHTML = `<span class="sidebar-dot ${post.category}"></span><span class="sidebar-label">${esc(post.subject)}</span>`;
+      item.addEventListener('click', () => {
+        expandedId = post.id;
+        if (activeCategory !== 'all' && activeCategory !== post.category) {
+          activeCategory = 'all';
+          document.querySelectorAll('.cat-tab').forEach(t => t.classList.toggle('active', t.dataset.cat === 'all'));
+        }
+        renderPosts();
+        setTimeout(() => {
+          const card = document.querySelector(`.post-card[data-pid="${post.id}"]`);
+          if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
+      });
+      group.appendChild(item);
+    });
+    sidebar.appendChild(group);
+  });
 
   if (!topLevel.length) {
     el.innerHTML = `<div class="forum-empty">
@@ -448,7 +566,7 @@ function renderPosts() {
 
     const repliesHtml = replies.map(r => `
       <div class="reply-card">
-        <div class="reply-meta"><strong>${esc(r.username)}</strong> · ${timeAgo(r.created_at)}</div>
+        <div class="reply-meta"><strong>${esc(r.username)}</strong> · ${fmtDate(r.created_at)}</div>
         <div class="reply-body">${esc(r.body)}</div>
       </div>`).join('');
 
@@ -457,7 +575,7 @@ function renderPosts() {
         <div class="post-head">
           <div class="post-meta-row">
             <span class="cat-pill ${post.category}">${catLabel(post.category)}</span>
-            <span class="post-author">by <strong>${esc(post.username)}</strong> · ${timeAgo(post.created_at)}</span>
+            <span class="post-author">by <strong>${esc(post.username)}</strong> · ${fmtDate(post.created_at)}</span>
           </div>
           <div class="post-subject">${esc(post.subject)}</div>
           <div class="post-preview">${esc(preview)}</div>

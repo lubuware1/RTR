@@ -116,7 +116,7 @@
     <div class="row cols-2" style="margin-bottom:14px;">
       <div class="field-group">
         <label>Filter by Matchweek</label>
-        <select id="matchGWFilter"><option value="all">All Matchweeks</option></select>
+        <select id="matchGWFilter"></select>
       </div>
       <div class="field-group">
         <label>Select Match</label>
@@ -310,7 +310,7 @@
     const sel = document.getElementById('matchSelect');
     const prevVal = sel.value;
     sel.innerHTML = '<option value="">Select a match…</option>';
-    const filtered = gwFilter === 'all' ? matches : matches.filter(m => +m.matchweek === +gwFilter);
+    const filtered = matches.filter(m => +m.matchweek === +gwFilter);
     filtered.forEach(m => {
       const opt = document.createElement('option');
       opt.value = m.id;
@@ -367,7 +367,7 @@
       gwFilter.appendChild(opt);
     });
 
-    renderMatchList(MATCHES, overrides, gwConfig?.gw || 'all');
+    renderMatchList(MATCHES, overrides, gwConfig?.gw || gws[0] || 1);
     gwFilter.addEventListener('change', () => renderMatchList(MATCHES, overrides, gwFilter.value));
 
     document.getElementById('matchSelect').addEventListener('change', e => {
@@ -394,12 +394,14 @@
     });
 
     // ── INCIDENTS ─────────────────────────────────────────
-    // Populate match selector
+    // Populate match selector — active GW only
     const incMatchSel = document.getElementById('incMatchSel');
-    MATCHES.forEach(m => {
+    const activeGW = gwConfig?.gw;
+    const activeMatches = activeGW ? MATCHES.filter(m => +m.matchweek === +activeGW) : MATCHES;
+    activeMatches.forEach(m => {
       const opt = document.createElement('option');
       opt.value = m.id;
-      opt.textContent = `MW${m.matchweek} · ${m.home} vs ${m.away} (${m.status})`;
+      opt.textContent = `${m.home} vs ${m.away} (${m.status})`;
       incMatchSel.appendChild(opt);
     });
 
@@ -466,10 +468,10 @@
 
     // ── HEATMAP ───────────────────────────────────────────
     const hmMatchSel = document.getElementById('hmMatchSel');
-    MATCHES.forEach(m => {
+    activeMatches.forEach(m => {
       const opt = document.createElement('option');
       opt.value = m.id;
-      opt.textContent = `MW${m.matchweek} · ${m.home} vs ${m.away} (${m.status})`;
+      opt.textContent = `${m.home} vs ${m.away} (${m.status})`;
       hmMatchSel.appendChild(opt);
     });
 
@@ -635,12 +637,13 @@
     pickedGWs.forEach(gw => {
       const opt = document.createElement('option');
       opt.value = gw;
-      // Flag already-finalised GWs (all picks in that GW already have gw_pts stored)
       const gwPicks = allPicks.filter(p => +p.matchweek === gw);
       const alreadyDone = gwPicks.length > 0 && gwPicks.every(p => p.gw_pts != null);
       opt.textContent = `Matchweek ${gw}${alreadyDone ? ' ✓ finalised' : ''}`;
+      if (activeGW && +gw === +activeGW) opt.selected = true;
       finalSel.appendChild(opt);
     });
+    finalSel.dispatchEvent(new Event('change'));
 
     function isHighYCMatchAdmin(matchId) {
       const m = MATCHES.find(x => +x.id === +matchId);
