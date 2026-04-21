@@ -110,6 +110,14 @@
     <button class="btn btn-green" id="saveGWBtn">Save Matchweek Config</button>
   </div>
 
+  <!-- FIXTURE SYNC -->
+  <div class="section">
+    <div class="section-title">Fixture Sync</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:12px;">Pulls the latest Premier League fixtures from football-data.org and adds any missing matches automatically.</p>
+    <button class="btn" id="syncFixturesBtn">🔄 Sync Fixtures Now</button>
+    <div id="syncFixturesResult" style="margin-top:10px;font-size:.82rem;"></div>
+  </div>
+
   <!-- MATCH MANAGER -->
   <div class="section">
     <div class="section-title">Match Manager</div>
@@ -775,6 +783,34 @@
         toast('Save failed — check console', true);
       }
     });
+
+  // ── FIXTURE SYNC ─────────────────────────────────────────
+  document.getElementById('syncFixturesBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('syncFixturesBtn');
+    const result = document.getElementById('syncFixturesResult');
+    btn.disabled = true;
+    btn.textContent = '⏳ Syncing…';
+    result.textContent = '';
+    try {
+      const res = await fetch(
+        'https://sxufittkehlktlfvicom.supabase.co/functions/v1/sync-fixtures',
+        { method: 'POST', headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+      );
+      const json = await res.json();
+      if (json.ok) {
+        result.style.color = 'var(--pl-green)';
+        result.textContent = `✓ Synced ${json.synced} fixtures successfully.`;
+      } else {
+        result.style.color = 'var(--red)';
+        result.textContent = `✗ Error: ${json.error}`;
+      }
+    } catch (e) {
+      result.style.color = 'var(--red)';
+      result.textContent = `✗ Request failed: ${e.message}`;
+    }
+    btn.disabled = false;
+    btn.textContent = '🔄 Sync Fixtures Now';
+  });
 
   })();
 </script>

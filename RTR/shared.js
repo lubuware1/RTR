@@ -702,10 +702,46 @@ async function loadFromSheets() {
     }
 
     console.log('[RTR] Sheets load complete. MATCHES:', MATCHES.length, 'REFS:', REFS.length);
+
+    // Merge auto-synced fixtures from Supabase (adds any not already in Sheets)
+    await loadFixtures();
+
     return true;
   } catch (e) {
     console.error('[RTR] Sheets load failed:', e);
     return false;
+  }
+}
+
+// ── AUTO FIXTURES (from Supabase, populated by Edge Function) ─
+async function loadFixtures() {
+  try {
+    const { data } = await getSB().from('RTR Fixtures').select('*');
+    if (!data?.length) return;
+    const existing = new Set(MATCHES.map(m => `${m.home}|${m.away}|${m.matchweek}`));
+    data.forEach(f => {
+      const key = `${f.home}|${f.away}|${f.matchweek}`;
+      if (existing.has(key)) return; // already in Sheets — don't duplicate
+      MATCHES.push({
+        id:              f.id,
+        matchweek:       +f.matchweek,
+        home:            f.home,
+        away:            f.away,
+        hE:              f.home_emoji || '',
+        aE:              f.away_emoji || '',
+        kickoff:         f.kickoff,
+        status:          f.status    || 'upcoming',
+        score:           f.score     || '– v –',
+        refId:           f.ref_id    || null,
+        yc: 0, rc: 0, pen: 0, var: 0,
+        perfectGame: false, incorrectVarPen: 0, incorrectVarRed: 0,
+        highlightVideoId: null, varVideoId: null,
+      });
+      existing.add(key);
+    });
+    console.log('[RTR] Fixtures loaded from Supabase:', data.length, 'total MATCHES:', MATCHES.length);
+  } catch (e) {
+    console.warn('[RTR] loadFixtures failed:', e);
   }
 }
 
