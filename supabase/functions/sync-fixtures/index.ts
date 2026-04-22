@@ -52,7 +52,17 @@ const TEAM_EMOJI: Record<string, string> = {
   'Wolverhampton':      '🟡',
 };
 
-serve(async () => {
+const corsHeaders = {
+  'Access-Control-Allow-Origin':  '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
+serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
   const res = await fetch(
@@ -63,7 +73,7 @@ serve(async () => {
   if (!res.ok) {
     return new Response(
       JSON.stringify({ error: `football-data.org returned ${res.status}` }),
-      { status: 502, headers: { 'Content-Type': 'application/json' } }
+      { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 
@@ -102,12 +112,12 @@ serve(async () => {
   if (error) {
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 
   return new Response(
     JSON.stringify({ ok: true, synced: fixtures.length }),
-    { headers: { 'Content-Type': 'application/json' } }
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
   );
 });

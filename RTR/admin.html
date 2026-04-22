@@ -118,6 +118,14 @@
     <div id="syncFixturesResult" style="margin-top:10px;font-size:.82rem;"></div>
   </div>
 
+  <!-- INCIDENT SYNC -->
+  <div class="section">
+    <div class="section-title">Incident Sync</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:12px;">Pulls yellow cards, red cards and penalties for completed matches in the active matchweek. Takes ~70 seconds due to API rate limits.</p>
+    <button class="btn" id="syncIncidentsBtn">📋 Sync Incidents for Active GW</button>
+    <div id="syncIncidentsResult" style="margin-top:10px;font-size:.82rem;"></div>
+  </div>
+
   <!-- MATCH MANAGER -->
   <div class="section">
     <div class="section-title">Match Manager</div>
@@ -784,7 +792,90 @@
       }
     });
 
+  // ── INCIDENT SYNC ────────────────────────────────────────
+  document.getElementById('syncIncidentsBtn').addEventListener('click', async () => {
+    const btn    = document.getElementById('syncIncidentsBtn');
+    const result = document.getElementById('syncIncidentsResult');
+    btn.disabled = true;
+    result.style.color = 'var(--text)';
+    result.textContent = 'Loading fixtures for active GW…';
+
+    try {
+      // Get active GW from config
+      const cfg = await loadGWConfig();
+      const activeGW = cfg?.gw;
+      if (!activeGW) throw new Error('No active GW set in config');
+
+      // Get completed matches for this GW from RTR Fixtures
+      const { data: fixtures, error: fErr } = await getSB()
+        .from('RTR Fixtures').select('id,home,away,status').eq('matchweek', activeGW);
+      if (fErr) throw new Error(fErr.message);
+
+      const completed = (fixtures || []).filter(f => f.status === 'complete');
+      if (!completed.length) {
+        result.style.color = 'var(--muted)';
+        result.textContent = `No completed matches found in GW${activeGW} yet.`;
+        btn.disabled = false;
+        return;
+      }
+
+      let synced = 0;
+      for (let i = 0; i < completed.length; i++) {
+        const f = completed[i];
+        result.textContent = `Fetching ${f.home} v ${f.away} (${i + 1}/${completed.length})…`;
+
+        const res  = await fetch(`/api/matches/${f.id}`);
+        const text = await res.text();
+        if (!res.ok) throw new Error(`Match ${f.id} returned ${res.status}: ${text.slice(0,100)}`);
+        const match = JSON.parse(text);
+
+        const bookings = match.bookings || [];
+        const goals    = match.goals    || [];
+
+        const yc  = bookings.filter(b => b.card === 'YELLOW_CARD').length;
+        const rc  = bookings.filter(b => b.card === 'RED_CARD' || b.card === 'YELLOW_RED_CARD').length;
+        const pen = goals.filter(g => g.type === 'PENALTY').length;
+
+        const { error: uErr } = await getSB().from('RTR Match Stats').upsert(
+          { match_id: f.id, yellow_cards: yc, red_cards: rc, penalties_given: pen },
+          { onConflict: 'match_id' }
+        );
+        if (uErr) throw new Error(`Save failed for ${f.home} v ${f.away}: ${uErr.message}`);
+        synced++;
+
+        // Respect free-tier rate limit of 10 calls/min — wait 7s between calls
+        if (i < completed.length - 1) await new Promise(r => setTimeout(r, 7000));
+      }
+
+      result.style.color = 'var(--pl-green)';
+      result.textContent = `✓ Synced incidents for ${synced} matches in GW${activeGW}.`;
+    } catch (e) {
+      result.style.color = 'var(--red)';
+      result.textContent = `✗ ${e.message}`;
+    }
+    btn.disabled = false;
+    btn.textContent = '📋 Sync Incidents for Active GW';
+  });
+
   // ── FIXTURE SYNC ─────────────────────────────────────────
+  const TEAM_MAP = {
+    'Arsenal FC':'Arsenal','Aston Villa FC':'Aston Villa','AFC Bournemouth':'Bournemouth',
+    'Brentford FC':'Brentford','Brighton & Hove Albion FC':'Brighton','Chelsea FC':'Chelsea',
+    'Crystal Palace FC':'Crystal Palace','Everton FC':'Everton','Fulham FC':'Fulham',
+    'Ipswich Town FC':'Ipswich','Leicester City FC':'Leicester City','Liverpool FC':'Liverpool',
+    'Manchester City FC':'Manchester City','Manchester United FC':'Manchester United',
+    'Newcastle United FC':'Newcastle United','Nottingham Forest FC':'Nottingham Forest',
+    'Southampton FC':'Southampton','Tottenham Hotspur FC':'Tottenham Hotspur',
+    'West Ham United FC':'West Ham United','Wolverhampton Wanderers FC':'Wolverhampton',
+  };
+  const TEAM_EMOJI_MAP = {
+    'Arsenal':'🔴','Aston Villa':'🟣','Bournemouth':'⚫','Brentford':'🔴','Brighton':'🔵',
+    'Chelsea':'🔵','Crystal Palace':'🔴','Everton':'🔵','Fulham':'⚪','Ipswich':'🔵',
+    'Leicester City':'🔵','Liverpool':'🔴','Manchester City':'🩵','Manchester United':'🔴',
+    'Newcastle United':'⚫','Nottingham Forest':'🔴','Southampton':'⚪',
+    'Tottenham Hotspur':'⚪','West Ham United':'🟣','Wolverhampton':'🟡',
+  };
+
   document.getElementById('syncFixturesBtn').addEventListener('click', async () => {
     const btn = document.getElementById('syncFixturesBtn');
     const result = document.getElementById('syncFixturesResult');
@@ -792,21 +883,35 @@
     btn.textContent = '⏳ Syncing…';
     result.textContent = '';
     try {
-      const res = await fetch(
-        'https://sxufittkehlktlfvicom.supabase.co/functions/v1/sync-fixtures',
-        { method: 'POST', headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` } }
-      );
-      const json = await res.json();
-      if (json.ok) {
-        result.style.color = 'var(--pl-green)';
-        result.textContent = `✓ Synced ${json.synced} fixtures successfully.`;
-      } else {
-        result.style.color = 'var(--red)';
-        result.textContent = `✗ Error: ${json.error}`;
-      }
+      // Use local server.js proxy — same path used throughout the app
+      const res = await fetch('/api/competitions/PL/matches');
+      const text = await res.text();
+      if (!res.ok) throw new Error(`API returned ${res.status}: ${text.slice(0, 200)}`);
+      const { matches = [] } = JSON.parse(text);
+
+      const fixtures = matches.map(m => {
+        const home = TEAM_MAP[m.homeTeam.name] ?? m.homeTeam.shortName ?? m.homeTeam.name;
+        const away = TEAM_MAP[m.awayTeam.name] ?? m.awayTeam.shortName ?? m.awayTeam.name;
+        let status = 'upcoming';
+        if (m.status === 'FINISHED') status = 'complete';
+        else if (m.status === 'IN_PLAY' || m.status === 'PAUSED') status = 'live';
+        let score = '– v –';
+        if (m.score?.fullTime?.home != null) score = `${m.score.fullTime.home} - ${m.score.fullTime.away}`;
+        return {
+          id: m.id, matchweek: m.matchday, home, away,
+          home_emoji: TEAM_EMOJI_MAP[home] ?? '', away_emoji: TEAM_EMOJI_MAP[away] ?? '',
+          kickoff: m.utcDate, status, score, updated_at: new Date().toISOString(),
+        };
+      });
+
+      const { error } = await getSB().from('RTR Fixtures').upsert(fixtures, { onConflict: 'id' });
+      if (error) throw new Error(error.message);
+
+      result.style.color = 'var(--pl-green)';
+      result.textContent = `✓ Synced ${fixtures.length} fixtures successfully.`;
     } catch (e) {
       result.style.color = 'var(--red)';
-      result.textContent = `✗ Request failed: ${e.message}`;
+      result.textContent = `✗ ${e.message}`;
     }
     btn.disabled = false;
     btn.textContent = '🔄 Sync Fixtures Now';
