@@ -360,7 +360,7 @@
         <span style="color:var(--muted);font-size:.7rem;margin-left:2px">▾</span>
         <div class="user-dropdown" id="userDropdown">
           <div class="dd-head">
-            <div class="dd-name" id="ddName"></div>
+            <div class="dd-uname" id="ddName"></div>
             <div class="dd-team" id="ddTeam"></div>
           </div>
           <div class="dd-item" onclick="location.href='badges.html'">🏅 Cards</div>
@@ -658,7 +658,7 @@ function initHeader() {
   applyUserAvatar(document.getElementById('ucAvatar'), currentUser);
   document.getElementById('ucName').textContent   = currentUser.username || 'User';
   if (isAdmin(currentUser)) document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
-  const team = WC_TEAMS.find(t => t.name === currentUser.team);
+  const team = PL_TEAMS.find(t => t.name === currentUser.team);
   document.getElementById('ucTeamEmoji').textContent = '';
   document.getElementById('ddName').textContent   = currentUser.username || 'User';
   document.getElementById('ddTeam').textContent   = currentUser.team ? `${currentUser.team} fan` : 'No team set';
