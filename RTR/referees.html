@@ -328,6 +328,28 @@ function renderRefs(){
     return 0;
   });
 
+  // League averages for metric bars
+  const lgData=REFS.map(r=>{
+    const pm=MATCHES.filter(m=>m.refId===r.id&&(m.status==='complete'||m.status==='recent'));
+    const g=r.games||pm.length||0; if(!g)return null;
+    return{
+      cpg:(pm.reduce((s,m)=>s+(m.yc||0),0)+pm.reduce((s,m)=>s+(m.rc||0),0))/g,
+      ppg:pm.reduce((s,m)=>s+(m.pen||0),0)/g,
+      vpg:pm.reduce((s,m)=>s+(m.var||0),0)/g,
+      gap:r.neutralRating!=null&&r.fanRating!=null?Math.abs(r.neutralRating-r.fanRating):null,
+    };
+  }).filter(Boolean);
+  const avg=(arr)=>arr.length?arr.reduce((s,v)=>s+v,0)/arr.length:0;
+  const lgAvg={
+    cpg:avg(lgData.map(r=>r.cpg)),
+    ppg:avg(lgData.map(r=>r.ppg)),
+    vpg:avg(lgData.map(r=>r.vpg)),
+    gap:avg(lgData.map(r=>r.gap).filter(v=>v!=null)),
+  };
+  const allRefTotals=REFS.map(r=>{const pm=MATCHES.filter(m=>m.refId===r.id&&(m.status==='complete'||m.status==='recent'));return{cards:pm.reduce((s,m)=>s+(m.yc||0)+(m.rc||0),0),pen:pm.reduce((s,m)=>s+(m.pen||0),0),var:pm.reduce((s,m)=>s+(m.var||0),0)};});
+  const metricMax={cpg:Math.max(1,...allRefTotals.map(r=>r.cards)),ppg:Math.max(1,...allRefTotals.map(r=>r.pen)),vpg:Math.max(1,...allRefTotals.map(r=>r.var)),gap:Math.max(3,...lgData.map(r=>r.gap).filter(v=>v!=null))};
+  function barColor(val,avg){const t=avg*0.2;if(Math.abs(val-avg)<=t)return'y';return val>avg?'g':'r';}
+
   document.getElementById('refsGrid').innerHTML=sorted.map((ref,rank)=>{
     const hasN=ref.neutralRating!=null, hasF=ref.fanRating!=null;
     const biasGap=hasN&&hasF?ref.neutralRating-ref.fanRating:null;
@@ -336,20 +358,23 @@ function renderRefs(){
     const gapClass=biasGap!==null?(biasGap>0.1?'neg':biasGap<-0.1?'pos':'zero'):'zero';
     const gapColor=biasGap!==null?(biasGap>0.1?'var(--red)':biasGap<-0.1?'var(--teal)':'var(--muted)'):'var(--muted)';
 
-    const nR=ref.neutralRating;
-    const seed=ref.id*7;
-    const cats=[
-      {lbl:'Decision Making', v:hasN?Math.min(10,Math.max(1,nR+((seed%3)*.4-.6))):0},
-      {lbl:'Card Management', v:hasN?Math.min(10,Math.max(1,nR+(((seed*3)%5)*.4-.8))):0},
-      {lbl:'Game Control',    v:hasN?Math.min(10,Math.max(1,nR+(((seed*7)%4)*.4-.7))):0},
-      {lbl:'VAR Awareness',   v:hasN?Math.min(10,Math.max(1,nR+(((seed*11)%6)*.4-.9))):0},
-    ];
-
     const recentMatches=MATCHES.filter(m=>m.refId===ref.id&&m.status!=='upcoming').slice(-3);
     const playedMatches=MATCHES.filter(m=>m.refId===ref.id&&(m.status==='complete'||m.status==='recent'));
     const totalYC=playedMatches.reduce((s,m)=>s+(m.yc||0),0);
     const totalRC=playedMatches.reduce((s,m)=>s+(m.rc||0),0);
+    const totalPen=playedMatches.reduce((s,m)=>s+(m.pen||0),0);
     const totalVAR=playedMatches.reduce((s,m)=>s+(m.var||0),0);
+    const g=ref.games||1;
+    const hasData=playedMatches.length>0;
+    const cpg=(totalYC+totalRC)/g;
+    const ppg=totalPen/g;
+    const vpg=totalVAR/g;
+    const metrics=[
+      {lbl:'Cards Given',        hasVal:hasData, val:totalYC+totalRC, display:hasData?String(totalYC+totalRC):'—', pct:hasData?Math.min(100,((totalYC+totalRC)/metricMax.cpg)*100):50, bc:hasData?barColor(cpg,lgAvg.cpg):'y'},
+      {lbl:'Penalties Given',    hasVal:hasData, val:totalPen,        display:hasData?String(totalPen):'—',        pct:hasData?Math.min(100,(ppg/metricMax.ppg)*100):50,              bc:hasData?barColor(ppg,lgAvg.ppg):'y'},
+      {lbl:'VAR Overturned',     hasVal:hasData, val:totalVAR,        display:hasData?String(totalVAR):'—',        pct:hasData?Math.min(100,(vpg/metricMax.vpg)*100):50,              bc:hasData?barColor(vpg,lgAvg.vpg):'y'},
+      {lbl:'Fan vs Neutral Gap', hasVal:biasGap!==null, val:gapAbs,  display:biasGap!==null?gapAbs.toFixed(1):'—', pct:biasGap!==null?Math.min(100,(gapAbs/metricMax.gap)*100):50, bc:biasGap!==null?barColor(gapAbs,lgAvg.gap):'y'},
+    ];
     const trendClass=hasN?(ref.neutralRating>=7?'up':ref.neutralRating>=5?'flat':'down'):'flat';
     const trendText=hasN?(ref.neutralRating>=7?'▲ Good form':ref.neutralRating>=5?'→ Average':'▼ Poor form'):'No data';
 
@@ -394,11 +419,7 @@ function renderRefs(){
             <span class="bg-val ${gapClass}">${gapAbs.toFixed(1)} — ${gapDir}</span>
           </div>`:''}
           <div class="cat-bars">
-            ${cats.map(c=>{
-              const pct=hasN?c.v*10:0;
-              const bc=c.v>=7?'g':c.v>=5?'y':'r';
-              return`<div class="bar-row"><span class="bar-lbl">${c.lbl}</span><div class="bar-track"><div class="bar-fill ${bc}" style="width:${pct}%"></div></div><span class="bar-val">${hasN?c.v.toFixed(1):'–'}</span></div>`;
-            }).join('')}
+            ${metrics.map(m=>`<div class="bar-row"><span class="bar-lbl">${m.lbl}</span><div class="bar-track"><div class="bar-fill ${m.bc}" style="width:${m.pct}%"></div></div><span class="bar-val">${m.display}</span></div>`).join('')}
           </div>
           ${recentMatches.length?`
           <div class="recent-matches-title">Recent Matches</div>
