@@ -13,137 +13,175 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{--bg:#f6f0ff;--surface:#ffffff;--surface2:#ede6ff;--border:#cfc0ee;--accent2:#f5a623;--red:#e02d42;--yellow:#d4920a;--green:#009960;--text:#6a58a0;--muted:#6a58a0;--pl-purple:#37003c;--pl-green:#00cc70;}
+  :root{
+    --bg:#0a0c10;--surface:#12151c;--surface2:#1a1d26;--border:#2a2d3a;
+    --text:#e0d6f5;--muted:#8b7fb8;
+    --pl-purple:#37003c;--pl-green:#00cc70;
+    --teal:#37ecba;--yellow:#ffd32a;--red:#ff4757;--green:#00cc70;
+  }
   *{margin:0;padding:0;box-sizing:border-box;}
   body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;}
 
-  header{background:linear-gradient(135deg,#37003c 0%,#1a0020 60%,#0a0c10 100%);border-bottom:2px solid var(--pl-green);padding:0 24px;position:sticky;top:0;z-index:100;box-shadow:0 4px 32px rgba(0,255,133,.12);}
-  .header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:60px;}
-  .logo{display:flex;align-items:center;gap:10px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.6rem;text-decoration:none;color:var(--text);}
-  .logo-badge{background:var(--pl-green);color:var(--pl-purple);width:34px;height:34px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
-  .logo span{color:var(--pl-green);}
-  .header-right{display:flex;align-items:center;gap:12px;}
-  nav{display:flex;gap:6px;}
-  nav a{background:none;border:1px solid transparent;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:.9rem;font-weight:600;letter-spacing:.5px;text-transform:uppercase;padding:6px 14px;border-radius:4px;cursor:pointer;transition:all .18s;text-decoration:none;display:inline-block;}
-  nav a.active,nav a:hover{background:rgba(0,255,133,.1);border-color:var(--pl-green);color:var(--pl-green);}
-  .user-chip{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 12px 5px 7px;cursor:pointer;transition:border-color .15s;font-size:.82rem;position:relative;}
-  .user-chip:hover{border-color:rgba(0,255,133,.4);}
+  /* shimmer bg */
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(ellipse 70% 50% at 15% 20%,rgba(55,0,60,.5) 0%,transparent 65%),
+               radial-gradient(ellipse 50% 50% at 85% 80%,rgba(80,0,90,.3) 0%,transparent 60%);
+    animation:shimmer 14s ease-in-out infinite alternate;}
+  @keyframes shimmer{0%{opacity:.6}100%{opacity:.9}}
+
+  /* HEADER */
+  header{background:rgba(10,12,16,.9);border-bottom:1px solid var(--border);padding:0 24px;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);}
+  .header-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:60px;}
+  .logo{display:flex;align-items:center;gap:8px;text-decoration:none;}
+  .logo img{height:32px;width:auto;}
+  .header-right{display:flex;align-items:center;gap:10px;}
+  nav{display:flex;gap:4px;}
+  nav a{color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:.82rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:6px 12px;border-radius:6px;transition:color .15s,background .15s;text-decoration:none;}
+  nav a.active,nav a:hover{color:var(--text);background:var(--surface2);}
+  nav a.active{color:var(--pl-green);}
+  .user-chip{display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 11px 5px 6px;cursor:pointer;transition:border-color .15s;font-size:.82rem;position:relative;}
+  .user-chip:hover{border-color:rgba(0,255,133,.35);}
   .uc-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--pl-purple),#8b008b);border:1.5px solid var(--pl-green);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:var(--pl-green);flex-shrink:0;}
   .uc-name{font-weight:600;color:var(--text);}
-  .preview-badge{background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.4);color:var(--accent2);font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 9px;border-radius:4px;}
-  .user-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;min-width:200px;z-index:200;box-shadow:0 8px 32px rgba(0,0,0,.4);display:none;overflow:hidden;}
+  .preview-badge{background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.4);color:#f5a623;font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:3px 9px;border-radius:4px;}
+  .user-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;min-width:200px;z-index:200;box-shadow:0 8px 32px rgba(0,0,0,.5);display:none;overflow:hidden;}
   .user-dropdown.open{display:block;}
   .dd-head{padding:14px 16px;border-bottom:1px solid var(--border);background:var(--surface2);}
-  .dd-uname{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;}
+  .dd-uname{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;color:var(--text);}
   .dd-team{font-size:.75rem;color:var(--muted);margin-top:2px;}
   .dd-item{padding:11px 16px;font-size:.85rem;color:var(--muted);cursor:pointer;transition:background .12s;display:flex;align-items:center;gap:8px;}
   .dd-item:hover{background:var(--surface2);color:var(--red);}
 
-  .page{max-width:1200px;margin:0 auto;padding:24px;}
-  .section-title{font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+  /* PAGE */
+  .page{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:24px 24px 80px;}
 
-  .refs-hero{background:linear-gradient(135deg,var(--pl-purple) 0%,#1a0028 60%,var(--surface) 100%);border:1px solid rgba(0,255,133,.15);border-radius:12px;padding:28px 32px;margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;}
-  .refs-hero h1{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2rem;text-transform:uppercase;letter-spacing:.5px;color:#fff;}
-  .refs-hero p{font-size:.85rem;color:rgba(255,255,255,.5);margin-top:6px;max-width:500px;line-height:1.6;}
-  .refs-hero-stats{display:flex;gap:24px;flex-shrink:0;}
-  .hero-stat .val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2.2rem;color:var(--pl-green);line-height:1;}
-  .hero-stat .lbl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+  /* Page header */
+  .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+  .page-header-left h1{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.6rem;text-transform:uppercase;letter-spacing:.3px;color:var(--text);}
+  .page-header-left h1 span{color:var(--pl-green);}
+  .page-header-left p{font-size:.78rem;color:var(--muted);margin-top:3px;}
+  .page-stats{display:flex;gap:20px;}
+  .pstat-val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5rem;color:var(--pl-green);line-height:1;}
+  .pstat-lbl{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:1px;}
 
-  .refs-controls{display:flex;align-items:center;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
-  .refs-controls-label{font-family:'Barlow Condensed',sans-serif;font-size:.78rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;}
-  .sort-btn{background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:.5px;text-transform:uppercase;padding:7px 14px;cursor:pointer;transition:all .15s;}
-  .sort-btn:hover{border-color:rgba(0,255,133,.4);color:var(--text);}
-  .sort-btn.active{background:rgba(0,255,133,.08);border-color:var(--pl-green);color:var(--pl-green);}
+  /* Sort bar */
+  .refs-controls{display:flex;align-items:center;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+  .refs-controls-label{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700;margin-right:2px;}
+  .sort-btn{background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.75rem;letter-spacing:.04em;text-transform:uppercase;padding:6px 12px;cursor:pointer;transition:all .15s;}
+  .sort-btn:hover{border-color:rgba(0,255,133,.35);color:var(--text);}
+  .sort-btn.active{background:rgba(0,204,112,.08);border-color:var(--pl-green);color:var(--pl-green);}
   .sort-btn.fan-sort.active{background:rgba(255,211,42,.08);border-color:var(--yellow);color:var(--yellow);}
 
-  .refs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
+  /* Column headers */
+  .refs-col-heads{display:grid;grid-template-columns:28px 36px 1fr 72px 72px 48px 18px;align-items:center;gap:8px;padding:0 14px 8px;font-family:'Barlow Condensed',sans-serif;font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
 
-  /* Referee profile card */
-  .rpc{background:#0d0f14;border:1px solid rgba(255,255,255,.1);border-radius:12px;overflow:hidden;transition:border-color .2s;}
-  .rpc.open{border-color:rgba(0,255,133,.3);}
-  .rpc-head{background:linear-gradient(135deg,var(--pl-purple),#1a0028);padding:16px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;user-select:none;}
-  .rpc-head:hover{filter:brightness(1.12);}
-  .rpc-av{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#37003c,#8b008b);border:2px solid rgba(0,255,133,.35);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.1rem;color:var(--pl-green);flex-shrink:0;}
-  .rpc-info{flex:1;min-width:0;}
-  .rpc-name{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.15rem;color:#fff;}
-  .rpc-meta{font-size:.74rem;color:rgba(255,255,255,.4);margin-top:3px;}
-  .rpc-notes{font-size:.7rem;color:rgba(255,255,255,.3);margin-top:3px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .rpc-rank{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2.2rem;color:rgba(0,255,133,.18);line-height:1;flex-shrink:0;}
-  .rpc-chevron{font-size:.85rem;color:rgba(0,255,133,.5);flex-shrink:0;transition:transform .25s;}
+  /* Ref list */
+  .refs-list{display:flex;flex-direction:column;gap:4px;}
+
+  /* Row */
+  .rpc{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .2s;}
+  .rpc:hover{border-color:rgba(0,204,112,.25);}
+  .rpc.open{border-color:rgba(0,204,112,.4);}
+  .rpc-head{display:grid;grid-template-columns:28px 36px 1fr 72px 72px 48px 18px;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;user-select:none;}
+  .rpc-rank{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:.9rem;color:var(--muted);text-align:center;}
+  .rpc-rank.top{color:var(--pl-green);}
+  .rpc-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#37003c,#6b0080);border:1.5px solid rgba(0,204,112,.3);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:.75rem;color:var(--pl-green);flex-shrink:0;}
+  .rpc-info{min-width:0;}
+  .rpc-name{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .rpc-meta{font-size:.68rem;color:var(--muted);margin-top:1px;}
+  .rpc-score-cell{text-align:center;}
+  .rpc-score-num{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.05rem;line-height:1;}
+  .rpc-score-num.nv{color:var(--teal);}
+  .rpc-score-num.fv{color:var(--yellow);}
+  .rpc-score-num.none{color:var(--muted);font-size:.75rem;font-weight:400;}
+  .rpc-score-sub{font-size:.58rem;color:var(--muted);margin-top:1px;text-transform:uppercase;letter-spacing:.05em;}
+  .rpc-games-cell{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.85rem;color:var(--muted);text-align:center;}
+  .rpc-chevron{font-size:.7rem;color:rgba(0,204,112,.4);text-align:center;transition:transform .25s;}
   .rpc.open .rpc-chevron{transform:rotate(180deg);}
 
+  /* Expand */
   .rpc-dropdown{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s ease;}
   .rpc.open .rpc-dropdown{grid-template-rows:1fr;}
   .rpc-dropdown-inner{overflow:hidden;}
+  .rpc-body{padding:12px 14px 14px;border-top:1px solid var(--border);background:var(--surface2);}
 
-  .rpc-body{padding:14px 18px;background:#0d0f14;}
-  .rpc-card-stats{display:flex;gap:6px;margin-bottom:14px;}
-  .rpc-stat-pill{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:6px 8px;text-align:center;}
-  .rpc-stat-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.05rem;color:#fff;}
-  .rpc-stat-lbl{font-size:.6rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.04em;margin-top:1px;}
+  /* Stats pills */
+  .rpc-card-stats{display:flex;gap:6px;margin-bottom:12px;}
+  .rpc-stat-pill{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 8px;text-align:center;}
+  .rpc-stat-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;color:var(--text);}
+  .rpc-stat-lbl{font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:1px;}
 
-  .rpc-scores{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
-  .score-box{background:rgba(255,255,255,.05);border-radius:8px;padding:10px 12px;}
+  /* Scores row */
+  .rpc-scores{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+  .score-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;}
   .score-box.nb{border-left:3px solid rgba(55,236,186,.5);}
   .score-box.fb{border-left:3px solid rgba(255,211,42,.5);}
-  .score-lbl{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;}
-  .score-lbl.nl{color:#37ecba;}.score-lbl.fl{color:#ffd32a;}
-  .score-val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.8rem;line-height:1;}
-  .score-val.nv{color:#37ecba;}.score-val.fv{color:#ffd32a;}.score-val.none{color:rgba(255,255,255,.3);font-size:1rem;}
-  .score-votes{font-size:.68rem;color:rgba(255,255,255,.35);margin-top:2px;}
+  .score-lbl{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;}
+  .score-lbl.nl{color:var(--teal);}.score-lbl.fl{color:var(--yellow);}
+  .score-val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.6rem;line-height:1;}
+  .score-val.nv{color:var(--teal);}.score-val.fv{color:var(--yellow);}.score-val.none{color:var(--muted);font-size:.9rem;font-weight:400;}
+  .score-votes{font-size:.65rem;color:var(--muted);margin-top:2px;}
 
-  .bias-gap-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:8px 10px;background:rgba(255,255,255,.05);border-radius:6px;}
-  .bg-label{font-size:.72rem;color:rgba(255,255,255,.4);flex-shrink:0;}
-  .bg-track{flex:1;background:rgba(255,255,255,.1);border-radius:4px;height:6px;overflow:hidden;}
-  .bg-fill{height:100%;border-radius:4px;transition:width .4s ease;}
-  .bg-val{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.78rem;flex-shrink:0;}
-  .bg-val.pos{color:#37ecba;}.bg-val.neg{color:#ff4757;}.bg-val.zero{color:rgba(255,255,255,.35);}
+  /* Bias bar */
+  .bias-gap-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;}
+  .bg-label{font-size:.7rem;color:var(--muted);flex-shrink:0;}
+  .bg-track{flex:1;background:rgba(255,255,255,.08);border-radius:4px;height:5px;overflow:hidden;}
+  .bg-fill{height:100%;border-radius:4px;}
+  .bg-val{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.75rem;flex-shrink:0;}
+  .bg-val.pos{color:var(--teal);}.bg-val.neg{color:var(--red);}.bg-val.zero{color:var(--muted);}
 
-  .cat-bars{margin-bottom:14px;}
-  .bar-row{display:grid;grid-template-columns:112px 1fr 32px;align-items:center;gap:8px;margin-bottom:6px;}
-  .bar-lbl{font-size:.72rem;color:rgba(255,255,255,.4);}
-  .bar-track{background:rgba(255,255,255,.08);border-radius:4px;height:6px;overflow:hidden;}
-  .bar-fill{height:100%;border-radius:4px;transition:width .4s ease;}
-  .bar-fill.g{background:#37ecba;}.bar-fill.y{background:#ffd32a;}.bar-fill.r{background:#ff4757;}
-  .bar-val{font-family:'Barlow Condensed',sans-serif;font-size:.72rem;font-weight:700;text-align:right;color:rgba(255,255,255,.4);}
+  /* Category bars */
+  .cat-bars{margin-bottom:12px;}
+  .bar-row{display:grid;grid-template-columns:110px 1fr 30px;align-items:center;gap:8px;margin-bottom:5px;}
+  .bar-lbl{font-size:.7rem;color:var(--muted);}
+  .bar-track{background:rgba(255,255,255,.07);border-radius:4px;height:5px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:4px;}
+  .bar-fill.g{background:var(--teal);}.bar-fill.y{background:var(--yellow);}.bar-fill.r{background:var(--red);}
+  .bar-val{font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:700;text-align:right;color:var(--muted);}
 
-  .recent-matches-title{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.35);margin-bottom:6px;}
-  .recent-match-row{background:rgba(255,255,255,.05);border-radius:5px;padding:5px 9px;display:flex;align-items:center;justify-content:space-between;font-size:.75rem;margin-bottom:4px;}
-  .rm-teams{font-family:'Barlow Condensed',sans-serif;font-weight:600;color:#fff;}
-  .rm-score{font-family:'Barlow Condensed',sans-serif;font-weight:700;color:rgba(255,255,255,.4);}
-  .rm-score.live{color:#ff4757;}
+  /* Recent matches */
+  .recent-matches-title{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:5px;}
+  .recent-match-row{background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:5px 9px;display:flex;align-items:center;justify-content:space-between;font-size:.74rem;margin-bottom:3px;}
+  .rm-teams{font-family:'Barlow Condensed',sans-serif;font-weight:600;color:var(--text);}
+  .rm-score{font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--muted);}
+  .rm-score.live{color:var(--red);}
 
-  .rpc-footer{padding:10px 18px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;background:#0d0f14;}
-  .rpc-games{font-size:.75rem;color:rgba(255,255,255,.4);}
-  .rpc-games strong{color:#fff;}
-  .rpc-trend{display:flex;align-items:center;gap:4px;font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:700;}
-  .rpc-trend.up{color:#37ecba;}.rpc-trend.down{color:#ff4757;}.rpc-trend.flat{color:rgba(255,255,255,.35);}
+  /* Footer */
+  .rpc-footer{padding:8px 14px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface2);}
+  .rpc-games{font-size:.72rem;color:var(--muted);}
+  .rpc-games strong{color:var(--text);}
+  .rpc-trend{font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;}
+  .rpc-trend.up{color:var(--teal);}.rpc-trend.down{color:var(--red);}.rpc-trend.flat{color:var(--muted);}
 
-  .data-banner{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;font-size:.78rem;gap:12px;flex-wrap:wrap;}
+  /* Data banner */
+  .data-banner{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 14px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;font-size:.76rem;gap:12px;flex-wrap:wrap;display:none;}
   .db-left{display:flex;align-items:center;gap:8px;color:var(--muted);}
-  .db-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;animation:blink 2s infinite;}
+  .db-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;animation:blink 2s infinite;}
   .db-dot.off{background:var(--muted);animation:none;}
   @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
   .db-link{color:var(--pl-green);font-weight:600;cursor:pointer;}
   .db-link:hover{text-decoration:underline;}
 
-  .toast{position:fixed;bottom:24px;right:24px;background:var(--pl-green);color:var(--pl-purple);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.9rem;padding:12px 20px;border-radius:8px;box-shadow:0 8px 32px rgba(0,255,133,.3);transform:translateY(60px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;z-index:1000;}
+  /* Toast */
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--pl-green);color:#000;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.9rem;padding:12px 20px;border-radius:8px;box-shadow:0 8px 32px rgba(0,255,133,.3);transform:translateY(60px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;z-index:1000;}
   .toast.show{transform:translateY(0);opacity:1;}
-  img.emoji{height:1em;width:1em;vertical-align:-0.1em;}
-  @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-  .skel{background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:4px;}
-  .skel-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;}
-  .skel-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-  .skel-circle{border-radius:50%;flex-shrink:0;}
-  .skel-line{height:11px;}
+  img.emoji{height:1em;width:1em;vertical-align:-.1em;}
 
-  /* ── MOBILE ─────────────────────────────────────────────── */
-  @media(max-width:768px){
-    .refs-grid{grid-template-columns:1fr;}
-    .refs-hero{padding:18px 16px;}
-    .refs-hero h1{font-size:1.5rem;}
-    .refs-hero-stats{gap:14px;}
-    .page{padding:12px;}
+  /* Skeletons */
+  @keyframes skel-anim{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  .skel{background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:200% 100%;animation:skel-anim 1.4s infinite;border-radius:4px;}
+  .skel-row-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;}
+  .skel-circle{border-radius:50%;flex-shrink:0;}
+  .skel-line{height:10px;}
+
+  /* Mobile */
+  @media(max-width:700px){
+    .refs-col-heads{display:none;}
+    .rpc-head{grid-template-columns:24px 32px 1fr 60px 60px 14px;gap:6px;padding:10px 10px;}
+    .rpc-games-cell{display:none;}
+    .page{padding:12px 12px 80px;}
+    .page-stats{gap:14px;}
+    .header-nav{display:none;}
   }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/twemoji@14/dist/twemoji.min.js" crossorigin="anonymous"></script>
@@ -187,33 +225,41 @@
 </div>
 
 <div class="page">
-  <div class="data-banner" style="display:none">
-    <div class="db-left"><div class="db-dot off" id="dbDot"></div><span id="dbText">Using built-in data · Connect Google Sheets for live updates</span></div>
+  <div class="data-banner" id="dataBanner">
+    <div class="db-left"><div class="db-dot off" id="dbDot"></div><span id="dbText">Using built-in data</span></div>
     <span class="db-link" id="dbHowTo">How to connect →</span>
   </div>
 
-  <div class="refs-hero">
-    <div>
-      <h1>Referee <span style="color:var(--pl-green)">Standings</span></h1>
-      <p>All Premier League referees ranked by community ratings. Neutral and fan scores are tracked separately to remove bias. Click any card to go rate that referee.</p>
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1>Referee <span>Standings</span></h1>
+      <p>Premier League refs ranked by community ratings · tap a row to expand</p>
     </div>
-    <div class="refs-hero-stats">
-      <div class="hero-stat"><div class="val" id="statRefs">–</div><div class="lbl">Referees</div></div>
-      <div class="hero-stat"><div class="val" id="statVotes">–</div><div class="lbl">Total Votes</div></div>
-      <div class="hero-stat"><div class="val" id="statAvg">–</div><div class="lbl">Avg Score</div></div>
+    <div class="page-stats">
+      <div><div class="pstat-val" id="statRefs">–</div><div class="pstat-lbl">Referees</div></div>
+      <div><div class="pstat-val" id="statVotes">–</div><div class="pstat-lbl">Total Votes</div></div>
+      <div><div class="pstat-val" id="statAvg">–</div><div class="pstat-lbl">Avg Score</div></div>
     </div>
   </div>
 
   <div class="refs-controls">
-    <span class="refs-controls-label">Sort by:</span>
-    <button class="sort-btn active" data-sort="neutral">Neutral Rating</button>
-    <button class="sort-btn fan-sort" data-sort="fan">Fan Rating</button>
-    <button class="sort-btn" data-sort="games">Games Played</button>
-    <button class="sort-btn" data-sort="votes">Most Voted</button>
-    <button class="sort-btn" data-sort="bias">Biggest Bias Gap</button>
+    <span class="refs-controls-label">Sort:</span>
+    <button class="sort-btn active" data-sort="neutral">Neutral</button>
+    <button class="sort-btn fan-sort" data-sort="fan">Fan</button>
+    <button class="sort-btn" data-sort="games">Games</button>
+    <button class="sort-btn" data-sort="votes">Votes</button>
+    <button class="sort-btn" data-sort="bias">Bias Gap</button>
   </div>
 
-  <div class="refs-grid" id="refsGrid"></div>
+  <div class="refs-col-heads">
+    <span></span><span></span><span>Referee</span>
+    <span style="text-align:center">Neutral</span>
+    <span style="text-align:center">Fan</span>
+    <span style="text-align:center">GW</span>
+    <span></span>
+  </div>
+
+  <div class="refs-list" id="refsGrid"></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -288,9 +334,8 @@ function renderRefs(){
     const gapAbs=biasGap!==null?Math.abs(biasGap):0;
     const gapDir=biasGap!==null?(biasGap>0.1?'Fans rate lower':biasGap<-0.1?'Fans rate higher':'No bias'):' ';
     const gapClass=biasGap!==null?(biasGap>0.1?'neg':biasGap<-0.1?'pos':'zero'):'zero';
-    const gapColor=biasGap!==null?(biasGap>0.1?'var(--red)':biasGap<-0.1?'var(--green)':'var(--muted)'):'var(--muted)';
+    const gapColor=biasGap!==null?(biasGap>0.1?'var(--red)':biasGap<-0.1?'var(--teal)':'var(--muted)'):'var(--muted)';
 
-    // Category breakdown — seeded from neutral rating so it's deterministic per ref
     const nR=ref.neutralRating;
     const seed=ref.id*7;
     const cats=[
@@ -305,62 +350,68 @@ function renderRefs(){
     const totalYC=playedMatches.reduce((s,m)=>s+(m.yc||0),0);
     const totalRC=playedMatches.reduce((s,m)=>s+(m.rc||0),0);
     const totalVAR=playedMatches.reduce((s,m)=>s+(m.var||0),0);
+    const trendClass=hasN?(ref.neutralRating>=7?'up':ref.neutralRating>=5?'flat':'down'):'flat';
+    const trendText=hasN?(ref.neutralRating>=7?'▲ Good form':ref.neutralRating>=5?'→ Average':'▼ Poor form'):'No data';
 
     return`<div class="rpc" data-ref-id="${ref.id}">
       <div class="rpc-head">
+        <div class="rpc-rank${rank<3?' top':''}">${rank+1}</div>
         <div class="rpc-av">${ref.initials}</div>
         <div class="rpc-info">
           <div class="rpc-name">${ref.name}</div>
-          <div class="rpc-meta">${ref.nationality||'English'} · Age ${ref.age||'–'} ${ref.fifaListed==='Yes'?'· 🌍 FIFA':''}</div>
-          ${ref.notes?`<div class="rpc-notes">${ref.notes}</div>`:''}
+          <div class="rpc-meta">${ref.nationality||'English'}${ref.fifaListed==='Yes'?' · FIFA':''} · ${ref.games} games</div>
         </div>
-        <div class="rpc-rank">#${rank+1}</div>
+        <div class="rpc-score-cell">
+          ${hasN?`<div class="rpc-score-num nv">${ref.neutralRating.toFixed(1)}</div><div class="rpc-score-sub">${ref.neutralVotes}v</div>`:`<div class="rpc-score-num none">—</div>`}
+        </div>
+        <div class="rpc-score-cell">
+          ${hasF?`<div class="rpc-score-num fv">${ref.fanRating.toFixed(1)}</div><div class="rpc-score-sub">${ref.fanVotes}v</div>`:`<div class="rpc-score-num none">—</div>`}
+        </div>
+        <div class="rpc-games-cell">${ref.games}</div>
         <div class="rpc-chevron">▼</div>
       </div>
       <div class="rpc-dropdown"><div class="rpc-dropdown-inner">
-      <div class="rpc-body">
-        <div class="rpc-card-stats">
-          <div class="rpc-stat-pill"><div class="rpc-stat-val" style="color:#f5c518">${totalYC}</div><div class="rpc-stat-lbl">Yellow Cards</div></div>
-          <div class="rpc-stat-pill"><div class="rpc-stat-val" style="color:var(--red)">${totalRC}</div><div class="rpc-stat-lbl">Red Cards</div></div>
-          <div class="rpc-stat-pill"><div class="rpc-stat-val" style="color:var(--pl-green)">${totalVAR}</div><div class="rpc-stat-lbl">Incorrect VAR Decisions</div></div>
-        </div>
-        <div class="rpc-scores">
-          <div class="score-box nb">
-            <div class="score-lbl nl">Neutral Score</div>
-            ${hasN?`<div class="score-val nv">${ref.neutralRating.toFixed(1)}<span style="font-size:.8rem;color:var(--muted)">/10</span></div><div class="score-votes">${ref.neutralVotes} neutral votes</div>`:`<div class="score-val none">No data yet</div>`}
+        <div class="rpc-body">
+          <div class="rpc-card-stats">
+            <div class="rpc-stat-pill"><div class="rpc-stat-val" style="color:var(--yellow)">${totalYC}</div><div class="rpc-stat-lbl">Yellow Cards</div></div>
+            <div class="rpc-stat-pill"><div class="rpc-stat-val" style="color:var(--red)">${totalRC}</div><div class="rpc-stat-lbl">Red Cards</div></div>
+            <div class="rpc-stat-pill"><div class="rpc-stat-val" style="color:var(--muted)">${totalVAR}</div><div class="rpc-stat-lbl">VAR Decisions</div></div>
           </div>
-          <div class="score-box fb">
-            <div class="score-lbl fl">Fan Score</div>
-            ${hasF?`<div class="score-val fv">${ref.fanRating.toFixed(1)}<span style="font-size:.8rem;color:var(--muted)">/10</span></div><div class="score-votes">${ref.fanVotes} fan votes</div>`:`<div class="score-val none">No data yet</div>`}
+          <div class="rpc-scores">
+            <div class="score-box nb">
+              <div class="score-lbl nl">Neutral Score</div>
+              ${hasN?`<div class="score-val nv">${ref.neutralRating.toFixed(1)}<span style="font-size:.75rem;color:var(--muted)">/10</span></div><div class="score-votes">${ref.neutralVotes} votes</div>`:`<div class="score-val none">No data yet</div>`}
+            </div>
+            <div class="score-box fb">
+              <div class="score-lbl fl">Fan Score</div>
+              ${hasF?`<div class="score-val fv">${ref.fanRating.toFixed(1)}<span style="font-size:.75rem;color:var(--muted)">/10</span></div><div class="score-votes">${ref.fanVotes} votes</div>`:`<div class="score-val none">No data yet</div>`}
+            </div>
           </div>
+          ${biasGap!==null?`
+          <div class="bias-gap-row">
+            <span class="bg-label">Fan bias:</span>
+            <div class="bg-track"><div class="bg-fill" style="width:${Math.min(100,gapAbs*15)}%;background:${gapColor}"></div></div>
+            <span class="bg-val ${gapClass}">${gapAbs.toFixed(1)} — ${gapDir}</span>
+          </div>`:''}
+          <div class="cat-bars">
+            ${cats.map(c=>{
+              const pct=hasN?c.v*10:0;
+              const bc=c.v>=7?'g':c.v>=5?'y':'r';
+              return`<div class="bar-row"><span class="bar-lbl">${c.lbl}</span><div class="bar-track"><div class="bar-fill ${bc}" style="width:${pct}%"></div></div><span class="bar-val">${hasN?c.v.toFixed(1):'–'}</span></div>`;
+            }).join('')}
+          </div>
+          ${recentMatches.length?`
+          <div class="recent-matches-title">Recent Matches</div>
+          ${recentMatches.map(m=>`
+            <div class="recent-match-row">
+              <span class="rm-teams">${m.hE||''} ${m.home} <span style="color:var(--muted)">vs</span> ${m.away} ${m.aE||''}</span>
+              <span class="rm-score${m.status==='live'?' live':''}">${m.score}</span>
+            </div>`).join('')}`:''}
         </div>
-        ${biasGap!==null?`
-        <div class="bias-gap-row">
-          <span class="bg-label">Fan bias:</span>
-          <div class="bg-track"><div class="bg-fill" style="width:${Math.min(100,gapAbs*15)}%;background:${gapColor}"></div></div>
-          <span class="bg-val ${gapClass}">${gapAbs.toFixed(1)} — ${gapDir}</span>
-        </div>`:''}
-        <div class="cat-bars">
-          ${cats.map(c=>{
-            const pct=hasN?c.v*10:0;
-            const bc=c.v>=7?'g':c.v>=5?'y':'r';
-            return`<div class="bar-row"><span class="bar-lbl">${c.lbl}</span><div class="bar-track"><div class="bar-fill ${bc}" style="width:${pct}%"></div></div><span class="bar-val">${hasN?c.v.toFixed(1):'–'}</span></div>`;
-          }).join('')}
+        <div class="rpc-footer">
+          <span class="rpc-games"><strong>${ref.games}</strong> games this season</span>
+          <span class="rpc-trend ${trendClass}">${trendText}</span>
         </div>
-        ${recentMatches.length?`
-        <div class="recent-matches-title">Recent Matches</div>
-        ${recentMatches.map(m=>`
-          <div class="recent-match-row">
-            <span class="rm-teams">${m.hE} ${m.home} <span style="color:var(--muted)">vs</span> ${m.away} ${m.aE}</span>
-            <span class="rm-score${m.status==='live'?' live':''}">${m.score}</span>
-          </div>`).join('')}`:''}
-      </div>
-      <div class="rpc-footer">
-        <span class="rpc-games"><strong>${ref.games}</strong> games this season</span>
-        <span class="rpc-trend ${hasN?(ref.neutralRating>=7?'up':ref.neutralRating>=5?'flat':'down'):'flat'}">
-          ${hasN?(ref.neutralRating>=7?'▲ Performing well':ref.neutralRating>=5?'→ Average':'▼ Poor form'):'No data yet'}
-        </span>
-      </div>
       </div></div>
     </div>`;
   }).join('');
@@ -384,16 +435,11 @@ document.getElementById('refsGrid').addEventListener('click',e=>{
 
 // ── SKELETONS ─────────────────────────────────────────────
 function skelRefCard() {
-  return `<div class="skel-card">
-    <div class="skel-row" style="margin-bottom:14px">
-      <div class="skel skel-circle" style="width:48px;height:48px"></div>
-      <div style="flex:1"><div class="skel skel-line" style="width:70%;margin-bottom:8px"></div><div class="skel skel-line" style="width:45%"></div></div>
-      <div class="skel skel-line" style="width:36px;height:36px;border-radius:6px"></div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <div class="skel skel-line" style="height:36px;border-radius:8px"></div>
-      <div class="skel skel-line" style="height:36px;border-radius:8px"></div>
-    </div>
+  return `<div class="skel-row-item">
+    <div class="skel skel-circle" style="width:36px;height:36px;flex-shrink:0"></div>
+    <div style="flex:1"><div class="skel skel-line" style="width:55%;margin-bottom:6px"></div><div class="skel skel-line" style="width:35%"></div></div>
+    <div class="skel skel-line" style="width:40px;height:28px;border-radius:6px"></div>
+    <div class="skel skel-line" style="width:40px;height:28px;border-radius:6px;margin-left:6px"></div>
   </div>`;
 }
 
