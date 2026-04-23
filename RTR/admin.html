@@ -126,6 +126,14 @@
     <div id="syncIncidentsResult" style="margin-top:10px;font-size:.82rem;"></div>
   </div>
 
+  <!-- FORUM GW POSTS -->
+  <div class="section">
+    <div class="section-title">Forum — Create GW Match Posts</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:12px;">Creates one forum discussion post per fixture in the active matchweek. Skips any fixture that already has a post. Users can then reply to discuss the match and referee.</p>
+    <button class="btn" id="createGWPostsBtn">💬 Create Forum Posts for Active GW</button>
+    <div id="createGWPostsResult" style="margin-top:10px;font-size:.82rem;"></div>
+  </div>
+
   <!-- MATCH MANAGER -->
   <div class="section">
     <div class="section-title">Match Manager</div>
@@ -791,6 +799,56 @@
         toast('Save failed — check console', true);
       }
     });
+
+  // ── FORUM GW POSTS ───────────────────────────────────────
+  document.getElementById('createGWPostsBtn').addEventListener('click', async () => {
+    const btn    = document.getElementById('createGWPostsBtn');
+    const result = document.getElementById('createGWPostsResult');
+    btn.disabled = true; result.textContent = 'Creating posts…';
+    try {
+      const cfg = await loadGWConfig();
+      const gw  = cfg?.gw;
+      if (!gw) throw new Error('No active GW set in config');
+
+      // Get fixtures for this GW that have a ref assigned
+      const gwFixtures = MATCHES.filter(m => +m.matchweek === gw && m.refId);
+      if (!gwFixtures.length) throw new Error(`No ref-assigned fixtures found for GW${gw}`);
+
+      // Check which posts already exist for this GW
+      const { data: existing } = await getSB()
+        .from('RTR Forum')
+        .select('subject')
+        .eq('category', 'game')
+        .eq('matchweek', gw);
+      const existingSubjects = new Set((existing || []).map(p => p.subject));
+
+      const toCreate = gwFixtures.filter(m => !existingSubjects.has(`${m.home} vs ${m.away}`));
+      if (!toCreate.length) {
+        result.textContent = `✓ All GW${gw} match posts already exist (${gwFixtures.length} fixtures)`;
+        btn.disabled = false; return;
+      }
+
+      const adminUser = getCurrentUser();
+      const inserts = toCreate.map(m => ({
+        user_id:    adminUser?.id || 'system',
+        username:   'RefRater',
+        category:   'game',
+        subject:    `${m.home} vs ${m.away}`,
+        body:       `Matchweek ${gw} — discuss the referee's performance, key decisions, cards and anything else from this match.`,
+        matchweek:  gw,
+        reply_to:   null,
+        created_at: new Date().toISOString(),
+      }));
+
+      const { error } = await getSB().from('RTR Forum').insert(inserts);
+      if (error) throw new Error(error.message);
+
+      result.textContent = `✓ Created ${inserts.length} forum posts for GW${gw}`;
+    } catch (e) {
+      result.textContent = `✗ ${e.message}`;
+    }
+    btn.disabled = false;
+  });
 
   // ── INCIDENT SYNC ────────────────────────────────────────
   document.getElementById('syncIncidentsBtn').addEventListener('click', async () => {

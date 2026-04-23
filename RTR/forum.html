@@ -311,6 +311,26 @@
   .reply-send-btn:hover { background: rgba(0,255,133,.2); }
   .reply-send-btn:disabled { opacity: .45; cursor: not-allowed; }
 
+  /* ── MATCHWEEK FILTER ── */
+  .mw-filter {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 14px;
+  }
+  .mw-filter-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: .72rem; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase;
+    color: var(--muted); flex-shrink: 0;
+  }
+  .mw-select {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 7px; padding: 7px 12px;
+    color: var(--text); font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: .85rem;
+    cursor: pointer; outline: none; transition: border-color .15s;
+  }
+  .mw-select:focus { border-color: rgba(0,255,133,.4); }
+
   /* ── EMPTY / LOADING ── */
   .forum-empty {
     text-align: center; padding: 60px 20px;
@@ -396,7 +416,7 @@
         <option value="game">Game</option>
         <option value="decision">⚖️ Decision</option>
       </select>
-      <input class="compose-input" id="compSubject" type="text" placeholder="Subject…" maxlength="120">
+<input class="compose-input" id="compSubject" type="text" placeholder="Subject…" maxlength="120">
     </div>
     <textarea class="compose-textarea" id="compBody" placeholder="Write your post…" maxlength="2000"></textarea>
     <div class="compose-actions">
@@ -423,6 +443,9 @@
         <button class="cat-tab" data-cat="general">💬 General</button>
       </div>
 
+      <!-- Matchweek filter (Games only) -->
+      <div class="mw-filter" id="mwFilterBar" style="display:none"></div>
+
       <!-- Post list -->
       <div id="postList">
         <div class="forum-loading">
@@ -443,7 +466,8 @@
 // ── HELPERS ───────────────────────────────────────────────
 let currentUser = null;
 let activeCategory = 'all';
-let allPosts = []; // flat array: top-level + replies
+let activeMatchweek = null;
+let allPosts = [];
 
 function toast(msg, dur = 3000) {
   const t = document.getElementById('toast');
@@ -474,14 +498,14 @@ async function loadPosts() {
   if (PREVIEW_MODE) return [];
   const { data, error } = await getSB()
     .from('RTR Forum')
-    .select('id, user_id, username, category, subject, body, reply_to, created_at')
+    .select('id, user_id, username, category, subject, body, reply_to, matchweek, created_at')
     .order('created_at', { ascending: false })
     .limit(200);
   if (error) { console.error('[RTR] loadPosts error:', error); return []; }
   return data || [];
 }
 
-async function savePost(category, subject, body, replyTo) {
+async function savePost(category, subject, body, replyTo, matchweek) {
   if (PREVIEW_MODE || !currentUser) return null;
   const { data, error } = await getSB().from('RTR Forum').insert({
     user_id: currentUser.id,
@@ -490,6 +514,7 @@ async function savePost(category, subject, body, replyTo) {
     subject: subject.trim(),
     body: body.trim(),
     reply_to: replyTo || null,
+    matchweek: matchweek || null,
     created_at: new Date().toISOString(),
   }).select().single();
   if (error) { console.error('[RTR] savePost error:', error); return null; }
@@ -502,10 +527,36 @@ const openSidebarCats = new Set(['game', 'decision', 'referee', 'general']); // 
 
 function renderPosts() {
   const el = document.getElementById('postList');
-  // top-level posts only (no reply_to), filtered by category
+
+  // Matchweek filter dropdown (Games tab only)
+  const mwBarEl = document.getElementById('mwFilterBar');
+  if (activeCategory === 'game') {
+    const gamePosts = allPosts.filter(p => !p.reply_to && p.category === 'game' && p.matchweek);
+    const weeks = [...new Set(gamePosts.map(p => p.matchweek))].sort((a,b) => b-a);
+    if (weeks.length) {
+      if (activeMatchweek === null) activeMatchweek = weeks[0]; // default to most recent GW
+      mwBarEl.innerHTML = `<span class="mw-filter-label">Matchweek</span>
+        <select class="mw-select" id="mwSelect">
+          ${weeks.map(w=>`<option value="${w}"${activeMatchweek===w?' selected':''}>Matchweek ${w}</option>`).join('')}
+        </select>`;
+      mwBarEl.style.display = 'flex';
+      document.getElementById('mwSelect').addEventListener('change', function() {
+        activeMatchweek = +this.value;
+        renderPosts();
+      });
+    } else {
+      mwBarEl.style.display = 'none';
+    }
+  } else {
+    mwBarEl.style.display = 'none';
+    activeMatchweek = null;
+  }
+
+  // top-level posts filtered by category and matchweek
   const topLevel = allPosts.filter(p =>
     !p.reply_to &&
-    (activeCategory === 'all' || p.category === activeCategory)
+    (activeCategory === 'all' || p.category === activeCategory) &&
+    (activeCategory !== 'game' || activeMatchweek === null || p.matchweek === activeMatchweek)
   );
 
   // ── Sidebar (grouped by category) ────────────────────
@@ -699,6 +750,7 @@ document.getElementById('compCancel').addEventListener('click', () => {
   document.getElementById('composeBox').classList.remove('open');
   document.getElementById('compSubject').value = '';
   document.getElementById('compBody').value = '';
+  document.getElementById('compCat').value = 'general';
 });
 document.getElementById('compSubmit').addEventListener('click', async () => {
   const cat     = document.getElementById('compCat').value;
@@ -708,7 +760,7 @@ document.getElementById('compSubmit').addEventListener('click', async () => {
   if (!body)    { toast('Please add some text'); return; }
   const btn = document.getElementById('compSubmit');
   btn.disabled = true;
-  const post = await savePost(cat, subject, body, null);
+  const post = await savePost(cat, subject, body, null, null);
   btn.disabled = false;
   if (post) {
     allPosts = [post, ...allPosts];
