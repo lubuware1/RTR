@@ -404,30 +404,33 @@ async function loadIncidentRatings() {
 // Find an existing "game" forum thread for a given match title
 async function findMatchForumThread(matchTitle) {
   if (PREVIEW_MODE) return null;
+  // Normalise separator — admin uses "vs", older match chat used "v"
+  const normalised = matchTitle.replace(/ v /g, ' vs ');
   const { data } = await getSB().from('RTR Forum')
-    .select('id, subject')
+    .select('id, subject, matchweek')
     .eq('category', 'game')
     .is('reply_to', null)
-    .eq('subject', matchTitle)
+    .eq('subject', normalised)
     .limit(1)
     .maybeSingle();
   return data || null;
 }
 
 // Post a comment to a match's forum thread, creating the thread if it doesn't exist yet
-async function postMatchComment(matchTitle, body, userId, username) {
+async function postMatchComment(matchTitle, body, userId, username, matchweek) {
   if (PREVIEW_MODE || !userId) return null;
   const sb = getSB();
-  // Find or create the thread
-  let thread = await findMatchForumThread(matchTitle);
+  const normTitle = matchTitle.replace(/ v /g, ' vs ');
+  let thread = await findMatchForumThread(normTitle);
   if (!thread) {
     const { data, error } = await sb.from('RTR Forum').insert({
       user_id: userId,
       username,
       category: 'game',
-      subject: matchTitle,
+      subject: normTitle,
       body,
       reply_to: null,
+      matchweek: matchweek || null,
       created_at: new Date().toISOString(),
     }).select('id').single();
     if (error) { console.error('[RTR] postMatchComment create thread error:', error); return null; }
@@ -438,9 +441,10 @@ async function postMatchComment(matchTitle, body, userId, username) {
     user_id: userId,
     username,
     category: 'game',
-    subject: matchTitle,
+    subject: normTitle,
     body,
     reply_to: thread.id,
+    matchweek: thread.matchweek || matchweek || null,
     created_at: new Date().toISOString(),
   }).select('id').single();
   if (error) { console.error('[RTR] postMatchComment reply error:', error); return null; }

@@ -692,13 +692,14 @@ async function openPanel(mid) {
   const discussLink = document.getElementById('matchDiscussLink');
   if (discussBox) {
     discussBox.style.display = '';
-    discussBox.dataset.matchTitle = `${m.home} v ${m.away}`;
+    discussBox.dataset.matchTitle = `${m.home} vs ${m.away}`;
+    discussBox.dataset.matchweek = m.matchweek || '';
     // Check if a thread already exists and show a link to it
-    findMatchForumThread(`${m.home} v ${m.away}`).then(thread => {
+    findMatchForumThread(`${m.home} vs ${m.away}`).then(thread => {
       if (thread && discussLink) {
-        discussLink.innerHTML = `Thread exists — <a href="forum.html">view in Forum</a>`;
+        discussLink.innerHTML = `Thread open — <a href="forum.html">view in Forum</a>`;
       } else if (discussLink) {
-        discussLink.innerHTML = `Posts here will create a thread in <a href="forum.html">Forum → Games</a>`;
+        discussLink.innerHTML = `Posts here will appear in <a href="forum.html">Forum → Games</a>`;
       }
     });
   }
@@ -785,9 +786,11 @@ document.getElementById('matchDiscussSend').addEventListener('click', async () =
   const body = input.value.trim();
   if (!body) return;
   if (!currentUser?.id) { toast('Sign in to post'); return; }
-  const matchTitle = document.getElementById('matchDiscuss').dataset.matchTitle;
+  const discussEl = document.getElementById('matchDiscuss');
+  const matchTitle = discussEl.dataset.matchTitle;
+  const matchweek = discussEl.dataset.matchweek ? +discussEl.dataset.matchweek : null;
   btn.disabled = true;
-  const result = await postMatchComment(matchTitle, body, currentUser.id, currentUser.username || 'User');
+  const result = await postMatchComment(matchTitle, body, currentUser.id, currentUser.username || 'User', matchweek);
   if (result) {
     input.value = '';
     toast('💬 Posted to Forum!');
