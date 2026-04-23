@@ -272,6 +272,9 @@
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
   }
+  @media(max-width:600px){
+    .replies-scroll { max-height: calc(100dvh - 320px); }
+  }
   .replies-scroll::-webkit-scrollbar { width: 4px; }
   .replies-scroll::-webkit-scrollbar-track { background: transparent; }
   .replies-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
@@ -623,7 +626,7 @@ function renderPosts() {
   }
 
   el.innerHTML = topLevel.map(post => {
-    const replies = allPosts.filter(p => p.reply_to === post.id);
+    const replies = allPosts.filter(p => p.reply_to === post.id).sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
     const isExpanded = expandedId === post.id;
     const preview = post.body.length > 120 ? post.body.slice(0, 120) + '…' : post.body;
 
