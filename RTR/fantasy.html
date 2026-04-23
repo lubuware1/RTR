@@ -3397,7 +3397,7 @@
           },
         ];
 
-        const gwMatches = MATCHES.filter((m) => +m.matchweek === FGW.gw);
+        const gwMatches = MATCHES.filter((m) => +m.matchweek === FGW.gw && m.refId);
 
         document.getElementById("wcGrid").innerHTML = wcs
           .map((w) => {
