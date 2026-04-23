@@ -260,23 +260,35 @@
     font-family: 'Barlow Condensed', sans-serif;
     font-size: .72rem; font-weight: 700;
     letter-spacing: 2px; text-transform: uppercase;
-    color: var(--muted); margin-bottom: 10px;
+    color: var(--muted); margin-bottom: 8px;
     padding-top: 12px; border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
   }
+  .replies-scroll {
+    max-height: 220px;
+    overflow-y: auto;
+    display: flex; flex-direction: column; gap: 6px;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .replies-scroll::-webkit-scrollbar { width: 4px; }
+  .replies-scroll::-webkit-scrollbar-track { background: transparent; }
+  .replies-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
   .reply-card {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 10px 12px;
-    margin-bottom: 8px;
+    padding: 8px 10px;
+    flex-shrink: 0;
   }
   .reply-meta {
-    font-size: .73rem; color: var(--muted);
-    margin-bottom: 5px;
+    font-size: .7rem; color: var(--muted);
+    margin-bottom: 3px;
   }
   .reply-meta strong { color: var(--text); }
   .reply-body {
-    font-size: .83rem; color: var(--text); line-height: 1.6;
+    font-size: .82rem; color: var(--text); line-height: 1.55;
   }
 
   /* ── REPLY BOX ── */
@@ -641,7 +653,7 @@ function renderPosts() {
         </div>
         <div class="post-body-full">${esc(post.body)}</div>
         <div class="replies-section">
-          ${replies.length ? `<div class="replies-label">${replies.length} ${replies.length === 1 ? 'Reply' : 'Replies'}</div>${repliesHtml}` : ''}
+          ${replies.length ? `<div class="replies-label"><span>${replies.length} ${replies.length === 1 ? 'Reply' : 'Replies'}</span></div><div class="replies-scroll" id="repliesScroll-${post.id}">${repliesHtml}</div>` : `<div class="replies-scroll" id="repliesScroll-${post.id}"></div>`}
           <div class="reply-box">
             <textarea class="reply-input" data-rpid="${post.id}" placeholder="Write a reply…" rows="1" maxlength="1000"></textarea>
             <button class="reply-send-btn" data-rpid="${post.id}">Reply</button>
@@ -650,19 +662,28 @@ function renderPosts() {
       </div>`;
   }).join('');
 
+  function scrollRepliesToBottom(pid) {
+    const sc = document.getElementById(`repliesScroll-${pid}`);
+    if (sc) sc.scrollTop = sc.scrollHeight;
+  }
+
   // Wire click-to-expand on post heads
   el.querySelectorAll('.post-card').forEach(card => {
     const pid = +card.dataset.pid;
-    // Click on head area (not on reply box or buttons inside)
     card.querySelector('.post-head').addEventListener('click', () => {
       expandedId = expandedId === pid ? null : pid;
       renderPosts();
+      if (expandedId === pid) setTimeout(() => scrollRepliesToBottom(pid), 30);
     });
     card.querySelector('.post-footer').addEventListener('click', () => {
       expandedId = expandedId === pid ? null : pid;
       renderPosts();
+      if (expandedId === pid) setTimeout(() => scrollRepliesToBottom(pid), 30);
     });
   });
+
+  // Scroll already-expanded thread to bottom on initial render
+  if (expandedId) setTimeout(() => scrollRepliesToBottom(expandedId), 30);
 
   // Wire reply send buttons
   el.querySelectorAll('.reply-send-btn').forEach(btn => {
@@ -675,9 +696,10 @@ function renderPosts() {
       const post = allPosts.find(p => p.id === pid);
       const reply = await savePost(post?.category || 'general', post?.subject || '', body, pid);
       if (reply) {
-        allPosts = [reply, ...allPosts];
+        allPosts = [...allPosts, reply];
         renderPosts();
         toast('Reply posted');
+        setTimeout(() => scrollRepliesToBottom(pid), 30);
       } else {
         btn.disabled = false;
         toast('Failed to post reply — please try again');
