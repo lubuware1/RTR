@@ -57,8 +57,9 @@
     overflow:hidden;
   }
   .hero-ref-bg{
-    position:absolute;bottom:0;left:50%;transform:translateX(-50%);
-    height:100%;width:auto;
+    position:fixed;top:0;left:0;
+    width:100vw;height:100vh;
+    object-fit:cover;object-position:center;
     opacity:.13;pointer-events:none;z-index:0;
     filter:saturate(1.2);
     mask-image:linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.6) 60%, transparent 100%);
@@ -69,7 +70,7 @@
     font-size:1rem;color:rgba(255,255,255,.7);max-width:480px;line-height:1.7;
     margin-bottom:36px;position:relative;z-index:2;
   }
-  .hero-ctas{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;position:relative;z-index:2;}
+  .hero-ctas{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;align-items:center;position:relative;z-index:2;}
   .btn-primary{
     font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.9rem;
     letter-spacing:.1em;text-transform:uppercase;text-decoration:none;
@@ -106,21 +107,25 @@
   }
   .nav-tile{
     text-decoration:none;color:var(--text);
-    background:var(--surface);border:1px solid var(--border);
+    background:rgba(255,255,255,.04);
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,.1);
+    box-shadow:0 4px 24px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.08);
     border-radius:14px;padding:20px 18px;
     display:flex;flex-direction:column;gap:8px;
-    transition:border-color .2s,transform .2s,box-shadow .2s;
+    transition:border-color .2s,transform .2s,box-shadow .2s,background .2s;
     position:relative;overflow:hidden;
   }
   .nav-tile::before{
     content:'';position:absolute;inset:0;
-    background:linear-gradient(135deg,rgba(0,255,133,.04) 0%,transparent 60%);
+    background:linear-gradient(135deg,rgba(0,255,133,.06) 0%,transparent 60%);
     opacity:0;transition:opacity .2s;
   }
   .nav-tile:hover{
-    border-color:rgba(0,255,133,.4);
+    background:rgba(255,255,255,.07);
+    border-color:rgba(0,255,133,.35);
     transform:translateY(-2px);
-    box-shadow:0 8px 32px rgba(0,255,133,.08);
+    box-shadow:0 12px 40px rgba(0,0,0,.35),0 0 0 1px rgba(0,255,133,.15),inset 0 1px 0 rgba(255,255,255,.1);
   }
   .nav-tile:hover::before{opacity:1;}
   .nav-tile-icon{font-size:1.6rem;line-height:1;margin-bottom:2px;}
@@ -141,6 +146,14 @@
   .video-grid{
     display:grid;
     grid-template-columns:repeat(3,1fr);
+    gap:16px;
+    margin-bottom:56px;
+  }
+
+  /* ── STAGGER GRID ── */
+  .stagger-grid{
+    display:flex;
+    flex-direction:column;
     gap:16px;
     margin-bottom:56px;
   }
@@ -255,10 +268,6 @@
   <img class="hero-ref-bg" src="CSV/image__5_-removebg-preview.png" alt="">
   <img class="hero-logo" src="images/logos/RRLogo.svg" alt="RefRater">
   <p class="hero-tag">Track Premier League referee performance, compare community ratings, and compete in the fantasy ref league.</p>
-  <div class="hero-ctas">
-    <a class="btn-primary" href="matches.html">View Matches</a>
-    <a class="btn-secondary" href="fantasy.html">Play PVBB</a>
-  </div>
 </section>
 
 <!-- MAIN -->
@@ -269,16 +278,16 @@
     <div class="live-strip-left">
       <div class="live-dot"></div>
       <div>
-        <div class="live-strip-title">Matchweek 3 — Live Now</div>
+        <div class="live-strip-title" id="liveStripTitle">Matchweek — Live Now</div>
         <div class="live-strip-sub">Tap to see live scores and rate referees</div>
       </div>
     </div>
     <div class="live-strip-arrow">Go to Matches →</div>
   </a>
 
-  <!-- NAV GRID -->
+  <!-- STAGGER GRID -->
   <div class="section-label">Explore</div>
-  <div class="nav-grid">
+  <div class="stagger-grid">
 
     <a class="nav-tile" href="matches.html">
       <div class="nav-tile-title">Matches</div>
@@ -286,11 +295,27 @@
       <div class="nav-tile-arrow">View →</div>
     </a>
 
+    <div class="video-box" style="cursor:default;border-color:rgba(0,255,133,.35);box-shadow:0 0 18px rgba(0,255,133,.12),0 0 1px rgba(0,255,133,.4);">
+      <video src="images/video/Screen Recording 2026-04-23 154109.mp4" controls preload="metadata" style="width:100%;aspect-ratio:16/9;display:block;background:#000;"></video>
+      <div class="video-meta">
+        <div class="video-label">Match Highlights</div>
+        <div class="video-sub">GW key moments</div>
+      </div>
+    </div>
+
     <a class="nav-tile" href="referees.html">
       <div class="nav-tile-title">Referees</div>
       <div class="nav-tile-desc">Full referee standings ranked by neutral and fan scores.</div>
       <div class="nav-tile-arrow">View →</div>
     </a>
+
+    <div class="video-box" style="cursor:default;border-color:rgba(0,255,133,.35);box-shadow:0 0 18px rgba(0,255,133,.12),0 0 1px rgba(0,255,133,.4);">
+      <video src="images/video/Screen Recording 2026-04-23 155342.mp4" controls preload="metadata" style="width:100%;aspect-ratio:16/9;display:block;background:#000;"></video>
+      <div class="video-meta">
+        <div class="video-label">VAR Decisions</div>
+        <div class="video-sub">This week's overturns</div>
+      </div>
+    </div>
 
     <a class="nav-tile" href="fantasy.html">
       <div class="nav-tile-title">PVBB</div>
@@ -298,57 +323,8 @@
       <div class="nav-tile-arrow">Play →</div>
     </a>
 
-    <a class="nav-tile" href="badges.html">
-      <div class="nav-tile-title">Cards</div>
-      <div class="nav-tile-desc">Unlock achievement cards by rating refs, winning battles and more.</div>
-      <div class="nav-tile-arrow">View →</div>
-    </a>
-
-  </div>
-
-  <!-- VIDEO GRID -->
-  <div class="section-label">Videos</div>
-  <div class="video-grid">
-
-    <div class="video-box">
-      <div class="video-thumb">
-        <div class="video-cs">Coming Soon</div>
-        <div class="video-play">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M4 2.5l9 5.5-9 5.5V2.5z" fill="var(--pl-green)"/>
-          </svg>
-        </div>
-      </div>
-      <div class="video-meta">
-        <div class="video-label">Match Highlights</div>
-        <div class="video-sub">GW3 key moments</div>
-      </div>
-    </div>
-
-    <div class="video-box">
-      <div class="video-thumb">
-        <div class="video-cs">Coming Soon</div>
-        <div class="video-play">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M4 2.5l9 5.5-9 5.5V2.5z" fill="var(--pl-green)"/>
-          </svg>
-        </div>
-      </div>
-      <div class="video-meta">
-        <div class="video-label">VAR Decisions</div>
-        <div class="video-sub">This week's overturns</div>
-      </div>
-    </div>
-
-    <div class="video-box">
-      <div class="video-thumb">
-        <div class="video-cs">Coming Soon</div>
-        <div class="video-play">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M4 2.5l9 5.5-9 5.5V2.5z" fill="var(--pl-green)"/>
-          </svg>
-        </div>
-      </div>
+    <div class="video-box" style="cursor:default;border-color:rgba(0,255,133,.35);box-shadow:0 0 18px rgba(0,255,133,.12),0 0 1px rgba(0,255,133,.4);">
+      <video src="images/video/Screen Recording 2026-04-23 161130.mp4" controls preload="metadata" style="width:100%;aspect-ratio:16/9;display:block;background:#000;"></video>
       <div class="video-meta">
         <div class="video-label">Ref Moments</div>
         <div class="video-sub">Top calls of the season</div>
@@ -361,6 +337,14 @@
 
 <footer>© RefRater — Community referee ratings</footer>
 
+<script>
+(async function() {
+  const cfg = await loadGWConfig();
+  if (cfg?.gw) {
+    document.getElementById('liveStripTitle').textContent = `Matchweek ${cfg.gw} — Live Now`;
+  }
+})();
+</script>
 <script>if("serviceWorker"in navigator){navigator.serviceWorker.register("/sw.js").catch(()=>{});}</script>
 </body>
 </html>

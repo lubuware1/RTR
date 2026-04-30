@@ -76,6 +76,40 @@
   .sidebar-cat-threads { display: none; }
   .sidebar-cat-threads.open { display: block; }
   .sidebar-cat-threads .sidebar-item { padding-left: 22px; }
+  .sidebar-mw-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 14px 2px 22px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: .6rem; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--muted);
+    border-top: 1px solid rgba(255,255,255,.05);
+    margin-top: 2px;
+    cursor: pointer; user-select: none;
+    transition: color .12s;
+  }
+  .sidebar-mw-header:hover { color: var(--text); }
+  .sidebar-mw-header:first-child { border-top: none; margin-top: 0; }
+  .sidebar-mw-header .mw-arrow { font-size: .55rem; transition: transform .18s; }
+  .sidebar-mw-header.mw-collapsed .mw-arrow { transform: rotate(-90deg); }
+  .sidebar-mw-threads.mw-hidden { display: none; }
+  .mw-divider {
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: .68rem;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: var(--muted);
+    padding: 10px 0 8px;
+    border-bottom: 1px solid var(--border);
+    margin: 20px 0 12px;
+    cursor: pointer; user-select: none;
+    transition: color .12s;
+  }
+  .mw-divider:hover { color: var(--text); }
+  .mw-divider:first-child { margin-top: 0; }
+  .mw-divider .mw-arrow { font-size: .6rem; transition: transform .18s; }
+  .mw-divider.mw-collapsed .mw-arrow { transform: rotate(-90deg); }
+  .mw-posts-group.mw-hidden { display: none; }
   .forum-main { flex: 1; min-width: 0; }
   @media (max-width: 700px) {
     .forum-layout { flex-direction: column; }
@@ -346,6 +380,71 @@
   }
   .mw-select:focus { border-color: rgba(0,255,133,.4); }
 
+  /* ── SEARCH BAR ── */
+  .forum-search-wrap {
+    position: relative; margin-bottom: 14px;
+  }
+  .forum-search-input {
+    width: 100%; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 9px;
+    padding: 9px 36px 9px 36px;
+    color: var(--text); font-family: 'Barlow', sans-serif; font-size: .85rem;
+    outline: none; transition: border-color .15s;
+  }
+  .forum-search-input:focus { border-color: rgba(0,255,133,.4); }
+  .forum-search-input::placeholder { color: var(--muted); }
+  .forum-search-icon {
+    position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+    color: var(--muted); pointer-events: none; font-size: .9rem;
+  }
+  .forum-search-clear {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer;
+    color: var(--muted); font-size: .9rem; padding: 2px 4px;
+    display: none; transition: color .12s;
+  }
+  .forum-search-clear:hover { color: var(--text); }
+  .forum-search-clear.visible { display: block; }
+  .search-count {
+    font-size: .72rem; color: var(--muted);
+    margin-bottom: 10px; padding-left: 2px;
+  }
+  mark {
+    background: rgba(0,255,133,.25); color: var(--text);
+    border-radius: 2px; padding: 0 1px;
+  }
+
+  /* ── REF PILL (in game posts) ── */
+  .ref-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(255,211,42,.12); border: 1px solid rgba(255,211,42,.3);
+    color: var(--yellow); font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: .68rem; letter-spacing: .06em; text-transform: uppercase;
+    padding: 2px 8px; border-radius: 4px; text-decoration: none;
+    transition: background .13s;
+  }
+  .ref-pill:hover { background: rgba(255,211,42,.22); }
+
+  /* ── REF DISCUSSION CARDS ── */
+  .ref-disc-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden; transition: border-color .2s;
+    margin-bottom: 6px;
+  }
+  .ref-disc-card:hover { border-color: rgba(255,211,42,.25); }
+  .ref-disc-card.open { border-color: rgba(255,211,42,.4); }
+  .ref-disc-head {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px; cursor: pointer; user-select: none;
+  }
+  .ref-disc-name {
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 800;
+    font-size: 1rem; color: var(--text);
+  }
+  .ref-disc-meta { font-size: .72rem; color: var(--muted); margin-top: 1px; }
+  .ref-disc-body { padding: 0 16px 14px; border-top: 1px solid var(--border); }
+  .ref-disc-body .replies-scroll { margin-top: 10px; }
+
   /* ── EMPTY / LOADING ── */
   .forum-empty {
     text-align: center; padding: 60px 20px;
@@ -458,6 +557,14 @@
         <button class="cat-tab" data-cat="general">💬 General</button>
       </div>
 
+      <!-- Search -->
+      <div class="forum-search-wrap">
+        <span class="forum-search-icon">🔍</span>
+        <input class="forum-search-input" id="forumSearch" type="text" placeholder="Search posts, games, decisions…" maxlength="120" autocomplete="off">
+        <button class="forum-search-clear" id="forumSearchClear" aria-label="Clear search">✕</button>
+      </div>
+      <div class="search-count" id="searchCount" style="display:none"></div>
+
       <!-- Matchweek filter (Games only) -->
       <div class="mw-filter" id="mwFilterBar" style="display:none"></div>
 
@@ -482,6 +589,8 @@
 let currentUser = null;
 let activeCategory = 'all';
 let activeMatchweek = null;
+let searchQuery = '';
+let expandedRefId = null;
 let allPosts = [];
 
 function toast(msg, dur = 3000) {
@@ -508,12 +617,27 @@ function catLabel(cat) {
   return { general:'General', referee:'Referee', game:'Game', decision:'Decision' }[cat] || cat;
 }
 
+function highlight(text, query) {
+  if (!query) return esc(text);
+  const safe = esc(text);
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return safe.replace(new RegExp(`(${escaped})`, 'gi'), '<mark>$1</mark>');
+}
+
+function postMatchesSearch(post, q) {
+  if (!q) return true;
+  const lower = q.toLowerCase();
+  return (post.subject || '').toLowerCase().includes(lower) ||
+         (post.body    || '').toLowerCase().includes(lower) ||
+         (post.username|| '').toLowerCase().includes(lower);
+}
+
 // ── SUPABASE ─────────────────────────────────────────────
 async function loadPosts() {
   if (PREVIEW_MODE) return [];
   const { data, error } = await getSB()
     .from('RTR Forum')
-    .select('id, user_id, username, category, subject, body, reply_to, matchweek, created_at')
+    .select('id, user_id, username, category, subject, body, reply_to, matchweek, ref_id, created_at')
     .order('created_at', { ascending: false })
     .limit(200);
   if (error) { console.error('[RTR] loadPosts error:', error); return []; }
@@ -536,11 +660,129 @@ async function savePost(category, subject, body, replyTo, matchweek) {
   return data;
 }
 
+async function saveRefPost(refId, refName, body) {
+  if (PREVIEW_MODE || !currentUser) return null;
+  const { data, error } = await getSB().from('RTR Forum').insert({
+    user_id: currentUser.id, username: currentUser.username || 'User',
+    category: 'referee', subject: refName, body: body.trim(),
+    ref_id: refId, reply_to: null, matchweek: null,
+    created_at: new Date().toISOString(),
+  }).select().single();
+  if (error) { console.error('[RTR] saveRefPost error:', error); return null; }
+  return data;
+}
+
 // ── RENDER ────────────────────────────────────────────────
 let expandedId = null;
 const openSidebarCats = new Set(['game', 'decision', 'referee', 'general']); // all open by default
+const openSidebarMWs = new Set(); // tracks open matchweek groups in sidebar: "${cat}-${mw}"
+const collapsedMainMWs = new Set(); // tracks collapsed matchweek dividers in main area
 
 function renderPosts() {
+  // ── Sidebar (always updated first) ────────────────────
+  const sidebar = document.getElementById('forumSidebar');
+  sidebar.innerHTML = '<div class="sidebar-heading">Threads</div>';
+  const CAT_ORDER = ['game', 'decision', 'referee', 'general'];
+  const CAT_LABELS = { game: '⚽ Games', decision: '⚖️ Decisions', referee: '🟡 Referees', general: '💬 General' };
+  const allTopLevel = allPosts.filter(p => !p.reply_to);
+  CAT_ORDER.forEach(cat => {
+    const posts = allTopLevel.filter(p => p.category === cat && postMatchesSearch(p, searchQuery));
+    if (!posts.length) return;
+    const isOpen = openSidebarCats.has(cat);
+    const header = document.createElement('div');
+    header.className = 'sidebar-cat-header' + (isOpen ? ' open' : '');
+    header.innerHTML = `<span>${CAT_LABELS[cat]}</span><span class="cat-arrow">▶</span>`;
+    header.addEventListener('click', () => {
+      if (openSidebarCats.has(cat)) openSidebarCats.delete(cat);
+      else openSidebarCats.add(cat);
+      renderPosts();
+    });
+    sidebar.appendChild(header);
+    const group = document.createElement('div');
+    group.className = 'sidebar-cat-threads' + (isOpen ? ' open' : '');
+
+    function addSidebarItem(post, target) {
+      const item = document.createElement('div');
+      item.className = 'sidebar-item' + (expandedId === post.id ? ' active' : '');
+      item.innerHTML = `<span class="sidebar-dot ${post.category}"></span><span class="sidebar-label">${esc(post.subject)}</span>`;
+      item.addEventListener('click', () => {
+        expandedId = post.id;
+        if (activeCategory !== 'all' && activeCategory !== post.category) {
+          activeCategory = 'all';
+          document.querySelectorAll('.cat-tab').forEach(t => t.classList.toggle('active', t.dataset.cat === 'all'));
+        }
+        renderPosts();
+        setTimeout(() => {
+          const card = document.querySelector(`.post-card[data-pid="${post.id}"]`);
+          if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
+      });
+      (target || group).appendChild(item);
+    }
+
+    // Group posts by matchweek (most recent first), then ungrouped at the end
+    const byMW = {};
+    const noMW = [];
+    posts.forEach(p => {
+      if (p.matchweek) { if (!byMW[p.matchweek]) byMW[p.matchweek] = []; byMW[p.matchweek].push(p); }
+      else noMW.push(p);
+    });
+    const mwKeys = Object.keys(byMW).map(Number).sort((a, b) => b - a);
+    const hasMWGroups = mwKeys.length > 0;
+    mwKeys.forEach((mw, i) => {
+      const key = `${cat}-${mw}`;
+      // Default: most recent MW open, others collapsed
+      if (i === 0 && !openSidebarMWs.has(key) && !openSidebarMWs.has(`__init_${key}`)) {
+        openSidebarMWs.add(key);
+        openSidebarMWs.add(`__init_${key}`);
+      }
+      const isOpen = openSidebarMWs.has(key);
+      const mwHdr = document.createElement('div');
+      mwHdr.className = 'sidebar-mw-header' + (isOpen ? '' : ' mw-collapsed');
+      if (i === 0) mwHdr.style.borderTop = 'none';
+      mwHdr.innerHTML = `<span>Matchweek ${mw}</span><span class="mw-arrow">▾</span>`;
+      const mwGroup = document.createElement('div');
+      mwGroup.className = 'sidebar-mw-threads' + (isOpen ? '' : ' mw-hidden');
+      byMW[mw].forEach(post => addSidebarItem(post, mwGroup));
+      mwHdr.addEventListener('click', () => {
+        if (openSidebarMWs.has(key)) openSidebarMWs.delete(key);
+        else openSidebarMWs.add(key);
+        renderPosts();
+      });
+      group.appendChild(mwHdr);
+      group.appendChild(mwGroup);
+    });
+    if (noMW.length) {
+      if (hasMWGroups) {
+        const key = `${cat}-general`;
+        if (!openSidebarMWs.has(`__init_${key}`)) {
+          openSidebarMWs.add(key);
+          openSidebarMWs.add(`__init_${key}`);
+        }
+        const isOpen = openSidebarMWs.has(key);
+        const mwHdr = document.createElement('div');
+        mwHdr.className = 'sidebar-mw-header' + (isOpen ? '' : ' mw-collapsed');
+        mwHdr.innerHTML = `<span>General</span><span class="mw-arrow">▾</span>`;
+        const mwGroup = document.createElement('div');
+        mwGroup.className = 'sidebar-mw-threads' + (isOpen ? '' : ' mw-hidden');
+        noMW.forEach(post => addSidebarItem(post, mwGroup));
+        mwHdr.addEventListener('click', () => {
+          if (openSidebarMWs.has(key)) openSidebarMWs.delete(key);
+          else openSidebarMWs.add(key);
+          renderPosts();
+        });
+        group.appendChild(mwHdr);
+        group.appendChild(mwGroup);
+      } else {
+        noMW.forEach(post => addSidebarItem(post, group));
+      }
+    }
+
+    sidebar.appendChild(group);
+  });
+
+  if (activeCategory === 'referee') { renderRefDiscussions(); return; }
+
   const el = document.getElementById('postList');
 
   // Matchweek filter dropdown (Games tab only)
@@ -567,55 +809,22 @@ function renderPosts() {
     activeMatchweek = null;
   }
 
-  // top-level posts filtered by category and matchweek
+  // top-level posts filtered by category, matchweek, and search
   const topLevel = allPosts.filter(p =>
     !p.reply_to &&
     (activeCategory === 'all' || p.category === activeCategory) &&
-    (activeCategory !== 'game' || activeMatchweek === null || p.matchweek === activeMatchweek)
+    (activeCategory !== 'game' || activeMatchweek === null || p.matchweek === activeMatchweek) &&
+    postMatchesSearch(p, searchQuery)
   );
 
-  // ── Sidebar (grouped by category) ────────────────────
-  const sidebar = document.getElementById('forumSidebar');
-  sidebar.innerHTML = '<div class="sidebar-heading">Threads</div>';
-  const CAT_ORDER = ['game', 'decision', 'referee', 'general'];
-  const CAT_LABELS = { game: '⚽ Games', decision: '⚖️ Decisions', referee: '🟡 Referees', general: '💬 General' };
-  // Use all top-level posts (unfiltered by activeCategory) so sidebar always shows all cats
-  const allTopLevel = allPosts.filter(p => !p.reply_to);
-  CAT_ORDER.forEach(cat => {
-    const posts = allTopLevel.filter(p => p.category === cat);
-    if (!posts.length) return;
-    const isOpen = openSidebarCats.has(cat);
-    const header = document.createElement('div');
-    header.className = 'sidebar-cat-header' + (isOpen ? ' open' : '');
-    header.innerHTML = `<span>${CAT_LABELS[cat]}</span><span class="cat-arrow">▶</span>`;
-    header.addEventListener('click', () => {
-      if (openSidebarCats.has(cat)) openSidebarCats.delete(cat);
-      else openSidebarCats.add(cat);
-      renderPosts();
-    });
-    sidebar.appendChild(header);
-    const group = document.createElement('div');
-    group.className = 'sidebar-cat-threads' + (isOpen ? ' open' : '');
-    posts.forEach(post => {
-      const item = document.createElement('div');
-      item.className = 'sidebar-item' + (expandedId === post.id ? ' active' : '');
-      item.innerHTML = `<span class="sidebar-dot ${post.category}"></span><span class="sidebar-label">${esc(post.subject)}</span>`;
-      item.addEventListener('click', () => {
-        expandedId = post.id;
-        if (activeCategory !== 'all' && activeCategory !== post.category) {
-          activeCategory = 'all';
-          document.querySelectorAll('.cat-tab').forEach(t => t.classList.toggle('active', t.dataset.cat === 'all'));
-        }
-        renderPosts();
-        setTimeout(() => {
-          const card = document.querySelector(`.post-card[data-pid="${post.id}"]`);
-          if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 50);
-      });
-      group.appendChild(item);
-    });
-    sidebar.appendChild(group);
-  });
+  // Search result count
+  const countEl = document.getElementById('searchCount');
+  if (searchQuery) {
+    countEl.style.display = 'block';
+    countEl.textContent = `${topLevel.length} result${topLevel.length !== 1 ? 's' : ''} for "${searchQuery}"`;
+  } else {
+    countEl.style.display = 'none';
+  }
 
   if (!topLevel.length) {
     el.innerHTML = `<div class="forum-empty">
@@ -625,26 +834,27 @@ function renderPosts() {
     return;
   }
 
-  el.innerHTML = topLevel.map(post => {
+  function renderPostCard(post) {
     const replies = allPosts.filter(p => p.reply_to === post.id).sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
     const isExpanded = expandedId === post.id;
     const preview = post.body.length > 120 ? post.body.slice(0, 120) + '…' : post.body;
-
+    const refObj = post.ref_id ? REFS.find(r => r.id === post.ref_id) : null;
+    const refPill = refObj ? `<a class="ref-pill" href="forum.html?ref=${refObj.id}">🟨 ${refObj.name}</a>` : '';
     const repliesHtml = replies.map(r => `
       <div class="reply-card">
         <div class="reply-meta"><strong>${esc(r.username)}</strong> · ${fmtDate(r.created_at)}</div>
         <div class="reply-body">${esc(r.body)}</div>
       </div>`).join('');
-
+    const q = searchQuery;
     return `
       <div class="post-card${isExpanded ? ' expanded' : ''}" data-pid="${post.id}">
         <div class="post-head">
           <div class="post-meta-row">
             <span class="cat-pill ${post.category}">${catLabel(post.category)}</span>
-            <span class="post-author">by <strong>${esc(post.username)}</strong> · ${fmtDate(post.created_at)}</span>
+            <span class="post-author">by <strong>${highlight(post.username, q)}</strong> · ${fmtDate(post.created_at)}</span>
           </div>
-          <div class="post-subject">${esc(post.subject)}</div>
-          <div class="post-preview">${esc(preview)}</div>
+          <div class="post-subject">${highlight(post.subject, q)} ${refPill}</div>
+          <div class="post-preview">${highlight(preview, q)}</div>
         </div>
         <div class="post-footer">
           <span class="post-reply-count">
@@ -663,7 +873,49 @@ function renderPosts() {
           </div>
         </div>
       </div>`;
-  }).join('');
+  }
+
+  // Group posts by matchweek (most recent first), ungrouped at the end
+  const postsByMW = {};
+  const postsNoMW = [];
+  topLevel.forEach(p => {
+    if (p.matchweek) { if (!postsByMW[p.matchweek]) postsByMW[p.matchweek] = []; postsByMW[p.matchweek].push(p); }
+    else postsNoMW.push(p);
+  });
+  const mwGroups = Object.keys(postsByMW).map(Number).sort((a, b) => b - a);
+  const showDividers = mwGroups.length > 1 || (mwGroups.length === 1 && postsNoMW.length > 0);
+
+  let html = '';
+  mwGroups.forEach(mw => {
+    const collapsed = collapsedMainMWs.has(mw);
+    if (showDividers) html += `<div class="mw-divider${collapsed ? ' mw-collapsed' : ''}" data-mwkey="${mw}">
+      <span>Matchweek ${mw}</span><span class="mw-arrow">▾</span>
+    </div>`;
+    html += `<div class="mw-posts-group${collapsed ? ' mw-hidden' : ''}" data-mwgroup="${mw}">`;
+    html += postsByMW[mw].map(renderPostCard).join('');
+    html += `</div>`;
+  });
+  if (postsNoMW.length) {
+    const collapsed = collapsedMainMWs.has('general');
+    if (showDividers) html += `<div class="mw-divider${collapsed ? ' mw-collapsed' : ''}" data-mwkey="general">
+      <span>General</span><span class="mw-arrow">▾</span>
+    </div>`;
+    html += `<div class="mw-posts-group${collapsed ? ' mw-hidden' : ''}" data-mwgroup="general">`;
+    html += postsNoMW.map(renderPostCard).join('');
+    html += `</div>`;
+  }
+  el.innerHTML = html;
+
+  // Wire matchweek divider collapse toggles
+  el.querySelectorAll('.mw-divider').forEach(div => {
+    div.addEventListener('click', () => {
+      const key = div.dataset.mwkey;
+      const numKey = isNaN(key) ? key : +key;
+      if (collapsedMainMWs.has(numKey)) collapsedMainMWs.delete(numKey);
+      else collapsedMainMWs.add(numKey);
+      renderPosts();
+    });
+  });
 
   function scrollRepliesToBottom(pid) {
     const sc = document.getElementById(`repliesScroll-${pid}`);
@@ -719,6 +971,100 @@ function renderPosts() {
   });
 }
 
+function renderRefDiscussions() {
+  const el = document.getElementById('postList');
+  document.getElementById('mwFilterBar').style.display = 'none';
+
+  if (!REFS.length) {
+    el.innerHTML = `<div class="forum-empty"><div class="forum-empty-icon">🟡</div><p>Loading referees…</p></div>`;
+    return;
+  }
+
+  const sorted = [...REFS].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+  el.innerHTML = sorted.map(ref => {
+    const refPosts = allPosts
+      .filter(p => p.ref_id === ref.id && !p.reply_to)
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    const totalComments = refPosts.length;
+    const isOpen = expandedRefId === ref.id;
+
+    const commentsHtml = refPosts.map(post => `
+      <div class="reply-card">
+        <div class="reply-meta"><strong>${esc(post.username)}</strong> · ${fmtDate(post.created_at)}</div>
+        <div class="reply-body">${esc(post.body)}</div>
+      </div>`).join('');
+
+    return `
+      <div class="ref-disc-card${isOpen ? ' open' : ''}" data-refid="${ref.id}">
+        <div class="ref-disc-head">
+          <div style="flex:1">
+            <div class="ref-disc-name">${esc(ref.name)}</div>
+            <div class="ref-disc-meta">${totalComments} comment${totalComments !== 1 ? 's' : ''}</div>
+          </div>
+          <span style="color:var(--muted);font-size:.7rem">${isOpen ? '▲' : '▼'}</span>
+        </div>
+        ${isOpen ? `
+        <div class="ref-disc-body">
+          <div class="replies-scroll" id="refScroll-${ref.id}">${commentsHtml || '<div style="color:var(--muted);font-size:.82rem;padding:10px 0">No comments yet — be the first</div>'}</div>
+          <div class="reply-box" style="margin-top:10px">
+            <textarea class="reply-input" data-refid="${ref.id}" placeholder="Comment on ${esc(ref.name)}…" rows="1" maxlength="1000"></textarea>
+            <button class="reply-send-btn ref-send" data-refid="${ref.id}">Post</button>
+          </div>
+        </div>` : ''}
+      </div>`;
+  }).join('');
+
+  // Wire open/close
+  el.querySelectorAll('.ref-disc-head').forEach(head => {
+    const card = head.closest('.ref-disc-card');
+    const refId = +card.dataset.refid;
+    head.addEventListener('click', () => {
+      expandedRefId = expandedRefId === refId ? null : refId;
+      renderRefDiscussions();
+      if (expandedRefId === refId) {
+        setTimeout(() => {
+          const sc = document.getElementById(`refScroll-${refId}`);
+          if (sc) sc.scrollTop = sc.scrollHeight;
+        }, 30);
+      }
+    });
+  });
+
+  // Wire send buttons
+  el.querySelectorAll('.ref-send').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const refId = +btn.dataset.refid;
+      const ta = el.querySelector(`.reply-input[data-refid="${refId}"]`);
+      const body = ta?.value.trim();
+      if (!body) return;
+      btn.disabled = true;
+      const ref = REFS.find(r => r.id === refId);
+      const post = await saveRefPost(refId, ref?.name || '', body);
+      if (post) {
+        allPosts = [...allPosts, post];
+        renderRefDiscussions();
+        setTimeout(() => {
+          const sc = document.getElementById(`refScroll-${refId}`);
+          if (sc) sc.scrollTop = sc.scrollHeight;
+        }, 30);
+        toast('Comment posted');
+      } else {
+        btn.disabled = false;
+        toast('Failed to post — please try again');
+      }
+    });
+  });
+
+  // Auto-expand textareas
+  el.querySelectorAll('.reply-input[data-refid]').forEach(ta => {
+    ta.addEventListener('input', () => {
+      ta.style.height = 'auto';
+      ta.style.height = ta.scrollHeight + 'px';
+    });
+  });
+}
+
 function esc(str) {
   return String(str || '')
     .replace(/&/g,'&amp;')
@@ -760,8 +1106,28 @@ document.querySelectorAll('.cat-tab').forEach(btn => {
     document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     expandedId = null;
+    if (activeCategory !== 'referee') expandedRefId = null;
     renderPosts();
   });
+});
+
+// ── SEARCH ────────────────────────────────────────────────
+const _searchInput = document.getElementById('forumSearch');
+const _searchClear = document.getElementById('forumSearchClear');
+let _searchDebounce;
+_searchInput.addEventListener('input', () => {
+  clearTimeout(_searchDebounce);
+  _searchDebounce = setTimeout(() => {
+    searchQuery = _searchInput.value.trim();
+    _searchClear.classList.toggle('visible', !!searchQuery);
+    renderPosts();
+  }, 200);
+});
+_searchClear.addEventListener('click', () => {
+  searchQuery = '';
+  _searchInput.value = '';
+  _searchClear.classList.remove('visible');
+  renderPosts();
 });
 
 // ── COMPOSE ───────────────────────────────────────────────
@@ -808,7 +1174,20 @@ document.getElementById('compSubmit').addEventListener('click', async () => {
   if (!authed) { window.location.href = 'login.html'; return; }
   currentUser = getCurrentUser();
   initHeader();
+  await loadFromSheets();
   allPosts = await loadPosts();
+
+  // ?ref=ID — open that referee's discussion section on load
+  const refParam = new URLSearchParams(location.search).get('ref');
+  if (refParam) {
+    const refId = +refParam;
+    if (REFS.find(r => r.id === refId)) {
+      activeCategory = 'referee';
+      expandedRefId = refId;
+      document.querySelectorAll('.cat-tab').forEach(b => b.classList.toggle('active', b.dataset.cat === 'referee'));
+    }
+  }
+
   renderPosts();
 })();
 </script>

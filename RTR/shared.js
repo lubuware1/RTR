@@ -345,19 +345,29 @@ async function saveIncident(matchId, type, minute, description) {
 
 // Populates ref.neutralRating, ref.fanRating, ref.neutralVotes, ref.fanVotes
 // from the incident voting tables. Called on any page that shows ref scores.
-async function loadIncidentRatings() {
+// matchIds: optional array of match IDs to scope scores to (e.g. current GW only).
+// When omitted, scores accumulate across all matchweeks (used by referees page).
+async function loadIncidentRatings(matchIds) {
   if (PREVIEW_MODE) return;
+  const matchIdSet = matchIds ? new Set(matchIds.map(Number)) : null;
+
   const { data: incidents } = await getSB()
     .from('RTR Incidents').select('id, match_id, type, weight');
   if (!incidents?.length) return;
 
-  const ids = incidents.map(i => i.id);
+  // Filter incidents to the requested matches if a scope is provided
+  const scopedIncidents = matchIdSet
+    ? incidents.filter(i => matchIdSet.has(Number(i.match_id)))
+    : incidents;
+  if (!scopedIncidents.length) return;
+
+  const ids = scopedIncidents.map(i => i.id);
   const { data: votes } = await getSB()
     .from('RTR Incident Votes').select('incident_id, vote, is_fan, weight')
     .in('incident_id', ids);
 
   const byMatch = {};
-  incidents.forEach(inc => {
+  scopedIncidents.forEach(inc => {
     if (!byMatch[inc.match_id]) byMatch[inc.match_id] = [];
     byMatch[inc.match_id].push(inc);
   });
@@ -372,6 +382,7 @@ async function loadIncidentRatings() {
   REFS.forEach(r => { r.neutralRating=null; r.neutralVotes=0; r.fanRating=null; r.fanVotes=0; });
   const refNeutral = {}, refFan = {};
   MATCHES.forEach(m => {
+    if (matchIdSet && !matchIdSet.has(Number(m.id))) return;
     const incs = byMatch[m.id];
     if (!incs) return;
     const ref = REFS.find(r => r.id === +m.refId);
@@ -701,6 +712,7 @@ async function loadFromSheets() {
           perfectGame:    o.perfect_game   ?? m.perfectGame,
           incorrectVarPen: o.incorrect_var_pen ?? m.incorrectVarPen,
           incorrectVarRed: o.incorrect_var_red ?? m.incorrectVarRed,
+          refId:          o.ref_id         ?? m.refId,
         };
       });
     }
@@ -725,7 +737,18 @@ async function loadFixtures() {
     const existing = new Set(MATCHES.map(m => `${m.home}|${m.away}|${m.matchweek}`));
     data.forEach(f => {
       const key = `${f.home}|${f.away}|${f.matchweek}`;
-      if (existing.has(key)) return; // already in Sheets — don't duplicate
+      if (existing.has(key)) {
+        // Already in Sheets — but merge ref_id if the fixture has one assigned
+        if (f.ref_id) {
+          const idx = MATCHES.findIndex(m =>
+            m.home === f.home && m.away === f.away && +m.matchweek === +f.matchweek
+          );
+          if (idx !== -1 && !MATCHES[idx].refId) {
+            MATCHES[idx] = { ...MATCHES[idx], refId: f.ref_id };
+          }
+        }
+        return;
+      }
       MATCHES.push({
         id:              f.id,
         matchweek:       +f.matchweek,
@@ -802,12 +825,46 @@ const SHARED_CSS = `
     header{padding:0 16px;}
   }
   /* ── DARK MODE ──────────────────────────────────────── */
-  html[data-theme="dark"]{--bg:#0a0c10;--surface:#12151c;--surface2:#1a1e28;--border:#242836;--red:#ff4757;--yellow:#ffd32a;--green:#37ecba;--text:#e8eaf0;--muted:#6b7280;--pl-green:#00ff85;--gold:#f5a623;}
+  html[data-theme="dark"]{--bg:#0a0c10;--surface:rgba(18,21,28,0.55);--surface2:rgba(26,30,40,0.65);--border:rgba(255,255,255,.09);--red:#ff4757;--yellow:#ffd32a;--green:#37ecba;--text:#e8eaf0;--muted:#6b7280;--pl-green:#00ff85;--gold:#f5a623;}
   html[data-theme="dark"] header{background:linear-gradient(135deg,#37003c 0%,#1a0020 60%,#0a0c10 100%);box-shadow:0 4px 32px rgba(0,255,133,.12);}
   html[data-theme="dark"] header::after{background:linear-gradient(to bottom,rgba(0,0,0,.55) 0%,transparent 100%);}
   html[data-theme="dark"] .mobile-nav{background:linear-gradient(135deg,#37003c 0%,#1a0020 100%);}
   html[data-theme="dark"] .gw-banner{background:linear-gradient(90deg,rgba(55,0,60,.9),rgba(10,12,16,1)) !important;}
-  html[data-theme="dark"] body::before{background:radial-gradient(ellipse 70% 50% at 20% 30%,rgba(55,0,60,.45) 0%,transparent 70%),radial-gradient(ellipse 60% 60% at 80% 70%,rgba(80,0,90,.3) 0%,transparent 65%) !important;}
+  html[data-theme="dark"] body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 70% 50% at 20% 30%,rgba(55,0,60,.45) 0%,transparent 70%),radial-gradient(ellipse 60% 60% at 80% 70%,rgba(80,0,90,.3) 0%,transparent 65%) !important;}
+  html[data-theme="dark"] .match-card,
+  html[data-theme="dark"] .rpc,
+  html[data-theme="dark"] .rpc-stat-pill,
+  html[data-theme="dark"] .post-card,
+  html[data-theme="dark"] .ref-disc-card,
+  html[data-theme="dark"] .reply-card,
+  html[data-theme="dark"] .badge-card,
+  html[data-theme="dark"] .leaderboard,
+  html[data-theme="dark"] .section,
+  html[data-theme="dark"] .forum-sidebar,
+  html[data-theme="dark"] .compose-box,
+  html[data-theme="dark"] .video-box,
+  html[data-theme="dark"] .live-strip,
+  html[data-theme="dark"] .rating-panel,
+  html[data-theme="dark"] .score-box,
+  html[data-theme="dark"] .pvs-box,
+  html[data-theme="dark"] .inc-card,
+  html[data-theme="dark"] .inc-score-tile,
+  html[data-theme="dark"] .heatmap-stat,
+  html[data-theme="dark"] .bonus-row,
+  html[data-theme="dark"] .bias-gap-row,
+  html[data-theme="dark"] .auth-box,
+  html[data-theme="dark"] .onboard-box,
+  html[data-theme="dark"] .user-dropdown,
+  html[data-theme="dark"] .rcard,
+  html[data-theme="dark"] .recent-match-row,
+  html[data-theme="dark"] .sel-match-info,
+  html[data-theme="dark"] .team-tile,
+  html[data-theme="dark"] .ref-disc-card{
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    border-color:rgba(255,255,255,.09);
+    box-shadow:0 4px 24px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.06);
+  }
 
   /* ── BADGE UNLOCK ANIMATION ─────────────────────────────── */
   .bu-backdrop{

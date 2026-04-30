@@ -834,9 +834,9 @@ initHeader();
   const gwConfig = await loadGWConfig();
   if (gwConfig) currentGW = gwConfig.gw;
   await loadFromSheets().catch(() => {});
-  const gwMatchIds = MATCHES.filter(m => m.matchweek === currentGW).map(m => +m.id);
+  const gwMatchIds = MATCHES.filter(m => +m.matchweek === +currentGW).map(m => +m.id);
   await Promise.all([
-    loadIncidentRatings(), // incident-driven neutral + fan scores per ref
+    loadIncidentRatings(gwMatchIds), // per-GW scores only
     loadUserVotes(currentUser?.id, gwMatchIds).then(v => v.forEach(id => rated.add(id)))
   ]);
   syncMatchStatuses();
@@ -849,7 +849,8 @@ initHeader();
     // Preserve any complete statuses already in memory before reloading sheet
     const alreadyComplete = new Set(MATCHES.filter(m => m.status === 'complete').map(m => m.id));
     await loadFromSheets().catch(() => {});
-    await loadIncidentRatings();
+    const refreshIds = MATCHES.filter(m => +m.matchweek === +currentGW).map(m => +m.id);
+    await loadIncidentRatings(refreshIds); // keep scores scoped to current GW
     MATCHES.forEach(m => { if (alreadyComplete.has(m.id)) m.status = 'complete'; });
     syncMatchStatuses();
     renderList();

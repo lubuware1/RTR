@@ -293,6 +293,13 @@
         <div class="field-group"><label>Bad VAR Penalties</label><input type="number" class="f-bpen" min="0" value="${badPen}"></div>
         <div class="field-group"><label>Bad VAR Reds</label><input type="number" class="f-bred" min="0" value="${badRed}"></div>
       </div>
+      <div class="field-group" style="margin-bottom:14px;">
+        <label>Referee</label>
+        <select class="f-ref">
+          <option value="">— Not assigned —</option>
+          ${REFS.map(r => `<option value="${r.id}"${+m.refId === r.id ? ' selected' : ''}>${r.name}</option>`).join('')}
+        </select>
+      </div>
       <div class="checkbox-row" style="margin-bottom:14px;">
         <input type="checkbox" class="f-perfect" id="perf_${m.id}" ${perfect?'checked':''}>
         <label for="perf_${m.id}">Perfect Game</label>
@@ -315,14 +322,24 @@
         incorrect_var_pen: +div.querySelector('.f-bpen').value,
         incorrect_var_red: +div.querySelector('.f-bred').value,
       };
+      const selectedRefId = div.querySelector('.f-ref').value;
+      if (selectedRefId) stat.ref_id = +selectedRefId;
       const ok = await saveMatchStat(stat);
+      // Also update RTR Fixtures ref_id if that row exists (API-synced fixtures)
+      if (selectedRefId) {
+        await getSB().from('RTR Fixtures')
+          .update({ ref_id: +selectedRefId })
+          .eq('id', +m.id);
+      }
       btn.disabled = false; btn.textContent = 'Save Match';
       if (ok) {
         overrides[+m.id] = stat;
+        m.refId = selectedRefId ? +selectedRefId : m.refId;
         const pill = div.querySelector('.status-pill');
         pill.className = `status-pill ${stat.status}`;
         pill.textContent = stat.status.toUpperCase();
-        toast(`✓ ${m.home} vs ${m.away} saved`);
+        const refName = REFS.find(r => r.id === +selectedRefId)?.name;
+        toast(`✓ ${m.home} vs ${m.away} saved${refName ? ` · Ref: ${refName}` : ''}`);
       } else {
         toast('Save failed', true);
       }
@@ -836,6 +853,7 @@
         subject:    `${m.home} vs ${m.away}`,
         body:       `Matchweek ${gw} — discuss the referee's performance, key decisions, cards and anything else from this match.`,
         matchweek:  gw,
+        ref_id:     m.refId || null,
         reply_to:   null,
         created_at: new Date().toISOString(),
       }));

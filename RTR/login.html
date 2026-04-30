@@ -82,7 +82,6 @@
 <div class="auth-wrap">
   <div class="auth-brand">
     <div class="auth-brand-logo"><img src="images/logos/RRLogo.svg" alt="Ref Rater" style="height:44px;width:auto;display:block;"></div>
-    <p>Rate 2026 World Cup referees — unbiased, by the fans</p>
   </div>
 
   <div class="auth-box">
@@ -315,7 +314,7 @@ document.getElementById('forgotBtn').addEventListener('click', async () => {
   const btn = document.getElementById('forgotBtn');
   btn.disabled = true; btn.textContent = 'Sending…';
   const { error } = await sb.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.origin + '/login.html'
+    redirectTo: 'https://refrater.netlify.app/login.html'
   });
   btn.disabled = false; btn.textContent = 'Send Reset Link';
   if (error) { showErr('forgotError', error.message); return; }
