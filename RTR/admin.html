@@ -77,6 +77,7 @@
   @media(max-width:768px){
     body{padding:12px;}
     .row.cols-2,.row.cols-3,.row.cols-4{grid-template-columns:1fr;}
+    .btn-sm{padding:10px 16px;font-size:.82rem;}
   }
 </style>
 </head>
@@ -272,7 +273,7 @@
       <div class="row cols-2">
         <div class="field-group">
           <label>Score</label>
-          <input type="text" class="f-score" value="${score}" placeholder="e.g. 2–1">
+          <input type="text" class="f-score" value="${score === '0-0' || score === '–' ? '' : score}" placeholder="e.g. 2-1">
         </div>
         <div class="field-group">
           <label>Status</label>
@@ -307,12 +308,13 @@
       <button class="btn btn-green btn-sm save-match-btn" data-mid="${m.id}">Save Match</button>
     `;
     div.querySelector('.save-match-btn').addEventListener('click', async () => {
+      if (document.activeElement) document.activeElement.blur();
       const btn = div.querySelector('.save-match-btn');
       btn.disabled = true; btn.textContent = 'Saving…';
       const stat = {
         match_id:        +m.id,
         matchweek:       +m.matchweek,
-        score:           div.querySelector('.f-score').value.trim(),
+        score:           div.querySelector('.f-score').value.trim() || '0-0',
         status:          div.querySelector('.f-status').value,
         yellow_cards:    +div.querySelector('.f-yc').value,
         red_cards:       +div.querySelector('.f-rc').value,
@@ -323,13 +325,13 @@
         incorrect_var_red: +div.querySelector('.f-bred').value,
       };
       const selectedRefId = div.querySelector('.f-ref').value;
-      if (selectedRefId) stat.ref_id = +selectedRefId;
-      const ok = await saveMatchStat(stat);
+      const { ok, error: saveErr } = await saveMatchStat(stat);
       // Also update RTR Fixtures ref_id if that row exists (API-synced fixtures)
       if (selectedRefId) {
-        await getSB().from('RTR Fixtures')
+        const { error: refErr } = await getSB().from('RTR Fixtures')
           .update({ ref_id: +selectedRefId })
           .eq('id', +m.id);
+        if (refErr) console.error('[RTR] ref update error:', refErr);
       }
       btn.disabled = false; btn.textContent = 'Save Match';
       if (ok) {
@@ -341,7 +343,8 @@
         const refName = REFS.find(r => r.id === +selectedRefId)?.name;
         toast(`✓ ${m.home} vs ${m.away} saved${refName ? ` · Ref: ${refName}` : ''}`);
       } else {
-        toast('Save failed', true);
+        const msg = saveErr?.message || saveErr?.code || 'Unknown error';
+        toast(`Save failed: ${msg}`, true);
       }
     });
     return div;
@@ -882,12 +885,10 @@
       const activeGW = cfg?.gw;
       if (!activeGW) throw new Error('No active GW set in config');
 
-      // Get completed matches for this GW from RTR Fixtures
-      const { data: fixtures, error: fErr } = await getSB()
-        .from('RTR Fixtures').select('id,home,away,status').eq('matchweek', activeGW);
-      if (fErr) throw new Error(fErr.message);
-
-      const completed = (fixtures || []).filter(f => f.status === 'complete');
+      // Use MATCHES (already loaded from sheets + Supabase overrides) as source of truth
+      const completed = MATCHES.filter(m =>
+        +m.matchweek === +activeGW && m.status === 'complete'
+      );
       if (!completed.length) {
         result.style.color = 'var(--muted)';
         result.textContent = `No completed matches found in GW${activeGW} yet.`;
@@ -971,7 +972,7 @@
         let status = 'upcoming';
         if (m.status === 'FINISHED') status = 'complete';
         else if (m.status === 'IN_PLAY' || m.status === 'PAUSED') status = 'live';
-        let score = '– v –';
+        let score = '0-0';
         if (m.score?.fullTime?.home != null) score = `${m.score.fullTime.home} - ${m.score.fullTime.away}`;
         return {
           id: m.id, matchweek: m.matchday, home, away,

@@ -13,12 +13,7 @@ const FD_API_BASE = 'https://api.football-data.org/v4';
 async function loadFromFootballData() { return false; }
 
 // ── GOOGLE SHEETS CONFIG ─────────────────────────────────
-// To connect live data:
-// 1. Upload refrater_database.xlsx to Google Sheets
-// 2. File > Share > Publish to Web > choose sheet > CSV > copy URL
-// 3. Paste URLs below
-const SHEETS_REFS_URL    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRCN0t8slUy1uRhOiQMy80if6U9QjN8z5NnWT5A0QpzFh9ERkIchDxOu3TjOGt9EeDqk1rvFGchFyTY/pub?gid=1387412017&single=true&output=csv';  // ← FA Cup Test referees
-const SHEETS_MATCHES_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRCN0t8slUy1uRhOiQMy80if6U9QjN8z5NnWT5A0QpzFh9ERkIchDxOu3TjOGt9EeDqk1rvFGchFyTY/pub?gid=1689456721&single=true&output=csv';  // ← FA Cup Test fixtures
+// Sheets removed — fixtures loaded exclusively from Supabase (RTR Fixtures + RTR Match Stats).
 
 // ── PREVIEW MODE ─────────────────────────────────────────
 // Set to true to skip login and use a guest account for easy previewing.
@@ -139,10 +134,10 @@ async function loadMatchStats() {
 }
 
 async function saveMatchStat(stat) {
-  if (PREVIEW_MODE) return true;
+  if (PREVIEW_MODE) return { ok: true };
   const { error } = await getSB().from('RTR Match Stats').upsert(stat, { onConflict: 'match_id' });
   if (error) console.error('[RTR] saveMatchStat error:', error);
-  return !error;
+  return { ok: !error, error };
 }
 
 async function saveGWConfig(gw, deadline) {
@@ -534,25 +529,11 @@ const WC_TEAMS = [
 // Keep alias so any page still referencing PL_TEAMS doesn't break
 const PL_TEAMS = WC_TEAMS;
 
-let REFS = [
-  {id:1,  name:"Szymon Marciniak",      initials:"SM", games:0, neutralRating:null, neutralVotes:0, fanRating:null, fanVotes:0, nationality:"Polish",    age:43, fifaListed:"Yes", notes:"Refereed 2022 World Cup Final"},
-  {id:2,  name:"Daniele Orsato",        initials:"DO", games:0, neutralRating:null, neutralVotes:0, fanRating:null, fanVotes:0, nationality:"Italian",   age:49, fifaListed:"Yes", notes:"Experienced UEFA Champions League ref"},
-  {id:3,  name:"Anthony Taylor",        initials:"AT", games:0, neutralRating:null, neutralVotes:0, fanRating:null, fanVotes:0, nationality:"English",   age:45, fifaListed:"Yes", notes:"Premier League and UEFA ref"},
-  {id:4,  name:"Facundo Tello",         initials:"FT", games:0, neutralRating:null, neutralVotes:0, fanRating:null, fanVotes:0, nationality:"Argentine", age:38, fifaListed:"Yes", notes:"CONMEBOL top referee"},
-  {id:5,  name:"Fernando Rapallini",    initials:"FR", games:0, neutralRating:null, neutralVotes:0, fanRating:null, fanVotes:0, nationality:"Argentine", age:44, fifaListed:"Yes", notes:"2022 World Cup referee"},
-  {id:6,  name:"Felix Zwayer",          initials:"FZ", games:0, neutralRating:null, neutralVotes:0, fanRating:null, fanVotes:0, nationality:"German",    age:43, fifaListed:"Yes", notes:"Bundesliga top referee"},
-  {id:7,  name:"Ismail Elfath",         initials:"IE", games:0, neutralRating:null, neutralVotes:0, fanRating:null, fanVotes:0, nationality:"American",  age:41, fifaListed:"Yes", notes:"MLS and CONCACAF top referee"},
-  {id:8,  name:"Abdulrahman Al-Jassim", initials:"AJ", games:0, neutralRating:null, neutralVotes:0, fanRating:null, fanVotes:0, nationality:"Qatari",    age:38, fifaListed:"Yes", notes:"2022 World Cup host nation ref"},
-  {id:9,  name:"Slavko Vinčić",         initials:"SV", games:0, neutralRating:null, neutralVotes:0, fanRating:null, fanVotes:0, nationality:"Slovenian", age:43, fifaListed:"Yes", notes:"UEFA Europa League referee"},
-  {id:10, name:"Bakary Gassama",        initials:"BG", games:0, neutralRating:null, neutralVotes:0, fanRating:null, fanVotes:0, nationality:"Gambian",   age:44, fifaListed:"Yes", notes:"CAF top referee"},
-  {id:11, name:"Mustapha Ghorbal",      initials:"MG", games:0, neutralRating:null, neutralVotes:0, fanRating:null, fanVotes:0, nationality:"Algerian",  age:42, fifaListed:"Yes", notes:"CAF and FIFA referee"},
-  {id:12, name:"Ivan Barton",           initials:"IB", games:0, neutralRating:null, neutralVotes:0, fanRating:null, fanVotes:0, nationality:"Salvadoran",age:38, fifaListed:"Yes", notes:"CONCACAF FIFA referee"},
-];
+// Refs are loaded from Supabase (RTR Referees table). Do not hardcode here.
+let REFS = [];
 
-// 2026 FIFA World Cup — Group Stage Matchday 1
-// Note: UEFA/Intercontinental playoff winners TBD (determined March 2026)
-// Match data is loaded exclusively from Google Sheets (SHEETS_MATCHES_URL above).
-// Do not add hardcoded matches here — edit the Google Sheet instead.
+// Match data is loaded from Supabase (RTR Fixtures table).
+// Do not add hardcoded matches here — add rows in Supabase instead.
 let MATCHES = [];
 
 const INCIDENTS = [
@@ -632,70 +613,49 @@ function isBiasedVote(mid, user) {
   return user?.team && (m.home === user.team || m.away === user.team);
 }
 
-// ── GOOGLE SHEETS LOADER ──────────────────────────────────
-function parseCSV(text) {
-  const lines = text.trim().split('\n');
-  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-  return lines.slice(1).map(line => {
-    const vals = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
-    const obj = {};
-    headers.forEach((h, i) => {
-      const v = vals[i] || '';
-      obj[h] = (!isNaN(v) && v !== '') ? +v : v;
-    });
-    return obj;
-  });
-}
-
+// ── SUPABASE DATA LOADER ──────────────────────────────────
 async function loadFromSheets() {
-  if (!SHEETS_REFS_URL && !SHEETS_MATCHES_URL) {
-    console.warn('[RTR] No Sheets URLs configured');
-    return false;
-  }
   try {
-    console.log('[RTR] Fetching from Google Sheets...');
-    const [refsRes, matchRes] = await Promise.all([
-      SHEETS_REFS_URL    ? fetch(SHEETS_REFS_URL)    : Promise.resolve(null),
-      SHEETS_MATCHES_URL ? fetch(SHEETS_MATCHES_URL) : Promise.resolve(null),
+    const [{ data: fixtures }, { data: refs }, overrides] = await Promise.all([
+      getSB().from('RTR Fixtures').select('*'),
+      getSB().from('RTR Referees').select('*'),
+      loadMatchStats(),
     ]);
 
-    if (refsRes) {
-      console.log('[RTR] Refs response status:', refsRes.status, refsRes.ok ? 'OK' : 'FAILED');
-      if (refsRes.ok) {
-        const parsed = parseCSV(await refsRes.text());
-        console.log('[RTR] Refs parsed:', parsed.length, 'rows');
-        if (parsed.length) REFS = parsed.map(r => ({
-          ...r,
-          neutralRating: +r.neutralRating || 0, neutralVotes: +r.neutralVotes || 0,
-          fanRating:     +r.fanRating     || 0, fanVotes:     +r.fanVotes     || 0,
-        }));
-      }
+    if (refs?.length) {
+      REFS = refs.map(r => ({
+        id:            r.id,
+        name:          r.name,
+        initials:      r.initials,
+        nationality:   r.nationality  || '',
+        age:           r.age          || 0,
+        fifaListed:    r.fifa_listed  ? 'Yes' : 'No',
+        notes:         r.notes        || '',
+        games:         0,
+        neutralRating: null, neutralVotes: 0,
+        fanRating:     null, fanVotes:     0,
+      }));
     }
 
-    if (matchRes) {
-      console.log('[RTR] Matches response status:', matchRes.status, matchRes.ok ? 'OK' : 'FAILED');
-      if (matchRes.ok) {
-        const text = await matchRes.text();
-        console.log('[RTR] Matches raw CSV (first 200 chars):', text.slice(0, 200));
-        const parsed = parseCSV(text);
-        console.log('[RTR] Matches parsed:', parsed.length, 'rows', parsed[0] || '(empty)');
-        if (parsed.length) MATCHES = parsed.map(m => ({
-          ...m,
-          matchweek: +m.matchweek || 1,
-          hE: m.homeEmoji || '', aE: m.awayEmoji || '',
-          yc: +m.yellowCards || 0, rc: +m.redCards || 0,
-          pen: +m.penaltiesGiven || 0, var: +m.varDecisions || 0,
-          perfectGame:     m.perfectGame === 'yes',
-          incorrectVarPen: +m.incorrectVarPen || 0,
-          incorrectVarRed: +m.incorrectVarRed || 0,
-          highlightVideoId: m.highlightVideoId || null,
-          varVideoId:       m.varVideoId       || null,
-        }));
-      }
+    if (fixtures?.length) {
+      MATCHES = fixtures.map(f => ({
+        id:              f.id,
+        matchweek:       +f.matchweek,
+        home:            f.home,
+        away:            f.away,
+        hE:              '',
+        aE:              '',
+        kickoff:         f.kickoff,
+        status:          f.status    || 'upcoming',
+        score:           f.score     || '0-0',
+        refId:           f.ref_id    || null,
+        yc: 0, rc: 0, pen: 0, var: 0,
+        perfectGame: false, incorrectVarPen: 0, incorrectVarRed: 0,
+        highlightVideoId: f.highlight_video_id || null,
+        varVideoId:       f.var_video_id       || null,
+      }));
     }
 
-    // Merge Supabase match stat overrides on top of sheet data
-    const overrides = await loadMatchStats();
     if (overrides.length) {
       const overrideMap = Object.fromEntries(overrides.map(o => [+o.match_id, o]));
       MATCHES = MATCHES.map(m => {
@@ -703,72 +663,27 @@ async function loadFromSheets() {
         if (!o) return m;
         return {
           ...m,
-          score:          o.score          ?? m.score,
-          status:         o.status         ?? m.status,
-          yc:             o.yellow_cards   ?? m.yc,
-          rc:             o.red_cards      ?? m.rc,
-          pen:            o.penalties_given ?? m.pen,
-          var:            o.var_decisions  ?? m.var,
-          perfectGame:    o.perfect_game   ?? m.perfectGame,
+          score:           o.score            ?? m.score,
+          status:          o.status           ?? m.status,
+          yc:              o.yellow_cards      ?? m.yc,
+          rc:              o.red_cards         ?? m.rc,
+          pen:             o.penalties_given   ?? m.pen,
+          var:             o.var_decisions     ?? m.var,
+          perfectGame:     o.perfect_game      ?? m.perfectGame,
           incorrectVarPen: o.incorrect_var_pen ?? m.incorrectVarPen,
           incorrectVarRed: o.incorrect_var_red ?? m.incorrectVarRed,
-          refId:          o.ref_id         ?? m.refId,
+          refId:           o.ref_id            ?? m.refId,
+          highlightVideoId: o.highlight_video_id ?? m.highlightVideoId,
+          varVideoId:       o.var_video_id       ?? m.varVideoId,
         };
       });
     }
 
-    console.log('[RTR] Sheets load complete. MATCHES:', MATCHES.length, 'REFS:', REFS.length);
-
-    // Merge auto-synced fixtures from Supabase (adds any not already in Sheets)
-    await loadFixtures();
-
+    console.log('[RTR] Loaded from Supabase. MATCHES:', MATCHES.length, 'REFS:', REFS.length);
     return true;
   } catch (e) {
-    console.error('[RTR] Sheets load failed:', e);
+    console.error('[RTR] Supabase load failed:', e);
     return false;
-  }
-}
-
-// ── AUTO FIXTURES (from Supabase, populated by Edge Function) ─
-async function loadFixtures() {
-  try {
-    const { data } = await getSB().from('RTR Fixtures').select('*');
-    if (!data?.length) return;
-    const existing = new Set(MATCHES.map(m => `${m.home}|${m.away}|${m.matchweek}`));
-    data.forEach(f => {
-      const key = `${f.home}|${f.away}|${f.matchweek}`;
-      if (existing.has(key)) {
-        // Already in Sheets — but merge ref_id if the fixture has one assigned
-        if (f.ref_id) {
-          const idx = MATCHES.findIndex(m =>
-            m.home === f.home && m.away === f.away && +m.matchweek === +f.matchweek
-          );
-          if (idx !== -1 && !MATCHES[idx].refId) {
-            MATCHES[idx] = { ...MATCHES[idx], refId: f.ref_id };
-          }
-        }
-        return;
-      }
-      MATCHES.push({
-        id:              f.id,
-        matchweek:       +f.matchweek,
-        home:            f.home,
-        away:            f.away,
-        hE:              f.home_emoji || '',
-        aE:              f.away_emoji || '',
-        kickoff:         f.kickoff,
-        status:          f.status    || 'upcoming',
-        score:           f.score     || '– v –',
-        refId:           f.ref_id    || null,
-        yc: 0, rc: 0, pen: 0, var: 0,
-        perfectGame: false, incorrectVarPen: 0, incorrectVarRed: 0,
-        highlightVideoId: null, varVideoId: null,
-      });
-      existing.add(key);
-    });
-    console.log('[RTR] Fixtures loaded from Supabase:', data.length, 'total MATCHES:', MATCHES.length);
-  } catch (e) {
-    console.warn('[RTR] loadFixtures failed:', e);
   }
 }
 
