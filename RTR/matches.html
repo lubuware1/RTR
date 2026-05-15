@@ -66,10 +66,12 @@
   .team{display:flex;align-items:center;gap:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;}
   .team.away{flex-direction:row-reverse;text-align:right;}
   .team-badge{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;border:2px solid var(--border);}
-  .score-block{text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.7rem;color:var(--text);letter-spacing:-1px;white-space:nowrap;}
-  .score-block .time{display:block;font-size:.65rem;font-weight:600;color:var(--muted);letter-spacing:1px;margin-top:2px;}
+  .score-block{text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;color:var(--text);letter-spacing:-.5px;white-space:normal;line-height:1.1;}
+  .score-block .time{display:block;font-size:.65rem;font-weight:600;color:var(--muted);letter-spacing:1px;margin-top:4px;}
+  .footer-score{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;color:var(--text);letter-spacing:-1px;}
   .match-footer{padding:8px 16px 10px;border-top:2px solid rgba(0,204,112,.3);background:rgba(0,204,112,.06);pointer-events:none;}
-  .ref-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .ref-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;position:relative;}
+  .footer-score{position:absolute;left:50%;transform:translateX(-50%);}
   .ref-info{display:flex;align-items:center;gap:8px;font-size:.82rem;}
   .ref-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--pl-purple),#6b006b);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:var(--pl-green);flex-shrink:0;}
   .ref-name{font-weight:600;color:var(--text);}.ref-role{font-size:.7rem;color:var(--muted);}
@@ -476,7 +478,7 @@ function renderList() {
       </div>
       <div class="match-body">
         <div class="team home"><div class="team-badge"><img src="images/logos/RRLogo.svg" style="width:22px;height:22px;opacity:.7;"></div><span>${m.home}</span></div>
-        <div class="score-block">${m.score}<span class="time"${live?' style="color:var(--red)"':''}>${live?'LIVE':up?(m.kickoff?new Date(String(m.kickoff).replace(' ','T').replace(/Z$/,'')).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).replace(',',''):'TBC'):'FT'}</span></div>
+        <div class="score-block">${ref?ref.name:'<span style="color:var(--muted);font-size:1rem">Referee TBC</span>'}<span class="time"${live?' style="color:var(--red)"':''}>${live?'LIVE':up?(m.kickoff?new Date(String(m.kickoff).replace(' ','T').replace(/Z$/,'')).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).replace(',',''):'TBC'):'FT'}</span></div>
         <div class="team away"><div class="team-badge"><img src="images/logos/RRLogo.svg" style="width:22px;height:22px;opacity:.7;"></div><span>${m.away}</span></div>
       </div>
       ${!up?`<div class="card-stats" style="padding:0 16px 6px">
@@ -494,10 +496,7 @@ function renderList() {
       </div>`:''}
       <div class="match-footer">
         <div class="ref-row">
-          ${ref
-            ? `<div class="ref-info"><div class="ref-avatar">${ref.initials}</div><div><div class="ref-name">${ref.name}</div><div class="ref-role">Referee</div></div></div>`
-            : `<div class="ref-info"><div class="ref-avatar" style="color:var(--muted);font-size:.55rem">TBC</div><div><div class="ref-name" style="color:var(--muted)">Referee TBC</div><div class="ref-role">Referee</div></div></div>`
-          }
+          <div class="footer-score">${up ? '–' : m.score}</div>
           ${ref ? (!up && rated.has(+m.id) ? `<span style="font-size:.7rem;color:var(--pl-green);font-weight:600;pointer-events:none">Rated ✓</span>` : `<button class="rate-ref-btn">Rate this Ref</button>`) : ''}
         </div>
         ${!up&&ref?`<div class="vote-split">
