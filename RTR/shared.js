@@ -720,49 +720,42 @@ async function loadFromSheets() {
     console.warn('[RTR] No Sheets URLs configured');
     return false;
   }
+  // Google Sheets load — failures are non-fatal, Supabase + API always run
   try {
     console.log('[RTR] Fetching from Google Sheets...');
     const [refsRes, matchRes] = await Promise.all([
       SHEETS_REFS_URL    ? fetch(SHEETS_REFS_URL)    : Promise.resolve(null),
       SHEETS_MATCHES_URL ? fetch(SHEETS_MATCHES_URL) : Promise.resolve(null),
     ]);
-
-    if (refsRes) {
-      console.log('[RTR] Refs response status:', refsRes.status, refsRes.ok ? 'OK' : 'FAILED');
-      if (refsRes.ok) {
-        const parsed = parseCSV(await refsRes.text());
-        console.log('[RTR] Refs parsed:', parsed.length, 'rows');
-        if (parsed.length) REFS = parsed.map(r => ({
-          ...r,
-          neutralRating: +r.neutralRating || 0, neutralVotes: +r.neutralVotes || 0,
-          fanRating:     +r.fanRating     || 0, fanVotes:     +r.fanVotes     || 0,
-        }));
-      }
+    if (refsRes?.ok) {
+      const parsed = parseCSV(await refsRes.text());
+      if (parsed.length) REFS = parsed.map(r => ({
+        ...r,
+        neutralRating: +r.neutralRating || 0, neutralVotes: +r.neutralVotes || 0,
+        fanRating:     +r.fanRating     || 0, fanVotes:     +r.fanVotes     || 0,
+      }));
     }
-
-    if (matchRes) {
-      console.log('[RTR] Matches response status:', matchRes.status, matchRes.ok ? 'OK' : 'FAILED');
-      if (matchRes.ok) {
-        const text = await matchRes.text();
-        console.log('[RTR] Matches raw CSV (first 200 chars):', text.slice(0, 200));
-        const parsed = parseCSV(text);
-        console.log('[RTR] Matches parsed:', parsed.length, 'rows', parsed[0] || '(empty)');
-        if (parsed.length) MATCHES = parsed.map(m => ({
-          ...m,
-          matchweek: +m.matchweek || 1,
-          hE: m.homeEmoji || '', aE: m.awayEmoji || '',
-          yc: +m.yellowCards || 0, rc: +m.redCards || 0,
-          pen: +m.penaltiesGiven || 0, var: +m.varDecisions || 0,
-          perfectGame:     m.perfectGame === 'yes',
-          incorrectVarPen: +m.incorrectVarPen || 0,
-          incorrectVarRed: +m.incorrectVarRed || 0,
-          highlightVideoId: m.highlightVideoId || null,
-          varVideoId:       m.varVideoId       || null,
-        }));
-      }
+    if (matchRes?.ok) {
+      const parsed = parseCSV(await matchRes.text());
+      if (parsed.length) MATCHES = parsed.map(m => ({
+        ...m,
+        matchweek: +m.matchweek || 1,
+        hE: m.homeEmoji || '', aE: m.awayEmoji || '',
+        yc: +m.yellowCards || 0, rc: +m.redCards || 0,
+        pen: +m.penaltiesGiven || 0, var: +m.varDecisions || 0,
+        perfectGame:     m.perfectGame === 'yes',
+        incorrectVarPen: +m.incorrectVarPen || 0,
+        incorrectVarRed: +m.incorrectVarRed || 0,
+        highlightVideoId: m.highlightVideoId || null,
+        varVideoId:       m.varVideoId       || null,
+      }));
     }
+  } catch(e) {
+    console.warn('[RTR] Google Sheets fetch failed (non-fatal):', e);
+  }
 
-    // Merge Supabase match stat overrides on top of sheet data
+  // Supabase overrides + Fixtures + FD API always run regardless of Sheets
+  try {
     const overrides = await loadMatchStats();
     const adminOverriddenIds = new Set();
     if (overrides.length) {
@@ -770,36 +763,32 @@ async function loadFromSheets() {
       MATCHES = MATCHES.map(m => {
         const o = overrideMap[+m.id];
         if (!o) return m;
-        // Track matches where admin has set an explicit score or status
         if (o.score != null || o.status != null) adminOverriddenIds.add(+m.id);
         return {
           ...m,
-          score:          o.score          ?? m.score,
-          status:         o.status         ?? m.status,
-          yc:             o.yellow_cards   ?? m.yc,
-          rc:             o.red_cards      ?? m.rc,
-          pen:            o.penalties_given ?? m.pen,
-          var:            o.var_decisions  ?? m.var,
-          perfectGame:    o.perfect_game   ?? m.perfectGame,
+          score:           o.score           ?? m.score,
+          status:          o.status          ?? m.status,
+          yc:              o.yellow_cards    ?? m.yc,
+          rc:              o.red_cards       ?? m.rc,
+          pen:             o.penalties_given ?? m.pen,
+          var:             o.var_decisions   ?? m.var,
+          perfectGame:     o.perfect_game    ?? m.perfectGame,
           incorrectVarPen: o.incorrect_var_pen ?? m.incorrectVarPen,
           incorrectVarRed: o.incorrect_var_red ?? m.incorrectVarRed,
-          refId:          o.ref_id         ?? m.refId,
+          refId:           o.ref_id          ?? m.refId,
         };
       });
     }
 
-    console.log('[RTR] Sheets load complete. MATCHES:', MATCHES.length, 'REFS:', REFS.length);
-
-    // Merge auto-synced fixtures from Supabase (adds any not already in Sheets)
     await loadFixtures();
 
-    // Apply live updates from football-data.org API for the current GW
     const gwCfg = await loadGWConfig();
     if (gwCfg?.gw) await applyFDUpdates(gwCfg.gw, adminOverriddenIds);
 
+    console.log('[RTR] Load complete. MATCHES:', MATCHES.length, 'REFS:', REFS.length);
     return true;
-  } catch (e) {
-    console.error('[RTR] Sheets load failed:', e);
+  } catch(e) {
+    console.error('[RTR] Data load failed:', e);
     return false;
   }
 }
