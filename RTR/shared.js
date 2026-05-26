@@ -9,8 +9,76 @@
 const FOOTBALL_DATA_KEY = '15b079ce9d02424994eae82a3e5f4a31';
 const FD_API_BASE = 'https://api.football-data.org/v4';
 
-// No live API for World Cup format — always uses static match data.
-async function loadFromFootballData() { return false; }
+// Fetch PL matches for a given matchday from football-data.org
+async function loadFromFootballData(matchday) {
+  try {
+    const res = await fetch(
+      `${FD_API_BASE}/competitions/PL/matches?matchday=${matchday}&season=2025`,
+      { headers: { 'X-Auth-Token': FOOTBALL_DATA_KEY } }
+    );
+    if (!res.ok) { console.warn('[RTR] FD API error:', res.status); return null; }
+    const json = await res.json();
+    return json.matches || null;
+  } catch(e) {
+    console.warn('[RTR] football-data.org fetch failed:', e);
+    return null;
+  }
+}
+
+// Normalise team name for fuzzy matching (strips FC/AFC suffixes)
+function _normTeam(n) {
+  return (n || '').toLowerCase().replace(/\s+(f\.?c\.?|a\.?f\.?c\.?)$/,'').trim();
+}
+
+// Merge live FD API data into MATCHES for the given GW.
+// adminIds = set of match IDs that have admin score/status overrides (those fields are skipped).
+async function applyFDUpdates(gw, adminIds) {
+  const fdMatches = await loadFromFootballData(gw);
+  if (!fdMatches?.length) return;
+
+  const fdMap = {};
+  fdMatches.forEach(fm => {
+    const h = _normTeam(fm.homeTeam?.shortName || fm.homeTeam?.name);
+    const a = _normTeam(fm.awayTeam?.shortName || fm.awayTeam?.name);
+    fdMap[`${h}|${a}`] = fm;
+  });
+
+  const FD_STATUS = { FINISHED:'complete', IN_PLAY:'live', PAUSED:'live', TIMED:'upcoming', SCHEDULED:'upcoming', SUSPENDED:'upcoming', POSTPONED:'upcoming', CANCELLED:'upcoming' };
+
+  MATCHES = MATCHES.map(m => {
+    if (+m.matchweek !== +gw) return m;
+    const fm = fdMap[`${_normTeam(m.home)}|${_normTeam(m.away)}`];
+    if (!fm) return m;
+
+    const isAdminOverride = adminIds.has(+m.id);
+    const ft = fm.score?.fullTime;
+    const hasScore = ft?.home != null && ft?.away != null && fm.status !== 'SCHEDULED' && fm.status !== 'TIMED';
+
+    // Match referee by name — try exact then surname
+    let newRefId = m.refId;
+    if (!m.refId) {
+      const apiRefName = (fm.referees?.find(r => r.type === 'REFEREE')?.name || '').toLowerCase();
+      if (apiRefName) {
+        const matched = REFS.find(r =>
+          r.name.toLowerCase() === apiRefName ||
+          apiRefName.includes(r.name.split(' ').pop().toLowerCase())
+        );
+        if (matched) newRefId = matched.id;
+      }
+    }
+
+    return {
+      ...m,
+      kickoff: fm.utcDate || m.kickoff,
+      refId: newRefId,
+      ...(isAdminOverride ? {} : {
+        status: FD_STATUS[fm.status] || m.status,
+        score:  hasScore ? `${ft.home}-${ft.away}` : m.score,
+      }),
+    };
+  });
+  console.log('[RTR] FD API updates applied for GW', gw);
+}
 
 // ── GOOGLE SHEETS CONFIG ─────────────────────────────────
 // To connect live data:
@@ -696,11 +764,14 @@ async function loadFromSheets() {
 
     // Merge Supabase match stat overrides on top of sheet data
     const overrides = await loadMatchStats();
+    const adminOverriddenIds = new Set();
     if (overrides.length) {
       const overrideMap = Object.fromEntries(overrides.map(o => [+o.match_id, o]));
       MATCHES = MATCHES.map(m => {
         const o = overrideMap[+m.id];
         if (!o) return m;
+        // Track matches where admin has set an explicit score or status
+        if (o.score != null || o.status != null) adminOverriddenIds.add(+m.id);
         return {
           ...m,
           score:          o.score          ?? m.score,
@@ -721,6 +792,10 @@ async function loadFromSheets() {
 
     // Merge auto-synced fixtures from Supabase (adds any not already in Sheets)
     await loadFixtures();
+
+    // Apply live updates from football-data.org API for the current GW
+    const gwCfg = await loadGWConfig();
+    if (gwCfg?.gw) await applyFDUpdates(gwCfg.gw, adminOverriddenIds);
 
     return true;
   } catch (e) {
@@ -758,7 +833,7 @@ async function loadFixtures() {
         aE:              f.away_emoji || '',
         kickoff:         f.kickoff,
         status:          f.status    || 'upcoming',
-        score:           f.score     || '– v –',
+        score:           f.score     || '0-0',
         refId:           f.ref_id    || null,
         yc: 0, rc: 0, pen: 0, var: 0,
         perfectGame: false, incorrectVarPen: 0, incorrectVarRed: 0,
