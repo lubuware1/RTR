@@ -47,6 +47,10 @@ async function applyFDUpdates(gw, adminIds) {
     fdMap[`${h}|${a}`] = fm;
   });
 
+  const gwMatches = MATCHES.filter(m => +m.matchweek === +gw);
+  console.log('[RTR] FD API keys:', Object.keys(fdMap));
+  console.log('[RTR] Supabase keys:', gwMatches.map(m => `${_normTeam(m.home)}|${_normTeam(m.away)}`));
+
   const FD_STATUS = { FINISHED:'complete', IN_PLAY:'live', PAUSED:'live', TIMED:'upcoming', SCHEDULED:'upcoming', SUSPENDED:'upcoming', POSTPONED:'upcoming', CANCELLED:'upcoming' };
 
   MATCHES = MATCHES.map(m => {
