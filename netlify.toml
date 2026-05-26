@@ -1,0 +1,3 @@
+[build]
+  publish = "RTR"
+  functions = "netlify/functions"

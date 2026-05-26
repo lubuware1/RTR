@@ -9,13 +9,17 @@
 const FOOTBALL_DATA_KEY = '15b079ce9d02424994eae82a3e5f4a31';
 const FD_API_BASE = 'https://api.football-data.org/v4';
 
-// Fetch PL matches for a given matchday from football-data.org
+// Fetch PL matches for a given matchday.
+// On Netlify, routes through the serverless proxy to avoid CORS.
+// Falls back to direct API call for localhost dev.
 async function loadFromFootballData(matchday) {
+  const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  const url = isLocal
+    ? `${FD_API_BASE}/competitions/PL/matches?matchday=${matchday}&season=2024`
+    : `/.netlify/functions/fd-matches?matchday=${matchday}&season=2024`;
+  const opts = isLocal ? { headers: { 'X-Auth-Token': FOOTBALL_DATA_KEY } } : {};
   try {
-    const res = await fetch(
-      `${FD_API_BASE}/competitions/PL/matches?matchday=${matchday}&season=2025`,
-      { headers: { 'X-Auth-Token': FOOTBALL_DATA_KEY } }
-    );
+    const res = await fetch(url, opts);
     if (!res.ok) { console.warn('[RTR] FD API error:', res.status); return null; }
     const json = await res.json();
     return json.matches || null;
