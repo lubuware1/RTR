@@ -41,13 +41,15 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
-  // Always go to network for Supabase, Google Sheets, auth, CDN scripts
+  // Always go to network for external APIs, Supabase, CDN scripts
   if (
     url.hostname.includes('supabase') ||
     url.hostname.includes('googleapis') ||
     url.hostname.includes('googleusercontent') ||
     url.hostname.includes('jsdelivr') ||
     url.hostname.includes('fonts.g') ||
+    url.hostname.includes('football-data.org') ||
+    url.hostname.includes('pagead2.googlesyndication') ||
     e.request.method !== 'GET'
   ) {
     return; // let browser handle it normally

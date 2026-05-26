@@ -467,9 +467,9 @@ function renderList() {
         <span>${fan?'<span class="my-team-tag">MY TEAM</span> ':''}Premier League · Matchweek ${m.matchweek||currentGW}</span>
       </div>
       <div class="match-body">
-        <div class="team home"><div class="team-badge"><img src="images/logos/RRLogo.svg" style="width:22px;height:22px;opacity:.7;"></div><span>${m.home}</span></div>
+        <div class="team home"><div class="team-badge">${m.homeCrest?`<img src="${m.homeCrest}" style="width:26px;height:26px;object-fit:contain;" onerror="this.src='images/logos/RRLogo.svg';this.style.opacity='.7';">`:`<img src="images/logos/RRLogo.svg" style="width:22px;height:22px;opacity:.7;">`}</div><span>${m.home}</span></div>
         <div class="score-block">${m.score}<span class="time"${live?' style="color:var(--red)"':''}>${live?'LIVE':up?(m.kickoff?new Date(String(m.kickoff).replace(' ','T').replace(/Z$/,'')).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).replace(',',''):'TBC'):'FT'}</span></div>
-        <div class="team away"><div class="team-badge"><img src="images/logos/RRLogo.svg" style="width:22px;height:22px;opacity:.7;"></div><span>${m.away}</span></div>
+        <div class="team away"><div class="team-badge">${m.awayCrest?`<img src="${m.awayCrest}" style="width:26px;height:26px;object-fit:contain;" onerror="this.src='images/logos/RRLogo.svg';this.style.opacity='.7';">`:`<img src="images/logos/RRLogo.svg" style="width:22px;height:22px;opacity:.7;">`}</div><span>${m.away}</span></div>
       </div>
       ${!up?`<div class="card-stats" style="padding:0 16px 6px">
         <span class="stat-pill yc"><span class="icon">🟨</span>${m.yc}</span>

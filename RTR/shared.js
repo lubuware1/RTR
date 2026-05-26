@@ -71,6 +71,8 @@ async function applyFDUpdates(gw, adminIds) {
       ...m,
       kickoff: fm.utcDate || m.kickoff,
       refId: newRefId,
+      homeCrest: fm.homeTeam?.crest || m.homeCrest || null,
+      awayCrest: fm.awayTeam?.crest || m.awayCrest || null,
       ...(isAdminOverride ? {} : {
         status: FD_STATUS[fm.status] || m.status,
         score:  hasScore ? `${ft.home}-${ft.away}` : m.score,
@@ -301,7 +303,7 @@ async function deleteManualBonus(id) {
 }
 
 async function loadGWConfig() {
-  if (PREVIEW_MODE) return { gw: 2, deadline: new Date(Date.now() + 86400000).toISOString(), deadlinePassed: false, status: 'upcoming' };
+  if (PREVIEW_MODE) return { gw: 38, deadline: new Date(Date.now() + 86400000).toISOString(), deadlinePassed: false, status: 'upcoming' };
   const { data } = await getSB().from('RTR Config').select('gw,deadline,status').eq('id', 1).single();
   if (!data) return null;
   return {
