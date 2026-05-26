@@ -15,8 +15,8 @@ const FD_API_BASE = 'https://api.football-data.org/v4';
 async function loadFromFootballData(matchday) {
   const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
   const url = isLocal
-    ? `${FD_API_BASE}/competitions/PL/matches?matchday=${matchday}&season=2024`
-    : `/.netlify/functions/fd-matches?matchday=${matchday}&season=2024`;
+    ? `${FD_API_BASE}/competitions/PL/matches?matchday=${matchday}&season=2025`
+    : `/.netlify/functions/fd-matches?matchday=${matchday}&season=2025`;
   const opts = isLocal ? { headers: { 'X-Auth-Token': FOOTBALL_DATA_KEY } } : {};
   try {
     const res = await fetch(url, opts);
