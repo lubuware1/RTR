@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>RefRater — Matches (API)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#f6f0ff;--surface:#ffffff;--surface2:#ede6ff;--border:#cfc0ee;--red:#e02d42;--yellow:#d4920a;--green:#009960;--text:#6a58a0;--muted:#6a58a0;--pl-purple:#37003c;--pl-green:#00cc70;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;}
+
+  header{background:linear-gradient(135deg,#37003c 0%,#1a0020 60%,#0a0c10 100%);border-bottom:2px solid var(--pl-green);padding:0 24px;position:sticky;top:0;z-index:100;}
+  .header-inner{max-width:800px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:60px;}
+  .logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5rem;color:#fff;}
+  .logo span{color:var(--pl-green);}
+  .gw-controls{display:flex;align-items:center;gap:8px;}
+  .gw-controls label{font-size:.75rem;color:rgba(255,255,255,.5);font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;text-transform:uppercase;}
+  .gw-controls input{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:5px 10px;border-radius:6px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.95rem;width:60px;text-align:center;}
+  .gw-controls button{background:var(--pl-green);color:#000;border:none;padding:6px 14px;border-radius:6px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.85rem;letter-spacing:.5px;cursor:pointer;}
+
+  .container{max-width:800px;margin:0 auto;padding:20px;}
+  .status-bar{font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+  .status-bar .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:6px;}
+
+  /* Match Cards — identical to matches.html */
+  .match-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden;transition:border-color .2s,transform .15s;}
+  .match-card:hover{border-color:rgba(0,255,133,.3);transform:translateY(-1px);}
+  .match-header{background:var(--surface2);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);}
+  .live-dot{display:inline-block;width:6px;height:6px;background:var(--red);border-radius:50%;margin-right:5px;animation:blink 1.2s infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+  .match-body{padding:14px 16px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;}
+  .team{display:flex;align-items:center;gap:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;}
+  .team.away{flex-direction:row-reverse;text-align:right;}
+  .team-badge{width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .team-badge img{width:28px;height:28px;object-fit:contain;}
+  .team-badge .fallback{width:28px;height:28px;background:var(--surface2);border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.6rem;color:var(--muted);font-weight:700;}
+  .score-block{text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.7rem;color:var(--text);letter-spacing:-1px;white-space:nowrap;}
+  .score-block .time{display:block;font-size:.65rem;font-weight:600;color:var(--muted);letter-spacing:1px;margin-top:2px;}
+  .score-block .time.live{color:var(--red);}
+  .match-footer{padding:8px 16px 12px;border-top:1px solid var(--border);}
+  .ref-row{display:flex;align-items:center;justify-content:space-between;}
+  .ref-info{display:flex;align-items:center;gap:8px;font-size:.82rem;}
+  .ref-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--pl-purple),#6b006b);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:var(--pl-green);flex-shrink:0;}
+  .ref-name{font-weight:600;color:var(--text);}
+  .ref-role{font-size:.7rem;color:var(--muted);}
+  .ref-tbc{font-size:.78rem;color:var(--muted);font-style:italic;}
+
+  .loading{text-align:center;padding:40px;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:1rem;letter-spacing:1px;}
+  .error{background:#fff0f0;border:1px solid #fcc;border-radius:10px;padding:16px;color:var(--red);font-size:.85rem;line-height:1.6;}
+
+  @media(max-width:600px){
+    .match-body{gap:6px;}
+    .team{font-size:.88rem;}
+    .score-block{font-size:1.4rem;}
+    .container{padding:12px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">Ref<span>Rater</span> <span style="font-size:.7rem;opacity:.5;margin-left:6px;">API TEST</span></div>
+    <div class="gw-controls">
+      <label>GW</label>
+      <input type="number" id="gwInput" value="38" min="1" max="38">
+      <button onclick="load()">Load</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  <div class="status-bar">
+    <span id="statusLeft">Loading…</span>
+    <span id="statusRight"></span>
+  </div>
+  <div id="list"><div class="loading">Loading matches…</div></div>
+</div>
+
+<script>
+const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+const FD_KEY  = '15b079ce9d02424994eae82a3e5f4a31';
+
+function fdUrl(gw) {
+  return isLocal
+    ? `https://api.football-data.org/v4/competitions/PL/matches?matchday=${gw}&season=2025`
+    : `/.netlify/functions/fd-matches?matchday=${gw}&season=2025`;
+}
+function fdOpts() {
+  return isLocal ? { headers: { 'X-Auth-Token': FD_KEY } } : {};
+}
+
+function statusInfo(s) {
+  if (s === 'FINISHED')              return { label: 'Full Time',  cls: '',      timeLabel: 'FT',     live: false };
+  if (s === 'IN_PLAY')               return { label: '● Live',     cls: 'live',  timeLabel: 'LIVE',   live: true  };
+  if (s === 'PAUSED')                return { label: '● Half Time',cls: 'live',  timeLabel: 'HT',     live: true  };
+  if (s === 'HALF_TIME')             return { label: '● Half Time',cls: 'live',  timeLabel: 'HT',     live: true  };
+  return                               { label: 'Upcoming',    cls: '',      timeLabel: null,    live: false };
+}
+
+function formatKickoff(utcDate) {
+  if (!utcDate) return 'TBC';
+  return new Date(utcDate).toLocaleString('en-GB', {
+    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false
+  }).replace(',', '');
+}
+
+function crest(url, name) {
+  const abbr = (name || '?').slice(0, 3).toUpperCase();
+  if (!url) return `<div class="fallback">${abbr}</div>`;
+  return `<img src="${url}" alt="${name}" onerror="this.outerHTML='<div class=fallback>${abbr}</div>'">`;
+}
+
+function scoreText(m) {
+  const ft = m.score?.fullTime;
+  if (ft?.home != null && ft?.away != null) return `${ft.home}–${ft.away}`;
+  return '–';
+}
+
+function renderCard(m) {
+  const { label, cls, timeLabel, live } = statusInfo(m.status);
+  const isUpcoming = !live && m.status !== 'FINISHED';
+  const score = isUpcoming ? '–' : scoreText(m);
+  const time  = live ? timeLabel : isUpcoming ? formatKickoff(m.utcDate) : 'FT';
+  const ref   = (m.referees || []).find(r => r.type === 'REFEREE') || m.referees?.[0];
+  const initials = ref ? ref.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '';
+  const home  = m.homeTeam?.shortName || m.homeTeam?.name || '?';
+  const away  = m.awayTeam?.shortName || m.awayTeam?.name || '?';
+
+  return `<div class="match-card">
+    <div class="match-header">
+      <span>${live ? '<span class="live-dot"></span>' : ''}${label}</span>
+      <span>Premier League · Matchweek ${m.matchday}</span>
+    </div>
+    <div class="match-body">
+      <div class="team home">
+        <div class="team-badge">${crest(m.homeTeam?.crest, home)}</div>
+        <span>${home}</span>
+      </div>
+      <div class="score-block">
+        ${score}
+        <span class="time${live ? ' live' : ''}">${time}</span>
+      </div>
+      <div class="team away">
+        <div class="team-badge">${crest(m.awayTeam?.crest, away)}</div>
+        <span>${away}</span>
+      </div>
+    </div>
+    <div class="match-footer">
+      <div class="ref-row">
+        ${ref
+          ? `<div class="ref-info">
+               <div class="ref-avatar">${initials}</div>
+               <div><div class="ref-name">${ref.name}</div><div class="ref-role">Referee</div></div>
+             </div>`
+          : `<span class="ref-tbc">Referee TBC</span>`}
+      </div>
+    </div>
+  </div>`;
+}
+
+async function load() {
+  const gw = document.getElementById('gwInput').value;
+  document.getElementById('statusLeft').textContent = 'Loading…';
+  document.getElementById('statusRight').textContent = '';
+  document.getElementById('list').innerHTML = '<div class="loading">Loading matches…</div>';
+
+  try {
+    const res  = await fetch(fdUrl(gw), fdOpts());
+    const data = await res.json();
+
+    if (!res.ok) {
+      document.getElementById('list').innerHTML =
+        `<div class="error"><strong>API error ${res.status}</strong><br>${data.message || JSON.stringify(data)}</div>`;
+      document.getElementById('statusLeft').textContent = `Error ${res.status}`;
+      return;
+    }
+
+    const matches = data.matches || [];
+    if (!matches.length) {
+      document.getElementById('list').innerHTML =
+        `<div class="error">No matches returned for GW${gw} season 2025.</div>`;
+      document.getElementById('statusLeft').textContent = '0 matches';
+      return;
+    }
+
+    document.getElementById('list').innerHTML = matches.map(renderCard).join('');
+    document.getElementById('statusLeft').innerHTML =
+      `<span class="dot"></span> GW${gw} · ${matches.length} matches`;
+    document.getElementById('statusRight').textContent =
+      `Season 2025/26 · football-data.org`;
+  } catch (e) {
+    document.getElementById('list').innerHTML =
+      `<div class="error"><strong>Fetch failed</strong><br>${e.message}<br>${isLocal ? '<br>On localhost this is a CORS block — open on Netlify instead.' : ''}</div>`;
+    document.getElementById('statusLeft').textContent = 'Failed';
+  }
+}
+
+load();
+</script>
+</body>
+</html>
