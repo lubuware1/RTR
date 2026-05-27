@@ -34,60 +34,35 @@ function _normTeam(n) {
   return (n || '').toLowerCase().replace(/\s+(f\.?c\.?|a\.?f\.?c\.?)$/,'').trim();
 }
 
-// Merge live FD API data into MATCHES for the given GW.
-// adminIds = set of match IDs that have admin score/status overrides (those fields are skipped).
-async function applyFDUpdates(gw, adminIds) {
-  const fdMatches = await loadFromFootballData(gw);
-  if (!fdMatches?.length) return;
+const FD_STATUS = { FINISHED:'complete', IN_PLAY:'live', PAUSED:'live', HALF_TIME:'live', TIMED:'upcoming', SCHEDULED:'upcoming', SUSPENDED:'upcoming', POSTPONED:'upcoming', CANCELLED:'upcoming' };
 
-  const fdMap = {};
-  fdMatches.forEach(fm => {
-    const h = _normTeam(fm.homeTeam?.shortName || fm.homeTeam?.name);
-    const a = _normTeam(fm.awayTeam?.shortName || fm.awayTeam?.name);
-    fdMap[`${h}|${a}`] = fm;
-  });
-
-  const gwMatches = MATCHES.filter(m => +m.matchweek === +gw);
-  console.log('[RTR] FD API keys:', Object.keys(fdMap));
-  console.log('[RTR] Supabase keys:', gwMatches.map(m => `${_normTeam(m.home)}|${_normTeam(m.away)}`));
-
-  const FD_STATUS = { FINISHED:'complete', IN_PLAY:'live', PAUSED:'live', TIMED:'upcoming', SCHEDULED:'upcoming', SUSPENDED:'upcoming', POSTPONED:'upcoming', CANCELLED:'upcoming' };
-
-  MATCHES = MATCHES.map(m => {
-    if (+m.matchweek !== +gw) return m;
-    const fm = fdMap[`${_normTeam(m.home)}|${_normTeam(m.away)}`];
-    if (!fm) return m;
-
-    const isAdminOverride = adminIds.has(+m.id);
+// Build MATCHES directly from API data — no name-matching needed.
+function buildMatchesFromFD(fdMatches) {
+  MATCHES = fdMatches.map(fm => {
     const ft = fm.score?.fullTime;
-    const hasScore = ft?.home != null && ft?.away != null && fm.status !== 'SCHEDULED' && fm.status !== 'TIMED';
-
-    // Match referee by name — try exact then surname
-    let newRefId = m.refId;
-    if (!m.refId) {
-      const apiRefName = (fm.referees?.find(r => r.type === 'REFEREE')?.name || '').toLowerCase();
-      if (apiRefName) {
-        const matched = REFS.find(r =>
-          r.name.toLowerCase() === apiRefName ||
-          apiRefName.includes(r.name.split(' ').pop().toLowerCase())
-        );
-        if (matched) newRefId = matched.id;
-      }
-    }
-
+    const hasScore = ft?.home != null && ft?.away != null && fm.status === 'FINISHED';
+    const apiRefName = (fm.referees?.find(r => r.type === 'REFEREE')?.name || '').toLowerCase();
+    const ref = apiRefName ? REFS.find(r =>
+      r.name.toLowerCase() === apiRefName ||
+      apiRefName.includes(r.name.split(' ').pop().toLowerCase())
+    ) : null;
     return {
-      ...m,
-      kickoff: fm.utcDate || m.kickoff,
-      refId: newRefId,
-      homeCrest: fm.homeTeam?.crest || m.homeCrest || null,
-      awayCrest: fm.awayTeam?.crest || m.awayCrest || null,
-      ...(isAdminOverride ? {} : {
-        status: FD_STATUS[fm.status] || m.status,
-        score:  hasScore ? `${ft.home}-${ft.away}` : m.score,
-      }),
+      id:        fm.id,
+      matchweek: fm.matchday,
+      home:      fm.homeTeam?.shortName || fm.homeTeam?.name || '',
+      away:      fm.awayTeam?.shortName || fm.awayTeam?.name || '',
+      hE: '', aE: '',
+      kickoff:   fm.utcDate  || null,
+      status:    FD_STATUS[fm.status] || 'upcoming',
+      score:     hasScore ? `${ft.home}-${ft.away}` : '–',
+      refId:     ref?.id || null,
+      homeCrest: fm.homeTeam?.crest || null,
+      awayCrest: fm.awayTeam?.crest || null,
+      yc: 0, rc: 0, pen: 0, var: 0,
+      perfectGame: false, incorrectVarPen: 0, incorrectVarRed: 0,
+      highlightVideoId: null, varVideoId: null,
     };
   });
-  console.log('[RTR] FD API updates applied for GW', gw);
 }
 
 // ── GOOGLE SHEETS CONFIG ─────────────────────────────────
@@ -726,74 +701,64 @@ function parseCSV(text) {
 }
 
 async function loadFromSheets() {
-  if (!SHEETS_REFS_URL && !SHEETS_MATCHES_URL) {
-    console.warn('[RTR] No Sheets URLs configured');
-    return false;
-  }
-  // Google Sheets load — failures are non-fatal, Supabase + API always run
+  // 1. REFS from Google Sheets (non-fatal)
   try {
-    console.log('[RTR] Fetching from Google Sheets...');
-    const [refsRes, matchRes] = await Promise.all([
-      SHEETS_REFS_URL    ? fetch(SHEETS_REFS_URL)    : Promise.resolve(null),
-      SHEETS_MATCHES_URL ? fetch(SHEETS_MATCHES_URL) : Promise.resolve(null),
-    ]);
-    if (refsRes?.ok) {
-      const parsed = parseCSV(await refsRes.text());
-      if (parsed.length) REFS = parsed.map(r => ({
-        ...r,
-        neutralRating: +r.neutralRating || 0, neutralVotes: +r.neutralVotes || 0,
-        fanRating:     +r.fanRating     || 0, fanVotes:     +r.fanVotes     || 0,
-      }));
-    }
-    if (matchRes?.ok) {
-      const parsed = parseCSV(await matchRes.text());
-      if (parsed.length) MATCHES = parsed.map(m => ({
-        ...m,
-        matchweek: +m.matchweek || 1,
-        hE: m.homeEmoji || '', aE: m.awayEmoji || '',
-        yc: +m.yellowCards || 0, rc: +m.redCards || 0,
-        pen: +m.penaltiesGiven || 0, var: +m.varDecisions || 0,
-        perfectGame:     m.perfectGame === 'yes',
-        incorrectVarPen: +m.incorrectVarPen || 0,
-        incorrectVarRed: +m.incorrectVarRed || 0,
-        highlightVideoId: m.highlightVideoId || null,
-        varVideoId:       m.varVideoId       || null,
-      }));
+    if (SHEETS_REFS_URL) {
+      const refsRes = await fetch(SHEETS_REFS_URL);
+      if (refsRes?.ok) {
+        const parsed = parseCSV(await refsRes.text());
+        if (parsed.length) REFS = parsed.map(r => ({
+          ...r,
+          neutralRating: +r.neutralRating || 0, neutralVotes: +r.neutralVotes || 0,
+          fanRating:     +r.fanRating     || 0, fanVotes:     +r.fanVotes     || 0,
+        }));
+      }
     }
   } catch(e) {
-    console.warn('[RTR] Google Sheets fetch failed (non-fatal):', e);
+    console.warn('[RTR] Sheets REFS fetch failed (non-fatal):', e);
   }
 
-  // Supabase overrides + Fixtures + FD API always run regardless of Sheets
+  // 2. Current GW + fixtures from API, with Supabase stats overlay
   try {
+    const gwCfg = await loadGWConfig();
+    const gw = gwCfg?.gw;
+    if (!gw) { console.warn('[RTR] No GW config'); return false; }
+
+    // API is the primary fixture source
+    const fdMatches = await loadFromFootballData(gw);
+    if (fdMatches?.length) {
+      buildMatchesFromFD(fdMatches);
+      console.log('[RTR] Fixtures loaded from API:', MATCHES.length, 'matches for GW', gw);
+    } else {
+      // Fallback: load from Supabase Fixtures if API is unavailable
+      console.warn('[RTR] API unavailable — falling back to Supabase fixtures');
+      await loadFixtures();
+    }
+
+    // 3. Overlay Supabase match stats: cards, VAR, video IDs, manual score/ref overrides
     const overrides = await loadMatchStats();
-    const adminOverriddenIds = new Set();
     if (overrides.length) {
       const overrideMap = Object.fromEntries(overrides.map(o => [+o.match_id, o]));
       MATCHES = MATCHES.map(m => {
         const o = overrideMap[+m.id];
         if (!o) return m;
-        if (o.score != null || o.status != null) adminOverriddenIds.add(+m.id);
         return {
           ...m,
-          score:           o.score           ?? m.score,
-          status:          o.status          ?? m.status,
-          yc:              o.yellow_cards    ?? m.yc,
-          rc:              o.red_cards       ?? m.rc,
-          pen:             o.penalties_given ?? m.pen,
-          var:             o.var_decisions   ?? m.var,
-          perfectGame:     o.perfect_game    ?? m.perfectGame,
-          incorrectVarPen: o.incorrect_var_pen ?? m.incorrectVarPen,
-          incorrectVarRed: o.incorrect_var_red ?? m.incorrectVarRed,
-          refId:           o.ref_id          ?? m.refId,
+          score:            o.score              ?? m.score,
+          status:           o.status             ?? m.status,
+          yc:               o.yellow_cards       ?? m.yc,
+          rc:               o.red_cards          ?? m.rc,
+          pen:              o.penalties_given    ?? m.pen,
+          var:              o.var_decisions      ?? m.var,
+          perfectGame:      o.perfect_game       ?? m.perfectGame,
+          incorrectVarPen:  o.incorrect_var_pen  ?? m.incorrectVarPen,
+          incorrectVarRed:  o.incorrect_var_red  ?? m.incorrectVarRed,
+          refId:            o.ref_id             ?? m.refId,
+          highlightVideoId: o.highlight_video_id ?? m.highlightVideoId,
+          varVideoId:       o.var_video_id       ?? m.varVideoId,
         };
       });
     }
-
-    await loadFixtures();
-
-    const gwCfg = await loadGWConfig();
-    if (gwCfg?.gw) await applyFDUpdates(gwCfg.gw, adminOverriddenIds);
 
     console.log('[RTR] Load complete. MATCHES:', MATCHES.length, 'REFS:', REFS.length);
     return true;
