@@ -894,12 +894,10 @@ initHeader();
   renderLb();
   // Reload sheet data + re-check statuses every minute so changes propagate without a page refresh
   setInterval(async () => {
-    // Preserve any complete statuses already in memory before reloading sheet
-    const alreadyComplete = new Set(MATCHES.filter(m => m.status === 'complete').map(m => m.id));
-    await loadFromSheets().catch(() => {});
+    await loadFromSheets().catch(() => {}); // refreshes REFS
+    await loadMatchesFromAPI(currentGW);    // re-fetches live scores from API
     const refreshIds = MATCHES.filter(m => +m.matchweek === +currentGW).map(m => +m.id);
-    await loadIncidentRatings(refreshIds); // keep scores scoped to current GW
-    MATCHES.forEach(m => { if (alreadyComplete.has(m.id)) m.status = 'complete'; });
+    await loadIncidentRatings(refreshIds);
     syncMatchStatuses();
     renderList();
     renderLb();

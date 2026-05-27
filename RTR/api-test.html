@@ -42,10 +42,12 @@
 <h1>⚽ football-data.org API Test</h1>
 
 <div class="controls">
+  <label>Competition</label>
+  <input type="text" id="compInput" value="WC" style="width:70px;text-transform:uppercase">
   <label>Matchweek</label>
-  <input type="number" id="gwInput" value="38" min="1" max="38">
+  <input type="number" id="gwInput" value="1" min="1" max="64">
   <label>Season</label>
-  <input type="number" id="seasonInput" value="2025" min="2020" max="2030" style="width:100px">
+  <input type="number" id="seasonInput" value="2026" min="2020" max="2030" style="width:100px">
   <button onclick="load()">Load Matches</button>
   <span id="status"></span>
 </div>
@@ -118,17 +120,18 @@ function renderCards(matches) {
 }
 
 async function load() {
-  const gw = document.getElementById('gwInput').value;
+  const gw     = document.getElementById('gwInput').value;
   const season = document.getElementById('seasonInput').value;
+  const comp   = document.getElementById('compInput').value.toUpperCase() || 'PL';
   const statusEl = document.getElementById('status');
   const grid = document.getElementById('grid');
   statusEl.textContent = 'Loading…';
   grid.innerHTML = '';
 
   const url = isLocal
-    ? `https://api.football-data.org/v4/competitions/PL/matches?matchday=${gw}&season=${season}`
-    : `/.netlify/functions/fd-matches?matchday=${gw}&season=${season}`;
-  const opts = isLocal ? { headers: { 'X-Auth-Token': FD_KEY } } : {};
+    ? `/api/fd-matches?matchday=${gw}&season=${season}&comp=${comp}`
+    : `/.netlify/functions/fd-matches?matchday=${gw}&season=${season}&comp=${comp}`;
+  const opts = {};
 
   try {
     const res = await fetch(url, opts);

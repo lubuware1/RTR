@@ -23,10 +23,10 @@ http.createServer((req, res) => {
 
   // ── API proxy ───────────────────────────────────────────
   if (parsed.pathname === '/api/fd-matches') {
-    const { matchday, season = '2025' } = parsed.query;
+    const { matchday, season = '2025', comp = 'PL' } = parsed.query;
     if (!matchday) { res.writeHead(400); res.end('matchday required'); return; }
 
-    const apiUrl = `https://api.football-data.org/v4/competitions/PL/matches?matchday=${matchday}&season=${season}`;
+    const apiUrl = `https://api.football-data.org/v4/competitions/${comp.toUpperCase()}/matches?matchday=${matchday}&season=${season}`;
     https.get(apiUrl, { headers: { 'X-Auth-Token': FD_KEY } }, apiRes => {
       let body = '';
       apiRes.on('data', d => body += d);
