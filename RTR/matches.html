@@ -827,12 +827,13 @@ async function loadMatchesFromAPI(gw) {
   const url = isLocal
     ? `/api/fd-matches?matchday=${gw}&season=2025`
     : `/.netlify/functions/fd-matches?matchday=${gw}&season=2025`;
+  console.log('[RTR] loadMatchesFromAPI → GW', gw, '→', url);
   try {
     const res  = await fetch(url);
-    if (!res.ok) return false;
+    if (!res.ok) { console.warn('[RTR] API returned', res.status, 'for', url); return false; }
     const data = await res.json();
     const fdMatches = data.matches;
-    if (!fdMatches?.length) return false;
+    if (!fdMatches?.length) { console.warn('[RTR] API returned 0 matches for GW', gw); return false; }
     const FD_STATUS = { FINISHED:'complete', IN_PLAY:'live', PAUSED:'live', HALF_TIME:'live', TIMED:'upcoming', SCHEDULED:'upcoming', SUSPENDED:'upcoming', POSTPONED:'upcoming', CANCELLED:'upcoming' };
     MATCHES = fdMatches.map(fm => {
       const ft = fm.score?.fullTime;
