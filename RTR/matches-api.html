@@ -84,13 +84,13 @@ const isLocal = location.hostname === 'localhost' || location.hostname === '127.
 const FD_KEY  = '15b079ce9d02424994eae82a3e5f4a31';
 
 function fdUrl(gw) {
+  // On localhost: call the local proxy server (node local-server.js)
+  // On Netlify:   call the serverless function
   return isLocal
-    ? `https://api.football-data.org/v4/competitions/PL/matches?matchday=${gw}&season=2025`
+    ? `/api/fd-matches?matchday=${gw}&season=2025`
     : `/.netlify/functions/fd-matches?matchday=${gw}&season=2025`;
 }
-function fdOpts() {
-  return isLocal ? { headers: { 'X-Auth-Token': FD_KEY } } : {};
-}
+function fdOpts() { return {}; }
 
 function statusInfo(s) {
   if (s === 'FINISHED')              return { label: 'Full Time',  cls: '',      timeLabel: 'FT',     live: false };
