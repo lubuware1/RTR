@@ -821,11 +821,57 @@ function skelMatchCard() {
   </div>`;
 }
 
+// ── API FIXTURE LOADER (inline — bypasses shared.js cache) ───
+async function loadMatchesFromAPI(gw) {
+  const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  const url = isLocal
+    ? `/api/fd-matches?matchday=${gw}&season=2025`
+    : `/.netlify/functions/fd-matches?matchday=${gw}&season=2025`;
+  try {
+    const res  = await fetch(url);
+    if (!res.ok) return false;
+    const data = await res.json();
+    const fdMatches = data.matches;
+    if (!fdMatches?.length) return false;
+    const FD_STATUS = { FINISHED:'complete', IN_PLAY:'live', PAUSED:'live', HALF_TIME:'live', TIMED:'upcoming', SCHEDULED:'upcoming', SUSPENDED:'upcoming', POSTPONED:'upcoming', CANCELLED:'upcoming' };
+    MATCHES = fdMatches.map(fm => {
+      const ft = fm.score?.fullTime;
+      const hasScore = ft?.home != null && ft?.away != null && fm.status === 'FINISHED';
+      const apiRef = (fm.referees||[]).find(r => r.type==='REFEREE');
+      const apiRefName = (apiRef?.name||'').toLowerCase();
+      const ref = apiRefName ? REFS.find(r =>
+        r.name.toLowerCase() === apiRefName ||
+        apiRefName.includes(r.name.split(' ').pop().toLowerCase())
+      ) : null;
+      return {
+        id: fm.id, matchweek: fm.matchday,
+        home: fm.homeTeam?.shortName || fm.homeTeam?.name || '',
+        away: fm.awayTeam?.shortName || fm.awayTeam?.name || '',
+        hE: '', aE: '',
+        kickoff:   fm.utcDate || null,
+        status:    FD_STATUS[fm.status] || 'upcoming',
+        score:     hasScore ? `${ft.home}-${ft.away}` : '–',
+        refId:     ref?.id || null,
+        homeCrest: fm.homeTeam?.crest || null,
+        awayCrest: fm.awayTeam?.crest || null,
+        yc: 0, rc: 0, pen: 0, var: 0,
+        perfectGame: false, incorrectVarPen: 0, incorrectVarRed: 0,
+        highlightVideoId: null, varVideoId: null,
+      };
+    });
+    console.log('[RTR] Matches loaded from API:', MATCHES.length, 'for GW', gw);
+    return true;
+  } catch(e) {
+    console.warn('[RTR] API fixture load failed:', e);
+    return false;
+  }
+}
+
 // ── START ─────────────────────────────────────────────────
 initHeader();
 (async () => {
   document.getElementById('matchList').innerHTML = Array(6).fill(skelMatchCard()).join('');
-  document.getElementById('leaderboard').innerHTML = Array(5).fill(`<div class="skel-card" style="display:flex;align-items:center;gap:12px"><div class="skel skel-circle" style="width:28px;height:28px;flex-shrink:0"></div><div style="flex:1"><div class="skel skel-line" style="width:60%;margin-bottom:6px"></div><div class="skel skel-line" style="width:40%"></div></div><div class="skel skel-line" style="width:32px;height:20px;border-radius:6px"></div></div>`).join('');
+  document.getElementById('leaderboard').innerHTML = Array(5).fill(`<div class="skel-card" style="display:flex;align-items:center;gap:12px"><div class="skel skel-circle" style="width:28px;height:28px;flex-shrink:0"></div><div style="flex:1"><div class="skel skel-line" style="width:60%;margin-bottom:6px"></div><div class="skel skel-line" style="width:40%"></div></div><div class="skel skel-line" style="width:32px;height=20px;border-radius:6px"></div></div>`).join('');
   if (!PREVIEW_MODE) {
     const valid = await checkAuth();
     if (!valid) { window.location.href = 'login.html'; return; }
@@ -833,7 +879,8 @@ initHeader();
   }
   const gwConfig = await loadGWConfig();
   if (gwConfig) currentGW = gwConfig.gw;
-  await loadFromSheets().catch(() => {});
+  await loadFromSheets().catch(() => {}); // loads REFS only (fixtures overridden below)
+  await loadMatchesFromAPI(currentGW);    // overwrites MATCHES with live API data
   const gwMatchIds = MATCHES.filter(m => +m.matchweek === +currentGW).map(m => +m.id);
   await Promise.all([
     loadIncidentRatings(gwMatchIds), // per-GW scores only

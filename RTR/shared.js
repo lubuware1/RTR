@@ -38,6 +38,7 @@ const FD_STATUS = { FINISHED:'complete', IN_PLAY:'live', PAUSED:'live', HALF_TIM
 
 // Build MATCHES directly from API data — no name-matching needed.
 function buildMatchesFromFD(fdMatches) {
+  console.log('[RTR] buildMatchesFromFD called with', fdMatches.length, 'matches');
   MATCHES = fdMatches.map(fm => {
     const ft = fm.score?.fullTime;
     const hasScore = ft?.home != null && ft?.away != null && fm.status === 'FINISHED';
