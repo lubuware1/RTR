@@ -10,6 +10,7 @@
 <link rel="apple-touch-icon" href="/images/logos/RRlogo192.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RefRater — Referees</title>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7289925014125722" crossorigin="anonymous"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -195,9 +196,8 @@
       <nav>
         <a href="matches.html">Matches</a>
         <a href="referees.html" class="active">Referees</a>
-        <a href="fantasy.html"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="Fantasy" style="height:20px;width:auto;vertical-align:middle;"></a>
         <a href="badges.html">Cards</a>
-        <a href="forum.html" class="admin-only" style="display:none">Forum</a>
+        <a href="forum.html">Forum</a>
       </nav>
       <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
       <div class="user-chip" id="userChip">
@@ -208,6 +208,8 @@
         <div class="user-dropdown" id="userDropdown">
           <div class="dd-head"><div class="dd-uname" id="ddName"></div><div class="dd-team" id="ddTeam"></div></div>
           <div class="dd-item" onclick="location.href='badges.html'">🏅 Cards</div>
+          <div class="dd-item admin-only" style="display:none" onclick="location.href='fantasy.html'"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="PVBB" style="height:16px;width:auto;vertical-align:middle;margin-right:6px;">PVBB</div>
+          <div class="dd-item admin-only" style="display:none" onclick="location.href='team_task_manager.html'">📋 Tasks</div>
           <div class="dd-item" id="ddLogout">↩ Sign out</div>
         </div>
       </div>
@@ -218,9 +220,8 @@
 <div class="mobile-nav" id="mobileNav">
   <a href="matches.html">Matches</a>
   <a href="referees.html" class="active">Referees</a>
-  <a href="fantasy.html"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="Fantasy" style="height:20px;width:auto;vertical-align:middle;"></a>
   <a href="badges.html">Cards</a>
-  <a href="forum.html" class="admin-only" style="display:none">Forum</a>
+  <a href="forum.html">Forum</a>
   <a href="history.html">History</a>
 </div>
 
@@ -468,13 +469,10 @@ function skelRefCard() {
 initHeader();
 (async () => {
   document.getElementById('refsGrid').innerHTML = Array(12).fill(skelRefCard()).join('');
-  const fdLive     = await loadFromFootballData();
-  const sheetsLive = !fdLive && await loadFromSheets().catch(() => false);
-  if (fdLive || sheetsLive) {
+  await loadFromSheets().catch(() => {});
+  {
     document.getElementById('dbDot').className = 'db-dot';
-    document.getElementById('dbText').textContent = fdLive
-      ? `Live data · GW ${fdLive.gw} · ${fdLive.count} matches loaded · football-data.org`
-      : 'Live data from Google Sheets · Updates automatically';
+    document.getElementById('dbText').textContent = 'Live data · Supabase';
   }
   await loadIncidentRatings();
   renderRefs();

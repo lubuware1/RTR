@@ -702,21 +702,25 @@ function parseCSV(text) {
 }
 
 async function loadFromSheets() {
-  // 1. REFS from Google Sheets (non-fatal)
+  // 1. REFS from Supabase RTR Referees table (non-fatal)
   try {
-    if (SHEETS_REFS_URL) {
-      const refsRes = await fetch(SHEETS_REFS_URL);
-      if (refsRes?.ok) {
-        const parsed = parseCSV(await refsRes.text());
-        if (parsed.length) REFS = parsed.map(r => ({
-          ...r,
-          neutralRating: +r.neutralRating || 0, neutralVotes: +r.neutralVotes || 0,
-          fanRating:     +r.fanRating     || 0, fanVotes:     +r.fanVotes     || 0,
-        }));
-      }
+    const { data: refs } = await getSB().from('RTR Referees').select('*');
+    if (refs?.length) {
+      REFS = refs.map(r => ({
+        id:          r.id,
+        name:        r.name,
+        initials:    r.initials,
+        nationality: r.nationality || '',
+        age:         r.age         || 0,
+        fifaListed:  r.fifa_listed ? 'Yes' : 'No',
+        notes:       r.notes       || '',
+        games:       0,
+        neutralRating: null, neutralVotes: 0,
+        fanRating:     null, fanVotes:     0,
+      }));
     }
   } catch(e) {
-    console.warn('[RTR] Sheets REFS fetch failed (non-fatal):', e);
+    console.warn('[RTR] Supabase REFS load failed (non-fatal):', e);
   }
 
   // 2. Current GW + fixtures from API, with Supabase stats overlay

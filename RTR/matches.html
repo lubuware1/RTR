@@ -10,6 +10,7 @@
 <link rel="apple-touch-icon" href="/images/logos/RRlogo192.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RefRater — Matches</title>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7289925014125722" crossorigin="anonymous"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -66,13 +67,17 @@
   .team{display:flex;align-items:center;gap:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;}
   .team.away{flex-direction:row-reverse;text-align:right;}
   .team-badge{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;border:2px solid var(--border);}
-  .score-block{text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.7rem;color:var(--text);letter-spacing:-1px;white-space:nowrap;}
-  .score-block .time{display:block;font-size:.65rem;font-weight:600;color:var(--muted);letter-spacing:1px;margin-top:2px;}
-  .match-footer{padding:8px 16px 10px;border-top:1px solid var(--border);pointer-events:none;}
-  .ref-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .score-block{text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;color:var(--text);letter-spacing:-.5px;white-space:normal;line-height:1.1;}
+  .score-block .time{display:block;font-size:.65rem;font-weight:600;color:var(--muted);letter-spacing:1px;margin-top:4px;}
+  .footer-score{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;color:var(--text);letter-spacing:-1px;}
+  .match-footer{padding:8px 16px 10px;border-top:2px solid rgba(0,204,112,.3);background:rgba(0,204,112,.06);pointer-events:none;}
+  .ref-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;position:relative;}
+  .footer-score{position:absolute;left:50%;transform:translateX(-50%);}
   .ref-info{display:flex;align-items:center;gap:8px;font-size:.82rem;}
   .ref-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--pl-purple),#6b006b);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:var(--pl-green);flex-shrink:0;}
   .ref-name{font-weight:600;color:var(--text);}.ref-role{font-size:.7rem;color:var(--muted);}
+  .rate-ref-btn{pointer-events:auto;background:none;border:1px solid rgba(0,204,112,.45);border-radius:6px;color:var(--pl-green);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.5px;text-transform:uppercase;padding:5px 12px;cursor:pointer;transition:all .15s;}
+  .rate-ref-btn:hover{background:rgba(0,204,112,.12);border-color:var(--pl-green);}
   .card-stats{display:flex;gap:14px;padding:0 0 6px;pointer-events:none;}
   .stat-pill{display:flex;align-items:center;gap:4px;font-size:.72rem;color:var(--muted);font-weight:600;}
   .stat-pill .icon{font-size:.85rem;}
@@ -98,68 +103,73 @@
   .rating-panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;position:sticky;top:84px;}
   .panel-head{background:linear-gradient(135deg,var(--pl-purple),#2a0035);padding:16px 20px;border-bottom:1px solid rgba(0,255,133,.2);display:flex;align-items:center;justify-content:space-between;}
   .panel-head-text h2{font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--pl-green);}
-  .panel-head-text p{font-size:.78rem;color:rgba(255,255,255,.5);margin-top:2px;}
+  .panel-head-text p{font-size:.78rem;color:#fff;margin-top:2px;}
   .panel-close-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:6px;color:rgba(255,255,255,.5);font-size:1rem;line-height:1;padding:4px 9px;cursor:pointer;transition:all .15s;display:none;}
   .panel-close-btn:hover{background:rgba(255,71,87,.15);border-color:rgba(255,71,87,.4);color:var(--red);}
   .panel-close-btn.visible{display:block;}
-  .panel-body{padding:20px;}
-  .sel-match-info{background:var(--surface2);border-radius:8px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:12px;}
-  .sel-match-teams{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.95rem;}
-  .sel-match-date{font-size:.72rem;color:var(--muted);margin-top:2px;}
-  .rcard{display:flex;align-items:center;gap:12px;background:var(--surface2);border-radius:8px;padding:12px 14px;margin-bottom:14px;}
-  .rcard-av{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--pl-purple) 0%,#8b008b 100%);border:2px solid rgba(0,255,133,.3);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;color:var(--pl-green);flex-shrink:0;}
-  .rcard-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.05rem;}
-  .rcard-meta{font-size:.75rem;color:var(--muted);margin-top:2px;}
-  .rcard-badge{margin-left:auto;background:rgba(0,255,133,.1);border:1px solid rgba(0,255,133,.3);color:var(--pl-green);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.8rem;padding:3px 8px;border-radius:4px;}
-  .bias-notice{border-radius:8px;padding:10px 13px;margin-bottom:14px;font-size:.78rem;line-height:1.5;display:none;}
-  .bias-notice.fv{background:rgba(255,211,42,.07);border:1px solid rgba(255,211,42,.25);color:var(--yellow);}
-  .bias-notice.nv{background:rgba(55,236,186,.07);border:1px solid rgba(55,236,186,.2);color:var(--green);}
-  .bias-notice strong{font-family:'Barlow Condensed',sans-serif;font-size:.85rem;}
-  .pvs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
-  .pvs-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;}
-  .pvs-box.nb{border-color:rgba(55,236,186,.2);}.pvs-box.fb{border-color:rgba(255,211,42,.2);}
-  .pvs-lbl{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
-  .pvs-lbl.nl{color:var(--green);}.pvs-lbl.fl{color:var(--yellow);}
-  .pvs-score{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.6rem;line-height:1;}
-  .pvs-score.ns{color:var(--green);}.pvs-score.fs{color:var(--yellow);}
-  .pvs-none{color:var(--muted);font-size:.8rem;font-family:'Barlow Condensed',sans-serif;}
-  .pvs-count{font-size:.7rem;color:var(--muted);margin-top:3px;}
-  /* ── INCIDENT SCORE DISPLAY ── */
-  .inc-score-block{padding:0 0 14px;border-bottom:1px solid var(--border);margin-bottom:16px;}
-  .inc-dual-scores{display:flex;gap:10px;}
-  .inc-score-tile{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 10px 12px;text-align:center;}
-  .inc-tile-label{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;}
-  .inc-tile-label.nl{color:var(--green);}
-  .inc-tile-label.fl{color:var(--yellow);}
+  .panel-body{padding:16px;}
+
+  /* ── COMBINED MATCH + REF BANNER ── */
+  .rp-match-banner{background:linear-gradient(135deg,rgba(55,0,60,.85),rgba(20,0,30,.95));border:1px solid rgba(0,255,133,.15);border-radius:10px;padding:14px 16px;margin-bottom:14px;}
+  .rp-match-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px;}
+  .rp-match-teams{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.05rem;color:#fff;line-height:1.2;}
+  .rp-match-meta{font-size:.7rem;color:#fff;margin-top:3px;}
+  .rp-match-score{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;color:var(--pl-green);flex-shrink:0;margin-top:1px;}
+  .rp-ref-row{display:flex;align-items:center;gap:8px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08);}
+  .rp-ref-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--pl-purple),#6b006b);border:1.5px solid rgba(0,255,133,.3);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.62rem;color:var(--pl-green);flex-shrink:0;}
+  .rp-ref-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;color:#fff;}
+  .rp-ref-badge{margin-left:auto;font-family:'Barlow Condensed',sans-serif;font-size:.6rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(0,255,133,.6);background:rgba(0,255,133,.07);border:1px solid rgba(0,255,133,.2);border-radius:4px;padding:2px 7px;}
+
+  /* ── COMMUNITY SCORES ── */
+  .rp-scores{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+  .rp-score-tile{background:linear-gradient(135deg,rgba(55,0,60,.85),rgba(20,0,30,.95));border:1px solid rgba(0,255,133,.15);border-radius:10px;padding:14px 10px;text-align:center;}
+  .rp-score-tile.nt{border-color:rgba(55,236,186,.2);}
+  .rp-score-tile.ft{border-color:rgba(255,211,42,.2);}
+  .rp-score-label{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;}
+  .rp-score-label.nt{color:var(--green);}
+  .rp-score-label.ft{color:var(--yellow);}
   .inc-tile-val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2.2rem;line-height:1;}
   .inc-tile-val.g{color:var(--green);}.inc-tile-val.y{color:var(--yellow);}.inc-tile-val.r{color:var(--red);}
-  .inc-tile-val.pending{color:var(--muted);font-size:1rem;padding:4px 0;}
-  .inc-tile-denom{font-size:.75rem;color:var(--muted);font-family:'Barlow Condensed',sans-serif;margin-left:1px;}
-  .inc-tile-sub{font-size:.65rem;color:var(--muted);margin-top:5px;}
-  .inc-pending-badge{display:inline-block;font-size:.62rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;background:rgba(107,114,128,.15);color:var(--muted);border:1px solid rgba(107,114,128,.25);border-radius:4px;padding:2px 7px;margin-top:6px;}
+  .inc-tile-val.pending{color:var(--muted);font-size:.92rem;padding:6px 0;}
+  .inc-tile-denom{font-size:.75rem;color:rgba(255,255,255,.7);font-family:'Barlow Condensed',sans-serif;margin-left:1px;}
+  .inc-tile-sub{font-size:.62rem;color:rgba(255,255,255,.6);margin-top:4px;}
+  .inc-pending-badge{display:inline-block;font-size:.62rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;background:rgba(107,114,128,.12);color:rgba(255,255,255,.7);border:1px solid rgba(107,114,128,.2);border-radius:4px;padding:2px 7px;margin-top:5px;}
 
   /* ── INCIDENT VOTING ── */
   .inc-pregame{text-align:center;padding:28px 16px;border:1px dashed var(--border);border-radius:10px;}
   .inc-pregame-icon{font-size:1.8rem;margin-bottom:8px;}
   .inc-pregame-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;margin-bottom:4px;}
   .inc-pregame-sub{font-size:.78rem;color:var(--muted);}
-  /* Incorrect Decision button */
-  .inc-flag-btn{width:100%;background:rgba(139,0,139,.1);border:1.5px solid rgba(139,0,139,.4);border-radius:10px;padding:14px 16px;color:rgba(200,100,200,.95);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;}
-  .inc-flag-btn:hover{background:rgba(139,0,139,.2);border-color:rgba(139,0,139,.7);}
-  .inc-flag-btn:disabled{opacity:.45;cursor:not-allowed;}
-  /* Incident cards */
-  .inc-section-label{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
-  .inc-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 14px 12px;margin-bottom:10px;transition:all .2s;}
-  .inc-card.voted{opacity:.7;}
-  .inc-card-header{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
-  .inc-card-type{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.95rem;text-transform:uppercase;letter-spacing:.5px;color:var(--text);flex:1;}
-  .inc-card-player{font-size:.82rem;color:#fff;font-weight:600;margin-left:2px;}
-  .inc-minute{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.75rem;color:var(--pl-green);background:rgba(0,255,133,.08);border:1px solid rgba(0,255,133,.2);border-radius:4px;padding:1px 6px;flex-shrink:0;}
-  .inc-card-outcome-row{text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;letter-spacing:.5px;text-transform:uppercase;margin-bottom:10px;}
-  .inc-empty{text-align:center;padding:24px 16px;color:var(--muted);font-size:.82rem;border:1px dashed var(--border);border-radius:8px;}
-  /* Match discussion box */
+  /* Flag a Decision button */
+  .rp-flag-btn{width:100%;background:none;border:1px solid rgba(139,0,139,.35);border-radius:8px;padding:10px 14px;color:rgba(200,100,200,.85);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:14px;}
+  .rp-flag-btn:hover{background:rgba(139,0,139,.1);border-color:rgba(139,0,139,.6);}
+  .rp-flag-btn:disabled{opacity:.35;cursor:not-allowed;}
+  /* Decisions section label */
+  .rp-dec-label{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+  /* Decision cards */
+  .inc-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:8px;transition:opacity .2s;}
+  .inc-card.voted{opacity:.6;}
+  .inc-card-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+  .inc-card-type{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;text-transform:uppercase;letter-spacing:.5px;color:var(--text);flex:1;}
+  .inc-minute{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.72rem;color:var(--pl-green);background:rgba(0,255,133,.08);border:1px solid rgba(0,255,133,.18);border-radius:4px;padding:2px 7px;flex-shrink:0;}
+  .inc-card-detail{font-size:.8rem;color:var(--muted);margin-bottom:4px;}
+  .inc-card-outcome{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.88rem;text-transform:uppercase;letter-spacing:.3px;margin-bottom:10px;}
+  .inc-empty{text-align:center;padding:20px 16px;color:var(--muted);font-size:.82rem;border:1px dashed var(--border);border-radius:8px;}
+  /* Vote buttons */
+  .inc-vote-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+  .inc-vote-btn{border:1.5px solid var(--border);border-radius:8px;padding:12px 8px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.9rem;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .18s;background:var(--surface);color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px;}
+  .inc-vote-btn.correct:hover:not(:disabled){background:rgba(0,204,112,.12);border-color:var(--pl-green);color:var(--pl-green);}
+  .inc-vote-btn.wrong:hover:not(:disabled){background:rgba(139,0,139,.12);border-color:#8b008b;color:rgba(200,100,200,.95);}
+  .inc-vote-btn.correct.voted{background:rgba(0,204,112,.08);border-color:rgba(0,204,112,.3);color:rgba(0,204,112,.6);}
+  .inc-vote-btn.wrong.voted{background:rgba(139,0,139,.08);border-color:rgba(139,0,139,.35);color:rgba(200,100,200,.6);}
+  .inc-vote-btn:disabled{opacity:.4;cursor:not-allowed;}
+  .inc-bar-wrap{display:flex;align-items:center;gap:8px;font-size:.7rem;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-weight:700;}
+  .inc-bar{flex:1;height:4px;border-radius:3px;background:var(--border);overflow:hidden;display:flex;}
+  .inc-bar-fill{height:100%;background:var(--pl-green);transition:width .4s ease;}
+  .inc-bar-fill-wrong{height:100%;background:#8b008b;transition:width .4s ease;}
+  /* Match discussion */
   .match-discuss{margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
-  .match-discuss-label{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  .match-discuss-label{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
   .match-discuss-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:'Barlow',sans-serif;font-size:.85rem;resize:none;min-height:70px;box-sizing:border-box;transition:border-color .2s;}
   .match-discuss-input:focus{outline:none;border-color:rgba(0,255,133,.4);}
   .match-discuss-send{margin-top:8px;background:var(--pl-green);color:#fff;border:none;border-radius:7px;padding:9px 18px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.85rem;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:opacity .15s;}
@@ -168,18 +178,6 @@
   .match-discuss-link{margin-top:8px;font-size:.75rem;color:var(--muted);}
   .match-discuss-link a{color:var(--pl-green);text-decoration:none;}
   .match-discuss-link a:hover{text-decoration:underline;}
-  .inc-vote-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
-  .inc-vote-btn{border:1.5px solid var(--border);border-radius:7px;padding:10px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .18s;background:var(--surface);color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px;}
-  .inc-vote-btn:hover:not(:disabled){transform:translateY(-1px);}
-  .inc-vote-btn.correct:hover:not(:disabled){background:rgba(55,236,186,.1);border-color:var(--green);color:var(--green);}
-  .inc-vote-btn.wrong:hover:not(:disabled){background:rgba(139,0,139,.12);border-color:#8b008b;color:rgba(200,100,200,.95);}
-  .inc-vote-btn.correct.voted{background:rgba(55,236,186,.07);border-color:rgba(55,236,186,.3);color:rgba(55,236,186,.5);}
-  .inc-vote-btn.wrong.voted{background:rgba(139,0,139,.07);border-color:rgba(139,0,139,.3);color:rgba(200,100,200,.5);}
-  .inc-vote-btn:disabled{opacity:.45;cursor:not-allowed;transform:none;}
-  .inc-bar-wrap{display:flex;align-items:center;gap:8px;font-size:.72rem;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-weight:700;}
-  .inc-bar{flex:1;height:5px;border-radius:3px;background:var(--border);overflow:hidden;display:flex;}
-  .inc-bar-fill{height:100%;background:var(--green);transition:width .4s ease;}
-  .inc-bar-fill-wrong{height:100%;background:#8b008b;transition:width .4s ease;}
 
   /* Leaderboard */
   .leaderboard{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:16px;}
@@ -246,6 +244,14 @@
   html:not([data-theme="dark"]) .team span { color: var(--muted); }
   html:not([data-theme="dark"]) .ref-name { color: var(--muted); }
   html:not([data-theme="dark"]) .lb-ref-name { color: var(--muted); }
+  /* Score tiles sit on a dark purple background in both modes — force light-mode text to match */
+  html:not([data-theme="dark"]) .rp-score-tile .inc-tile-val { color: #fff; }
+  html:not([data-theme="dark"]) .rp-score-tile .inc-tile-val.g { color: #00ff85; }
+  html:not([data-theme="dark"]) .rp-score-tile .inc-tile-val.y { color: #ffd32a; }
+  html:not([data-theme="dark"]) .rp-score-tile .inc-tile-val.r { color: #ff4757; }
+  html:not([data-theme="dark"]) .rp-score-tile .inc-tile-val.pending { color: rgba(255,255,255,.45); }
+  html:not([data-theme="dark"]) .rp-score-label.nt { color: #00ff85; }
+  html:not([data-theme="dark"]) .rp-score-label.ft { color: #ffd32a; }
 
   /* ── MOBILE ─────────────────────────────────────────────── */
   @media(max-width:768px){
@@ -272,9 +278,8 @@
       <nav>
         <a href="matches.html" class="active">Matches</a>
         <a href="referees.html">Referees</a>
-        <a href="fantasy.html"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="Fantasy" style="height:20px;width:auto;vertical-align:middle;"></a>
         <a href="badges.html">Cards</a>
-        <a href="forum.html" class="admin-only" style="display:none">Forum</a>
+        <a href="forum.html">Forum</a>
       </nav>
       <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
       <div class="user-chip" id="userChip">
@@ -285,6 +290,8 @@
         <div class="user-dropdown" id="userDropdown">
           <div class="dd-head"><div class="dd-uname" id="ddName"></div><div class="dd-team" id="ddTeam"></div></div>
           <div class="dd-item" onclick="location.href='badges.html'">🏅 Cards</div>
+          <div class="dd-item admin-only" style="display:none" onclick="location.href='fantasy.html'"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="PVBB" style="height:16px;width:auto;vertical-align:middle;margin-right:6px;">PVBB</div>
+          <div class="dd-item admin-only" style="display:none" onclick="location.href='team_task_manager.html'">📋 Tasks</div>
           <div class="dd-item danger" id="ddLogout">↩ Sign out</div>
         </div>
       </div>
@@ -295,7 +302,6 @@
 <div class="mobile-nav" id="mobileNav">
   <a href="matches.html" class="active">Matches</a>
   <a href="referees.html">Referees</a>
-  <a href="fantasy.html"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="Fantasy" style="height:20px;width:auto;vertical-align:middle;"></a>
   <a href="badges.html">Cards</a>
   <a href="forum.html" class="admin-only" style="display:none">Forum</a>
   <a href="history.html">History</a>
@@ -326,26 +332,25 @@
           <p>Pick a match to rate the referee after kick off</p>
         </div>
         <div id="panelForm" style="display:none">
-          <div class="sel-match-info" id="panelMatchInfo"></div>
-          <div class="rcard" id="panelRefCard"></div>
-          <!-- Incident-driven score -->
-          <div class="inc-score-block">
-            <div class="inc-dual-scores">
-              <div class="inc-score-tile">
-                <div class="inc-tile-label nl">Neutral Rating</div>
-                <div class="inc-tile-val" id="incScoreNeutralVal">–</div>
-                <div class="inc-tile-sub" id="incScoreNeutralSub"></div>
-              </div>
-              <div class="inc-score-tile">
-                <div class="inc-tile-label fl">Fan Rating</div>
-                <div class="inc-tile-val" id="incScoreFanVal">–</div>
-                <div class="inc-tile-sub" id="incScoreFanSub"></div>
-              </div>
+          <!-- Combined match + ref banner (populated by openPanel JS) -->
+          <div id="panelMatchInfo"></div>
+          <div id="panelRefCard" style="display:none"></div>
+          <!-- Community scores -->
+          <div class="rp-scores">
+            <div class="rp-score-tile nt">
+              <div class="rp-score-label nt">Neutral</div>
+              <div class="inc-tile-val" id="incScoreNeutralVal">–</div>
+              <div class="inc-tile-sub" id="incScoreNeutralSub"></div>
+            </div>
+            <div class="rp-score-tile ft">
+              <div class="rp-score-label ft">Fan</div>
+              <div class="inc-tile-val" id="incScoreFanVal">–</div>
+              <div class="inc-tile-sub" id="incScoreFanSub"></div>
             </div>
           </div>
-          <!-- Incorrect Decision button + Incidents panel -->
-          <button class="inc-flag-btn" id="incFlagBtn">⚑ Incorrect Decision</button>
-          <div class="inc-section-label" id="incSectionLabel" style="display:none">Decisions</div>
+          <!-- Decisions -->
+          <button class="rp-flag-btn" id="incFlagBtn">⚑ Flag a Decision</button>
+          <div class="rp-dec-label" id="incSectionLabel" style="display:none">Decisions to vote on</div>
           <div id="incidentList"></div>
           <!-- Match discussion -->
           <div class="match-discuss" id="matchDiscuss" style="display:none">
@@ -447,16 +452,22 @@ function flagImg(emoji) {
 function renderList() {
   document.getElementById('matchSectionTitle').textContent = `Premier League · Matchweek ${currentGW}`;
   const el = document.getElementById('matchList');
-  const gwFiltered = MATCHES.filter(m => m.matchweek === currentGW);
+  const gwFiltered = MATCHES
+    .filter(m => m.matchweek === currentGW)
+    .sort((a, b) => {
+      const ta = a.kickoff ? new Date(String(a.kickoff).replace(' ','T').replace(/Z$/,'')) : Infinity;
+      const tb = b.kickoff ? new Date(String(b.kickoff).replace(' ','T').replace(/Z$/,'')) : Infinity;
+      return ta - tb;
+    });
   const list = filter==='all' ? gwFiltered : gwFiltered.filter(m=>m.status===(filter==='recent'?'complete':filter));
   if (!list.length) { el.innerHTML='<div class="empty-state"><div class="icon">📋</div><p>No matches</p></div>'; return; }
   const logoSrc = 'images/logos/ref_rater_logo_green_a.svg';
   const logoRepeat = Array(8).fill(`<img src="${logoSrc}" alt="RefRater">`).join('');
   const adBanner = `<div class="ad-banner"><span class="ad-banner-label">Advertisement</span><div class="ad-banner-scroll"><div class="ad-banner-track">${logoRepeat}${logoRepeat}</div></div></div>`;
   const cards = list.map(m => {
-    const ref = REFS.find(r=>r.id===+m.refId); if(!ref) return '';
+    const ref = REFS.find(r=>r.id===+m.refId);
     const live=m.status==='live', up=m.status==='upcoming', fan=isFanMatch(m,currentUser);
-    const hasN=ref.neutralRating!=null, hasF=ref.fanRating!=null;
+    const hasN=ref&&ref.neutralRating!=null, hasF=ref&&ref.fanRating!=null;
     const nSf=hasN?Math.round(ref.neutralRating/2):0;
     const fSf=hasF?Math.round(ref.fanRating/2):0;
     const nStars=Array.from({length:5},(_,i)=>`<span class="vb-star${i<nSf?' ln':''}">★</span>`).join('');
@@ -468,7 +479,7 @@ function renderList() {
       </div>
       <div class="match-body">
         <div class="team home"><div class="team-badge">${m.homeCrest?`<img src="${m.homeCrest}" style="width:26px;height:26px;object-fit:contain;" onerror="this.src='images/logos/RRLogo.svg';this.style.opacity='.7';">`:`<img src="images/logos/RRLogo.svg" style="width:22px;height:22px;opacity:.7;">`}</div><span>${m.home}</span></div>
-        <div class="score-block">${m.score}<span class="time"${live?' style="color:var(--red)"':''}>${live?'LIVE':up?(m.kickoff?new Date(String(m.kickoff).replace(' ','T').replace(/Z$/,'')).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).replace(',',''):'TBC'):'FT'}</span></div>
+        <div class="score-block">${ref?ref.name:'<span style="color:var(--muted);font-size:1rem">Referee TBC</span>'}<span class="time"${live?' style="color:var(--red)"':''}>${live?'LIVE':up?(m.kickoff?new Date(String(m.kickoff).replace(' ','T').replace(/Z$/,'')).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).replace(',',''):'TBC'):'FT'}</span></div>
         <div class="team away"><div class="team-badge">${m.awayCrest?`<img src="${m.awayCrest}" style="width:26px;height:26px;object-fit:contain;" onerror="this.src='images/logos/RRLogo.svg';this.style.opacity='.7';">`:`<img src="images/logos/RRLogo.svg" style="width:22px;height:22px;opacity:.7;">`}</div><span>${m.away}</span></div>
       </div>
       ${!up?`<div class="card-stats" style="padding:0 16px 6px">
@@ -486,10 +497,10 @@ function renderList() {
       </div>`:''}
       <div class="match-footer">
         <div class="ref-row">
-          <div class="ref-info"><div class="ref-avatar">${ref.initials}</div><div><div class="ref-name">${ref.name}</div><div class="ref-role">Referee</div></div></div>
-          ${!up && rated.has(+m.id)?`<span style="font-size:.7rem;color:var(--pl-green);font-weight:600">Rated ✓</span>`:''}
+          <div class="footer-score">${up ? '–' : m.score}</div>
+          ${ref ? (!up && rated.has(+m.id) ? `<span style="font-size:.7rem;color:var(--pl-green);font-weight:600;pointer-events:none">Rated ✓</span>` : `<button class="rate-ref-btn">Rate this Ref</button>`) : ''}
         </div>
-        ${!up?`<div class="vote-split">
+        ${!up&&ref?`<div class="vote-split">
           <div class="vote-bucket nb"><div><div class="vb-label nl">Neutral</div><div class="vb-stars">${nStars}</div></div><div><div class="vb-score ${hasN?'ns':'na'}">${hasN?ref.neutralRating.toFixed(1):'–'}</div><div class="vb-count">${ref.neutralVotes} votes</div></div></div>
           <div class="vote-bucket fb"><div><div class="vb-label fl">Fan</div><div class="vb-stars">${fStars}</div></div><div><div class="vb-score ${hasF?'fs':'na'}">${hasF?ref.fanRating.toFixed(1):'–'}</div><div class="vb-count">${ref.fanVotes} votes</div></div></div>
         </div>`:''}
@@ -583,25 +594,22 @@ function renderIncidentList() {
     const needed = Math.ceil(MIN_VOTES / VOTE_MULTIPLIER);
 
     return `<div class="inc-card${locked ? ' voted' : ''}">
-      <div class="inc-card-header">
+      <div class="inc-card-top">
         <span class="inc-card-type">${inc.type}</span>
-        ${player ? `<span class="inc-card-player">— ${player}</span>` : ''}
         ${inc.minute !== null ? `<span class="inc-minute">${inc.minute}'</span>` : ''}
       </div>
-      ${outcome ? `<div class="inc-card-outcome-row" style="color:${outcomeColour}">${outcome}</div>` : ''}
+      ${player ? `<div class="inc-card-detail">— ${player}</div>` : ''}
+      ${outcome ? `<div class="inc-card-outcome" style="color:${outcomeColour}">${outcome}</div>` : ''}
       <div class="inc-vote-row">
-        <button class="inc-vote-btn correct${myVote==='correct'?' voted':''}" data-iid="${inc.id}" data-vote="correct" ${locked?'disabled':''}>✅ Correct</button>
-        <button class="inc-vote-btn wrong${myVote==='wrong'?' voted':''}"   data-iid="${inc.id}" data-vote="wrong"   ${locked?'disabled':''}>Incorrect</button>
+        <button class="inc-vote-btn correct${myVote==='correct'?' voted':''}" data-iid="${inc.id}" data-vote="correct" ${locked?'disabled':''}>✓ Correct</button>
+        <button class="inc-vote-btn wrong${myVote==='wrong'?' voted':''}" data-iid="${inc.id}" data-vote="wrong" ${locked?'disabled':''}>✗ Wrong</button>
       </div>
       ${total ? `<div class="inc-bar-wrap">
-        <span style="color:var(--green)">${correctPct}%</span>
-        <div class="inc-bar">
-          <div class="inc-bar-fill" style="width:${correctPct}%"></div>
-          <div class="inc-bar-fill-wrong" style="width:${100-correctPct}%"></div>
-        </div>
+        <span style="color:var(--pl-green)">${correctPct}%</span>
+        <div class="inc-bar"><div class="inc-bar-fill" style="width:${correctPct}%"></div><div class="inc-bar-fill-wrong" style="width:${100-correctPct}%"></div></div>
         <span style="color:#c064c0">${100-correctPct}%</span>
       </div>` : ''}
-      ${isPending ? `<div class="inc-pending-badge">⏳ ${total}/${needed} votes · pending score</div>` : ''}
+      ${isPending ? `<div class="inc-pending-badge">⏳ ${total}/${needed} votes · pending</div>` : ''}
     </div>`;
   }).join('');
 }
@@ -640,17 +648,24 @@ async function openPanel(mid) {
   const ref = REFS.find(r => r.id === +m.refId);
 
   document.getElementById('panelMatchInfo').innerHTML = `
-    <div style="font-size:1.3rem">${m.hE} vs ${m.aE}</div>
-    <div>
-      <div class="sel-match-teams">${m.home} vs ${m.away}</div>
-      <div class="sel-match-date">Premier League · Matchweek ${m.matchweek||currentGW}</div>
-    </div>
-    ${m.score !== '–' ? `<div style="margin-left:auto;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem">${m.score}</div>` : ''}`;
-
-  document.getElementById('panelRefCard').innerHTML = `
-    <div class="rcard-av">${ref.initials}</div>
-    <div><div class="rcard-name">${ref.name}</div><div class="rcard-meta">${ref.nationality} · FIFA Listed</div></div>
-    <div class="rcard-badge">FIFA</div>`;
+    <div class="rp-match-banner">
+      <div class="rp-match-row">
+        <div>
+          <div class="rp-match-teams">${m.hE ? m.hE + ' ' : ''}${m.home} vs ${m.away}${m.aE ? ' ' + m.aE : ''}</div>
+          <div class="rp-match-meta">Premier League · Matchweek ${m.matchweek||currentGW}</div>
+        </div>
+        ${m.score !== '–' ? `<div class="rp-match-score">${m.score}</div>` : ''}
+      </div>
+      ${ref ? `<div class="rp-ref-row">
+        <div class="rp-ref-av">${ref.initials}</div>
+        <span class="rp-ref-name">${ref.name}</span>
+        <span class="rp-ref-badge">Referee</span>
+      </div>` : `<div class="rp-ref-row">
+        <div class="rp-ref-av" style="font-size:.55rem;color:var(--muted)">TBC</div>
+        <span class="rp-ref-name" style="color:var(--muted)">Referee TBC</span>
+      </div>`}
+    </div>`;
+  document.getElementById('panelRefCard').innerHTML = '';
 
   // Block voting for upcoming matches (bypassed when TEST_FAN_VOTES is on)
   if (m.status === 'upcoming' && !TEST_FAN_VOTES) {

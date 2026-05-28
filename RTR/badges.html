@@ -10,6 +10,7 @@
 <link rel="apple-touch-icon" href="/images/logos/RRlogo192.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RefRater — Cards</title>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7289925014125722" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="shared.js"></script>
 <style>
@@ -279,9 +280,8 @@
       <nav>
         <a href="matches.html">Matches</a>
         <a href="referees.html">Referees</a>
-        <a href="fantasy.html"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="Fantasy" style="height:20px;width:auto;vertical-align:middle;"></a>
         <a href="badges.html" class="active">Cards</a>
-        <a href="forum.html" class="admin-only" style="display:none">Forum</a>
+        <a href="forum.html">Forum</a>
       </nav>
       <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
       <div class="user-chip" id="userChip">
@@ -295,6 +295,8 @@
             <div class="dd-team" id="ddTeam"></div>
           </div>
           <div class="dd-item" id="ddBadges">🏅 My Cards</div>
+          <div class="dd-item admin-only" style="display:none" onclick="location.href='fantasy.html'"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="PVBB" style="height:16px;width:auto;vertical-align:middle;margin-right:6px;">PVBB</div>
+          <div class="dd-item admin-only" style="display:none" onclick="location.href='team_task_manager.html'">📋 Tasks</div>
           <div class="dd-item danger" id="ddLogout">↩ Sign out</div>
         </div>
       </div>
@@ -305,9 +307,8 @@
 <div class="mobile-nav" id="mobileNav">
   <a href="matches.html">Matches</a>
   <a href="referees.html">Referees</a>
-  <a href="fantasy.html"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="Fantasy" style="height:20px;width:auto;vertical-align:middle;"></a>
   <a href="badges.html" class="active">Cards</a>
-  <a href="forum.html" class="admin-only" style="display:none">Forum</a>
+  <a href="forum.html">Forum</a>
 </div>
 
 <div class="page">
