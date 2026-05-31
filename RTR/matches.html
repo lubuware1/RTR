@@ -316,7 +316,7 @@
       <button class="view-tab" data-filter="live">Live</button>
       <button class="view-tab" data-filter="recent">Recent</button>
     </div>
-    <div class="ad-banner" style="margin-top:10px;"><span class="ad-banner-label">Advertisement</span><img src="images/badges/redcardbadge.png" alt="Red Card" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:.85;"></div>
+    <div class="ad-banner" style="margin-top:10px;"><span class="ad-banner-label">Advertisement</span><img src="CSV/Bet36.png" alt="Bet365" style="position:absolute;inset:0;width:100%;height:100%;object-fit:none;object-position:center top;opacity:.85;"></div>
     <div class="section-title" id="matchSectionTitle">Premier League · Matchweek 1</div>
     <div id="matchList"></div>
   </div>
@@ -392,6 +392,21 @@ let selId=null;
 const rated=new Set();
 let filter='all', lbMode='neutral';
 let currentGW = 1; // updated from Supabase on load
+let currentComp = 'PL';
+let currentSeason = '2025';
+
+const COMP_NAMES = {
+  PL: 'Premier League', WC: 'FIFA World Cup', CL: 'UEFA Champions League',
+  ELC: 'Championship', EC: 'European Championship', PD: 'La Liga',
+  BL1: 'Bundesliga', SA: 'Serie A', FL1: 'Ligue 1', PPL: 'Primeira Liga',
+};
+function compLabel() { return COMP_NAMES[currentComp] || currentComp; }
+function roundLabel(gw) {
+  if (currentComp !== 'WC') return `Matchweek ${gw}`;
+  if (gw <= 3) return `Group Stage · Round ${gw}`;
+  const rounds = { 4:'Round of 32', 5:'Round of 16', 6:'Quarter-Finals', 7:'Semi-Finals', 8:'Third Place', 9:'Final' };
+  return rounds[gw] || `Round ${gw}`;
+}
 
 const DESCS = RATING_DESCS;
 
@@ -450,7 +465,7 @@ function flagImg(emoji) {
 
 // ── MATCH LIST ────────────────────────────────────────────
 function renderList() {
-  document.getElementById('matchSectionTitle').textContent = `Premier League · Matchweek ${currentGW}`;
+  document.getElementById('matchSectionTitle').textContent = `${compLabel()} · ${roundLabel(currentGW)}`;
   const el = document.getElementById('matchList');
   const gwFiltered = MATCHES
     .filter(m => m.matchweek === currentGW)
@@ -475,7 +490,7 @@ function renderList() {
     return `<div class="match-card${selId===m.id?' selected':''}${fan?' fan-match':''}" data-mid="${m.id}">
       <div class="match-header">
         <span>${live?'<span class="live-dot"></span>LIVE':up?'UPCOMING':'FULL TIME'}</span>
-        <span>${fan?'<span class="my-team-tag">MY TEAM</span> ':''}Premier League · Matchweek ${m.matchweek||currentGW}</span>
+        <span>${fan?'<span class="my-team-tag">MY TEAM</span> ':''}${compLabel()} · ${roundLabel(m.matchweek||currentGW)}</span>
       </div>
       <div class="match-body">
         <div class="team home"><div class="team-badge">${m.homeCrest?`<img src="${m.homeCrest}" style="width:26px;height:26px;object-fit:contain;" onerror="this.src='images/logos/RRLogo.svg';this.style.opacity='.7';">`:`<img src="images/logos/RRLogo.svg" style="width:22px;height:22px;opacity:.7;">`}</div><span>${m.home}</span></div>
@@ -652,7 +667,7 @@ async function openPanel(mid) {
       <div class="rp-match-row">
         <div>
           <div class="rp-match-teams">${m.hE ? m.hE + ' ' : ''}${m.home} vs ${m.away}${m.aE ? ' ' + m.aE : ''}</div>
-          <div class="rp-match-meta">Premier League · Matchweek ${m.matchweek||currentGW}</div>
+          <div class="rp-match-meta">${compLabel()} · ${roundLabel(m.matchweek||currentGW)}</div>
         </div>
         ${m.score !== '–' ? `<div class="rp-match-score">${m.score}</div>` : ''}
       </div>
@@ -837,12 +852,12 @@ function skelMatchCard() {
 }
 
 // ── API FIXTURE LOADER (inline — bypasses shared.js cache) ───
-async function loadMatchesFromAPI(gw) {
+async function loadMatchesFromAPI(gw, comp = currentComp, season = currentSeason) {
   const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
   const url = isLocal
-    ? `/api/fd-matches?matchday=${gw}&season=2025`
-    : `/.netlify/functions/fd-matches?matchday=${gw}&season=2025`;
-  console.log('[RTR] loadMatchesFromAPI → GW', gw, '→', url);
+    ? `/api/fd-matches?matchday=${gw}&season=${season}&comp=${comp}`
+    : `/.netlify/functions/fd-matches?matchday=${gw}&season=${season}&comp=${comp}`;
+  console.log('[RTR] loadMatchesFromAPI → GW', gw, comp, season, '→', url);
   try {
     const res  = await fetch(url);
     if (!res.ok) { console.warn('[RTR] API returned', res.status, 'for', url); return false; }
@@ -894,9 +909,32 @@ initHeader();
     currentUser = getCurrentUser();
   }
   const gwConfig = await loadGWConfig();
-  if (gwConfig) currentGW = gwConfig.gw;
+  if (gwConfig) {
+    currentGW = gwConfig.gw;
+    currentComp = gwConfig.comp || 'PL';
+    currentSeason = gwConfig.season || '2025';
+  }
   await loadFromSheets().catch(() => {}); // loads REFS only (fixtures overridden below)
   await loadMatchesFromAPI(currentGW);    // overwrites MATCHES with live API data
+  const stats = await loadMatchStats().catch(() => []);
+  if (stats.length) {
+    const overrideMap = Object.fromEntries(stats.map(o => [+o.match_id, o]));
+    MATCHES = MATCHES.map(m => {
+      const o = overrideMap[+m.id];
+      if (!o) return m;
+      return { ...m,
+        score: o.score ?? m.score, status: o.status ?? m.status,
+        yc: o.yellow_cards ?? m.yc, rc: o.red_cards ?? m.rc,
+        pen: o.penalties_given ?? m.pen, var: o.var_decisions ?? m.var,
+        perfectGame: o.perfect_game ?? m.perfectGame,
+        incorrectVarPen: o.incorrect_var_pen ?? m.incorrectVarPen,
+        incorrectVarRed: o.incorrect_var_red ?? m.incorrectVarRed,
+        refId: o.ref_id ?? m.refId,
+        highlightVideoId: o.highlight_video_id ?? m.highlightVideoId,
+        varVideoId: o.var_video_id ?? m.varVideoId,
+      };
+    });
+  }
   const gwMatchIds = MATCHES.filter(m => +m.matchweek === +currentGW).map(m => +m.id);
   await Promise.all([
     loadIncidentRatings(gwMatchIds), // per-GW scores only
@@ -911,6 +949,24 @@ initHeader();
   setInterval(async () => {
     await loadFromSheets().catch(() => {}); // refreshes REFS
     await loadMatchesFromAPI(currentGW);    // re-fetches live scores from API
+    const refreshStats = await loadMatchStats().catch(() => []);
+    if (refreshStats.length) {
+      const rm = Object.fromEntries(refreshStats.map(o => [+o.match_id, o]));
+      MATCHES = MATCHES.map(m => {
+        const o = rm[+m.id]; if (!o) return m;
+        return { ...m,
+          score: o.score ?? m.score, status: o.status ?? m.status,
+          yc: o.yellow_cards ?? m.yc, rc: o.red_cards ?? m.rc,
+          pen: o.penalties_given ?? m.pen, var: o.var_decisions ?? m.var,
+          perfectGame: o.perfect_game ?? m.perfectGame,
+          incorrectVarPen: o.incorrect_var_pen ?? m.incorrectVarPen,
+          incorrectVarRed: o.incorrect_var_red ?? m.incorrectVarRed,
+          refId: o.ref_id ?? m.refId,
+          highlightVideoId: o.highlight_video_id ?? m.highlightVideoId,
+          varVideoId: o.var_video_id ?? m.varVideoId,
+        };
+      });
+    }
     const refreshIds = MATCHES.filter(m => +m.matchweek === +currentGW).map(m => +m.id);
     await loadIncidentRatings(refreshIds);
     syncMatchStatuses();

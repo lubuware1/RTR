@@ -140,6 +140,16 @@
   .bar-fill.g{background:var(--teal);}.bar-fill.y{background:var(--yellow);}.bar-fill.r{background:var(--red);}
   .bar-val{font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:700;text-align:right;color:var(--muted);}
 
+  /* Ref stat table */
+  .ref-stat-table{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:.75rem;}
+  .ref-stat-header,.ref-stat-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;padding:4px 6px;}
+  .ref-stat-header{font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-size:.65rem;border-bottom:1px solid var(--border);}
+  .ref-stat-row{border-bottom:1px solid var(--border);color:var(--text);}
+  .ref-stat-row:last-child{border-bottom:none;}
+  .ref-stat-row span:first-child{color:var(--muted);}
+  .ref-stat-row span:not(:first-child){font-family:'Barlow Condensed',sans-serif;font-weight:700;text-align:center;}
+  .ref-stat-header span:not(:first-child){text-align:center;}
+
   /* Recent matches */
   .recent-matches-title{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:5px;}
   .recent-match-row{background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:5px 9px;display:flex;align-items:center;justify-content:space-between;font-size:.74rem;margin-bottom:3px;}
@@ -329,14 +339,15 @@ function renderRefs(){
     return 0;
   });
 
-  // League averages for metric bars
+  // League averages for metric bars — use direct stats from RTR Match Stats if available
   const lgData=REFS.map(r=>{
-    const pm=MATCHES.filter(m=>m.refId===r.id&&(m.status==='complete'||m.status==='recent'));
-    const g=r.games||pm.length||0; if(!g)return null;
+    const g=r.games||0; if(!g)return null;
+    const yc=r.overall_yel!=null?r.overall_yel:(r._yc!==undefined?r._yc:MATCHES.filter(m=>m.refId===r.id&&(m.status==='complete'||m.status==='recent')).reduce((s,m)=>s+(m.yc||0),0));
+    const rc=r.overall_red!=null?r.overall_red:(r._rc!==undefined?r._rc:MATCHES.filter(m=>m.refId===r.id&&(m.status==='complete'||m.status==='recent')).reduce((s,m)=>s+(m.rc||0),0));
+    const pen=r._pen!==undefined?r._pen:MATCHES.filter(m=>m.refId===r.id&&(m.status==='complete'||m.status==='recent')).reduce((s,m)=>s+(m.pen||0),0);
+    const varD=r._var!==undefined?r._var:MATCHES.filter(m=>m.refId===r.id&&(m.status==='complete'||m.status==='recent')).reduce((s,m)=>s+(m.var||0),0);
     return{
-      cpg:(pm.reduce((s,m)=>s+(m.yc||0),0)+pm.reduce((s,m)=>s+(m.rc||0),0))/g,
-      ppg:pm.reduce((s,m)=>s+(m.pen||0),0)/g,
-      vpg:pm.reduce((s,m)=>s+(m.var||0),0)/g,
+      cpg:(yc+rc)/g, ppg:pen/g, vpg:varD/g,
       gap:r.neutralRating!=null&&r.fanRating!=null?Math.abs(r.neutralRating-r.fanRating):null,
     };
   }).filter(Boolean);
@@ -347,9 +358,14 @@ function renderRefs(){
     vpg:avg(lgData.map(r=>r.vpg)),
     gap:avg(lgData.map(r=>r.gap).filter(v=>v!=null)),
   };
-  const allRefTotals=REFS.map(r=>{const pm=MATCHES.filter(m=>m.refId===r.id&&(m.status==='complete'||m.status==='recent'));return{cards:pm.reduce((s,m)=>s+(m.yc||0)+(m.rc||0),0),pen:pm.reduce((s,m)=>s+(m.pen||0),0),var:pm.reduce((s,m)=>s+(m.var||0),0)};});
+  const allRefTotals=REFS.map(r=>({
+    cards:(r._yc!==undefined?r._yc:0)+(r._rc!==undefined?r._rc:0),
+    pen:r._pen!==undefined?r._pen:0,
+    var:r._var!==undefined?r._var:0,
+  }));
   const metricMax={cpg:Math.max(1,...allRefTotals.map(r=>r.cards)),ppg:Math.max(1,...allRefTotals.map(r=>r.pen)),vpg:Math.max(1,...allRefTotals.map(r=>r.var)),gap:Math.max(3,...lgData.map(r=>r.gap).filter(v=>v!=null))};
   function barColor(val,avg){const t=avg*0.2;if(Math.abs(val-avg)<=t)return'y';return val>avg?'g':'r';}
+  function barFixed(val,red,yellow){if(val>=red)return'r';if(val>=yellow)return'y';return'g';}
 
   document.getElementById('refsGrid').innerHTML=sorted.map((ref,rank)=>{
     const hasN=ref.neutralRating!=null, hasF=ref.fanRating!=null;
@@ -361,20 +377,21 @@ function renderRefs(){
 
     const recentMatches=MATCHES.filter(m=>m.refId===ref.id&&m.status!=='upcoming').slice(-3);
     const playedMatches=MATCHES.filter(m=>m.refId===ref.id&&(m.status==='complete'||m.status==='recent'));
-    const totalYC=playedMatches.reduce((s,m)=>s+(m.yc||0),0);
-    const totalRC=playedMatches.reduce((s,m)=>s+(m.rc||0),0);
-    const totalPen=playedMatches.reduce((s,m)=>s+(m.pen||0),0);
-    const totalVAR=playedMatches.reduce((s,m)=>s+(m.var||0),0);
-    const g=ref.games||1;
-    const hasData=playedMatches.length>0;
-    const cpg=(totalYC+totalRC)/g;
+    const totalYC=ref.overall_yel!=null?ref.overall_yel:(ref._yc!==undefined?ref._yc:playedMatches.reduce((s,m)=>s+(m.yc||0),0));
+    const totalRC=ref.overall_red!=null?ref.overall_red:(ref._rc!==undefined?ref._rc:playedMatches.reduce((s,m)=>s+(m.rc||0),0));
+    const totalPen=ref._pen!==undefined?ref._pen:playedMatches.reduce((s,m)=>s+(m.pen||0),0);
+    const totalVAR=ref._var!==undefined?ref._var:playedMatches.reduce((s,m)=>s+(m.var||0),0);
+    const g=ref.games||playedMatches.length||1;
+    const hasData=ref.games>0||playedMatches.length>0;
     const ppg=totalPen/g;
     const vpg=totalVAR/g;
+    const yel_pg=ref.overall_yel_pg!=null?+ref.overall_yel_pg:(totalYC/g);
+    const pen_pg=ref.overall_pen_pg!=null?+ref.overall_pen_pg:ppg;
     const metrics=[
-      {lbl:'Cards Given',        hasVal:hasData, val:totalYC+totalRC, display:hasData?String(totalYC+totalRC):'—', pct:hasData?Math.min(100,((totalYC+totalRC)/metricMax.cpg)*100):50, bc:hasData?barColor(cpg,lgAvg.cpg):'y'},
-      {lbl:'Penalties Given',    hasVal:hasData, val:totalPen,        display:hasData?String(totalPen):'—',        pct:hasData?Math.min(100,(ppg/metricMax.ppg)*100):50,              bc:hasData?barColor(ppg,lgAvg.ppg):'y'},
-      {lbl:'VAR Overturned',     hasVal:hasData, val:totalVAR,        display:hasData?String(totalVAR):'—',        pct:hasData?Math.min(100,(vpg/metricMax.vpg)*100):50,              bc:hasData?barColor(vpg,lgAvg.vpg):'y'},
-      {lbl:'Fan vs Neutral Gap', hasVal:biasGap!==null, val:gapAbs,  display:biasGap!==null?gapAbs.toFixed(1):'—', pct:biasGap!==null?Math.min(100,(gapAbs/metricMax.gap)*100):50, bc:biasGap!==null?barColor(gapAbs,lgAvg.gap):'y'},
+      {lbl:'Yellows/Game',       hasVal:hasData, display:hasData?yel_pg.toFixed(2):'—', pct:hasData?Math.min(100,(yel_pg/5.0)*100):50,   bc:hasData?barFixed(yel_pg,4.0,3.0):'y'},
+      {lbl:'Penalties/Game',     hasVal:hasData, display:hasData?pen_pg.toFixed(2):'—', pct:hasData?Math.min(100,(pen_pg/0.4)*100):50,   bc:hasData?barFixed(pen_pg,0.25,0.10):'y'},
+      {lbl:'VAR Overturned/Game',hasVal:hasData, display:hasData?vpg.toFixed(2):'—',    pct:hasData?Math.min(100,(vpg/0.75)*100):50,     bc:hasData?barFixed(vpg,0.50,0.25):'y'},
+      {lbl:'Fan vs Neutral Gap', hasVal:biasGap!==null, display:biasGap!==null?gapAbs.toFixed(1):'—', pct:biasGap!==null?Math.min(100,(gapAbs/metricMax.gap)*100):50, bc:biasGap!==null?barColor(gapAbs,lgAvg.gap):'y'},
     ];
     const trendClass=hasN?(ref.neutralRating>=7?'up':ref.neutralRating>=5?'flat':'down'):'flat';
     const trendText=hasN?(ref.neutralRating>=7?'▲ Good form':ref.neutralRating>=5?'→ Average':'▼ Poor form'):'No data';
@@ -422,11 +439,23 @@ function renderRefs(){
           <div class="cat-bars">
             ${metrics.map(m=>`<div class="bar-row"><span class="bar-lbl">${m.lbl}</span><div class="bar-track"><div class="bar-fill ${m.bc}" style="width:${m.pct}%"></div></div><span class="bar-val">${m.display}</span></div>`).join('')}
           </div>
+          ${ref.overall_apps!=null?`
+          <div class="ref-stat-table">
+            <div class="ref-stat-header"><span></span><span>Overall</span><span>Home</span><span>Away</span></div>
+            <div class="ref-stat-row"><span>Apps</span><span>${ref.overall_apps??'—'}</span><span>${ref.home_apps??'—'}</span><span>${ref.away_apps??'—'}</span></div>
+            <div class="ref-stat-row"><span>Fouls/Game</span><span>${ref.overall_fouls_pg??'—'}</span><span>${ref.home_fouls_pg??'—'}</span><span>${ref.away_fouls_pg??'—'}</span></div>
+            <div class="ref-stat-row"><span>Fouls/Tackle</span><span>${ref.overall_fouls_tackles??'—'}</span><span>${ref.home_fouls_tackles??'—'}</span><span>${ref.away_fouls_tackles??'—'}</span></div>
+            <div class="ref-stat-row"><span>Pens/Game</span><span>${ref.overall_pen_pg??'—'}</span><span>${ref.home_pen_pg??'—'}</span><span>${ref.away_pen_pg??'—'}</span></div>
+            <div class="ref-stat-row"><span>Yellows</span><span>${ref.overall_yel??'—'}</span><span>${ref.home_yel??'—'}</span><span>${ref.away_yel??'—'}</span></div>
+            <div class="ref-stat-row"><span>Yellows/Game</span><span>${ref.overall_yel_pg??'—'}</span><span>${ref.home_yel_pg??'—'}</span><span>${ref.away_yel_pg??'—'}</span></div>
+            <div class="ref-stat-row"><span>Reds</span><span>${ref.overall_red??'—'}</span><span>${ref.home_red??'—'}</span><span>${ref.away_red??'—'}</span></div>
+            <div class="ref-stat-row"><span>Reds/Game</span><span>${ref.overall_red_pg??'—'}</span><span>${ref.home_red_pg??'—'}</span><span>${ref.away_red_pg??'—'}</span></div>
+          </div>`:''}
           ${recentMatches.length?`
           <div class="recent-matches-title">Recent Matches</div>
           ${recentMatches.map(m=>`
             <div class="recent-match-row">
-              <span class="rm-teams">${m.hE||''} ${m.home} <span style="color:var(--muted)">vs</span> ${m.away} ${m.aE||''}</span>
+              <span class="rm-teams">${m.home} <span style="color:var(--muted)">vs</span> ${m.away}</span>
               <span class="rm-score${m.status==='live'?' live':''}">${m.score}</span>
             </div>`).join('')}`:''}
         </div>
@@ -469,7 +498,7 @@ function skelRefCard() {
 initHeader();
 (async () => {
   document.getElementById('refsGrid').innerHTML = Array(12).fill(skelRefCard()).join('');
-  await loadFromSheets().catch(() => {});
+  await loadRefsPageData().catch(() => {});
   {
     document.getElementById('dbDot').className = 'db-dot';
     document.getElementById('dbText').textContent = 'Live data · Supabase';

@@ -12,12 +12,12 @@ const FD_API_BASE = 'https://api.football-data.org/v4';
 // Fetch PL matches for a given matchday.
 // On Netlify, routes through the serverless proxy to avoid CORS.
 // Falls back to direct API call for localhost dev.
-async function loadFromFootballData(matchday) {
+async function loadFromFootballData(matchday, comp = 'PL', season = '2025') {
   const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
   const url = isLocal
-    ? `${FD_API_BASE}/competitions/PL/matches?matchday=${matchday}&season=2025`
-    : `/.netlify/functions/fd-matches?matchday=${matchday}&season=2025`;
-  const opts = isLocal ? { headers: { 'X-Auth-Token': FOOTBALL_DATA_KEY } } : {};
+    ? `/api/fd-matches?matchday=${matchday}&season=${season}&comp=${comp}`
+    : `/.netlify/functions/fd-matches?matchday=${matchday}&season=${season}&comp=${comp}`;
+  const opts = {};
   try {
     const res = await fetch(url, opts);
     if (!res.ok) { console.warn('[RTR] FD API error:', res.status); return null; }
@@ -193,10 +193,10 @@ async function loadMatchStats() {
 }
 
 async function saveMatchStat(stat) {
-  if (PREVIEW_MODE) return true;
+  if (PREVIEW_MODE) return { ok: true, error: null };
   const { error } = await getSB().from('RTR Match Stats').upsert(stat, { onConflict: 'match_id' });
   if (error) console.error('[RTR] saveMatchStat error:', error);
-  return !error;
+  return { ok: !error, error };
 }
 
 async function saveGWConfig(gw, deadline) {
@@ -287,11 +287,13 @@ async function deleteManualBonus(id) {
 }
 
 async function loadGWConfig() {
-  if (PREVIEW_MODE) return { gw: 38, deadline: new Date(Date.now() + 86400000).toISOString(), deadlinePassed: false, status: 'upcoming' };
-  const { data } = await getSB().from('RTR Config').select('gw,deadline,status').eq('id', 1).single();
+  if (PREVIEW_MODE) return { gw: 38, comp: 'PL', season: '2025', deadline: new Date(Date.now() + 86400000).toISOString(), deadlinePassed: false, status: 'upcoming' };
+  const { data } = await getSB().from('RTR Config').select('gw,deadline,status,comp,season').eq('id', 1).single();
   if (!data) return null;
   return {
     gw: data.gw,
+    comp: data.comp || 'PL',
+    season: data.season || '2025',
     deadline: data.deadline,
     deadlinePassed: new Date() > new Date(data.deadline),
     status: data.status || 'upcoming'
@@ -701,24 +703,115 @@ function parseCSV(text) {
   });
 }
 
+function mapRef(r) {
+  return {
+    id: r.id, name: r.name, initials: r.initials,
+    nationality: r.nationality || '', age: r.age || 0,
+    fifaListed: r.fifa_listed ? 'Yes' : 'No', notes: r.notes || '',
+    games: r.overall_apps || 0, neutralRating: null, neutralVotes: 0, fanRating: null, fanVotes: 0,
+    overall_apps: r.overall_apps || null, overall_fouls_pg: r.overall_fouls_pg || null,
+    overall_fouls_tackles: r.overall_fouls_tackles || null, overall_pen_pg: r.overall_pen_pg || null,
+    overall_yel_pg: r.overall_yel_pg || null, overall_yel: r.overall_yel || null,
+    overall_red_pg: r.overall_red_pg || null, overall_red: r.overall_red || null,
+    home_apps: r.home_apps || null, home_fouls_pg: r.home_fouls_pg || null,
+    home_fouls_tackles: r.home_fouls_tackles || null, home_pen_pg: r.home_pen_pg || null,
+    home_yel_pg: r.home_yel_pg || null, home_yel: r.home_yel || null,
+    home_red_pg: r.home_red_pg || null, home_red: r.home_red || null,
+    away_apps: r.away_apps || null, away_fouls_pg: r.away_fouls_pg || null,
+    away_fouls_tackles: r.away_fouls_tackles || null, away_pen_pg: r.away_pen_pg || null,
+    away_yel_pg: r.away_yel_pg || null, away_yel: r.away_yel || null,
+    away_red_pg: r.away_red_pg || null, away_red: r.away_red || null,
+  };
+}
+
+// Used by referees.html — loads all historical data from Supabase only (no API)
+async function loadRefsPageData() {
+  try {
+    const { data: refs, error: refsErr } = await getSB().from('RTR Referees').select('*');
+    console.log('[RTR] RTR Referees query → data:', refs?.length, 'error:', refsErr);
+    if (refs?.length) { REFS = refs.map(mapRef); }
+  } catch(e) { console.warn('[RTR] REFS load failed:', e); }
+
+  await loadFixtures();
+
+  try {
+    const stats = await loadMatchStats();
+    if (stats.length) {
+      // Apply overlay to MATCHES for the entries that match Supabase fixture IDs
+      const om = Object.fromEntries(stats.map(o => [+o.match_id, o]));
+      MATCHES = MATCHES.map(m => {
+        const o = om[+m.id]; if (!o) return m;
+        return { ...m,
+          score: o.score ?? m.score, status: o.status ?? m.status,
+          yc: o.yellow_cards ?? m.yc, rc: o.red_cards ?? m.rc,
+          pen: o.penalties_given ?? m.pen, var: o.var_decisions ?? m.var,
+          perfectGame: o.perfect_game ?? m.perfectGame,
+          incorrectVarPen: o.incorrect_var_pen ?? m.incorrectVarPen,
+          incorrectVarRed: o.incorrect_var_red ?? m.incorrectVarRed,
+          refId: o.ref_id ?? m.refId,
+          highlightVideoId: o.highlight_video_id ?? m.highlightVideoId,
+          varVideoId: o.var_video_id ?? m.varVideoId,
+        };
+      });
+      // Build fixture → ref lookup from loaded fixtures
+      const fixtureRefMap = {};
+      MATCHES.forEach(m => { if (m.refId) fixtureRefMap[+m.id] = m.refId; });
+
+      // Join: RTR Match Stats.match_id → RTR Fixtures.id → RTR Fixtures.ref_id
+      const agg = {};
+      stats.forEach(s => {
+        const refId = fixtureRefMap[+s.match_id];
+        if (!refId) return;
+        if (!agg[refId]) agg[refId] = { yc:0, rc:0, pen:0, var:0, games:0 };
+        agg[refId].yc   += s.yellow_cards   || 0;
+        agg[refId].rc   += s.red_cards       || 0;
+        agg[refId].pen  += s.penalties_given || 0;
+        agg[refId].var  += s.var_decisions   || 0;
+        agg[refId].games++;
+      });
+      REFS.forEach(r => {
+        const s = agg[r.id]; if (!s) return;
+        if (!r.overall_apps) r.games = s.games;
+        r._yc   = s.yc;
+        r._rc   = s.rc;
+        r._pen  = s.pen;
+        r._var  = s.var;
+      });
+    }
+  } catch(e) { console.warn('[RTR] Stats overlay failed:', e); }
+
+  // Fetch one GW from API to build team crest map, then apply to all MATCHES
+  try {
+    const gwCfg = await loadGWConfig();
+    const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    const url = isLocal
+      ? `/api/fd-matches?matchday=${gwCfg?.gw||38}&season=${gwCfg?.season||'2025'}&comp=${gwCfg?.comp||'PL'}`
+      : `/.netlify/functions/fd-matches?matchday=${gwCfg?.gw||38}&season=${gwCfg?.season||'2025'}&comp=${gwCfg?.comp||'PL'}`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      const crestMap = {};
+      (data.matches || []).forEach(m => {
+        [m.homeTeam, m.awayTeam].forEach(t => {
+          if (!t?.crest) return;
+          if (t.shortName) crestMap[t.shortName] = t.crest;
+          if (t.name)      crestMap[t.name]      = t.crest;
+        });
+      });
+      MATCHES = MATCHES.map(m => ({
+        ...m,
+        homeCrest: crestMap[m.home] || m.homeCrest || null,
+        awayCrest: crestMap[m.away] || m.awayCrest || null,
+      }));
+    }
+  } catch(e) {}
+}
+
 async function loadFromSheets() {
   // 1. REFS from Supabase RTR Referees table (non-fatal)
   try {
     const { data: refs } = await getSB().from('RTR Referees').select('*');
-    if (refs?.length) {
-      REFS = refs.map(r => ({
-        id:          r.id,
-        name:        r.name,
-        initials:    r.initials,
-        nationality: r.nationality || '',
-        age:         r.age         || 0,
-        fifaListed:  r.fifa_listed ? 'Yes' : 'No',
-        notes:       r.notes       || '',
-        games:       0,
-        neutralRating: null, neutralVotes: 0,
-        fanRating:     null, fanVotes:     0,
-      }));
-    }
+    if (refs?.length) { REFS = refs.map(mapRef); }
   } catch(e) {
     console.warn('[RTR] Supabase REFS load failed (non-fatal):', e);
   }
@@ -730,14 +823,13 @@ async function loadFromSheets() {
     if (!gw) { console.warn('[RTR] No GW config'); return false; }
 
     // API is the primary fixture source
-    const fdMatches = await loadFromFootballData(gw);
+    const fdMatches = await loadFromFootballData(gw, gwCfg.comp, gwCfg.season);
     if (fdMatches?.length) {
       buildMatchesFromFD(fdMatches);
       console.log('[RTR] Fixtures loaded from API:', MATCHES.length, 'matches for GW', gw);
     } else {
-      // Fallback: load from Supabase Fixtures if API is unavailable
-      console.warn('[RTR] API unavailable — falling back to Supabase fixtures');
-      await loadFixtures();
+      console.warn('[RTR] API returned no matches for', gwCfg.comp, gwCfg.season, 'GW', gw);
+      MATCHES = [];
     }
 
     // 3. Overlay Supabase match stats: cards, VAR, video IDs, manual score/ref overrides
