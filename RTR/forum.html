@@ -651,8 +651,8 @@ async function savePost(category, subject, body, replyTo, matchweek) {
     user_id: currentUser.id,
     username: currentUser.username || 'User',
     category,
-    subject: subject.trim(),
-    body: body.trim(),
+    subject: cleanText(subject.trim()),
+    body: cleanText(body.trim()),
     reply_to: replyTo || null,
     matchweek: matchweek || null,
     created_at: new Date().toISOString(),
@@ -665,7 +665,7 @@ async function saveRefPost(refId, refName, body) {
   if (PREVIEW_MODE || !currentUser) return null;
   const { data, error } = await getSB().from('RTR Forum').insert({
     user_id: currentUser.id, username: currentUser.username || 'User',
-    category: 'referee', subject: refName, body: body.trim(),
+    category: 'referee', subject: refName, body: cleanText(body.trim()),
     ref_id: refId, reply_to: null, matchweek: null,
     created_at: new Date().toISOString(),
   }).select().single();

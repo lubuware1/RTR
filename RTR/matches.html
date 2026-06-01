@@ -74,7 +74,7 @@
   .ref-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;position:relative;}
   .footer-score{position:absolute;left:50%;transform:translateX(-50%);}
   .ref-info{display:flex;align-items:center;gap:8px;font-size:.82rem;}
-  .ref-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--pl-purple),#6b006b);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:var(--pl-green);flex-shrink:0;}
+  .ref-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--pl-purple),#6b006b);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:var(--pl-green);flex-shrink:0;overflow:hidden;}
   .ref-name{font-weight:600;color:var(--text);}.ref-role{font-size:.7rem;color:var(--muted);}
   .rate-ref-btn{pointer-events:auto;background:none;border:1px solid rgba(0,204,112,.45);border-radius:6px;color:var(--pl-green);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.5px;text-transform:uppercase;padding:5px 12px;cursor:pointer;transition:all .15s;}
   .rate-ref-btn:hover{background:rgba(0,204,112,.12);border-color:var(--pl-green);}
@@ -116,7 +116,7 @@
   .rp-match-meta{font-size:.7rem;color:#fff;margin-top:3px;}
   .rp-match-score{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;color:var(--pl-green);flex-shrink:0;margin-top:1px;}
   .rp-ref-row{display:flex;align-items:center;gap:8px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08);}
-  .rp-ref-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--pl-purple),#6b006b);border:1.5px solid rgba(0,255,133,.3);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.62rem;color:var(--pl-green);flex-shrink:0;}
+  .rp-ref-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--pl-purple),#6b006b);border:1.5px solid rgba(0,255,133,.3);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.62rem;color:var(--pl-green);flex-shrink:0;overflow:hidden;}
   .rp-ref-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;color:#fff;}
   .rp-ref-badge{margin-left:auto;font-family:'Barlow Condensed',sans-serif;font-size:.6rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(0,255,133,.6);background:rgba(0,255,133,.07);border:1px solid rgba(0,255,133,.2);border-radius:4px;padding:2px 7px;}
 
@@ -278,7 +278,7 @@
       <nav>
         <a href="matches.html" class="active">Matches</a>
         <a href="referees.html">Referees</a>
-        <a href="badges.html">Cards</a>
+        <a href="badges.html" class="auth-only" style="display:none">Cards</a>
         <a href="forum.html">Forum</a>
       </nav>
       <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
@@ -302,9 +302,9 @@
 <div class="mobile-nav" id="mobileNav">
   <a href="matches.html" class="active">Matches</a>
   <a href="referees.html">Referees</a>
-  <a href="badges.html">Cards</a>
+  <a href="badges.html" class="auth-only" style="display:none">Cards</a>
   <a href="forum.html" class="admin-only" style="display:none">Forum</a>
-  <a href="history.html">History</a>
+  <a href="history.html" class="auth-only" style="display:none">History</a>
 </div>
 
 <div class="container">
@@ -385,7 +385,6 @@ const TEST_FAN_VOTES = true; // random weight 13–27, unlimited re-votes
 
 // ── INIT ──────────────────────────────────────────────────
 let currentUser = getCurrentUser();
-if (!PREVIEW_MODE && !currentUser) { window.location.href = 'login.html'; }
 
 // State
 let selId=null;
@@ -412,6 +411,13 @@ const DESCS = RATING_DESCS;
 
 // ── HEADER ────────────────────────────────────────────────
 function initHeader() {
+  if (!currentUser) {
+    document.getElementById('ucName').textContent = 'Login';
+    document.getElementById('ucAvatar').textContent = '→';
+    document.getElementById('userChip').addEventListener('click', () => { window.location.href = 'login.html'; }, { once: true });
+    return;
+  }
+  document.querySelectorAll('.auth-only').forEach(el => el.style.display = '');
   const team = PL_TEAMS.find(t => t.name === currentUser?.team);
   applyUserAvatar(document.getElementById('ucAvatar'), currentUser);
   document.getElementById('ucName').textContent = currentUser?.username || 'Guest';
@@ -423,8 +429,6 @@ function initHeader() {
     const badge = document.createElement('div');
     badge.className = 'preview-badge'; badge.textContent = 'Preview Mode';
     document.getElementById('userChip').insertBefore(badge, document.getElementById('userChip').firstChild);
-  }
-  if (currentUser?.team) {
   }
 }
 
@@ -541,6 +545,7 @@ function closePanel() {
   document.getElementById('panelCloseBtn').classList.remove('visible');
   document.getElementById('panelSubtitle').textContent='Select a match to submit your rating';
   document.getElementById('ratingPanel').classList.remove('panel-open');
+  document.body.style.overflow = '';
   renderList();
 }
 
@@ -657,6 +662,7 @@ async function openPanel(mid) {
   document.getElementById('panelForm').style.display = 'block';
   document.getElementById('panelCloseBtn').classList.add('visible');
   document.getElementById('ratingPanel').classList.add('panel-open');
+  document.body.style.overflow = 'hidden';
   document.getElementById('panelSubtitle').textContent = 'Tap ✕ to close';
 
   const m = MATCHES.find(x => x.id === +mid);
@@ -672,7 +678,7 @@ async function openPanel(mid) {
         ${m.score !== '–' ? `<div class="rp-match-score">${m.score}</div>` : ''}
       </div>
       ${ref ? `<div class="rp-ref-row">
-        <div class="rp-ref-av">${ref.initials}</div>
+        <div class="rp-ref-av">${refAvatarHtml(ref)}</div>
         <span class="rp-ref-name">${ref.name}</span>
         <span class="rp-ref-badge">Referee</span>
       </div>` : `<div class="rp-ref-row">
@@ -768,6 +774,7 @@ document.getElementById('filterTabs').addEventListener('click',e=>{
 document.getElementById('incidentList').addEventListener('click', async e => {
   const btn = e.target.closest('.inc-vote-btn');
   if (!btn || btn.disabled) return;
+  if (!currentUser) { toast('Please log in to vote'); setTimeout(() => { window.location.href = 'login.html'; }, 1200); return; }
   const incidentId = btn.dataset.iid;
   const vote = btn.dataset.vote; // 'correct' or 'wrong'
 
@@ -815,7 +822,7 @@ document.getElementById('matchDiscussSend').addEventListener('click', async () =
   const linkEl = document.getElementById('matchDiscussLink');
   const body = input.value.trim();
   if (!body) return;
-  if (!currentUser?.id) { toast('Sign in to post'); return; }
+  if (!currentUser?.id) { toast('Please log in to post'); setTimeout(() => { window.location.href = 'login.html'; }, 1200); return; }
   const discussEl = document.getElementById('matchDiscuss');
   const matchTitle = discussEl.dataset.matchTitle;
   const matchweek = discussEl.dataset.matchweek ? +discussEl.dataset.matchweek : null;
@@ -904,8 +911,7 @@ initHeader();
   document.getElementById('matchList').innerHTML = Array(6).fill(skelMatchCard()).join('');
   document.getElementById('leaderboard').innerHTML = Array(5).fill(`<div class="skel-card" style="display:flex;align-items:center;gap:12px"><div class="skel skel-circle" style="width:28px;height:28px;flex-shrink:0"></div><div style="flex:1"><div class="skel skel-line" style="width:60%;margin-bottom:6px"></div><div class="skel skel-line" style="width:40%"></div></div><div class="skel skel-line" style="width:32px;height=20px;border-radius:6px"></div></div>`).join('');
   if (!PREVIEW_MODE) {
-    const valid = await checkAuth();
-    if (!valid) { window.location.href = 'login.html'; return; }
+    await checkAuth().catch(() => {});
     currentUser = getCurrentUser();
   }
   const gwConfig = await loadGWConfig();

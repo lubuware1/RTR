@@ -149,6 +149,36 @@ async function loadUserVotes(userId, matchIds) {
   return new Set((data || []).map(v => v.match_id));
 }
 
+// ── PROFANITY FILTER ─────────────────────────────────────
+const _badWords = [
+  'fuck','fucking','fucker','fucks','f\\*ck',
+  'shit','shitting','shitter','shits','sh\\*t',
+  'cunt','cunts',
+  'bitch','bitches','bitching',
+  'bastard','bastards',
+  'asshole','assholes','arsehole','arseholes',
+  'cock','cocks','cockhead',
+  'dick','dicks','dickhead',
+  'piss','pissed','pisser',
+  'twat','twats',
+  'wanker','wankers','wank',
+  'bollocks','bollock',
+  'prick','pricks',
+  'slut','sluts',
+  'whore','whores',
+  'nigger','niggers','nigga',
+  'faggot','faggots',
+  'retard','retards',
+];
+const _profanityRe = new RegExp(`(${_badWords.join('|')})`, 'gi');
+function cleanText(text) {
+  if (!text) return text;
+  return text
+    .replace(/[@4]/g, 'a').replace(/[3]/g, 'e').replace(/[!1|]/g, 'i')
+    .replace(/[0]/g, 'o').replace(/[5$]/g, 's').replace(/[+]/g, 't')
+    .replace(_profanityRe, m => '*'.repeat(m.length));
+}
+
 async function saveVoteToDB(voteData) {
   if (PREVIEW_MODE) return true;
   await getSB().from('RTR Votes').delete().eq('user_id', voteData.user_id).eq('match_id', voteData.match_id);
@@ -703,12 +733,21 @@ function parseCSV(text) {
   });
 }
 
+function refAvatarHtml(ref, size = 28) {
+  if (ref?.photo_url) {
+    return `<img src="${ref.photo_url}" alt="${ref.initials||''}" style="width:100%;height:100%;object-fit:cover;object-position:top center;" onerror="this.outerHTML='${ref.initials||''}'">`;
+  }
+  return ref?.initials || '';
+}
+
 function mapRef(r) {
   return {
     id: r.id, name: r.name, initials: r.initials,
     nationality: r.nationality || '', age: r.age || 0,
     fifaListed: r.fifa_listed ? 'Yes' : 'No', notes: r.notes || '',
     games: r.overall_apps || 0, neutralRating: null, neutralVotes: 0, fanRating: null, fanVotes: 0,
+    photo_url: r.photo_url || null, hero_photo_url: r.hero_photo_url || null, bio: r.bio || null,
+    hero_photo_position: r.hero_photo_position || null,
     overall_apps: r.overall_apps || null, overall_fouls_pg: r.overall_fouls_pg || null,
     overall_fouls_tackles: r.overall_fouls_tackles || null, overall_pen_pg: r.overall_pen_pg || null,
     overall_yel_pg: r.overall_yel_pg || null, overall_yel: r.overall_yel || null,
@@ -759,6 +798,8 @@ async function loadRefsPageData() {
 
       // Join: RTR Match Stats.match_id → RTR Fixtures.id → RTR Fixtures.ref_id
       const agg = {};
+      const refMatchHistory = {};
+      const fixtureMap = Object.fromEntries(MATCHES.map(m => [+m.id, m]));
       stats.forEach(s => {
         const refId = fixtureRefMap[+s.match_id];
         if (!refId) return;
@@ -768,6 +809,13 @@ async function loadRefsPageData() {
         agg[refId].pen  += s.penalties_given || 0;
         agg[refId].var  += s.var_decisions   || 0;
         agg[refId].games++;
+        if (!refMatchHistory[refId]) refMatchHistory[refId] = [];
+        const fix = fixtureMap[+s.match_id];
+        refMatchHistory[refId].push({
+          matchweek: fix?.matchweek || 0,
+          home: fix?.home || '', away: fix?.away || '',
+          yc: s.yellow_cards || 0, rc: s.red_cards || 0, pen: s.penalties_given || 0,
+        });
       });
       REFS.forEach(r => {
         const s = agg[r.id]; if (!s) return;
@@ -776,6 +824,8 @@ async function loadRefsPageData() {
         r._rc   = s.rc;
         r._pen  = s.pen;
         r._var  = s.var;
+        const history = refMatchHistory[r.id] || [];
+        r._last3 = history.sort((a,b) => b.matchweek - a.matchweek).slice(0, 3);
       });
     }
   } catch(e) { console.warn('[RTR] Stats overlay failed:', e); }
@@ -949,7 +999,7 @@ const SHARED_CSS = `
   /* ── MOBILE NAV ─────────────────────────────────────────── */
   .hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:6px;}
   .hamburger span{display:block;width:22px;height:2px;background:var(--text);border-radius:2px;transition:all .2s;}
-  .mobile-nav{display:none;position:fixed;top:60px;left:0;right:0;background:linear-gradient(135deg,#37003c 0%,#1a0020 100%);border-bottom:2px solid var(--pl-green);z-index:99;padding:12px 16px;flex-direction:column;gap:4px;}
+  .mobile-nav{display:none;position:fixed;top:60px;left:0;right:0;background:linear-gradient(135deg,#37003c 0%,#1a0020 100%);border-bottom:2px solid var(--pl-green);z-index:300;padding:12px 16px;flex-direction:column;gap:4px;}
   .mobile-nav a{color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:600;letter-spacing:.5px;text-transform:uppercase;padding:10px 14px;border-radius:6px;text-decoration:none;display:block;border:1px solid transparent;}
   .mobile-nav a.active,.mobile-nav a:hover{background:rgba(0,255,133,.1);border-color:var(--pl-green);color:var(--pl-green);}
   .mobile-nav.open{display:flex;}

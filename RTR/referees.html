@@ -86,7 +86,8 @@
   .rpc-head{display:grid;grid-template-columns:28px 36px 1fr 72px 72px 48px 18px;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;user-select:none;}
   .rpc-rank{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:.9rem;color:var(--muted);text-align:center;}
   .rpc-rank.top{color:var(--pl-green);}
-  .rpc-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#37003c,#6b0080);border:1.5px solid rgba(0,204,112,.3);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:.75rem;color:var(--pl-green);flex-shrink:0;}
+  .rpc-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#37003c,#6b0080);border:1.5px solid rgba(0,204,112,.3);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:.75rem;color:var(--pl-green);flex-shrink:0;overflow:hidden;}
+  .rpc-av img{width:100%;height:100%;object-fit:cover;object-position:top center;}
   .rpc-info{min-width:0;}
   .rpc-name{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .rpc-meta{font-size:.68rem;color:var(--muted);margin-top:1px;}
@@ -254,12 +255,21 @@
   </div>
 
   <div class="refs-controls">
-    <span class="refs-controls-label">Sort:</span>
-    <button class="sort-btn active" data-sort="neutral">Neutral</button>
-    <button class="sort-btn fan-sort" data-sort="fan">Fan</button>
-    <button class="sort-btn" data-sort="games">Games</button>
-    <button class="sort-btn" data-sort="votes">Votes</button>
-    <button class="sort-btn" data-sort="bias">Bias Gap</button>
+    <span class="refs-controls-label">Sort by:</span>
+    <select id="refSortSelect" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.85rem;padding:6px 12px;cursor:pointer;">
+      <option value="neutral">Neutral Rating</option>
+      <option value="fan">Fan Rating</option>
+      <option value="name">Referee (A–Z)</option>
+      <option value="games">Games Played</option>
+      <option value="votes">Most Votes</option>
+      <option value="bias">Fan vs Neutral Gap</option>
+      <option value="yel_pg">Yellows / Game</option>
+      <option value="yel">Total Yellows</option>
+      <option value="red_pg">Reds / Game</option>
+      <option value="red">Total Reds</option>
+      <option value="pen_pg">Penalties / Game</option>
+      <option value="var">VAR Decisions</option>
+    </select>
   </div>
 
   <div class="refs-col-heads">
@@ -279,7 +289,6 @@
 <script src="shared.js"></script>
 <script>
 const currentUser = getCurrentUser();
-if (!PREVIEW_MODE && !currentUser) { window.location.href = 'login.html'; }
 
 let refSort = 'neutral';
 
@@ -287,6 +296,12 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 
 // Header init
 function initHeader(){
+  if (!currentUser) {
+    document.getElementById('ucName').textContent = 'Login';
+    document.getElementById('ucAvatar').textContent = '→';
+    document.getElementById('userChip').addEventListener('click', () => { window.location.href = 'login.html'; }, { once: true });
+    return;
+  }
   const team=PL_TEAMS.find(t=>t.name===currentUser?.team);
   applyUserAvatar(document.getElementById('ucAvatar'), currentUser);
   document.getElementById('ucName').textContent=currentUser?.username||'Guest';
@@ -320,21 +335,23 @@ function renderRefs(){
   document.getElementById('statAvg').textContent=avgScore>0?avgScore.toFixed(1):'–';
 
   // Sort
+  const nullLast=(a,b,fn)=>{const av=fn(a),bv=fn(b);if(av==null&&bv==null)return 0;if(av==null)return 1;if(bv==null)return -1;return bv-av;};
   const sorted=[...REFS].sort((a,b)=>{
-    if(refSort==='neutral'){
-      if(a.neutralRating==null&&b.neutralRating==null)return 0;if(a.neutralRating==null)return 1;if(b.neutralRating==null)return -1;
-      return b.neutralRating-a.neutralRating;
-    }
-    if(refSort==='fan'){
-      if(a.fanRating==null&&b.fanRating==null)return 0;if(a.fanRating==null)return 1;if(b.fanRating==null)return -1;
-      return b.fanRating-a.fanRating;
-    }
-    if(refSort==='games')return b.games-a.games;
-    if(refSort==='votes')return(b.neutralVotes+b.fanVotes)-(a.neutralVotes+a.fanVotes);
+    if(refSort==='neutral') return nullLast(a,b,r=>r.neutralRating);
+    if(refSort==='fan')     return nullLast(a,b,r=>r.fanRating);
+    if(refSort==='name')    return a.name.localeCompare(b.name);
+    if(refSort==='games')   return b.games-a.games;
+    if(refSort==='votes')   return(b.neutralVotes+b.fanVotes)-(a.neutralVotes+a.fanVotes);
+    if(refSort==='yel_pg')  return nullLast(a,b,r=>r.overall_yel_pg!=null?+r.overall_yel_pg:null);
+    if(refSort==='yel')     return(b.overall_yel||0)-(a.overall_yel||0);
+    if(refSort==='red_pg')  return nullLast(a,b,r=>r.overall_red_pg!=null?+r.overall_red_pg:null);
+    if(refSort==='red')     return(b.overall_red||0)-(a.overall_red||0);
+    if(refSort==='pen_pg')  return nullLast(a,b,r=>r.overall_pen_pg!=null?+r.overall_pen_pg:null);
+    if(refSort==='var')     return(b._var||0)-(a._var||0);
     if(refSort==='bias'){
-      const gA=a.neutralRating!=null&&a.fanRating!=null?Math.abs(a.neutralRating-a.fanRating):0;
-      const gB=b.neutralRating!=null&&b.fanRating!=null?Math.abs(b.neutralRating-b.fanRating):0;
-      return gB-gA;
+      const gA=a.neutralRating!=null&&a.fanRating!=null?Math.abs(a.neutralRating-a.fanRating):null;
+      const gB=b.neutralRating!=null&&b.fanRating!=null?Math.abs(b.neutralRating-b.fanRating):null;
+      return nullLast(a,b,()=>null)||(gB-gA);
     }
     return 0;
   });
@@ -399,7 +416,7 @@ function renderRefs(){
     return`<div class="rpc" data-ref-id="${ref.id}">
       <div class="rpc-head">
         <div class="rpc-rank${rank<3?' top':''}">${rank+1}</div>
-        <div class="rpc-av">${ref.initials}</div>
+        <div class="rpc-av">${refAvatarHtml(ref)}</div>
         <div class="rpc-info">
           <div class="rpc-name">${ref.name}</div>
           <div class="rpc-meta">${ref.nationality||'English'}${ref.fifaListed==='Yes'?' · FIFA':''} · ${ref.games} games</div>
@@ -439,6 +456,18 @@ function renderRefs(){
           <div class="cat-bars">
             ${metrics.map(m=>`<div class="bar-row"><span class="bar-lbl">${m.lbl}</span><div class="bar-track"><div class="bar-fill ${m.bc}" style="width:${m.pct}%"></div></div><span class="bar-val">${m.display}</span></div>`).join('')}
           </div>
+          ${ref._last3?.length?`
+          <div class="recent-matches-title" style="margin-top:10px;">Last ${ref._last3.length} Game${ref._last3.length>1?'s':''}</div>
+          <div class="ref-stat-table">
+            <div class="ref-stat-header"><span>Match</span><span>YC</span><span>RC</span><span>Pen</span></div>
+            ${ref._last3.map(m=>`<div class="ref-stat-row" style="grid-template-columns:1fr auto auto auto;">
+              <span style="color:var(--text);font-size:.75rem;">${m.home} vs ${m.away}</span>
+              <span style="color:var(--yellow)">${m.yc}</span>
+              <span style="color:var(--red)">${m.rc}</span>
+              <span>${m.pen}</span>
+            </div>`).join('')}
+          </div>`:''}
+
           ${ref.overall_apps!=null?`
           <div class="ref-stat-table">
             <div class="ref-stat-header"><span></span><span>Overall</span><span>Home</span><span>Away</span></div>
@@ -456,24 +485,20 @@ function renderRefs(){
           ${recentMatches.map(m=>`
             <div class="recent-match-row">
               <span class="rm-teams">${m.home} <span style="color:var(--muted)">vs</span> ${m.away}</span>
-              <span class="rm-score${m.status==='live'?' live':''}">${m.score}</span>
+              <span class="rm-score">${m.score}</span>
             </div>`).join('')}`:''}
         </div>
         <div class="rpc-footer">
           <span class="rpc-games"><strong>${ref.games}</strong> games this season</span>
-          <span class="rpc-trend ${trendClass}">${trendText}</span>
+          <a href="referee.html?id=${ref.id}" style="font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;color:var(--pl-green);letter-spacing:.5px;text-transform:uppercase;" onclick="event.stopPropagation()">View Profile →</a>
         </div>
       </div></div>
     </div>`;
   }).join('');
 }
 
-// Sort buttons
-document.querySelector('.refs-controls').addEventListener('click',e=>{
-  const btn=e.target.closest('[data-sort]');if(!btn)return;
-  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  refSort=btn.dataset.sort;
+document.getElementById('refSortSelect').addEventListener('change',e=>{
+  refSort=e.target.value;
   renderRefs();
 });
 
