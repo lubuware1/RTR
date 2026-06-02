@@ -316,7 +316,7 @@
       <button class="view-tab" data-filter="live">Live</button>
       <button class="view-tab" data-filter="recent">Recent</button>
     </div>
-    <div class="ad-banner" style="margin-top:10px;"><span class="ad-banner-label">Advertisement</span><img src="CSV/Bet36.png" alt="Bet365" style="position:absolute;inset:0;width:100%;height:100%;object-fit:none;object-position:center top;opacity:.85;"></div>
+
     <div class="section-title" id="matchSectionTitle">Premier League · Matchweek 1</div>
     <div id="matchList"></div>
   </div>
@@ -482,7 +482,6 @@ function renderList() {
   if (!list.length) { el.innerHTML='<div class="empty-state"><div class="icon">📋</div><p>No matches</p></div>'; return; }
   const logoSrc = 'images/logos/ref_rater_logo_green_a.svg';
   const logoRepeat = Array(8).fill(`<img src="${logoSrc}" alt="RefRater">`).join('');
-  const adBanner = `<div class="ad-banner"><span class="ad-banner-label">Advertisement</span><div class="ad-banner-scroll"><div class="ad-banner-track">${logoRepeat}${logoRepeat}</div></div></div>`;
   const cards = list.map(m => {
     const ref = REFS.find(r=>r.id===+m.refId);
     const live=m.status==='live', up=m.status==='upcoming', fan=isFanMatch(m,currentUser);
@@ -526,9 +525,6 @@ function renderList() {
       </div>
     </div>`;
   });
-  // Inject ad banners after card 3 and card 7 (if the list is long enough)
-  if (cards.length > 3)  cards.splice(3,  0, adBanner);
-  if (cards.length > 8)  cards.splice(8,  0, adBanner);
   el.innerHTML = cards.join('');
 }
 
