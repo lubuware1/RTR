@@ -589,8 +589,8 @@ async function loadAndRenderInline(mid) {
   const el = getInlineEl(mid);
   if (!el || !el.classList.contains('open')) return;
   const m = MATCHES.find(x => x.id === +mid);
-  const ref = REFS.find(r => r.id === +m?.refId);
-  if (!m || !ref) return;
+  if (!m) { el.innerHTML = ''; return; }
+  const ref = REFS.find(r => +r.id === +m.refId) || null;
   const isUpcoming = m.status === 'upcoming' && !TEST_FAN_VOTES;
   if (!isUpcoming) {
     matchIncidents = await loadIncidents(mid);
@@ -650,8 +650,8 @@ function renderInlinePanel(mid, m, ref, isUpcoming) {
 
   el.innerHTML = `
     <div class="inline-ref-bar">
-      <div class="rcard-av" style="width:36px;height:36px;font-size:.85rem;flex-shrink:0">${ref.initials}</div>
-      <div style="flex:1"><div class="rcard-name">${ref.name}</div><div class="rcard-meta">${ref.nationality}</div></div>
+      <div class="rcard-av" style="width:36px;height:36px;font-size:.85rem;flex-shrink:0;overflow:hidden">${ref ? refAvatarHtml(ref, 36) : '?'}</div>
+      <div style="flex:1"><div class="rcard-name">${ref ? ref.name : 'Referee TBC'}</div><div class="rcard-meta">${ref ? (ref.nationality||'') : ''}</div></div>
     </div>
     ${!isUpcoming?`<div class="inline-score-tiles">${scoreTile(nScore,nVotes,'n')}${scoreTile(fScore,fVotes,'f')}</div>`:''}
     ${!isUpcoming?`<div style="padding:10px 16px 0"><button class="inc-flag-btn" data-flag-mid="${mid}">⚑ Flag an Incorrect Decision</button></div>`:''}
