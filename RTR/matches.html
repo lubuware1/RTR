@@ -1002,6 +1002,27 @@ initHeader();
     const refreshIds = MATCHES.filter(m => +m.matchweek === +currentGW).map(m => +m.id);
     await loadIncidentRatings(refreshIds);
     syncMatchStatuses();
+    // If a panel is open for a live/complete match, re-fetch its incidents so new decisions appear
+    if (selId) {
+      const openMatch = MATCHES.find(x => x.id === +selId);
+      if (openMatch && openMatch.status !== 'upcoming') {
+        try {
+          const freshIncidents = await loadIncidents(selId);
+          if (freshIncidents.length !== matchIncidents.length) {
+            const ids = freshIncidents.map(i => i.id);
+            const [voteSplit, myVotes] = await Promise.all([
+              loadIncidentVotes(ids),
+              TEST_FAN_VOTES ? Promise.resolve({}) : loadMyIncidentVotes(currentUser?.id, ids),
+            ]);
+            matchIncidents = freshIncidents;
+            incidentVoteTotals = voteSplit;
+            Object.assign(myIncidentVotes, myVotes);
+            drumState.incidents = freshIncidents;
+            drumState._N = freshIncidents.length;
+          }
+        } catch(e) {}
+      }
+    }
     renderList();
     reopenInlineAfterRender();
     renderLb();
