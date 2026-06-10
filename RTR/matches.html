@@ -144,7 +144,7 @@
   .inc-pregame-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;margin-bottom:4px;}
   .inc-pregame-sub{font-size:.78rem;color:var(--muted);}
   /* Incorrect Decision button */
-  .inc-flag-btn{width:100%;background:rgba(139,0,139,.1);border:1.5px solid rgba(139,0,139,.4);border-radius:10px;padding:14px 16px;color:rgba(200,100,200,.95);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;}
+  .inc-flag-btn{width:100%;background:rgba(139,0,139,.1);border:1.5px solid rgba(139,0,139,.4);border-radius:10px;padding:13px 16px;color:rgba(200,100,200,.95);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:0;}
   .inc-flag-btn:hover{background:rgba(139,0,139,.2);border-color:rgba(139,0,139,.7);}
   .inc-flag-btn:disabled{opacity:.45;cursor:not-allowed;}
   /* Incident cards */
@@ -246,13 +246,76 @@
   html:not([data-theme="dark"]) .team span { color: var(--muted); }
   html:not([data-theme="dark"]) .ref-name { color: var(--muted); }
   html:not([data-theme="dark"]) .lb-ref-name { color: var(--muted); }
+  html:not([data-theme="dark"]) .drum-outer{background:linear-gradient(180deg,var(--surface2) 0%,var(--surface) 35%,var(--surface) 65%,var(--surface2) 100%);border-color:var(--border);box-shadow:0 2px 12px rgba(0,0,0,.07);}
+  html:not([data-theme="dark"]) .drum-viewport::before{background:linear-gradient(to bottom,var(--surface2) 0%,transparent 100%);}
+  html:not([data-theme="dark"]) .drum-viewport::after{background:linear-gradient(to top,var(--surface2) 0%,transparent 100%);}
+  html:not([data-theme="dark"]) .drum-face-type{color:var(--text);text-shadow:none;}
+  html:not([data-theme="dark"]) .drum-face-detail{color:var(--muted);}
+  html:not([data-theme="dark"]) .drum-face-outcome{text-shadow:none;}
+  html:not([data-theme="dark"]) .drum-controls{background:var(--surface2);border-top-color:var(--border);}
+  html:not([data-theme="dark"]) .drum-arrow{background:var(--surface);border-color:var(--border);color:var(--muted);}
+  html:not([data-theme="dark"]) .drum-hint{color:var(--muted);opacity:.5;}
+  html:not([data-theme="dark"]) .drum-voted-pill.v-correct{background:rgba(0,153,96,.1);color:var(--green);border-color:rgba(0,153,96,.25);}
+  html:not([data-theme="dark"]) .drum-voted-pill.v-wrong{background:rgba(139,0,139,.08);color:#8b008b;border-color:rgba(139,0,139,.2);}
 
+  /* ── INLINE EXPANSION ───────────────────────────────────── */
+  .match-card.selected{transform:none !important;}
+  .match-inline-panel{pointer-events:auto;display:none;border-top:1px solid var(--border);background:var(--surface2);}
+  .match-inline-panel.open{display:block;animation:fadeSlide .2s ease;}
+  @keyframes fadeSlide{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+  .inline-ref-bar{display:flex;align-items:center;gap:10px;padding:12px 16px 0;}
+  .inline-score-tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 16px 0;}
+  .inline-discuss{padding:12px 16px 14px;}
+  .inline-discuss-label{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  .inline-discuss-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:'Barlow',sans-serif;font-size:.85rem;resize:none;min-height:60px;box-sizing:border-box;transition:border-color .2s;}
+  .inline-discuss-input:focus{outline:none;border-color:rgba(0,255,133,.4);}
+  .inline-discuss-send{margin-top:8px;background:var(--pl-green);color:#fff;border:none;border-radius:7px;padding:8px 16px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.82rem;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:opacity .15s;}
+  .inline-discuss-send:hover{opacity:.85;}
+  .inline-discuss-send:disabled{opacity:.45;cursor:not-allowed;}
+  .inline-discuss-link{margin-top:6px;font-size:.72rem;color:var(--muted);}
+  .inline-discuss-link a{color:var(--pl-green);text-decoration:none;}
+  /* ── DRUM REEL ──────────────────────────────────────────── */
+  .drum-section{padding:12px 16px 0;}
+  .drum-section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .drum-section-lbl{font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+  .drum-counter{font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:700;color:var(--pl-green);}
+  .drum-outer{border:1px solid rgba(0,255,133,.2);border-radius:12px;overflow:hidden;position:relative;background:linear-gradient(180deg,#1a0525 0%,#0e0018 35%,#0e0018 65%,#1a0525 100%);box-shadow:0 4px 24px rgba(0,0,0,.35),0 0 0 1px rgba(255,255,255,.04) inset;}
+  .drum-viewport{height:156px;overflow:hidden;position:relative;cursor:grab;touch-action:pan-x;perspective:400px;perspective-origin:50% 50%;}
+  .drum-viewport:active{cursor:grabbing;}
+  .drum-viewport::before,.drum-viewport::after{content:'';position:absolute;left:0;right:0;height:52px;z-index:4;pointer-events:none;}
+  .drum-viewport::before{top:0;background:linear-gradient(to bottom,#0e0018 0%,rgba(14,0,24,.6) 60%,transparent 100%);}
+  .drum-viewport::after{bottom:0;background:linear-gradient(to top,#0e0018 0%,rgba(14,0,24,.6) 60%,transparent 100%);}
+  .drum-center-highlight{position:absolute;top:50%;left:0;right:0;height:52px;transform:translateY(-50%);border-top:1.5px solid rgba(0,255,133,.4);border-bottom:1.5px solid rgba(0,255,133,.4);background:rgba(0,255,133,.06);z-index:3;pointer-events:none;box-shadow:0 0 20px rgba(0,255,133,.1) inset;}
+  .drum-face{position:absolute;left:0;right:0;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 48px 0 16px;gap:2px;will-change:transform,opacity;backface-visibility:hidden;}
+  .drum-face-type{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.05rem;text-transform:uppercase;letter-spacing:.5px;text-align:center;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.4);}
+  .drum-face-detail{font-size:.77rem;color:rgba(255,255,255,.5);text-align:center;}
+  .drum-face-outcome{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.82rem;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,.3);}
+  .drum-voted-pill{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:.62rem;font-weight:700;font-family:'Barlow Condensed',sans-serif;padding:2px 7px;border-radius:4px;letter-spacing:.3px;text-transform:uppercase;}
+  .drum-voted-pill.v-correct{background:rgba(0,255,133,.15);color:#37efba;border:1px solid rgba(0,255,133,.35);}
+  .drum-voted-pill.v-wrong{background:rgba(200,64,200,.15);color:rgba(230,150,230,.95);border:1px solid rgba(200,64,200,.35);}
+  .drum-controls{display:flex;align-items:center;justify-content:center;gap:10px;padding:8px 16px;border-top:1px solid rgba(255,255,255,.05);background:rgba(14,0,24,.5);}
+  .drum-arrows{display:flex;gap:8px;}
+  .drum-arrow{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:6px;width:36px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,.35);font-size:.8rem;transition:all .15s;flex-shrink:0;}
+  .drum-arrow:hover:not([disabled]){border-color:rgba(0,255,133,.5);color:var(--pl-green);background:rgba(0,255,133,.08);}
+  .drum-arrow[disabled]{opacity:.18;cursor:default;pointer-events:none;}
+  .drum-hint{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:rgba(255,255,255,.2);}
+  /* ── VOTE BUTTONS (prominent, below drum) ── */
+  .drum-vote-section{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 16px 4px;}
+  .drum-vote-btn{border-radius:10px;padding:15px 10px 13px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:5px;border:2px solid;}
+  .drum-vote-btn .dvb-icon{font-size:1.6rem;line-height:1;transition:transform .2s;}
+  .drum-vote-btn:hover:not(:disabled) .dvb-icon{transform:scale(1.15);}
+  .drum-vote-btn.correct{background:rgba(0,153,96,.07);border-color:rgba(0,153,96,.28);color:var(--green);}
+  .drum-vote-btn.correct:hover:not(:disabled){background:rgba(0,153,96,.14);border-color:rgba(0,153,96,.6);}
+  .drum-vote-btn.correct.active{background:var(--green);border-color:var(--green);color:#fff;box-shadow:0 4px 20px rgba(0,153,96,.4);}
+  .drum-vote-btn.correct.active .dvb-icon{transform:scale(1.1);}
+  .drum-vote-btn.wrong{background:rgba(139,0,139,.07);border-color:rgba(139,0,139,.28);color:rgba(200,100,200,.95);}
+  .drum-vote-btn.wrong:hover:not(:disabled){background:rgba(139,0,139,.14);border-color:rgba(139,0,139,.6);}
+  .drum-vote-btn.wrong.active{background:#8b008b;border-color:#8b008b;color:#fff;box-shadow:0 4px 20px rgba(139,0,139,.4);}
+  .drum-vote-btn.wrong.active .dvb-icon{transform:scale(1.1);}
+  .drum-vote-btn:disabled{opacity:.3;cursor:not-allowed;}
   /* ── MOBILE ─────────────────────────────────────────────── */
   @media(max-width:768px){
     .container{grid-template-columns:1fr;padding:12px;}
-    .rating-panel{position:fixed;bottom:0;left:0;right:0;top:auto;border-radius:16px 16px 0 0;max-height:90vh;overflow-y:auto;z-index:200;transform:translateY(100%);transition:transform .3s ease;border-left:none;border-right:none;border-bottom:none;}
-    .rating-panel.panel-open{transform:translateY(0);}
-    .panel-close-btn{display:block !important;}
     .leaderboard{margin-top:0;}
     .match-body{grid-template-columns:1fr auto 1fr;gap:6px;}
     .team{font-size:.88rem;}
@@ -315,48 +378,6 @@
     <div id="matchList"></div>
   </div>
   <div>
-    <div class="rating-panel" id="ratingPanel">
-      <div class="panel-head">
-        <div class="panel-head-text"><h2>Rate the Referee</h2><p id="panelSubtitle">Select a match to submit your rating</p></div>
-        <button class="panel-close-btn" id="panelCloseBtn" title="Close">✕</button>
-      </div>
-      <div class="panel-body">
-        <div class="empty-state" id="panelEmpty">
-          <img class="empty-state-img" src="CSV/image__5_-removebg-preview.png" alt="">
-          <p>Pick a match to rate the referee after kick off</p>
-        </div>
-        <div id="panelForm" style="display:none">
-          <div class="sel-match-info" id="panelMatchInfo"></div>
-          <div class="rcard" id="panelRefCard"></div>
-          <!-- Incident-driven score -->
-          <div class="inc-score-block">
-            <div class="inc-dual-scores">
-              <div class="inc-score-tile">
-                <div class="inc-tile-label nl">Neutral Rating</div>
-                <div class="inc-tile-val" id="incScoreNeutralVal">–</div>
-                <div class="inc-tile-sub" id="incScoreNeutralSub"></div>
-              </div>
-              <div class="inc-score-tile">
-                <div class="inc-tile-label fl">Fan Rating</div>
-                <div class="inc-tile-val" id="incScoreFanVal">–</div>
-                <div class="inc-tile-sub" id="incScoreFanSub"></div>
-              </div>
-            </div>
-          </div>
-          <!-- Incorrect Decision button + Incidents panel -->
-          <button class="inc-flag-btn" id="incFlagBtn">⚑ Incorrect Decision</button>
-          <div class="inc-section-label" id="incSectionLabel" style="display:none">Decisions</div>
-          <div id="incidentList"></div>
-          <!-- Match discussion -->
-          <div class="match-discuss" id="matchDiscuss" style="display:none">
-            <div class="match-discuss-label">💬 Match Discussion</div>
-            <textarea class="match-discuss-input" id="matchDiscussInput" placeholder="Share your thoughts on this match…" rows="3" maxlength="1000"></textarea>
-            <button class="match-discuss-send" id="matchDiscussSend">Post to Forum</button>
-            <div class="match-discuss-link" id="matchDiscussLink"></div>
-          </div>
-        </div>
-      </div>
-    </div>
     <div class="leaderboard">
       <div class="lb-header"><span>⭐ Ref Rankings · Premier League</span>
         <div class="lb-tabs">
@@ -494,6 +515,7 @@ function renderList() {
           <div class="vote-bucket fb"><div><div class="vb-label fl">Fan</div><div class="vb-stars">${fStars}</div></div><div><div class="vb-score ${hasF?'fs':'na'}">${hasF?ref.fanRating.toFixed(1):'–'}</div><div class="vb-count">${ref.fanVotes} votes</div></div></div>
         </div>`:''}
       </div>
+      <div class="match-inline-panel" id="inline-${m.id}"></div>
     </div>`;
   });
   // Inject ad banners after card 3 and card 7 (if the list is long enough)
@@ -502,206 +524,292 @@ function renderList() {
   el.innerHTML = cards.join('');
 }
 
-// ── PANEL ─────────────────────────────────────────────────
-function closePanel() {
-  selId=null;
-  matchIncidents=[]; incidentVoteTotals={ neutral:{}, fan:{} }; myIncidentVotes={};
-  document.getElementById('incSectionLabel').style.display='none';
-  document.getElementById('incFlagBtn').disabled=false;
-  const _dd = document.getElementById('matchDiscuss');
-  if (_dd) { _dd.style.display='none'; document.getElementById('matchDiscussInput').value=''; document.getElementById('matchDiscussLink').innerHTML=''; }
-  document.getElementById('panelEmpty').style.display='block';
-  document.getElementById('panelForm').style.display='none';
-  document.getElementById('panelCloseBtn').classList.remove('visible');
-  document.getElementById('panelSubtitle').textContent='Select a match to submit your rating';
-  document.getElementById('ratingPanel').classList.remove('panel-open');
-  renderList();
+// ── INLINE PANEL STATE ───────────────────────────────────
+let matchIncidents = [];
+let incidentVoteTotals = { neutral: {}, fan: {} };
+let myIncidentVotes = {};
+let drumState = { index: 0, incidents: [], myVotes: {}, mid: null, _updateFaces: null, _syncUI: null, _N: 0 };
+
+function getInlineEl(mid) { return document.getElementById(`inline-${mid}`); }
+
+function closeInline(silent = false) {
+  if (!selId) return;
+  const el = getInlineEl(selId);
+  if (el) el.classList.remove('open');
+  selId = null;
+  matchIncidents = []; incidentVoteTotals = { neutral:{}, fan:{} }; myIncidentVotes = {};
+  drumState = { index:0, incidents:[], myVotes:{}, mid:null, _updateFaces:null, _syncUI:null, _N:0 };
+  if (!silent) renderList();
 }
 
-document.getElementById('panelCloseBtn').addEventListener('click', closePanel);
+async function toggleInline(mid) {
+  if (selId === mid) { closeInline(); return; }
+  if (selId) { const prev = getInlineEl(selId); if (prev) prev.classList.remove('open'); selId = null; }
+  selId = mid;
+  renderList();
+  const el = getInlineEl(mid);
+  if (!el) return;
+  el.classList.add('open');
+  el.innerHTML = `<div style="padding:16px;color:var(--muted);font-size:.82rem;text-align:center">Loading…</div>`;
+  await loadAndRenderInline(mid);
+}
 
-// ── INCIDENT VOTING STATE ─────────────────────────────────
-let matchIncidents = []; // incidents for current open match
-let incidentVoteTotals = { neutral: {}, fan: {} }; // split by vote type
-let myIncidentVotes = {}; // { incidentId: { vote, created_at } }
+async function loadAndRenderInline(mid) {
+  const el = getInlineEl(mid);
+  if (!el || !el.classList.contains('open')) return;
+  const m = MATCHES.find(x => x.id === +mid);
+  const ref = REFS.find(r => r.id === +m?.refId);
+  if (!m || !ref) return;
+  const isUpcoming = m.status === 'upcoming' && !TEST_FAN_VOTES;
+  if (!isUpcoming) {
+    matchIncidents = await loadIncidents(mid);
+    const ids = matchIncidents.map(i => i.id);
+    const [voteSplit, myVotes] = await Promise.all([
+      loadIncidentVotes(ids),
+      TEST_FAN_VOTES ? Promise.resolve({}) : loadMyIncidentVotes(currentUser?.id, ids),
+    ]);
+    incidentVoteTotals = voteSplit; myIncidentVotes = myVotes;
+  } else {
+    matchIncidents = []; incidentVoteTotals = { neutral:{}, fan:{} }; myIncidentVotes = {};
+  }
+  drumState = { index:0, incidents:matchIncidents, myVotes:myIncidentVotes, mid, _updateFaces:null, _syncUI:null, _N:matchIncidents.length };
+  renderInlinePanel(mid, m, ref, isUpcoming);
+}
 
-function renderIncidentScore(incs, voteTotals) {
-  const neutralScore = calcIncidentScore(incs, voteTotals.neutral);
-  const fanScore     = calcIncidentScore(incs, voteTotals.fan);
+function renderInlinePanel(mid, m, ref, isUpcoming) {
+  const el = getInlineEl(mid);
+  if (!el) return;
   const needed = Math.ceil(MIN_VOTES / VOTE_MULTIPLIER);
+  const nScore = isUpcoming ? null : calcIncidentScore(matchIncidents, incidentVoteTotals.neutral);
+  const fScore = isUpcoming ? null : calcIncidentScore(matchIncidents, incidentVoteTotals.fan);
+  const nVotes = isUpcoming ? 0 : Object.values(incidentVoteTotals.neutral).reduce((s,v)=>s+v.correct+v.wrong,0);
+  const fVotes = isUpcoming ? 0 : Object.values(incidentVoteTotals.fan).reduce((s,v)=>s+v.correct+v.wrong,0);
 
-  function updateTile(valId, subId, score, voteCount) {
-    const valEl = document.getElementById(valId);
-    const subEl = document.getElementById(subId);
-    if (!valEl) return;
-    if (score === null) {
-      valEl.textContent = 'Pending';
-      valEl.className = 'inc-tile-val pending';
-      subEl.textContent = voteCount
-        ? `${voteCount} vote${voteCount !== 1 ? 's' : ''} · need ${needed} to unlock`
-        : `Need ${needed} votes to unlock`;
-    } else {
-      const sc = score >= 7 ? 'g' : score >= 5 ? 'y' : 'r';
-      valEl.innerHTML = `${score.toFixed(1)}<span class="inc-tile-denom">/10</span>`;
-      valEl.className = `inc-tile-val ${sc}`;
-      subEl.textContent = `${voteCount} vote${voteCount !== 1 ? 's' : ''}`;
+  function scoreTile(score, votes, type) {
+    const lbl = type==='n' ? 'Neutral Rating' : 'Fan Rating';
+    const cls = type==='n' ? 'nl' : 'fl';
+    const sc  = score!==null ? (score>=7?'g':score>=5?'y':'r') : '';
+    const val = score!==null
+      ? `<div class="inc-tile-val ${sc}" data-score="${type}-val">${score.toFixed(1)}<span class="inc-tile-denom">/10</span></div>`
+      : `<div class="inc-tile-val pending" data-score="${type}-val">${votes?`${votes}/${needed}`:'Pending'}</div>`;
+    return `<div class="inc-score-tile"><div class="inc-tile-label ${cls}">${lbl}</div>${val}<div class="inc-tile-sub" data-score="${type}-sub">${!isUpcoming?votes+' vote'+(votes!==1?'s':''):''}</div></div>`;
+  }
+
+  const drumHTML = (!isUpcoming && matchIncidents.length) ? `
+    <div class="drum-section" id="drum-${mid}">
+      <div class="drum-section-hdr">
+        <span class="drum-section-lbl">Decisions</span>
+        <span class="drum-counter" id="drum-counter-${mid}">1 of ${matchIncidents.length}</span>
+      </div>
+      <div class="drum-outer">
+        <div class="drum-viewport" id="drum-vp-${mid}">
+          <div class="drum-center-highlight"></div>
+          ${matchIncidents.map((inc,i) => buildDrumFace(inc,i)).join('')}
+        </div>
+        <div class="drum-controls">
+          <div class="drum-arrows">
+            <button class="drum-arrow" id="drum-up-${mid}" data-drum-up="${mid}" disabled>▲</button>
+            <button class="drum-arrow" id="drum-dn-${mid}" data-drum-dn="${mid}" ${matchIncidents.length<=1?'disabled':''}>▼</button>
+          </div>
+          <span class="drum-hint">drag or tap to scroll</span>
+        </div>
+      </div>
+      <div class="drum-vote-section" id="drum-vote-btns-${mid}">${buildVoteBtnsHTML(mid,0)}</div>
+    </div>` : (!isUpcoming ? `<div class="inc-empty" style="margin:12px 16px">No decisions logged yet for this match</div>` : '');
+
+  el.innerHTML = `
+    <div class="inline-ref-bar">
+      <div class="rcard-av" style="width:36px;height:36px;font-size:.85rem;flex-shrink:0">${ref.initials}</div>
+      <div style="flex:1"><div class="rcard-name">${ref.name}</div><div class="rcard-meta">${ref.nationality}</div></div>
+    </div>
+    ${!isUpcoming?`<div class="inline-score-tiles">${scoreTile(nScore,nVotes,'n')}${scoreTile(fScore,fVotes,'f')}</div>`:''}
+    ${!isUpcoming?`<div style="padding:10px 16px 0"><button class="inc-flag-btn" data-flag-mid="${mid}">⚑ Flag an Incorrect Decision</button></div>`:''}
+    ${isUpcoming?`<div class="inc-pregame" style="margin:12px 16px"><div class="inc-pregame-icon">🔒</div><div class="inc-pregame-title">Match hasn't started yet</div><div class="inc-pregame-sub">Voting opens once the game kicks off</div></div>`:''}
+    ${drumHTML}
+    ${!isUpcoming?`<div class="inline-discuss" data-match-title="${m.home} vs ${m.away}" data-matchweek="${m.matchweek||''}">
+      <div class="inline-discuss-label">💬 Match Discussion</div>
+      <textarea class="inline-discuss-input" placeholder="Share your thoughts…" rows="3" maxlength="1000"></textarea>
+      <button class="inline-discuss-send">Post to Forum</button>
+      <div class="inline-discuss-link"></div>
+    </div>`:''}`;
+
+  if (!isUpcoming && matchIncidents.length) initDrum(mid);
+
+  if (!isUpcoming) {
+    const discussEl = el.querySelector('.inline-discuss');
+    if (discussEl) {
+      findMatchForumThread(`${m.home} vs ${m.away}`).then(thread => {
+        const linkEl = discussEl.querySelector('.inline-discuss-link');
+        if (linkEl) linkEl.innerHTML = thread
+          ? `Thread open — <a href="forum.html">view in Forum</a>`
+          : `Posts here will appear in <a href="forum.html">Forum → Games</a>`;
+      });
     }
   }
-
-  const nVotes = Object.values(voteTotals.neutral).reduce((s,v) => s + v.correct + v.wrong, 0);
-  const fVotes = Object.values(voteTotals.fan).reduce((s,v) => s + v.correct + v.wrong, 0);
-
-  updateTile('incScoreNeutralVal', 'incScoreNeutralSub', neutralScore, nVotes);
-  updateTile('incScoreFanVal',     'incScoreFanSub',     fanScore,     fVotes);
 }
 
-function renderIncidentList() {
-  const el = document.getElementById('incidentList');
-  const labelEl = document.getElementById('incSectionLabel');
-  const curMatch = MATCHES.find(x => x.id === selId);
-  const viewingAsFan = curMatch && isFanMatch(curMatch, currentUser);
-  const voteBucket = viewingAsFan ? incidentVoteTotals.fan : incidentVoteTotals.neutral;
-
-  if (!matchIncidents.length) {
-    labelEl.style.display = 'none';
-    el.innerHTML = '<div class="inc-empty">No decisions logged yet for this match</div>';
-    return;
-  }
-
-  labelEl.style.display = '';
-  el.innerHTML = matchIncidents.map(inc => {
-    const parts = (inc.description || '').split('||');
-    const player  = parts[0]?.trim() || '';
-    const outcome = parts[1]?.trim() || '';
-    const outcomeColour = parts[2]?.trim() === 'purple' ? '#c064c0' : 'var(--pl-green)';
-    const v = voteBucket[inc.id] || { correct: 0, wrong: 0 };
-    const total = v.correct + v.wrong;
-    const correctPct = total ? Math.round((v.correct / total) * 100) : 50;
-    const myVote = myIncidentVotes[inc.id]?.vote || null;
-    const locked = !!myVote;
-    const isPending = total * VOTE_MULTIPLIER < MIN_VOTES;
-    const needed = Math.ceil(MIN_VOTES / VOTE_MULTIPLIER);
-
-    return `<div class="inc-card${locked ? ' voted' : ''}">
-      <div class="inc-card-header">
-        <span class="inc-card-type">${inc.type}</span>
-        ${player ? `<span class="inc-card-player">— ${player}</span>` : ''}
-        ${inc.minute !== null ? `<span class="inc-minute">${inc.minute}'</span>` : ''}
-      </div>
-      ${outcome ? `<div class="inc-card-outcome-row" style="color:${outcomeColour}">${outcome}</div>` : ''}
-      <div class="inc-vote-row">
-        <button class="inc-vote-btn correct${myVote==='correct'?' voted':''}" data-iid="${inc.id}" data-vote="correct" ${locked?'disabled':''}>✅ Correct</button>
-        <button class="inc-vote-btn wrong${myVote==='wrong'?' voted':''}"   data-iid="${inc.id}" data-vote="wrong"   ${locked?'disabled':''}>Incorrect</button>
-      </div>
-      ${total ? `<div class="inc-bar-wrap">
-        <span style="color:var(--green)">${correctPct}%</span>
-        <div class="inc-bar">
-          <div class="inc-bar-fill" style="width:${correctPct}%"></div>
-          <div class="inc-bar-fill-wrong" style="width:${100-correctPct}%"></div>
-        </div>
-        <span style="color:#c064c0">${100-correctPct}%</span>
-      </div>` : ''}
-      ${isPending ? `<div class="inc-pending-badge">⏳ ${total}/${needed} votes · pending score</div>` : ''}
-    </div>`;
-  }).join('');
+function buildDrumFace(inc, index) {
+  const myVote = myIncidentVotes[inc.id]?.vote || null;
+  const parts = (inc.description || '').split('||');
+  const player  = parts[0]?.trim() || '';
+  const outcome = parts[1]?.trim() || '';
+  const outcomeColour = parts[2]?.trim() === 'purple' ? '#c064c0' : 'var(--pl-green)';
+  const pill = myVote ? `<span class="drum-voted-pill v-${myVote}">${myVote==='correct'?'✓ Correct':'✗ Wrong'}</span>` : '';
+  return `<div class="drum-face dim" data-drum-index="${index}" data-inc-id="${inc.id}">
+    <div class="drum-face-type">${inc.type}${inc.minute!=null?` <span class="inc-minute">${inc.minute}'</span>`:''}</div>
+    ${player?`<div class="drum-face-detail">${player}</div>`:''}
+    ${outcome?`<div class="drum-face-outcome" style="color:${outcomeColour}">${outcome}</div>`:''}
+    ${pill}
+  </div>`;
 }
 
-// "Incorrect Decision" button — scrolls to incident panel
-document.getElementById('incFlagBtn').addEventListener('click', async () => {
-  // Calculate match minute from kickoff time
-  const m = MATCHES.find(x => x.id === selId);
-  let matchMinute = null;
-  if (m?.kickoff) {
-    const ko = new Date(String(m.kickoff).replace(' ', 'T').replace(/Z$/, '')).getTime();
-    const elapsed = Math.floor((Date.now() - ko) / 60000);
-    if (elapsed >= 0 && elapsed <= 130) matchMinute = Math.min(130, elapsed);
+function buildVoteBtnsHTML(mid, index) {
+  const inc = drumState.incidents[index];
+  if (!inc) return '';
+  const myVote = drumState.myVotes[inc.id]?.vote || null;
+  return `
+    <button class="drum-vote-btn correct${myVote==='correct'?' active':''}" data-drum-vote="correct" data-iid="${inc.id}" data-mid="${mid}">
+      <span class="dvb-icon">✅</span>Correct
+    </button>
+    <button class="drum-vote-btn wrong${myVote==='wrong'?' active':''}" data-drum-vote="wrong" data-iid="${inc.id}" data-mid="${mid}">
+      <span class="dvb-icon">✗</span>Incorrect
+    </button>`;
+}
+
+function initDrum(mid) {
+  const vp = document.getElementById(`drum-vp-${mid}`);
+  if (!vp) return;
+  const faceH = 52, vpH = 156, N = drumState.incidents.length;
+  const centerY = (vpH - faceH) / 2; // 52px — center of viewport
+
+  function updateFaces(fracIdx, animate) {
+    vp.querySelectorAll('.drum-face').forEach((f, i) => {
+      const dist = i - fracIdx;
+      const absD = Math.abs(dist);
+      const y    = centerY + dist * faceH;
+      const rx   = dist * 22;                         // rotateX angle per slot
+      const sc   = Math.max(0.65, 1 - absD * 0.1);   // scale down items away from center
+      const op   = Math.max(0.1,  1 - absD * 0.38);  // fade out distant items
+      f.style.transition = animate ? 'transform .32s cubic-bezier(.25,.46,.45,.94),opacity .32s' : 'none';
+      f.style.transform  = `translateY(${y}px) rotateX(${rx}deg) scale(${sc})`;
+      f.style.opacity    = op;
+    });
   }
 
-  // Save the flag (fire-and-forget)
-  if (selId && currentUser?.id) {
-    saveDecisionFlag(selId, matchMinute).catch(() => {});
+  function syncUI(idx) {
+    const ctr = document.getElementById(`drum-counter-${mid}`);
+    if (ctr) ctr.textContent = `${idx+1} of ${N}`;
+    const up = document.getElementById(`drum-up-${mid}`);
+    const dn = document.getElementById(`drum-dn-${mid}`);
+    if (up) up.disabled = idx === 0;
+    if (dn) dn.disabled = idx === N - 1;
+    const vb = document.getElementById(`drum-vote-btns-${mid}`);
+    if (vb) vb.innerHTML = buildVoteBtnsHTML(mid, idx);
   }
 
-  // Scroll to decisions panel
-  document.getElementById('incidentList').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  toast('⚑ Flagged!');
-});
+  updateFaces(0, false);
+  syncUI(0);
+  drumState._updateFaces = updateFaces;
+  drumState._syncUI = syncUI;
+  drumState._N = N;
 
+  let startY = null, startIdx = null, dragging = false;
+  vp.addEventListener('pointerdown', e => {
+    startY = e.clientY; startIdx = drumState.index; dragging = true;
+    vp.setPointerCapture(e.pointerId);
+  });
+  vp.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const frac = startIdx - (e.clientY - startY) / faceH;
+    updateFaces(Math.max(-0.6, Math.min(N - 0.4, frac)), false);
+  });
+  vp.addEventListener('pointerup', e => {
+    if (!dragging) return; dragging = false;
+    drumState.index = Math.max(0, Math.min(N - 1, Math.round(startIdx - (e.clientY - startY) / faceH)));
+    updateFaces(drumState.index, true);
+    syncUI(drumState.index);
+  });
+  vp.addEventListener('pointercancel', () => {
+    if (!dragging) return; dragging = false;
+    updateFaces(drumState.index, true);
+  });
+}
 
-async function openPanel(mid) {
-  selId = mid;
-  document.getElementById('panelEmpty').style.display = 'none';
-  document.getElementById('panelForm').style.display = 'block';
-  document.getElementById('panelCloseBtn').classList.add('visible');
-  document.getElementById('ratingPanel').classList.add('panel-open');
-  document.getElementById('panelSubtitle').textContent = 'Tap ✕ to close';
+async function handleDrumVote(btn) {
+  const incidentId = btn.dataset.iid;
+  const vote = btn.dataset.drumVote;
+  const mid  = +btn.dataset.mid;
+  const voteMatch = MATCHES.find(x => x.id===mid);
+  const isFan = voteMatch && isFanMatch(voteMatch, currentUser);
+  const bucket = isFan ? 'fan' : 'neutral';
+  const voteWeight = TEST_FAN_VOTES ? Math.floor(Math.random()*15)+13 : 5;
 
-  const m = MATCHES.find(x => x.id === +mid);
-  const ref = REFS.find(r => r.id === +m.refId);
-
-  document.getElementById('panelMatchInfo').innerHTML = `
-    <div style="font-size:1.3rem">${m.hE} vs ${m.aE}</div>
-    <div>
-      <div class="sel-match-teams">${m.home} vs ${m.away}</div>
-      <div class="sel-match-date">Premier League · Matchweek ${m.matchweek||currentGW}</div>
-    </div>
-    ${m.score !== '–' ? `<div style="margin-left:auto;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem">${m.score}</div>` : ''}`;
-
-  document.getElementById('panelRefCard').innerHTML = `
-    <div class="rcard-av">${ref.initials}</div>
-    <div><div class="rcard-name">${ref.name}</div><div class="rcard-meta">${ref.nationality} · FIFA Listed</div></div>
-    <div class="rcard-badge">FIFA</div>`;
-
-  // Block voting for upcoming matches (bypassed when TEST_FAN_VOTES is on)
-  if (m.status === 'upcoming' && !TEST_FAN_VOTES) {
-    document.getElementById('incSectionLabel').style.display = 'none';
-    document.getElementById('incidentList').innerHTML = `
-      <div class="inc-pregame">
-        <div class="inc-pregame-icon">🔒</div>
-        <div class="inc-pregame-title">Match hasn't started yet</div>
-        <div class="inc-pregame-sub">Voting opens once the game kicks off</div>
-      </div>`;
-    document.getElementById('incFlagBtn').disabled = true;
-    ['incScoreNeutralVal','incScoreFanVal'].forEach(id => {
-      const el = document.getElementById(id); if (el) { el.textContent = '–'; el.className = 'inc-tile-val'; }
-    });
-    ['incScoreNeutralSub','incScoreFanSub'].forEach(id => {
-      const el = document.getElementById(id); if (el) el.textContent = '';
-    });
-    renderList();
-    return;
+  const oldVote = drumState.myVotes[incidentId]?.vote;
+  if (oldVote && incidentVoteTotals[bucket][incidentId]) {
+    incidentVoteTotals[bucket][incidentId][oldVote] = Math.max(0,(incidentVoteTotals[bucket][incidentId][oldVote]||0)-voteWeight);
   }
+  if (!incidentVoteTotals[bucket][incidentId]) incidentVoteTotals[bucket][incidentId]={correct:0,wrong:0};
+  incidentVoteTotals[bucket][incidentId][vote]=(incidentVoteTotals[bucket][incidentId][vote]||0)+voteWeight;
+  drumState.myVotes[incidentId]={vote}; myIncidentVotes[incidentId]={vote};
 
-  // Load incidents + votes
-  document.getElementById('incidentList').innerHTML = `<div style="color:var(--muted);font-size:.82rem;padding:12px 0;">Loading incidents…</div>`;
-  matchIncidents = await loadIncidents(mid);
-  const ids = matchIncidents.map(i => i.id);
-  const [voteSplit, myVotes] = await Promise.all([
-    loadIncidentVotes(ids),
-    TEST_FAN_VOTES ? Promise.resolve({}) : loadMyIncidentVotes(currentUser?.id, ids),
-  ]);
-  incidentVoteTotals = voteSplit;
-  myIncidentVotes = myVotes;
+  const face = document.querySelector(`.drum-face[data-inc-id="${incidentId}"]`);
+  if (face) {
+    let pill = face.querySelector('.drum-voted-pill');
+    if (!pill) { pill=document.createElement('span'); face.appendChild(pill); }
+    pill.className=`drum-voted-pill v-${vote}`;
+    pill.textContent=vote==='correct'?'✓ Correct':'✗ Wrong';
+  }
+  const vb = document.getElementById(`drum-vote-btns-${mid}`);
+  if (vb) vb.innerHTML=buildVoteBtnsHTML(mid, drumState.index);
+  updateInlineScores(mid);
 
-  renderIncidentScore(matchIncidents, incidentVoteTotals);
-  renderIncidentList();
-  renderList();
+  const ok = await saveIncidentVote(incidentId, currentUser?.id, vote, isFan, voteWeight);
+  if (!ok) { toast('⚠ Vote failed — please try again'); return; }
+  toast(`${vote==='correct'?'✅ ':''} Vote recorded as ${isFan?'Fan':'Neutral'}!`.trim());
+  const ref = REFS.find(r=>r.id===+voteMatch.refId);
+  if (ref) {
+    const ns=calcIncidentScore(matchIncidents,incidentVoteTotals.neutral);
+    const fs=calcIncidentScore(matchIncidents,incidentVoteTotals.fan);
+    if(ns!==null) ref.neutralRating=ns;
+    if(fs!==null) ref.fanRating=fs;
+    renderLb();
+  }
+  if (currentUser?.id) checkVotingBadges(currentUser.id).catch(()=>{});
+}
 
-  // Show match discussion box
-  const discussBox = document.getElementById('matchDiscuss');
-  const discussLink = document.getElementById('matchDiscussLink');
-  if (discussBox) {
-    discussBox.style.display = '';
-    discussBox.dataset.matchTitle = `${m.home} vs ${m.away}`;
-    discussBox.dataset.matchweek = m.matchweek || '';
-    // Check if a thread already exists and show a link to it
-    findMatchForumThread(`${m.home} vs ${m.away}`).then(thread => {
-      if (thread && discussLink) {
-        discussLink.innerHTML = `Thread open — <a href="forum.html">view in Forum</a>`;
-      } else if (discussLink) {
-        discussLink.innerHTML = `Posts here will appear in <a href="forum.html">Forum → Games</a>`;
-      }
-    });
+function updateInlineScores(mid) {
+  const el = getInlineEl(mid);
+  if (!el) return;
+  const needed = Math.ceil(MIN_VOTES/VOTE_MULTIPLIER);
+  const nScore = calcIncidentScore(matchIncidents, incidentVoteTotals.neutral);
+  const fScore = calcIncidentScore(matchIncidents, incidentVoteTotals.fan);
+  const nVotes = Object.values(incidentVoteTotals.neutral).reduce((s,v)=>s+v.correct+v.wrong,0);
+  const fVotes = Object.values(incidentVoteTotals.fan).reduce((s,v)=>s+v.correct+v.wrong,0);
+  function upd(vSel, sSel, score, votes) {
+    const vEl=el.querySelector(`[data-score="${vSel}"]`);
+    const sEl=el.querySelector(`[data-score="${sSel}"]`);
+    if(!vEl) return;
+    if(score===null){ vEl.textContent=votes?`${votes}/${needed}`:'Pending'; vEl.className='inc-tile-val pending'; if(sEl) sEl.textContent=votes?`${votes} vote${votes!==1?'s':''} · need ${needed} to unlock`:`Need ${needed} votes`; }
+    else { const sc=score>=7?'g':score>=5?'y':'r'; vEl.innerHTML=`${score.toFixed(1)}<span class="inc-tile-denom">/10</span>`; vEl.className=`inc-tile-val ${sc}`; if(sEl) sEl.textContent=`${votes} vote${votes!==1?'s':''}`; }
+  }
+  upd('n-val','n-sub',nScore,nVotes);
+  upd('f-val','f-sub',fScore,fVotes);
+}
+
+function reopenInlineAfterRender() {
+  if (!selId) return;
+  const el = getInlineEl(selId);
+  if (!el) return;
+  el.classList.add('open');
+  const m   = MATCHES.find(x=>x.id===+selId);
+  const ref = REFS.find(r=>r.id===+m?.refId);
+  if (!m || !ref) return;
+  const savedIndex = drumState.index;
+  renderInlinePanel(selId, m, ref, m.status==='upcoming'&&!TEST_FAN_VOTES);
+  if (savedIndex > 0 && drumState._updateFaces && drumState._syncUI) {
+    drumState.index = savedIndex;
+    drumState._updateFaces(savedIndex, false);
+    drumState._syncUI(savedIndex);
   }
 }
 
@@ -722,88 +830,83 @@ function renderLb(){
 }
 
 // ── EVENTS ────────────────────────────────────────────────
-document.getElementById('matchList').addEventListener('click',e=>{const c=e.target.closest('[data-mid]');if(c)openPanel(+c.dataset.mid);});
-function updatePanelVisibility() {
-  // Panel is always visible — incidents can be voted on for any match
-  document.getElementById('ratingPanel').style.display = '';
-}
+document.getElementById('matchList').addEventListener('click', e => {
+  if (e.target.closest('.vid-btn')) return; // handled by video script
+
+  // Drum arrow up
+  const upBtn = e.target.closest('[data-drum-up]');
+  if (upBtn) {
+    e.stopPropagation();
+    if (drumState.index > 0 && drumState._updateFaces && drumState._syncUI) {
+      drumState.index--;
+      drumState._updateFaces(drumState.index, true);
+      drumState._syncUI(drumState.index);
+    }
+    return;
+  }
+  // Drum arrow down
+  const dnBtn = e.target.closest('[data-drum-dn]');
+  if (dnBtn) {
+    e.stopPropagation();
+    if (drumState.index < drumState._N - 1 && drumState._updateFaces && drumState._syncUI) {
+      drumState.index++;
+      drumState._updateFaces(drumState.index, true);
+      drumState._syncUI(drumState.index);
+    }
+    return;
+  }
+  // Drum vote
+  const voteBtn = e.target.closest('[data-drum-vote]');
+  if (voteBtn) { e.stopPropagation(); handleDrumVote(voteBtn); return; }
+  // Flag
+  const flagBtn = e.target.closest('[data-flag-mid]');
+  if (flagBtn) {
+    e.stopPropagation();
+    const mid = +flagBtn.dataset.flagMid;
+    const m = MATCHES.find(x=>x.id===mid);
+    let mm=null;
+    if(m?.kickoff){const ko=new Date(String(m.kickoff).replace(' ','T').replace(/Z$/,'')).getTime();const el=Math.floor((Date.now()-ko)/60000);if(el>=0&&el<=130)mm=Math.min(130,el);}
+    if(mid&&currentUser?.id) saveDecisionFlag(mid,mm).catch(()=>{});
+    document.getElementById(`drum-${mid}`)?.scrollIntoView({behavior:'smooth',block:'nearest'});
+    toast('⚑ Flagged!');
+    return;
+  }
+  // Inline discuss send
+  const sendBtn = e.target.closest('.inline-discuss-send');
+  if (sendBtn) {
+    e.stopPropagation();
+    const discussEl = sendBtn.closest('.inline-discuss');
+    if (!discussEl) return;
+    const input  = discussEl.querySelector('.inline-discuss-input');
+    const linkEl = discussEl.querySelector('.inline-discuss-link');
+    const body   = input?.value.trim();
+    if (!body) return;
+    if (!currentUser?.id) { toast('Sign in to post'); return; }
+    sendBtn.disabled = true;
+    postMatchComment(discussEl.dataset.matchTitle, body, currentUser.id, currentUser.username||'User', discussEl.dataset.matchweek?+discussEl.dataset.matchweek:null).then(result => {
+      if (result) { if(input) input.value=''; toast('💬 Posted to Forum!'); if(linkEl) linkEl.innerHTML=`Thread live — <a href="forum.html">view in Forum → Games</a>`; }
+      else toast('⚠ Failed to post — please try again');
+      sendBtn.disabled=false;
+    });
+    return;
+  }
+  // Match card toggle
+  if (e.target.closest('.match-inline-panel') || e.target.closest('.match-video-player')) return;
+  const card = e.target.closest('[data-mid]');
+  if (card) toggleInline(+card.dataset.mid);
+});
+
+function updatePanelVisibility() { /* no-op — inline panels replace the old side panel */ }
 
 document.getElementById('filterTabs').addEventListener('click',e=>{
   const b=e.target.closest('.view-tab');if(!b)return;
   filter=b.dataset.filter; document.querySelectorAll('.view-tab').forEach(x=>x.classList.remove('active')); b.classList.add('active');
-  updatePanelVisibility();
   renderList();
-});
-// ── INCIDENT VOTE HANDLER ─────────────────────────────────
-document.getElementById('incidentList').addEventListener('click', async e => {
-  const btn = e.target.closest('.inc-vote-btn');
-  if (!btn || btn.disabled) return;
-  const incidentId = btn.dataset.iid;
-  const vote = btn.dataset.vote; // 'correct' or 'wrong'
-
-  const voteMatch = MATCHES.find(x => x.id === selId);
-  const isFan = voteMatch && isFanMatch(voteMatch, currentUser);
-  const bucket = isFan ? 'fan' : 'neutral';
-
-  // Optimistic UI update — use same weight as will be saved
-  const voteWeight = TEST_FAN_VOTES ? Math.floor(Math.random() * 15) + 13 : 5;
-  if (!TEST_FAN_VOTES) btn.disabled = true;
-  if (!incidentVoteTotals[bucket][incidentId]) incidentVoteTotals[bucket][incidentId] = { correct: 0, wrong: 0 };
-  incidentVoteTotals[bucket][incidentId][vote] += voteWeight;
-  if (!TEST_FAN_VOTES) myIncidentVotes[incidentId] = { vote, created_at: new Date().toISOString() };
-
-  renderIncidentScore(matchIncidents, incidentVoteTotals);
-  renderIncidentList();
-
-  const ok = await saveIncidentVote(incidentId, currentUser?.id, vote, isFan, voteWeight);
-  if (!ok) {
-    incidentVoteTotals[bucket][incidentId][vote] -= voteWeight;
-    delete myIncidentVotes[incidentId];
-    renderIncidentScore(matchIncidents, incidentVoteTotals);
-    renderIncidentList();
-    toast('⚠ Vote failed — please try again');
-    return;
-  }
-
-  // Update ref score in leaderboard
-  const ref = REFS.find(r => r.id === +voteMatch.refId);
-  if (ref) {
-    const ns = calcIncidentScore(matchIncidents, incidentVoteTotals.neutral);
-    const fs = calcIncidentScore(matchIncidents, incidentVoteTotals.fan);
-    if (ns !== null) ref.neutralRating = ns;
-    if (fs !== null) ref.fanRating     = fs;
-    renderLb();
-  }
-  toast(`${vote === 'correct' ? '✅' : ''} Vote recorded as ${isFan ? 'Fan' : 'Neutral'}!`.trim());
-
-  if (currentUser?.id) checkVotingBadges(currentUser.id).catch(() => {});
-});
-// ── MATCH DISCUSSION ──────────────────────────────────────
-document.getElementById('matchDiscussSend').addEventListener('click', async () => {
-  const btn = document.getElementById('matchDiscussSend');
-  const input = document.getElementById('matchDiscussInput');
-  const linkEl = document.getElementById('matchDiscussLink');
-  const body = input.value.trim();
-  if (!body) return;
-  if (!currentUser?.id) { toast('Sign in to post'); return; }
-  const discussEl = document.getElementById('matchDiscuss');
-  const matchTitle = discussEl.dataset.matchTitle;
-  const matchweek = discussEl.dataset.matchweek ? +discussEl.dataset.matchweek : null;
-  btn.disabled = true;
-  const result = await postMatchComment(matchTitle, body, currentUser.id, currentUser.username || 'User', matchweek);
-  if (result) {
-    input.value = '';
-    toast('💬 Posted to Forum!');
-    linkEl.innerHTML = `Thread live — <a href="forum.html">view in Forum → Games</a>`;
-  } else {
-    toast('⚠ Failed to post — please try again');
-  }
-  btn.disabled = false;
 });
 
 document.getElementById('leaderboard').addEventListener('click',e=>{
   const r=e.target.closest('[data-lref]');if(!r)return;
-  const m=MATCHES.find(m=>m.refId===+r.dataset.lref&&m.status!=='upcoming');if(m)openPanel(m.id);
+  const m=MATCHES.find(m=>m.refId===+r.dataset.lref&&m.status!=='upcoming');if(m)toggleInline(m.id);
 });
 document.getElementById('lbN').addEventListener('click',()=>{lbMode='neutral';document.getElementById('lbN').classList.add('active');document.getElementById('lbF').classList.remove('active');renderLb();});
 document.getElementById('lbF').addEventListener('click',()=>{lbMode='fan';document.getElementById('lbF').classList.add('active');document.getElementById('lbN').classList.remove('active');renderLb();});
@@ -900,6 +1003,7 @@ initHeader();
     await loadIncidentRatings(refreshIds);
     syncMatchStatuses();
     renderList();
+    reopenInlineAfterRender();
     renderLb();
   }, 60 * 1000);
 })();
