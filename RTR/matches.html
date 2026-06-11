@@ -561,6 +561,75 @@ let incidentVoteTotals = { neutral: {}, fan: {} };
 let myIncidentVotes = {};
 let drumState = { index: 0, incidents: [], myVotes: {}, mid: null, _updateFaces: null, _syncUI: null, _N: 0 };
 
+// ── LIVE CARD + INCIDENT AUTO-SYNC ────────────────────────
+// Fetches per-match detail for every live match in the current GW.
+// Updates yc/rc/pen in MATCHES for all users.
+// For admin users, also auto-saves new Yellow Card / Red Card /
+// Penalty Given incidents to Supabase so the drum wheel populates.
+async function autoSyncLiveCards() {
+  const liveNow = MATCHES.filter(m => m.status === 'live' && +m.matchweek === +currentGW);
+  if (!liveNow.length) return;
+  const isLocalDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  for (const lm of liveNow) {
+    try {
+      const url = isLocalDev ? `/api/matches/${lm.id}` : `/.netlify/functions/fd-match?id=${lm.id}`;
+      const dr = await fetch(url);
+      if (!dr.ok) continue;
+      const detail   = await dr.json();
+      const bookings = detail.bookings || [];
+      const goals    = detail.goals    || [];
+      const yc  = bookings.filter(b => b.card === 'YELLOW_CARD').length;
+      const rc  = bookings.filter(b => b.card === 'RED_CARD' || b.card === 'YELLOW_RED_CARD').length;
+      const pen = goals.filter(g => g.type === 'PENALTY').length;
+      const idx = MATCHES.findIndex(m => m.id === lm.id);
+      if (idx !== -1) MATCHES[idx] = { ...MATCHES[idx], yc, rc, pen };
+
+      if (isAdmin()) {
+        const existing = await loadIncidents(lm.id);
+        const ycBook   = bookings.filter(b => b.card === 'YELLOW_CARD');
+        const rcBook   = bookings.filter(b => b.card === 'RED_CARD' || b.card === 'YELLOW_RED_CARD');
+        const penGoal  = goals.filter(g => g.type === 'PENALTY');
+        const exYC  = existing.filter(i => i.type === 'Yellow Card').length;
+        const exRC  = existing.filter(i => i.type === 'Red Card').length;
+        const exPen = existing.filter(i => i.type === 'Penalty Given').length;
+
+        const created = [];
+        for (let i = exYC; i < ycBook.length; i++) {
+          const b = ycBook[i];
+          const inc = await saveIncident(lm.id, 'Yellow Card', b.minute ?? null, b.player?.name ?? null);
+          if (inc) created.push(inc);
+        }
+        for (let i = exRC; i < rcBook.length; i++) {
+          const b = rcBook[i];
+          const inc = await saveIncident(lm.id, 'Red Card', b.minute ?? null, b.player?.name ?? null);
+          if (inc) created.push(inc);
+        }
+        for (let i = exPen; i < penGoal.length; i++) {
+          const g = penGoal[i];
+          const inc = await saveIncident(lm.id, 'Penalty Given', g.minute ?? null, g.scorer?.name ?? null);
+          if (inc) created.push(inc);
+        }
+
+        if (created.length && selId && +selId === lm.id) {
+          const allInc = [...existing, ...created];
+          const ids = allInc.map(i => i.id);
+          const [voteSplit, myVotes] = await Promise.all([
+            loadIncidentVotes(ids),
+            loadMyIncidentVotes(currentUser?.id, ids),
+          ]);
+          matchIncidents     = allInc;
+          incidentVoteTotals = voteSplit;
+          Object.assign(myIncidentVotes, myVotes);
+          drumState.incidents = allInc;
+          drumState._N        = allInc.length;
+        }
+      }
+    } catch(e) {
+      console.warn('[RTR] autoSyncLiveCards failed:', lm.home, 'v', lm.away, e);
+    }
+  }
+}
+
 function getInlineEl(mid) { return document.getElementById(`inline-${mid}`); }
 
 function closeInline(silent = false) {
@@ -1043,6 +1112,7 @@ initHeader();
   updatePanelVisibility();
   renderList();
   renderLb();
+  autoSyncLiveCards().then(() => { renderList(); renderLb(); }).catch(() => {});
   // Reload sheet data + re-check statuses every minute so changes propagate without a page refresh
   setInterval(async () => {
     await loadFromSheets().catch(() => {}); // refreshes REFS
@@ -1067,6 +1137,7 @@ initHeader();
         };
       });
     }
+    await autoSyncLiveCards().catch(() => {});
     const refreshIds = MATCHES.filter(m => +m.matchweek === +currentGW).map(m => +m.id);
     await loadIncidentRatings(refreshIds);
     syncMatchStatuses();
