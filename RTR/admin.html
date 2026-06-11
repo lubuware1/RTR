@@ -101,11 +101,21 @@
     <div class="row cols-2">
       <div class="field-group">
         <label>Active Matchweek</label>
-        <input type="number" id="cfgGW" min="1" max="50" value="1">
+        <input type="number" id="cfgGW" min="1" max="100" value="1">
       </div>
       <div class="field-group">
         <label>Picks Deadline (local time)</label>
         <input type="datetime-local" id="cfgDeadline">
+      </div>
+    </div>
+    <div class="row cols-2" style="margin-top:10px;">
+      <div class="field-group">
+        <label>Competition Code</label>
+        <input type="text" id="cfgComp" placeholder="e.g. WC, PL" value="WC">
+      </div>
+      <div class="field-group">
+        <label>Season</label>
+        <input type="text" id="cfgSeason" placeholder="e.g. 2026" value="2026">
       </div>
     </div>
     <button class="btn btn-green" id="saveGWBtn">Save Matchweek Config</button>
@@ -114,8 +124,22 @@
   <!-- FIXTURE SYNC -->
   <div class="section">
     <div class="section-title">Fixture Sync</div>
-    <p style="font-size:.85rem;color:var(--muted);margin-bottom:12px;">Pulls fixtures from football-data.org for the active competition and matchweek and upserts them into the database.</p>
-    <button class="btn" id="syncFixturesBtn">🔄 Sync Fixtures Now</button>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:12px;">Pulls fixtures from football-data.org for the active competition and upserts them into the database.</p>
+    <button class="btn" id="syncFixturesBtn">🔄 Sync Active Matchweek</button>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:10px;">Sync a range of matchweeks — use this to import historic data.</p>
+      <div class="row cols-2" style="margin-bottom:10px;">
+        <div class="field-group">
+          <label>From Matchweek</label>
+          <input type="number" id="syncFrom" min="1" value="1">
+        </div>
+        <div class="field-group">
+          <label>To Matchweek</label>
+          <input type="number" id="syncTo" min="1" value="3">
+        </div>
+      </div>
+      <button class="btn" id="syncRangeBtn">📥 Sync Matchweek Range</button>
+    </div>
     <div id="syncFixturesResult" style="margin-top:10px;font-size:.82rem;"></div>
   </div>
 
@@ -390,6 +414,8 @@
     const gwConfig = await loadGWConfig();
     if (gwConfig) {
       document.getElementById('cfgGW').value = gwConfig.gw;
+      if (gwConfig.comp)   document.getElementById('cfgComp').value   = gwConfig.comp;
+      if (gwConfig.season) document.getElementById('cfgSeason').value = gwConfig.season;
       if (gwConfig.deadline) {
         const d = new Date(gwConfig.deadline);
         document.getElementById('cfgDeadline').value = new Date(d - d.getTimezoneOffset()*60000).toISOString().slice(0,16);
@@ -429,13 +455,15 @@
     document.getElementById('saveGWBtn').addEventListener('click', async () => {
       const btn = document.getElementById('saveGWBtn');
       btn.disabled = true; btn.textContent = 'Saving…';
-      const gw = +document.getElementById('cfgGW').value;
+      const gw       = +document.getElementById('cfgGW').value;
+      const comp     = document.getElementById('cfgComp').value.trim().toUpperCase();
+      const season   = document.getElementById('cfgSeason').value.trim();
       const deadlineRaw = document.getElementById('cfgDeadline').value;
       if (!gw || !deadlineRaw) { toast('Enter a matchweek number and deadline', true); btn.disabled = false; btn.textContent = 'Save Matchweek Config'; return; }
       const deadline = new Date(deadlineRaw).toISOString();
-      const ok = await saveGWConfig(gw, deadline);
+      const ok = await saveGWConfig(gw, deadline, comp, season);
       btn.disabled = false; btn.textContent = 'Save Matchweek Config';
-      toast(ok ? `✓ GW${gw} config saved` : 'Save failed', !ok);
+      toast(ok ? `✓ GW${gw} config saved (${comp} ${season})` : 'Save failed', !ok);
     });
 
     // ── INCIDENTS ─────────────────────────────────────────
@@ -996,7 +1024,70 @@
       result.textContent = `✗ ${e.message}`;
     }
     btn.disabled = false;
-    btn.textContent = '🔄 Sync Fixtures Now';
+    btn.textContent = '🔄 Sync Active Matchweek';
+  });
+
+  // ── SYNC RANGE ────────────────────────────────────────────
+  document.getElementById('syncRangeBtn').addEventListener('click', async () => {
+    const btn    = document.getElementById('syncRangeBtn');
+    const result = document.getElementById('syncFixturesResult');
+    const from   = +document.getElementById('syncFrom').value;
+    const to     = +document.getElementById('syncTo').value;
+    if (!from || !to || from > to) { result.style.color = 'var(--red)'; result.textContent = '✗ Enter a valid matchweek range'; return; }
+
+    const cfg = await loadGWConfig();
+    if (!cfg?.comp || !cfg?.season) { result.style.color = 'var(--red)'; result.textContent = '✗ Save competition and season in Matchweek Config first'; return; }
+
+    btn.disabled = true;
+    result.style.color = 'var(--text)';
+    result.textContent = `Syncing matchweeks ${from}–${to}…`;
+
+    let totalSynced = 0;
+    const errors = [];
+
+    for (let gw = from; gw <= to; gw++) {
+      try {
+        result.textContent = `Syncing matchweek ${gw} of ${to}…`;
+        const fdMatches = await loadFromFootballData(gw, cfg.comp, cfg.season);
+        if (!fdMatches?.length) { errors.push(`GW${gw}: no matches returned`); continue; }
+
+        const fixtures = fdMatches.map(m => {
+          const home = TEAM_MAP[m.homeTeam?.name] ?? m.homeTeam?.shortName ?? m.homeTeam?.name ?? '';
+          const away = TEAM_MAP[m.awayTeam?.name] ?? m.awayTeam?.shortName ?? m.awayTeam?.name ?? '';
+          const ft = m.score?.fullTime;
+          const hasScore = ft?.home != null && ft?.away != null && m.status === 'FINISHED';
+          return {
+            id:         m.id,
+            matchweek:  m.matchday,
+            home,
+            away,
+            home_emoji: TEAM_EMOJI_MAP[home] ?? '',
+            away_emoji: TEAM_EMOJI_MAP[away] ?? '',
+            kickoff:    m.utcDate,
+            status:     FD_STATUS[m.status] || 'upcoming',
+            score:      hasScore ? `${ft.home} - ${ft.away}` : '0-0',
+            updated_at: new Date().toISOString(),
+          };
+        });
+
+        const { error } = await getSB().from('RTR Fixtures').upsert(fixtures, { onConflict: 'id' });
+        if (error) { errors.push(`GW${gw}: ${error.message}`); continue; }
+        totalSynced += fixtures.length;
+      } catch (e) {
+        errors.push(`GW${gw}: ${e.message}`);
+      }
+      // Small delay to avoid rate limiting
+      if (gw < to) await new Promise(r => setTimeout(r, 700));
+    }
+
+    btn.disabled = false;
+    if (errors.length) {
+      result.style.color = 'var(--yellow)';
+      result.textContent = `⚠ Synced ${totalSynced} fixtures. Errors: ${errors.join('; ')}`;
+    } else {
+      result.style.color = 'var(--pl-green)';
+      result.textContent = `✓ Synced ${totalSynced} fixtures across matchweeks ${from}–${to}.`;
+    }
   });
 
   })();
