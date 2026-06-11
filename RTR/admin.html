@@ -114,7 +114,7 @@
   <!-- FIXTURE SYNC -->
   <div class="section">
     <div class="section-title">Fixture Sync</div>
-    <p style="font-size:.85rem;color:var(--muted);margin-bottom:12px;">Pulls the latest Premier League fixtures from football-data.org and adds any missing matches automatically.</p>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:12px;">Pulls fixtures from football-data.org for the active competition and matchweek and upserts them into the database.</p>
     <button class="btn" id="syncFixturesBtn">🔄 Sync Fixtures Now</button>
     <div id="syncFixturesResult" style="margin-top:10px;font-size:.82rem;"></div>
   </div>
@@ -311,6 +311,7 @@
       if (document.activeElement) document.activeElement.blur();
       const btn = div.querySelector('.save-match-btn');
       btn.disabled = true; btn.textContent = 'Saving…';
+      const selectedRefId = div.querySelector('.f-ref').value;
       const stat = {
         match_id:        +m.id,
         matchweek:       +m.matchweek,
@@ -323,8 +324,8 @@
         perfect_game:    div.querySelector('.f-perfect').checked,
         incorrect_var_pen: +div.querySelector('.f-bpen').value,
         incorrect_var_red: +div.querySelector('.f-bred').value,
+        ref_id:          selectedRefId ? +selectedRefId : null,
       };
-      const selectedRefId = div.querySelector('.f-ref').value;
       const { ok, error: saveErr } = await saveMatchStat(stat);
       // Also update RTR Fixtures ref_id if that row exists (API-synced fixtures)
       if (selectedRefId) {
@@ -960,24 +961,28 @@
     btn.textContent = '⏳ Syncing…';
     result.textContent = '';
     try {
-      // Use local server.js proxy — same path used throughout the app
-      const res = await fetch('/api/competitions/PL/matches');
-      const text = await res.text();
-      if (!res.ok) throw new Error(`API returned ${res.status}: ${text.slice(0, 200)}`);
-      const { matches = [] } = JSON.parse(text);
+      const cfg = await loadGWConfig();
+      if (!cfg?.gw) throw new Error('No active matchweek set in config');
 
-      const fixtures = matches.map(m => {
-        const home = TEAM_MAP[m.homeTeam.name] ?? m.homeTeam.shortName ?? m.homeTeam.name;
-        const away = TEAM_MAP[m.awayTeam.name] ?? m.awayTeam.shortName ?? m.awayTeam.name;
-        let status = 'upcoming';
-        if (m.status === 'FINISHED') status = 'complete';
-        else if (m.status === 'IN_PLAY' || m.status === 'PAUSED') status = 'live';
-        let score = '0-0';
-        if (m.score?.fullTime?.home != null) score = `${m.score.fullTime.home} - ${m.score.fullTime.away}`;
+      const fdMatches = await loadFromFootballData(cfg.gw, cfg.comp || 'PL', cfg.season || '2025');
+      if (!fdMatches?.length) throw new Error(`No matches returned from API for ${cfg.comp} matchweek ${cfg.gw}`);
+
+      const fixtures = fdMatches.map(m => {
+        const home = TEAM_MAP[m.homeTeam?.name] ?? m.homeTeam?.shortName ?? m.homeTeam?.name ?? '';
+        const away = TEAM_MAP[m.awayTeam?.name] ?? m.awayTeam?.shortName ?? m.awayTeam?.name ?? '';
+        const ft = m.score?.fullTime;
+        const hasScore = ft?.home != null && ft?.away != null && m.status === 'FINISHED';
         return {
-          id: m.id, matchweek: m.matchday, home, away,
-          home_emoji: TEAM_EMOJI_MAP[home] ?? '', away_emoji: TEAM_EMOJI_MAP[away] ?? '',
-          kickoff: m.utcDate, status, score, updated_at: new Date().toISOString(),
+          id:          m.id,
+          matchweek:   m.matchday,
+          home,
+          away,
+          home_emoji:  TEAM_EMOJI_MAP[home] ?? '',
+          away_emoji:  TEAM_EMOJI_MAP[away] ?? '',
+          kickoff:     m.utcDate,
+          status:      FD_STATUS[m.status] || 'upcoming',
+          score:       hasScore ? `${ft.home} - ${ft.away}` : '0-0',
+          updated_at:  new Date().toISOString(),
         };
       });
 
@@ -985,7 +990,7 @@
       if (error) throw new Error(error.message);
 
       result.style.color = 'var(--pl-green)';
-      result.textContent = `✓ Synced ${fixtures.length} fixtures successfully.`;
+      result.textContent = `✓ Synced ${fixtures.length} fixtures for ${cfg.comp} matchweek ${cfg.gw}.`;
     } catch (e) {
       result.style.color = 'var(--red)';
       result.textContent = `✗ ${e.message}`;

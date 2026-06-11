@@ -42,8 +42,18 @@ http.createServer((req, res) => {
   // ── API PROXY ────────────────────────────────────────────
   // Requests to /api/* are forwarded to football-data.org
   if (req.url.startsWith('/api/')) {
-    const apiPath = '/v4' + req.url.slice(4); // strip /api, keep /competitions/... etc
     const key = getApiKey();
+    // /api/fd-matches?matchday=X&season=Y&comp=Z  →  /v4/competitions/{comp}/matches?matchday=X&season=Y
+    let apiPath;
+    if (req.url.startsWith('/api/fd-matches')) {
+      const qs = new URL(req.url, 'http://localhost').searchParams;
+      const comp     = qs.get('comp')     || 'PL';
+      const matchday = qs.get('matchday') || '1';
+      const season   = qs.get('season')   || '2025';
+      apiPath = `/v4/competitions/${comp}/matches?matchday=${matchday}&season=${season}`;
+    } else {
+      apiPath = '/v4' + req.url.slice(4); // legacy: /api/competitions/... etc
+    }
 
     if (!key) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
