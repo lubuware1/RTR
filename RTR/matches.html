@@ -960,7 +960,7 @@ document.getElementById('matchList').addEventListener('click', e => {
     const mid = +flagBtn.dataset.flagMid;
     const m = MATCHES.find(x=>x.id===mid);
     let mm=null;
-    if(m?.kickoff){const ko=new Date(String(m.kickoff).replace(' ','T').replace(/Z$/,'')).getTime();const el=Math.floor((Date.now()-ko)/60000);if(el>=0&&el<=130)mm=Math.min(130,el);}
+    if(m?.kickoff){const ko=new Date(String(m.kickoff).replace(' ','T')).getTime();const el=Math.floor((Date.now()-ko)/60000);if(el>=0&&el<=130)mm=Math.min(130,el);}
     if(mid&&currentUser?.id) saveDecisionFlag(mid,mm).catch(()=>{});
     document.getElementById(`drum-${mid}`)?.scrollIntoView({behavior:'smooth',block:'nearest'});
     toast('⚑ Flagged!');

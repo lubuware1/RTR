@@ -661,7 +661,7 @@ function syncMatchStatuses() {
   MATCHES.forEach(m => {
     if (m.status === 'complete') return;
     if (!m.kickoff) return;
-    const ko = new Date(String(m.kickoff).replace(' ', 'T').replace(/Z$/, '')).getTime();
+    const ko = new Date(String(m.kickoff).replace(' ', 'T')).getTime();
     if (isNaN(ko)) return;
     // If manually marked live in the sheet, only advance to complete — never revert to upcoming
     if (m.status === 'live') {
