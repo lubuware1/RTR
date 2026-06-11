@@ -964,7 +964,7 @@ async function loadMatchesFromAPI(gw, comp = currentComp, season = currentSeason
     const FD_STATUS = { FINISHED:'complete', IN_PLAY:'live', PAUSED:'live', HALF_TIME:'live', TIMED:'upcoming', SCHEDULED:'upcoming', SUSPENDED:'upcoming', POSTPONED:'upcoming', CANCELLED:'upcoming' };
     MATCHES = fdMatches.map(fm => {
       const ft = fm.score?.fullTime;
-      const hasScore = ft?.home != null && ft?.away != null && fm.status === 'FINISHED';
+      const hasScore = ft?.home != null && ft?.away != null && (fm.status === 'FINISHED' || fm.status === 'IN_PLAY' || fm.status === 'PAUSED' || fm.status === 'HALF_TIME');
       const apiRef = (fm.referees||[]).find(r => r.type==='REFEREE');
       const apiRefName = (apiRef?.name||'').toLowerCase();
       const ref = apiRefName ? REFS.find(r =>

@@ -41,7 +41,7 @@ function buildMatchesFromFD(fdMatches) {
   console.log('[RTR] buildMatchesFromFD called with', fdMatches.length, 'matches');
   MATCHES = fdMatches.map(fm => {
     const ft = fm.score?.fullTime;
-    const hasScore = ft?.home != null && ft?.away != null && fm.status === 'FINISHED';
+    const hasScore = ft?.home != null && ft?.away != null && (fm.status === 'FINISHED' || fm.status === 'IN_PLAY' || fm.status === 'PAUSED' || fm.status === 'HALF_TIME');
     const apiRefName = (fm.referees?.find(r => r.type === 'REFEREE')?.name || '').toLowerCase();
     const ref = apiRefName ? REFS.find(r =>
       r.name.toLowerCase() === apiRefName ||
