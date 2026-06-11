@@ -339,7 +339,7 @@
       const stat = {
         match_id:        +m.id,
         matchweek:       +m.matchweek,
-        score:           div.querySelector('.f-score').value.trim() || '0-0',
+        score:           div.querySelector('.f-score').value.trim() || null,
         status:          div.querySelector('.f-status').value,
         yellow_cards:    +div.querySelector('.f-yc').value,
         red_cards:       +div.querySelector('.f-rc').value,
@@ -930,7 +930,9 @@
         const f = completed[i];
         result.textContent = `Fetching ${f.home} v ${f.away} (${i + 1}/${completed.length})…`;
 
-        const res  = await fetch(`/api/matches/${f.id}`);
+        const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+        const matchUrl = isLocal ? `/api/matches/${f.id}` : `/.netlify/functions/fd-match?id=${f.id}`;
+        const res  = await fetch(matchUrl);
         const text = await res.text();
         if (!res.ok) throw new Error(`Match ${f.id} returned ${res.status}: ${text.slice(0,100)}`);
         const match = JSON.parse(text);

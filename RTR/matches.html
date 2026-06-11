@@ -1018,8 +1018,10 @@ initHeader();
     MATCHES = MATCHES.map(m => {
       const o = overrideMap[+m.id];
       if (!o) return m;
+      const derivedStatus = o.status ?? m.status;
       return { ...m,
-        score: o.score ?? m.score, status: o.status ?? m.status,
+        score: derivedStatus === 'live' ? m.score : (o.score ?? m.score),
+        status: derivedStatus,
         yc: o.yellow_cards ?? m.yc, rc: o.red_cards ?? m.rc,
         pen: o.penalties_given ?? m.pen, var: o.var_decisions ?? m.var,
         perfectGame: o.perfect_game ?? m.perfectGame,
@@ -1050,8 +1052,10 @@ initHeader();
       const rm = Object.fromEntries(refreshStats.map(o => [+o.match_id, o]));
       MATCHES = MATCHES.map(m => {
         const o = rm[+m.id]; if (!o) return m;
+        const derivedStatus = o.status ?? m.status;
         return { ...m,
-          score: o.score ?? m.score, status: o.status ?? m.status,
+          score: derivedStatus === 'live' ? m.score : (o.score ?? m.score),
+          status: derivedStatus,
           yc: o.yellow_cards ?? m.yc, rc: o.red_cards ?? m.rc,
           pen: o.penalties_given ?? m.pen, var: o.var_decisions ?? m.var,
           perfectGame: o.perfect_game ?? m.perfectGame,

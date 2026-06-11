@@ -889,10 +889,11 @@ async function loadFromSheets() {
       MATCHES = MATCHES.map(m => {
         const o = overrideMap[+m.id];
         if (!o) return m;
+        const derivedStatus = o.status ?? m.status;
         return {
           ...m,
-          score:            o.score              ?? m.score,
-          status:           o.status             ?? m.status,
+          score:            derivedStatus === 'live' ? m.score : (o.score ?? m.score),
+          status:           derivedStatus,
           yc:               o.yellow_cards       ?? m.yc,
           rc:               o.red_cards          ?? m.rc,
           pen:              o.penalties_given    ?? m.pen,
