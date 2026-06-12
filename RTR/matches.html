@@ -596,6 +596,15 @@ async function autoSyncLiveCards() {
       const idx = MATCHES.findIndex(m => m.id === lm.id);
       if (idx !== -1) MATCHES[idx] = { ...MATCHES[idx], yc, rc, pen };
 
+      // Persist to RTR Match Stats so card counts survive page reloads.
+      // Only write if the API actually returned a bookings array — if it's
+      // missing entirely the free tier isn't providing card data for this match
+      // and we'd risk overwriting anything entered manually.
+      if (Array.isArray(detail.bookings)) {
+        saveMatchStat({ match_id: lm.id, yellow_cards: yc, red_cards: rc, penalties_given: pen })
+          .catch(e => console.warn('[RTR] failed to persist card stats:', e));
+      }
+
       if (isAdmin()) {
         const existing = await loadIncidents(lm.id);
         const ycBook   = bookings.filter(b => b.card === 'YELLOW_CARD');
