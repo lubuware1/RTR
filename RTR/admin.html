@@ -338,6 +338,7 @@
       const selectedRefId = div.querySelector('.f-ref').value;
       const stat = {
         match_id:        +m.id,
+        comp:            gwConfig?.comp || null,
         matchweek:       +m.matchweek,
         score:           div.querySelector('.f-score').value.trim() || null,
         status:          div.querySelector('.f-status').value,
@@ -945,7 +946,7 @@
         const pen = goals.filter(g => g.type === 'PENALTY').length;
 
         const { error: uErr } = await getSB().from('RTR Match Stats').upsert(
-          { match_id: f.id, yellow_cards: yc, red_cards: rc, penalties_given: pen },
+          { match_id: f.id, comp: cfg?.comp || null, yellow_cards: yc, red_cards: rc, penalties_given: pen },
           { onConflict: 'match_id' }
         );
         if (uErr) throw new Error(`Save failed for ${f.home} v ${f.away}: ${uErr.message}`);

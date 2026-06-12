@@ -601,7 +601,7 @@ async function autoSyncLiveCards() {
       // missing entirely the free tier isn't providing card data for this match
       // and we'd risk overwriting anything entered manually.
       if (Array.isArray(detail.bookings)) {
-        saveMatchStat({ match_id: lm.id, yellow_cards: yc, red_cards: rc, penalties_given: pen })
+        saveMatchStat({ match_id: lm.id, comp: currentComp, yellow_cards: yc, red_cards: rc, penalties_given: pen })
           .catch(e => console.warn('[RTR] failed to persist card stats:', e));
       }
 
