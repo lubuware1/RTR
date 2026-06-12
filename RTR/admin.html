@@ -1005,6 +1005,7 @@
         const hasScore = ft?.home != null && ft?.away != null && m.status === 'FINISHED';
         return {
           id:          m.id,
+          comp:        cfg?.comp || null,
           matchweek:   m.matchday,
           home,
           away,
@@ -1061,6 +1062,7 @@
           const hasScore = ft?.home != null && ft?.away != null && m.status === 'FINISHED';
           return {
             id:         m.id,
+            comp:       cfg?.comp || null,
             matchweek:  m.matchday,
             home,
             away,

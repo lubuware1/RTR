@@ -1078,6 +1078,29 @@ async function loadMatchesFromAPI(gw, comp = currentComp, season = currentSeason
       };
     });
     console.log('[RTR] Matches loaded from API:', MATCHES.length, 'for GW', gw);
+
+    // Persist fixtures to Supabase as soon as they load — no admin step needed
+    if (!PREVIEW_MODE) {
+      const rows = fdMatches.map(fm => {
+        const ft = fm.score?.fullTime;
+        const hasScore = ft?.home != null && ft?.away != null &&
+          (fm.status === 'FINISHED' || fm.status === 'IN_PLAY' || fm.status === 'PAUSED' || fm.status === 'HALF_TIME');
+        return {
+          id:         fm.id,
+          comp:       comp,
+          matchweek:  fm.matchday,
+          home:       fm.homeTeam?.shortName || fm.homeTeam?.name || '',
+          away:       fm.awayTeam?.shortName || fm.awayTeam?.name || '',
+          kickoff:    fm.utcDate || null,
+          status:     FD_STATUS[fm.status] || 'upcoming',
+          score:      hasScore ? `${ft.home}-${ft.away}` : null,
+          updated_at: new Date().toISOString(),
+        };
+      });
+      getSB().from('RTR Fixtures').upsert(rows, { onConflict: 'id' })
+        .then(({ error }) => { if (error) console.warn('[RTR] fixture upsert failed:', error.message); });
+    }
+
     return true;
   } catch(e) {
     console.warn('[RTR] API fixture load failed:', e);
