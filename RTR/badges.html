@@ -243,6 +243,26 @@
   /* RefRater SVG logo */
   .bc-logo { flex-shrink: 0; }
 
+  /* Hero mascot — gold & bronze cards only */
+  .bc-hero {
+    position: absolute; inset: 0; border-radius: 16px;
+    overflow: hidden; pointer-events: none; z-index: 1;
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .bc-hero img {
+    width: 120%; max-width: none;
+    opacity: .22; mix-blend-mode: screen;
+    filter: saturate(.55) brightness(1.05);
+    transform: translate(2%, 8%);
+  }
+  .bc-hero-fade {
+    position: absolute; inset: 0; border-radius: 16px;
+    pointer-events: none; z-index: 2;
+    background: linear-gradient(180deg,
+      rgba(3,12,8,.38) 0%, rgba(3,12,8,0) 30%,
+      rgba(3,12,8,.52) 68%, rgba(3,12,8,.82) 100%);
+  }
+
   /* Medallion */
   .bc-medallion {
     margin: 6px auto 2px;
@@ -528,6 +548,9 @@ function buildCard(def, index, isEarned, isActive, dateStr) {
   const delay        = ((index * 0.35) % 3).toFixed(2);
 
   const foil = isEarned ? `<div class="bc-foil"></div><div class="bc-sparkle"></div>` : '';
+  const hero = (isGold || isBronze)
+    ? `<div class="bc-hero"><img src="refrater_hero.png" alt=""></div><div class="bc-hero-fade"></div>`
+    : '';
   const lockOverlay = !isEarned ? `<div class="bc-lock-overlay"><span>🔒</span></div>` : '';
   const activePip   = isActive  ? `<div class="bc-active-pip"></div>` : '';
 
@@ -554,6 +577,7 @@ function buildCard(def, index, isEarned, isActive, dateStr) {
     <div class="bc-wrap">
       <div class="bc-inner ${variantClass} ${lockedClass}" style="--accent:${accent}; animation-delay:${delay}s;">
         <div class="bc-gloss"></div>
+        ${hero}
         ${foil}
         <div class="bc-content">
           <div class="bc-top">
