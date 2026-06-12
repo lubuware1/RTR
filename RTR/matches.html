@@ -526,8 +526,8 @@ function renderList() {
         <div class="score-block">${ref?ref.name:'<span style="color:var(--muted);font-size:1rem">Referee TBC</span>'}<span class="time"${live?' style="color:var(--red)"':''}>${live?'LIVE':up?(m.kickoff?new Date(String(m.kickoff).replace(' ','T').replace(/Z$/,'')).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).replace(',',''):'TBC'):'FT'}</span></div>
         <div class="team away"><div class="team-badge">${m.awayCrest?`<img src="${m.awayCrest}" style="width:26px;height:26px;object-fit:contain;" onerror="this.src='images/logos/RRLogo.svg';this.style.opacity='.7';">`:`<img src="images/logos/RRLogo.svg" style="width:22px;height:22px;opacity:.7;">`}</div><span>${m.away}</span></div>
       </div>
-      ${!up&&(m.yc||m.rc||m.pen||m.var)?`<div class="card-stats" style="padding:0 16px 6px">
-        ${m.yc?`<span class="stat-pill yc"><span class="icon">🟨</span>${m.yc}</span>`:''}
+      ${!up?`<div class="card-stats" style="padding:0 16px 6px">
+        <span class="stat-pill yc"><span class="icon">🟨</span>${m.yc}</span>
         ${m.rc?`<span class="stat-pill rc"><span class="icon">🟥</span>${m.rc}</span>`:''}
         ${m.pen?`<span class="stat-pill">${m.pen > 1 ? m.pen + 'x ' : ''}PEN</span>`:''}
         ${m.var?`<span class="stat-pill"><span class="icon">📺</span>VAR×${m.var}</span>`:''}
