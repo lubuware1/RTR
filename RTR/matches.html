@@ -526,8 +526,8 @@ function renderList() {
         <div class="score-block">${ref?ref.name:'<span style="color:var(--muted);font-size:1rem">Referee TBC</span>'}<span class="time"${live?' style="color:var(--red)"':''}>${live?'LIVE':up?(m.kickoff?new Date(String(m.kickoff).replace(' ','T').replace(/Z$/,'')).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).replace(',',''):'TBC'):'FT'}</span></div>
         <div class="team away"><div class="team-badge">${m.awayCrest?`<img src="${m.awayCrest}" style="width:26px;height:26px;object-fit:contain;" onerror="this.src='images/logos/RRLogo.svg';this.style.opacity='.7';">`:`<img src="images/logos/RRLogo.svg" style="width:22px;height:22px;opacity:.7;">`}</div><span>${m.away}</span></div>
       </div>
-      ${!up?`<div class="card-stats" style="padding:0 16px 6px">
-        <span class="stat-pill yc"><span class="icon">🟨</span>${m.yc}</span>
+      ${!up&&(m.yc||m.rc||m.pen||m.var)?`<div class="card-stats" style="padding:0 16px 6px">
+        ${m.yc?`<span class="stat-pill yc"><span class="icon">🟨</span>${m.yc}</span>`:''}
         ${m.rc?`<span class="stat-pill rc"><span class="icon">🟥</span>${m.rc}</span>`:''}
         ${m.pen?`<span class="stat-pill">${m.pen > 1 ? m.pen + 'x ' : ''}PEN</span>`:''}
         ${m.var?`<span class="stat-pill"><span class="icon">📺</span>VAR×${m.var}</span>`:''}
@@ -562,15 +562,26 @@ let myIncidentVotes = {};
 let drumState = { index: 0, incidents: [], myVotes: {}, mid: null, _updateFaces: null, _syncUI: null, _N: 0 };
 
 // ── LIVE CARD + INCIDENT AUTO-SYNC ────────────────────────
-// Fetches per-match detail for every live match in the current GW.
-// Updates yc/rc/pen in MATCHES for all users.
+// Fetches per-match detail for every live/complete match in the current GW.
+// Live matches are synced every poll; complete matches are fetched once and cached.
+// cardCache survives loadFromSheets/loadMatchStats rebuilds so values persist between polls.
 // For admin users, also auto-saves new Yellow Card / Red Card /
 // Penalty Given incidents to Supabase so the drum wheel populates.
+const cardCache = {}; // matchId → {yc, rc, pen}
 async function autoSyncLiveCards() {
-  const liveNow = MATCHES.filter(m => m.status === 'live' && +m.matchweek === +currentGW);
-  if (!liveNow.length) return;
+  // Re-apply cached values after any MATCHES rebuild (loadFromSheets resets yc/rc/pen to 0)
+  for (const [id, cards] of Object.entries(cardCache)) {
+    const idx = MATCHES.findIndex(m => String(m.id) === id);
+    if (idx !== -1) MATCHES[idx] = { ...MATCHES[idx], ...cards };
+  }
+
+  const toSync = MATCHES.filter(m =>
+    +m.matchweek === +currentGW &&
+    (m.status === 'live' || (m.status === 'complete' && !cardCache[m.id]))
+  );
+  if (!toSync.length) return;
   const isLocalDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-  for (const lm of liveNow) {
+  for (const lm of toSync) {
     try {
       const url = isLocalDev ? `/api/matches/${lm.id}` : `/.netlify/functions/fd-match?id=${lm.id}`;
       const dr = await fetch(url);
@@ -581,6 +592,7 @@ async function autoSyncLiveCards() {
       const yc  = bookings.filter(b => b.card === 'YELLOW_CARD').length;
       const rc  = bookings.filter(b => b.card === 'RED_CARD' || b.card === 'YELLOW_RED_CARD').length;
       const pen = goals.filter(g => g.type === 'PENALTY').length;
+      cardCache[lm.id] = { yc, rc, pen };
       const idx = MATCHES.findIndex(m => m.id === lm.id);
       if (idx !== -1) MATCHES[idx] = { ...MATCHES[idx], yc, rc, pen };
 
@@ -1165,7 +1177,7 @@ initHeader();
     renderList();
     reopenInlineAfterRender();
     renderLb();
-  }, 60 * 1000);
+  }, 3 * 60 * 1000);
 })();
 </script>
 <script>

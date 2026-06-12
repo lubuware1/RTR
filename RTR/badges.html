@@ -129,6 +129,41 @@
       0 0 36px rgba(205,127,50,.25);
   }
 
+  /* Silver variant */
+  .bc-inner.bc-silver {
+    background: radial-gradient(125% 80% at 50% -8%, #2a2a2e 0%, #141416 42%, #08080a 100%);
+    box-shadow:
+      inset 0 0 0 1.5px rgba(220,220,240,.9),
+      inset 0 0 0 3px rgba(192,192,210,.25),
+      inset 0 0 20px rgba(192,192,210,.18),
+      0 28px 55px -16px rgba(0,0,0,.85),
+      0 0 36px rgba(192,192,210,.25);
+  }
+  .bc-inner.bc-silver .bc-num  { text-shadow: 0 2px 0 rgba(0,0,0,.35), 0 0 16px rgba(192,192,210,.65); }
+  .bc-inner.bc-silver .bc-medallion {
+    border-color: rgba(220,220,240,.8);
+    box-shadow: 0 0 18px rgba(192,192,210,.3), inset 0 0 10px rgba(0,0,0,.5);
+  }
+  .bc-inner.bc-silver .bc-stats  { border-top-color: rgba(192,192,210,.22); }
+  .bc-inner.bc-silver .bc-footer { border-top-color: rgba(192,192,210,.15); }
+  .bc-inner.bc-silver .bc-foil {
+    background:
+      linear-gradient(115deg,
+        transparent 28%,
+        rgba(192,192,210,.42) 42%,
+        rgba(240,240,255,.9) 50%,
+        rgba(192,192,210,.42) 58%,
+        transparent 72%),
+      repeating-linear-gradient(102deg,
+        rgba(180,180,200,.13) 0px,
+        rgba(220,220,240,.28) 10px,
+        rgba(160,160,200,.16) 20px,
+        rgba(200,200,230,.22) 30px,
+        rgba(180,180,200,.13) 40px);
+    background-size: 220% 220%, 200% 200%;
+    background-position: var(--mx) var(--my), var(--mx) var(--my);
+  }
+
   /* Locked */
   .bc-inner.bc-locked {
     filter: grayscale(0.65) brightness(0.6);
@@ -243,21 +278,21 @@
   /* RefRater SVG logo */
   .bc-logo { flex-shrink: 0; }
 
-  /* Hero mascot — gold & bronze cards only */
+  /* Hero background — gold & bronze cards only */
   .bc-hero {
-    position: absolute; inset: 0; border-radius: 16px;
-    overflow: hidden; pointer-events: none; z-index: 1;
-    display: flex; align-items: flex-end; justify-content: center;
+    position: absolute; inset: 0; pointer-events: none; z-index: 1;
+    display: flex; align-items: center; justify-content: center;
+    /* clip-path instead of overflow+border-radius so it works under preserve-3d */
+    clip-path: inset(0 round 16px);
   }
   .bc-hero img {
-    width: 120%; max-width: none;
-    opacity: .22; mix-blend-mode: screen;
-    filter: saturate(.55) brightness(1.05);
-    transform: translate(2%, 8%);
+    width: 100%; height: 100%; object-fit: cover;
+    opacity: .18; mix-blend-mode: screen;
+    filter: saturate(.4) brightness(1.1);
   }
   .bc-hero-fade {
-    position: absolute; inset: 0; border-radius: 16px;
-    pointer-events: none; z-index: 2;
+    position: absolute; inset: 0; pointer-events: none; z-index: 2;
+    clip-path: inset(0 round 16px);
     background: linear-gradient(180deg,
       rgba(3,12,8,.38) 0%, rgba(3,12,8,0) 30%,
       rgba(3,12,8,.52) 68%, rgba(3,12,8,.82) 100%);
@@ -266,23 +301,22 @@
   /* Medallion */
   .bc-medallion {
     margin: 6px auto 2px;
-    width: 84px; height: 84px; border-radius: 50%;
-    background: radial-gradient(circle at 50% 40%, rgba(255,255,255,.08) 0%, rgba(0,0,0,.3) 100%);
-    border: 1.5px solid rgba(0,230,122,.65);
-    box-shadow: 0 0 18px rgba(0,230,122,.28), inset 0 0 12px rgba(0,0,0,.5);
+    width: 72px; height: 72px; border-radius: 50%;
+    border: 3px solid rgba(0,230,122,.8);
+    box-shadow: 0 0 18px rgba(0,230,122,.3), inset 0 0 10px rgba(0,0,0,.5);
     display: flex; align-items: center; justify-content: center;
     overflow: hidden;
     flex-shrink: 0;
   }
   .bc-inner.bc-gold .bc-medallion {
-    border-color: rgba(255,215,0,.65);
-    box-shadow: 0 0 18px rgba(255,200,0,.3), inset 0 0 12px rgba(0,0,0,.5);
+    border-color: rgba(255,215,0,.85);
+    box-shadow: 0 0 18px rgba(255,200,0,.35), inset 0 0 10px rgba(0,0,0,.5);
   }
   .bc-inner.bc-bronze .bc-medallion {
-    border-color: rgba(205,127,50,.65);
-    box-shadow: 0 0 18px rgba(205,127,50,.3), inset 0 0 12px rgba(0,0,0,.5);
+    border-color: rgba(205,127,50,.85);
+    box-shadow: 0 0 18px rgba(205,127,50,.35), inset 0 0 10px rgba(0,0,0,.5);
   }
-  .bc-medallion img { width: 68%; height: 68%; object-fit: contain; }
+  .bc-medallion img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
   .bc-medallion .bc-emoji { font-size: 2rem; line-height: 1; }
 
   /* Title & separator */
@@ -398,7 +432,7 @@
   @media (max-width: 600px) {
     .badge-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .bc-num { font-size: 32px; }
-    .bc-medallion { width: 64px; height: 64px; }
+    .bc-medallion { width: 56px; height: 56px; }
     .bc-title { font-size: 13px; }
     .bc-desc { font-size: 9.5px; }
   }
@@ -530,8 +564,9 @@ function initHeader() {
 function buildCard(def, index, isEarned, isActive, dateStr) {
   const isGold   = !!def.gold;
   const isBronze = !!def.bronze;
-  const accent   = isGold ? '#FFD700' : isBronze ? '#CD7F32' : '#00e67a';
-  const accentDim = isGold ? 'rgba(255,200,0,' : isBronze ? 'rgba(205,127,50,' : 'rgba(0,230,122,';
+  const isSilver = !!def.silver;
+  const accent   = isGold ? '#FFD700' : isBronze ? '#CD7F32' : isSilver ? '#C0C0D8' : '#00e67a';
+  const accentDim = isGold ? 'rgba(255,200,0,' : isBronze ? 'rgba(205,127,50,' : isSilver ? 'rgba(192,192,210,' : 'rgba(0,230,122,';
 
   const num = String(index + 1).padStart(2, '0');
   const catLabel = {
@@ -541,15 +576,18 @@ function buildCard(def, index, isEarned, isActive, dateStr) {
     'Loyalty':             'LOYALTY',
     'Special':             'SPECIAL',
   }[def.category] || 'CARD';
-  const rarity = isGold ? 'LEGENDARY' : isBronze ? 'MASTER' : def.img ? 'RARE' : 'COMMON';
+  const rarity = isGold ? 'LEGENDARY' : isBronze ? 'MASTER' : isSilver ? 'SILVER' : def.img ? 'RARE' : 'COMMON';
 
-  const variantClass = isGold ? 'bc-gold' : isBronze ? 'bc-bronze' : '';
+  const variantClass = isGold ? 'bc-gold' : isBronze ? 'bc-bronze' : isSilver ? 'bc-silver' : '';
   const lockedClass  = !isEarned ? 'bc-locked' : '';
   const delay        = ((index * 0.35) % 3).toFixed(2);
 
   const foil = isEarned ? `<div class="bc-foil"></div><div class="bc-sparkle"></div>` : '';
-  const hero = (isGold || isBronze)
-    ? `<div class="bc-hero"><img src="refrater_hero.png" alt=""></div><div class="bc-hero-fade"></div>`
+  const heroImg = isGold ? 'images/logos/RRlogo192.png'
+    : isSilver ? 'images/badges/RefYellow-removebg-preview.png'
+    : 'images/badges/redcardbadge.png';
+  const hero = (isGold || isBronze || isSilver)
+    ? `<div class="bc-hero"><img src="${heroImg}" alt=""></div><div class="bc-hero-fade"></div>`
     : '';
   const lockOverlay = !isEarned ? `<div class="bc-lock-overlay"><span>🔒</span></div>` : '';
   const activePip   = isActive  ? `<div class="bc-active-pip"></div>` : '';
@@ -575,7 +613,7 @@ function buildCard(def, index, isEarned, isActive, dateStr) {
 
   return `
     <div class="bc-wrap">
-      <div class="bc-inner ${variantClass} ${lockedClass}" style="--accent:${accent}; animation-delay:${delay}s;">
+      <div class="bc-inner ${variantClass} ${lockedClass}" data-badge-key="${def.key}" style="--accent:${accent}; animation-delay:${delay}s;">
         <div class="bc-gloss"></div>
         ${hero}
         ${foil}
@@ -716,6 +754,22 @@ function renderBadges(earned) {
 
 // ── MAIN ──────────────────────────────────────────────────
 (async function init() {
+  // ?preview=1 — visual test, no auth required
+  if (location.search.includes('preview=1')) {
+    const now = new Date().toISOString();
+    renderBadges([
+      { badge_key: 'first_vote',       awarded_at: now },
+      { badge_key: 'hot_take',         awarded_at: now },
+      { badge_key: 'wc_red_card',      awarded_at: now },
+      { badge_key: 'wc_red_card_x10',  awarded_at: now },
+      { badge_key: 'founder',          awarded_at: now },
+      { badge_key: 'podium',           awarded_at: now },
+      { badge_key: 'early_adopter',    awarded_at: now },
+    ]);
+    document.getElementById('progressLabel').textContent = 'Preview mode';
+    return;
+  }
+
   const authed = await checkAuth();
   if (!authed) { window.location.href = 'login.html'; return; }
 

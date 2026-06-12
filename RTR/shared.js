@@ -1364,7 +1364,7 @@ const BADGE_DEFS = [
   // Loyalty
   { key: 'founder',       category: 'Loyalty',  img: 'images/logos/RRlogo192.png', name: 'Founder', desc: 'A founding member of RefRater', gold: true },
   { key: 'profile_setup', category: 'Loyalty',  icon: '👤', name: 'All Kitted Out', desc: 'Set your favourite team on your profile' },
-  { key: 'early_adopter', category: 'Loyalty',  icon: '🌟', name: 'Early Adopter',  desc: 'Among the first 50 users to join RefRater' },
+  { key: 'early_adopter', category: 'Loyalty',  img: 'images/badges/RefYellow-removebg-preview.png', name: 'Early Adopter',  desc: 'Among the first 50 users to join RefRater', silver: true },
   // Special
   { key: 'perfect_voter', category: 'Special',  icon: '🎖️', name: 'Perfect Eye',    desc: 'Vote correctly on all incidents in a match' },
 ];
