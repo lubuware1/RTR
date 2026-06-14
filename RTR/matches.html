@@ -1099,6 +1099,13 @@ async function loadMatchesFromAPI(gw, comp = currentComp, season = currentSeason
       });
       getSB().from('RTR Fixtures').upsert(rows, { onConflict: 'id' })
         .then(({ error }) => { if (error) console.warn('[RTR] fixture upsert failed:', error.message); });
+
+      // Seed every game into RTR Match Stats too (insert-only via ignoreDuplicates),
+      // so each game has a stats row for card sync / ref + leaderboard joins. Existing
+      // rows are never overwritten, so synced cards and admin edits are preserved.
+      const statSeed = fdMatches.map(fm => ({ match_id: fm.id, comp: comp }));
+      getSB().from('RTR Match Stats').upsert(statSeed, { onConflict: 'match_id', ignoreDuplicates: true })
+        .then(({ error }) => { if (error) console.warn('[RTR] match-stats seed failed:', error.message); });
     }
 
     return true;
