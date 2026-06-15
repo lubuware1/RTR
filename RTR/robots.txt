@@ -1,0 +1,20 @@
+# robots.txt — RefRater
+# AdSense crawler: allow everywhere (never block Mediapartners-Google)
+User-agent: Mediapartners-Google
+Disallow:
+
+# Google AdsBot (landing-page quality)
+User-agent: AdsBot-Google
+Disallow:
+
+User-agent: *
+Allow: /
+# Gated / internal tools — not public content
+Disallow: /admin.html
+Disallow: /team_task_manager.html
+Disallow: /fantasy.html
+Disallow: /login.html
+# Serverless API endpoints
+Disallow: /.netlify/
+
+Sitemap: https://refrater.netlify.app/sitemap.xml
