@@ -281,11 +281,13 @@
   .drum-viewport::before{top:0;background:linear-gradient(to bottom,#0e0018 0%,rgba(14,0,24,.6) 60%,transparent 100%);}
   .drum-viewport::after{bottom:0;background:linear-gradient(to top,#0e0018 0%,rgba(14,0,24,.6) 60%,transparent 100%);}
   .drum-center-highlight{position:absolute;top:50%;left:0;right:0;height:52px;transform:translateY(-50%);border-top:1.5px solid rgba(0,255,133,.4);border-bottom:1.5px solid rgba(0,255,133,.4);background:rgba(0,255,133,.06);z-index:3;pointer-events:none;box-shadow:0 0 20px rgba(0,255,133,.1) inset;}
-  .drum-face{position:absolute;left:0;right:0;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 48px 0 16px;gap:2px;will-change:transform,opacity;backface-visibility:hidden;}
-  .drum-face-type{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.05rem;text-transform:uppercase;letter-spacing:.5px;text-align:center;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.4);}
-  .drum-face-detail{font-size:.77rem;color:rgba(255,255,255,.5);text-align:center;}
-  .drum-face-outcome{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.82rem;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,.3);}
-  .drum-voted-pill{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:.62rem;font-weight:700;font-family:'Barlow Condensed',sans-serif;padding:2px 7px;border-radius:4px;letter-spacing:.3px;text-transform:uppercase;}
+  .drum-face{position:absolute;left:0;right:0;height:52px;display:flex;flex-direction:row;align-items:center;padding:0 10px;gap:4px;will-change:transform,opacity;backface-visibility:hidden;}
+  .drum-face-player{flex:1;font-size:.75rem;color:rgba(255,255,255,.55);text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .drum-face-type{flex:1.6;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.95rem;text-transform:uppercase;letter-spacing:.5px;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,.4);}
+  .drum-face-min{flex:1;text-align:right;flex-shrink:0;}
+  .drum-face-detail{display:none;}
+  .drum-face-outcome{display:none;}
+  .drum-voted-pill{position:absolute;right:6px;top:4px;font-size:.58rem;font-weight:700;font-family:'Barlow Condensed',sans-serif;padding:1px 5px;border-radius:3px;letter-spacing:.3px;text-transform:uppercase;}
   .drum-voted-pill.v-correct{background:rgba(0,255,133,.15);color:#37efba;border:1px solid rgba(0,255,133,.35);}
   .drum-voted-pill.v-wrong{background:rgba(200,64,200,.15);color:rgba(230,150,230,.95);border:1px solid rgba(200,64,200,.35);}
   .drum-voted-pill.v-good{background:rgba(245,166,35,.15);color:#f5a623;border:1px solid rgba(245,166,35,.35);}
@@ -301,7 +303,7 @@
   .drum-hint{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:rgba(255,255,255,.2);}
   /* ── VOTE BUTTONS ─────────────────────────────────────── */
   .drum-vote-section{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 16px 4px;}
-  .drum-vote-btn{border-radius:10px;padding:15px 10px 13px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:5px;border:2px solid;}
+  .drum-vote-btn{border-radius:10px;padding:14px 10px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;border:2px solid;}
   .drum-vote-btn .dvb-icon{font-size:1.6rem;line-height:1;transition:transform .2s;}
   .drum-vote-btn:hover:not(:disabled) .dvb-icon{transform:scale(1.15);}
   .drum-vote-btn.correct{background:rgba(0,153,96,.07);border-color:rgba(0,153,96,.28);color:var(--green);}
@@ -313,6 +315,19 @@
   .drum-vote-btn.wrong.active{background:#8b008b;border-color:#8b008b;color:#fff;box-shadow:0 4px 20px rgba(139,0,139,.4);}
   .drum-vote-btn.wrong.active .dvb-icon{transform:scale(1.1);}
   .drum-vote-btn:disabled{opacity:.3;cursor:not-allowed;}
+  /* hide icon spans now that emojis are removed */
+  .drum-vote-btn .dvb-icon{display:none;}
+
+  /* ── VOTE HEATMAP (admin only) ──────────────────────────── */
+  .vote-heatmap{margin:10px 16px 0;padding:10px 12px;background:rgba(0,0,0,.25);border:1px solid var(--border);border-radius:10px;}
+  .vote-heatmap-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.68rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  .hm-row{margin-bottom:6px;}
+  .hm-label{font-size:.7rem;color:rgba(255,255,255,.55);margin-bottom:2px;display:flex;justify-content:space-between;}
+  .hm-label span:last-child{color:rgba(255,255,255,.35);font-size:.65rem;}
+  .hm-bar{height:8px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden;display:flex;}
+  .hm-bar-correct{background:var(--pl-green);height:100%;transition:width .4s ease;}
+  .hm-bar-wrong{background:#c064c0;height:100%;transition:width .4s ease;}
+  html:not([data-theme="dark"]) .hm-label{color:var(--muted);}
 
   /* ── LIGHT MODE OVERRIDES ─────────────────────────────── */
   html:not([data-theme="dark"]) .team span { color: var(--muted); }
@@ -321,9 +336,8 @@
   html:not([data-theme="dark"]) .drum-outer{background:linear-gradient(180deg,var(--surface2) 0%,var(--surface) 35%,var(--surface) 65%,var(--surface2) 100%);border-color:var(--border);box-shadow:0 2px 12px rgba(0,0,0,.07);}
   html:not([data-theme="dark"]) .drum-viewport::before{background:linear-gradient(to bottom,var(--surface2) 0%,transparent 100%);}
   html:not([data-theme="dark"]) .drum-viewport::after{background:linear-gradient(to top,var(--surface2) 0%,transparent 100%);}
-  html:not([data-theme="dark"]) .drum-face-type{color:var(--text);text-shadow:none;}
-  html:not([data-theme="dark"]) .drum-face-detail{color:var(--muted);}
-  html:not([data-theme="dark"]) .drum-face-outcome{text-shadow:none;}
+  html:not([data-theme="dark"]) .drum-face-player{color:var(--muted);}
+  html:not([data-theme="dark"]) .drum-face-type{text-shadow:none;}
   html:not([data-theme="dark"]) .drum-controls{background:var(--surface2);border-top-color:var(--border);}
   html:not([data-theme="dark"]) .drum-arrow{background:var(--surface);border-color:var(--border);color:var(--muted);}
   html:not([data-theme="dark"]) .drum-hint{color:var(--muted);opacity:.5;}
@@ -694,10 +708,10 @@ let myGeneralVotes = {}; // keyed by "matchId_incId"
 let drumState = { index: 0, incidents: [], myVotes: {}, mid: null, _updateFaces: null, _syncUI: null, _N: 0 };
 
 const GENERAL_INCIDENTS = [
-  { id: 'gen-player-mgmt',    type: 'Player Management',       synthetic: true },
-  { id: 'gen-consistency',    type: 'Consistency',              synthetic: true },
-  { id: 'gen-time-wasting',   type: 'Time Wasting Attention',  synthetic: true },
-  { id: 'gen-play-advantage', type: 'Play Advantage',          synthetic: true },
+  { id: 'gen-player-mgmt',    type: 'Player Management',       synthetic: true, weight: 1 },
+  { id: 'gen-consistency',    type: 'Consistency',             synthetic: true, weight: 1 },
+  { id: 'gen-time-wasting',   type: 'Time Wasting Attention',  synthetic: true, weight: 1 },
+  { id: 'gen-play-advantage', type: 'Play Advantage',          synthetic: true, weight: 1 },
 ];
 
 // ── LIVE CARD + INCIDENT AUTO-SYNC ────────────────────────
@@ -824,16 +838,25 @@ async function loadAndRenderInline(mid) {
   if (!isUpcoming) {
     matchIncidents = await loadIncidents(mid);
     const ids = matchIncidents.map(i => i.id);
-    const [voteSplit, myVotes] = await Promise.all([
+    const [voteSplit, myVotes, genAgg, myGenVotes] = await Promise.all([
       loadIncidentVotes(ids),
       TEST_FAN_VOTES ? Promise.resolve({}) : loadMyIncidentVotes(currentUser?.id, ids),
+      loadGeneralVotesAggregate(mid),
+      loadMyGeneralVotes(mid, currentUser?.id),
     ]);
-    incidentVoteTotals = voteSplit; myIncidentVotes = myVotes;
+    incidentVoteTotals = voteSplit;
+    myIncidentVotes = myVotes;
+    // Merge general vote aggregates into both score buckets
+    Object.entries(genAgg).forEach(([cat, totals]) => {
+      incidentVoteTotals.neutral[cat] = { ...totals };
+      incidentVoteTotals.fan[cat]     = { ...totals };
+    });
     matchIncidents = [...matchIncidents, ...GENERAL_INCIDENTS];
+    myGeneralVotes = myGenVotes;
   } else {
     matchIncidents = []; incidentVoteTotals = { neutral:{}, fan:{} }; myIncidentVotes = {};
+    myGeneralVotes = {};
   }
-  myGeneralVotes = {};
   drumState = { index:0, incidents:matchIncidents, myVotes:myIncidentVotes, mid, _updateFaces:null, _syncUI:null, _N:matchIncidents.length };
   renderInlinePanel(mid, m, ref, isUpcoming);
 }
@@ -885,7 +908,7 @@ function renderInlinePanel(mid, m, ref, isUpcoming) {
       <div style="flex:1"><div class="rcard-name">${ref ? ref.name : 'Referee TBC'}</div><div class="rcard-meta">${ref ? (ref.nationality||'') : ''}</div></div>
     </div>
     ${!isUpcoming?`<div class="inline-score-tiles">${scoreTile(nScore,nVotes,'n')}${scoreTile(fScore,fVotes,'f')}</div>`:''}
-    ${!isUpcoming?`<div style="padding:10px 16px 0"><button class="inc-flag-btn" data-flag-mid="${mid}">⚑ Flag an Incorrect Decision</button></div>`:''}
+    ${!isUpcoming?`<div style="padding:10px 16px 0"><button class="inc-flag-btn" data-flag-mid="${mid}">Flag Decision for Review</button></div>${isAdmin(currentUser)?`<div class="vote-heatmap" id="vote-heatmap-${mid}" style="display:none"></div>`:''}`:''}
     ${isUpcoming?`<div class="inc-pregame" style="margin:12px 16px"><div class="inc-pregame-icon">🔒</div><div class="inc-pregame-title">Match hasn't started yet</div><div class="inc-pregame-sub">Voting opens once the game kicks off</div></div>`:''}
     ${drumHTML}
     ${!isUpcoming?`<div class="inline-discuss" data-match-title="${m.home} vs ${m.away}" data-matchweek="${m.matchweek||''}">
@@ -910,28 +933,56 @@ function renderInlinePanel(mid, m, ref, isUpcoming) {
   }
 }
 
+function showVoteHeatmap(mid) {
+  const el = document.getElementById(`vote-heatmap-${mid}`);
+  if (!el) return;
+  const realIncs = matchIncidents.filter(i => !i.synthetic);
+  if (!realIncs.length) { el.style.display = 'none'; return; }
+  const rows = realIncs.map(inc => {
+    const parts = (inc.description || '').split('||');
+    const player = parts[0]?.trim() || '';
+    const nv = incidentVoteTotals.neutral[inc.id] || { correct:0, wrong:0 };
+    const fv = incidentVoteTotals.fan[inc.id]     || { correct:0, wrong:0 };
+    const nTotal = nv.correct + nv.wrong;
+    const fTotal = fv.correct + fv.wrong;
+    const nPct = nTotal ? Math.round(nv.correct / nTotal * 100) : 0;
+    const fPct = fTotal ? Math.round(fv.correct / fTotal * 100) : 0;
+    const label = `${player ? player + ' — ' : ''}${inc.type}${inc.minute != null ? ` ${inc.minute}'` : ''}`;
+    return `<div class="hm-row">
+      <div class="hm-label"><span>${label}</span><span>N: ${nPct}% correct · F: ${fPct}% correct</span></div>
+      <div class="hm-bar">
+        <div class="hm-bar-correct" style="width:${nPct}%"></div>
+        <div class="hm-bar-wrong" style="width:${100-nPct}%"></div>
+      </div>
+    </div>`;
+  }).join('');
+  el.innerHTML = `<div class="vote-heatmap-title">Vote Breakdown</div>${rows}`;
+  el.style.display = 'block';
+}
+
 function buildDrumFace(inc, index) {
   if (inc.synthetic) {
     const gv = myGeneralVotes[inc.id] || null;
     const pillClass = gv === 'bad' ? 'v-wrong' : gv === 'good' ? 'v-good' : 'v-correct';
-    const pillText  = gv ? (gv === 'bad' ? '✗ Bad' : gv === 'good' ? '✓ Good' : '⭐ Excellent') : '';
+    const pillText  = gv ? (gv === 'bad' ? 'Bad' : gv === 'good' ? 'Good' : 'Excellent') : '';
     const pill = gv ? `<span class="drum-voted-pill ${pillClass}">${pillText}</span>` : '';
     return `<div class="drum-face dim" data-drum-index="${index}" data-inc-id="${inc.id}" data-synthetic="true">
+      <div class="drum-face-player" style="color:rgba(167,139,250,.5);font-size:.65rem;text-transform:uppercase;letter-spacing:.5px;">General</div>
       <div class="drum-face-type" style="color:#a78bfa">${inc.type}</div>
-      <div class="drum-face-detail">General Rating</div>
+      <div class="drum-face-min"></div>
       ${pill}
     </div>`;
   }
   const myVote = myIncidentVotes[inc.id]?.vote || null;
   const parts = (inc.description || '').split('||');
   const player  = parts[0]?.trim() || '';
-  const outcome = parts[1]?.trim() || '';
   const outcomeColour = parts[2]?.trim() === 'purple' ? '#c064c0' : 'var(--pl-green)';
-  const pill = myVote ? `<span class="drum-voted-pill v-${myVote}">${myVote==='correct'?'✓ Correct':'✗ Wrong'}</span>` : '';
+  const pill = myVote ? `<span class="drum-voted-pill v-${myVote}">${myVote==='correct'?'Correct':'Wrong'}</span>` : '';
+  const minBadge = inc.minute != null ? `<span class="inc-minute" style="font-size:.7rem">${inc.minute}'</span>` : '';
   return `<div class="drum-face dim" data-drum-index="${index}" data-inc-id="${inc.id}">
-    <div class="drum-face-type">${inc.type}${inc.minute!=null?` <span class="inc-minute">${inc.minute}'</span>`:''}</div>
-    ${player?`<div class="drum-face-detail">${player}</div>`:''}
-    ${outcome?`<div class="drum-face-outcome" style="color:${outcomeColour}">${outcome}</div>`:''}
+    <div class="drum-face-player">${player}</div>
+    <div class="drum-face-type" style="color:${outcomeColour}">${inc.type}</div>
+    <div class="drum-face-min">${minBadge}</div>
     ${pill}
   </div>`;
 }
@@ -944,26 +995,16 @@ function buildVoteBtnsHTML(mid, index) {
     const voteSection = document.getElementById(`drum-vote-btns-${mid}`);
     if (voteSection) voteSection.classList.add('three-col');
     return `
-      <button class="drum-vote-btn wrong${gv==='bad'?' active':''}" data-gen-vote="bad" data-iid="${inc.id}" data-mid="${mid}">
-        <span class="dvb-icon">✗</span>Bad
-      </button>
-      <button class="drum-vote-btn neutral${gv==='good'?' active':''}" data-gen-vote="good" data-iid="${inc.id}" data-mid="${mid}">
-        <span class="dvb-icon">👍</span>Good
-      </button>
-      <button class="drum-vote-btn correct${gv==='excellent'?' active':''}" data-gen-vote="excellent" data-iid="${inc.id}" data-mid="${mid}">
-        <span class="dvb-icon">⭐</span>Excellent
-      </button>`;
+      <button class="drum-vote-btn wrong${gv==='bad'?' active':''}" data-gen-vote="bad" data-iid="${inc.id}" data-mid="${mid}">Bad</button>
+      <button class="drum-vote-btn neutral${gv==='good'?' active':''}" data-gen-vote="good" data-iid="${inc.id}" data-mid="${mid}">Good</button>
+      <button class="drum-vote-btn correct${gv==='excellent'?' active':''}" data-gen-vote="excellent" data-iid="${inc.id}" data-mid="${mid}">Excellent</button>`;
   }
   const myVote = drumState.myVotes[inc.id]?.vote || null;
   const voteSection = document.getElementById(`drum-vote-btns-${mid}`);
   if (voteSection) voteSection.classList.remove('three-col');
   return `
-    <button class="drum-vote-btn correct${myVote==='correct'?' active':''}" data-drum-vote="correct" data-iid="${inc.id}" data-mid="${mid}">
-      <span class="dvb-icon">✅</span>Correct
-    </button>
-    <button class="drum-vote-btn wrong${myVote==='wrong'?' active':''}" data-drum-vote="wrong" data-iid="${inc.id}" data-mid="${mid}">
-      <span class="dvb-icon">✗</span>Incorrect
-    </button>`;
+    <button class="drum-vote-btn correct${myVote==='correct'?' active':''}" data-drum-vote="correct" data-iid="${inc.id}" data-mid="${mid}">Correct</button>
+    <button class="drum-vote-btn wrong${myVote==='wrong'?' active':''}" data-drum-vote="wrong" data-iid="${inc.id}" data-mid="${mid}">Incorrect</button>`;
 }
 
 function initDrum(mid) {
@@ -1047,7 +1088,7 @@ async function handleDrumVote(btn) {
     let pill = face.querySelector('.drum-voted-pill');
     if (!pill) { pill=document.createElement('span'); face.appendChild(pill); }
     pill.className=`drum-voted-pill v-${vote}`;
-    pill.textContent=vote==='correct'?'✓ Correct':'✗ Wrong';
+    pill.textContent=vote==='correct'?'Correct':'Wrong';
   }
   const vb = document.getElementById(`drum-vote-btns-${mid}`);
   if (vb) vb.innerHTML=buildVoteBtnsHTML(mid, drumState.index);
@@ -1055,7 +1096,7 @@ async function handleDrumVote(btn) {
 
   const ok = await saveIncidentVote(incidentId, currentUser?.id, vote, isFan, voteWeight);
   if (!ok) { toast('⚠ Vote failed — please try again'); return; }
-  toast(`${vote==='correct'?'✅ ':''} Vote recorded as ${isFan?'Fan':'Neutral'}!`.trim());
+  toast(`Vote recorded as ${isFan?'Fan':'Neutral'}!`);
   const ref = REFS.find(r=>r.id===+voteMatch.refId);
   if (ref) {
     const ns=calcIncidentScore(matchIncidents,incidentVoteTotals.neutral);
@@ -1147,24 +1188,47 @@ document.getElementById('matchList').addEventListener('click', e => {
   const genBtn = e.target.closest('[data-gen-vote]');
   if (genBtn) {
     e.stopPropagation();
-    const vote = genBtn.dataset.genVote;
+    const vote  = genBtn.dataset.genVote;
     const incId = genBtn.dataset.iid;
-    const mid = genBtn.dataset.mid;
+    const mid   = +genBtn.dataset.mid;
+    const voteWeight = TEST_FAN_VOTES ? Math.floor(Math.random()*15)+13 : 5;
+
+    // Remove old vote from local totals, add new one (bad→wrong, good/excellent→correct)
+    const oldVote = myGeneralVotes[incId];
+    if (!incidentVoteTotals.neutral[incId]) incidentVoteTotals.neutral[incId] = { correct:0, wrong:0 };
+    if (!incidentVoteTotals.fan[incId])     incidentVoteTotals.fan[incId]     = { correct:0, wrong:0 };
+    if (oldVote) {
+      const oldKey = oldVote === 'bad' ? 'wrong' : 'correct';
+      ['neutral','fan'].forEach(b => {
+        incidentVoteTotals[b][incId][oldKey] = Math.max(0, (incidentVoteTotals[b][incId][oldKey]||0) - voteWeight);
+      });
+    }
+    const newKey = vote === 'bad' ? 'wrong' : 'correct';
+    ['neutral','fan'].forEach(b => {
+      incidentVoteTotals[b][incId][newKey] = (incidentVoteTotals[b][incId][newKey]||0) + voteWeight;
+    });
     myGeneralVotes[incId] = vote;
-    // Update pill on the face
+
+    // Persist to Supabase
+    if (currentUser?.id) {
+      saveGeneralVote(mid, incId, currentUser.id, vote, voteWeight).catch(() => {});
+    }
+
+    // Update pill on the drum face
     const face = document.querySelector(`.drum-face[data-inc-id="${incId}"]`);
     if (face) {
       let pill = face.querySelector('.drum-voted-pill');
       if (!pill) { pill = document.createElement('span'); face.appendChild(pill); }
       const pillClass = vote==='bad' ? 'v-wrong' : vote==='good' ? 'v-good' : 'v-correct';
-      const pillText  = vote==='bad' ? '✗ Bad' : vote==='good' ? '✓ Good' : '⭐ Excellent';
+      const pillText  = vote==='bad' ? 'Bad' : vote==='good' ? 'Good' : 'Excellent';
       pill.className = `drum-voted-pill ${pillClass}`;
       pill.textContent = pillText;
     }
     const vb = document.getElementById(`drum-vote-btns-${mid}`);
     if (vb) vb.innerHTML = buildVoteBtnsHTML(mid, drumState.index);
-    const label = vote==='bad' ? '✗ Bad' : vote==='good' ? '✓ Good' : '⭐ Excellent';
+    const label = vote==='bad' ? 'Bad' : vote==='good' ? 'Good' : 'Excellent';
     toast(`${label} — General rating saved`);
+    updateInlineScores(mid);
     return;
   }
   const flagBtn = e.target.closest('[data-flag-mid]');
@@ -1176,7 +1240,8 @@ document.getElementById('matchList').addEventListener('click', e => {
     if(m?.kickoff){const ko=new Date(String(m.kickoff).replace(' ','T')).getTime();const el=Math.floor((Date.now()-ko)/60000);if(el>=0&&el<=130)mm=Math.min(130,el);}
     if(mid&&currentUser?.id) saveDecisionFlag(mid,mm).catch(()=>{});
     document.getElementById(`drum-${mid}`)?.scrollIntoView({behavior:'smooth',block:'nearest'});
-    toast('⚑ Flagged!');
+    toast('Flagged for review!');
+    if (isAdmin(currentUser)) showVoteHeatmap(mid);
     return;
   }
   const sendBtn = e.target.closest('.inline-discuss-send');

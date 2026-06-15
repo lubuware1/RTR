@@ -346,25 +346,38 @@ const INCIDENT_TYPES = [
 // Votes threshold config
 const VOTE_MULTIPLIER = 1;   // votes use stored weight column — no additional multiplier needed
 const MIN_VOTES = 10;        // effective votes needed before a decision affects the score
+const INCIDENT_DECAY = 0.75; // each additional incident carries 75% of the previous one's impact
 
 // Compute incident-driven score starting from 10.
 // Returns null if no decisions have cleared the vote threshold yet.
+// The worst-voted decision is weighted at full strength; each subsequent one decays by INCIDENT_DECAY.
 // incidents: [{ id, weight }]
 // votes: { [incidentId]: { correct: N, wrong: N } }
 function calcIncidentScore(incidents, votes) {
   if (!incidents.length) return null;
-  let score = 10.0;
-  let anyQualified = false;
+
+  // collect qualified incidents with their wrong ratio
+  const qualified = [];
   incidents.forEach(inc => {
     const v = votes[inc.id];
     if (!v) return;
     const total = v.correct + v.wrong;
-    if (total * VOTE_MULTIPLIER < MIN_VOTES) return; // below threshold — pending
-    anyQualified = true;
-    const penalty = inc.weight * (v.wrong / total);
-    score -= penalty;
+    if (total * VOTE_MULTIPLIER < MIN_VOTES) return;
+    qualified.push({ inc, wrongRatio: v.wrong / total });
   });
-  if (!anyQualified) return null;
+
+  if (!qualified.length) return null;
+
+  // worst decision first so it takes the full-weight hit
+  qualified.sort((a, b) => b.wrongRatio - a.wrongRatio);
+
+  let score = 10.0;
+  let decay = 1.0;
+  qualified.forEach(({ inc, wrongRatio }) => {
+    score -= inc.weight * wrongRatio * decay;
+    decay *= INCIDENT_DECAY;
+  });
+
   return Math.max(1.0, Math.round(score * 10) / 10);
 }
 
@@ -409,6 +422,51 @@ async function loadMyIncidentVotes(userId, incidentIds) {
   return map;
 }
 
+// General rating categories (same list as GENERAL_INCIDENTS in matches.html)
+const GENERAL_CATEGORIES = [
+  { id: 'gen-player-mgmt',    weight: 1 },
+  { id: 'gen-consistency',    weight: 1 },
+  { id: 'gen-time-wasting',   weight: 1 },
+  { id: 'gen-play-advantage', weight: 1 },
+];
+
+async function saveGeneralVote(matchId, category, userId, vote, weight = 5) {
+  if (PREVIEW_MODE) return true;
+  const { error } = await getSB().from('RTR General Votes')
+    .upsert(
+      { match_id: matchId, category, user_id: userId, vote, weight },
+      { onConflict: 'match_id,category,user_id' }
+    );
+  if (error) console.error('[RTR] saveGeneralVote error:', error);
+  return !error;
+}
+
+async function loadMyGeneralVotes(matchId, userId) {
+  if (!userId || PREVIEW_MODE) return {};
+  const { data } = await getSB().from('RTR General Votes')
+    .select('category, vote')
+    .eq('match_id', matchId)
+    .eq('user_id', userId);
+  const map = {};
+  (data || []).forEach(v => { map[v.category] = v.vote; });
+  return map;
+}
+
+// Returns { category: { correct: N, wrong: N } } — bad→wrong, good/excellent→correct
+async function loadGeneralVotesAggregate(matchId) {
+  if (PREVIEW_MODE) return {};
+  const { data } = await getSB().from('RTR General Votes')
+    .select('category, vote, weight')
+    .eq('match_id', matchId);
+  const agg = {};
+  (data || []).forEach(v => {
+    if (!agg[v.category]) agg[v.category] = { correct: 0, wrong: 0 };
+    if (v.vote === 'bad') agg[v.category].wrong  += v.weight || 1;
+    else                  agg[v.category].correct += v.weight || 1;
+  });
+  return agg;
+}
+
 async function saveIncidentVote(incidentId, userId, vote, isFan, weight = 5) {
   if (PREVIEW_MODE) return true;
   const { error } = await getSB().from('RTR Incident Votes').insert({
@@ -437,20 +495,20 @@ async function loadIncidentRatings(matchIds) {
   if (PREVIEW_MODE) return;
   const matchIdSet = matchIds ? new Set(matchIds.map(Number)) : null;
 
-  const { data: incidents } = await getSB()
-    .from('RTR Incidents').select('id, match_id, type, weight');
-  if (!incidents?.length) return;
+  const [{ data: incidents }, { data: genVotes }] = await Promise.all([
+    getSB().from('RTR Incidents').select('id, match_id, type, weight'),
+    getSB().from('RTR General Votes').select('match_id, category, vote, weight'),
+  ]);
+  if (!incidents?.length && !genVotes?.length) return;
 
-  // Filter incidents to the requested matches if a scope is provided
   const scopedIncidents = matchIdSet
-    ? incidents.filter(i => matchIdSet.has(Number(i.match_id)))
-    : incidents;
-  if (!scopedIncidents.length) return;
+    ? (incidents||[]).filter(i => matchIdSet.has(Number(i.match_id)))
+    : (incidents||[]);
 
   const ids = scopedIncidents.map(i => i.id);
-  const { data: votes } = await getSB()
-    .from('RTR Incident Votes').select('incident_id, vote, is_fan, weight')
-    .in('incident_id', ids);
+  const { data: votes } = ids.length
+    ? await getSB().from('RTR Incident Votes').select('incident_id, vote, is_fan, weight').in('incident_id', ids)
+    : { data: [] };
 
   const byMatch = {};
   scopedIncidents.forEach(inc => {
@@ -465,23 +523,45 @@ async function loadIncidentRatings(matchIds) {
     if (b[v.incident_id]) b[v.incident_id][v.vote] += v.weight || 1;
   });
 
+  // Aggregate general votes per match per category — bad→wrong, good/excellent→correct
+  const genByMatch = {};
+  (genVotes||[]).forEach(v => {
+    const mid = Number(v.match_id);
+    if (matchIdSet && !matchIdSet.has(mid)) return;
+    if (!genByMatch[mid]) genByMatch[mid] = {};
+    if (!genByMatch[mid][v.category]) genByMatch[mid][v.category] = { correct:0, wrong:0 };
+    if (v.vote === 'bad') genByMatch[mid][v.category].wrong  += v.weight || 1;
+    else                  genByMatch[mid][v.category].correct += v.weight || 1;
+  });
+
   REFS.forEach(r => { r.neutralRating=null; r.neutralVotes=0; r.fanRating=null; r.fanVotes=0; });
   const refNeutral = {}, refFan = {};
   MATCHES.forEach(m => {
     if (matchIdSet && !matchIdSet.has(Number(m.id))) return;
-    const incs = byMatch[m.id];
-    if (!incs) return;
     const ref = REFS.find(r => r.id === +m.refId);
     if (!ref) return;
     if (!refNeutral[ref.id]) refNeutral[ref.id] = [];
     if (!refFan[ref.id])     refFan[ref.id]     = [];
-    incs.forEach(inc => {
+
+    // Specific incidents
+    (byMatch[m.id]||[]).forEach(inc => {
       const nv = neutral[inc.id] || { correct:0, wrong:0 };
       const fv = fan[inc.id]     || { correct:0, wrong:0 };
       if (nv.correct + nv.wrong) refNeutral[ref.id].push({ ...inc, _v: nv });
       if (fv.correct + fv.wrong) refFan[ref.id].push({ ...inc, _v: fv });
     });
+
+    // General rating categories — same totals for both neutral and fan buckets
+    const gen = genByMatch[m.id] || {};
+    GENERAL_CATEGORIES.forEach(cat => {
+      const gv = gen[cat.id];
+      if (!gv || gv.correct + gv.wrong === 0) return;
+      const synInc = { id: cat.id, match_id: m.id, type: cat.id, weight: cat.weight };
+      refNeutral[ref.id].push({ ...synInc, _v: gv });
+      refFan[ref.id].push({ ...synInc, _v: gv });
+    });
   });
+
   REFS.forEach(r => {
     if (refNeutral[r.id]?.length) {
       const vMap = Object.fromEntries(refNeutral[r.id].map(i => [i.id, i._v]));
