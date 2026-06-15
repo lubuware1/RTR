@@ -624,7 +624,10 @@ function renderRecentStrip() {
       document.querySelectorAll('.view-tab').forEach(x => x.classList.remove('active'));
       document.querySelector('[data-filter="recent"]')?.classList.add('active');
       renderList(); renderRecentStrip();
-      setTimeout(() => document.querySelector(`.match-card[data-mid="${mid}"]`)?.click(), 60);
+      setTimeout(() => {
+        const card = document.querySelector(`.match-card[data-mid="${mid}"]`);
+        if (card) { card.click(); card.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+      }, 60);
     });
   });
   initRecentStripScroll();

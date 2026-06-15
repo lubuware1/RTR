@@ -1019,7 +1019,7 @@ const SHARED_CSS = `
   html[data-theme="dark"] .gw-banner{background:linear-gradient(90deg,rgba(55,0,60,.9),rgba(10,12,16,1)) !important;}
   html[data-theme="dark"] body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 70% 50% at 20% 30%,rgba(55,0,60,.45) 0%,transparent 70%),radial-gradient(ellipse 60% 60% at 80% 70%,rgba(80,0,90,.3) 0%,transparent 65%) !important;}
   /* ── DIAGONAL LOGO WATERMARK ── */
-  body::after{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;background-image:url(images/logos/RRLogo.svg);background-repeat:repeat;background-size:140px auto;transform:rotate(-28deg);opacity:0.045;pointer-events:none;z-index:0;}
+  body::after{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;background-image:url(images/logos/RRLogo.svg);background-repeat:repeat;background-size:140px auto;transform:rotate(-28deg);opacity:0.045;pointer-events:none;z-index:-1;}
   html:not([data-theme="dark"]) body::after{filter:brightness(0.35);opacity:0.12;}
   html[data-theme="dark"] .match-card,
   html[data-theme="dark"] .rpc,
