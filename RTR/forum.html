@@ -1077,7 +1077,13 @@ function esc(str) {
 
 // ── HEADER ────────────────────────────────────────────────
 function initHeader() {
-  if (!currentUser) { window.location.href = 'login.html'; return; }
+  if (!currentUser) {
+    const nm = document.getElementById('ucName'); if (nm) nm.textContent = 'Login';
+    const av = document.getElementById('ucAvatar'); if (av) av.textContent = '→';
+    const chip = document.getElementById('userChip'); if (chip) chip.addEventListener('click', () => { window.location.href = 'login.html'; });
+    const hb = document.getElementById('hamburger'); if (hb) hb.addEventListener('click', () => { document.getElementById('mobileNav')?.classList.toggle('open'); });
+    return;
+  }
   applyUserAvatar(document.getElementById('ucAvatar'), currentUser);
   document.getElementById('ucName').textContent   = currentUser.username || 'User';
   if (isAdmin(currentUser)) document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
@@ -1171,8 +1177,7 @@ document.getElementById('compSubmit').addEventListener('click', async () => {
 
 // ── MAIN ──────────────────────────────────────────────────
 (async function init() {
-  const authed = await checkAuth();
-  if (!authed) { window.location.href = 'login.html'; return; }
+  await checkAuth();              // refresh session if logged in; no longer gates guests
   currentUser = getCurrentUser();
   initHeader();
   await loadFromSheets();

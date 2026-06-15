@@ -537,7 +537,13 @@ function fmt(dateStr) {
 function initHeader() {
   const user = getCurrentUser();
   currentUser = user;
-  if (!user) { window.location.href = 'login.html'; return; }
+  if (!user) {
+    const nm = document.getElementById('ucName'); if (nm) nm.textContent = 'Login';
+    const av = document.getElementById('ucAvatar'); if (av) av.textContent = '→';
+    const chip = document.getElementById('userChip'); if (chip) chip.addEventListener('click', () => { window.location.href = 'login.html'; });
+    const hb = document.getElementById('hamburger'); if (hb) hb.addEventListener('click', () => { document.getElementById('mobileNav')?.classList.toggle('open'); });
+    return;
+  }
 
   applyUserAvatar(document.getElementById('ucAvatar'), user);
   document.getElementById('ucName').textContent   = user.username || 'User';
@@ -773,8 +779,7 @@ function renderBadges(earned) {
     return;
   }
 
-  const authed = await checkAuth();
-  if (!authed) { window.location.href = 'login.html'; return; }
+  await checkAuth();              // refresh session if logged in; no longer gates guests
 
   initHeader();
   if (!currentUser) return;
