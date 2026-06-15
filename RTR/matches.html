@@ -288,6 +288,11 @@
   .drum-voted-pill{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:.62rem;font-weight:700;font-family:'Barlow Condensed',sans-serif;padding:2px 7px;border-radius:4px;letter-spacing:.3px;text-transform:uppercase;}
   .drum-voted-pill.v-correct{background:rgba(0,255,133,.15);color:#37efba;border:1px solid rgba(0,255,133,.35);}
   .drum-voted-pill.v-wrong{background:rgba(200,64,200,.15);color:rgba(230,150,230,.95);border:1px solid rgba(200,64,200,.35);}
+  .drum-voted-pill.v-good{background:rgba(245,166,35,.15);color:#f5a623;border:1px solid rgba(245,166,35,.35);}
+  .drum-vote-section.three-col{grid-template-columns:1fr 1fr 1fr;}
+  .drum-vote-btn.neutral{background:rgba(245,166,35,.07);border-color:rgba(245,166,35,.28);color:#f5a623;}
+  .drum-vote-btn.neutral:hover:not(:disabled){background:rgba(245,166,35,.14);border-color:rgba(245,166,35,.6);}
+  .drum-vote-btn.neutral.active{background:#f5a623;border-color:#f5a623;color:#000;box-shadow:0 4px 20px rgba(245,166,35,.4);}
   .drum-controls{display:flex;align-items:center;justify-content:center;gap:10px;padding:8px 16px;border-top:1px solid rgba(255,255,255,.05);background:rgba(14,0,24,.5);}
   .drum-arrows{display:flex;gap:8px;}
   .drum-arrow{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:6px;width:36px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,.35);font-size:.8rem;transition:all .15s;flex-shrink:0;}
@@ -340,9 +345,8 @@
   .recent-strip{position:sticky;top:62px;z-index:90;background:#0f1117;border-bottom:1px solid var(--border);padding:10px 0;overflow:hidden;display:flex;align-items:center;}
   .recent-strip:empty{display:none;}
   .rs-label{flex-shrink:0;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.65rem;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);padding:0 14px;border-right:1px solid var(--border);white-space:nowrap;z-index:1;}
-  .rs-track{display:flex;gap:10px;width:max-content;animation:rs-scroll 40s linear infinite;padding:0 10px;}
-  .rs-track:hover{animation-play-state:paused;}
-  @keyframes rs-scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+  .rs-track{display:flex;gap:10px;width:max-content;padding:0 10px;cursor:grab;user-select:none;}
+  .rs-track.dragging{cursor:grabbing;}
   .rs-card{flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;min-width:140px;transition:border-color .15s,background .15s;display:flex;flex-direction:column;gap:5px;}
   .rs-card:hover{border-color:var(--pl-green);background:var(--surface2);animation-play-state:paused;}
   .rs-teams{display:flex;align-items:center;gap:4px;}
@@ -404,8 +408,8 @@
 
     <div class="view-tabs" id="filterTabs">
       <button class="view-tab active" data-filter="all">All</button>
-      <button class="view-tab" data-filter="upcoming">Upcoming</button>
       <button class="view-tab" data-filter="live">Live</button>
+      <button class="view-tab" data-filter="upcoming">Upcoming</button>
       <button class="view-tab" data-filter="recent">Recent</button>
     </div>
 
@@ -612,7 +616,7 @@ function renderRecentStrip() {
     </div>`;
   }).join('');
   // Duplicate cards for seamless infinite loop
-  strip.innerHTML = `<span class="rs-label">Recent</span><div class="rs-track">${cardHTML}${cardHTML}</div>`;
+  strip.innerHTML = `<div class="rs-track">${cardHTML}${cardHTML}</div>`;
   strip.querySelectorAll('.rs-card').forEach(card => {
     card.addEventListener('click', () => {
       const mid = card.dataset.mid;
@@ -623,13 +627,75 @@ function renderRecentStrip() {
       setTimeout(() => document.querySelector(`.match-card[data-mid="${mid}"]`)?.click(), 60);
     });
   });
+  initRecentStripScroll();
+}
+
+let _rsRafId = null;
+let _rsPos = 0;
+function initRecentStripScroll() {
+  if (_rsRafId) { cancelAnimationFrame(_rsRafId); _rsRafId = null; }
+  const track = document.querySelector('#recentStrip .rs-track');
+  if (!track) return;
+  _rsPos = 0;
+  let dragging = false, dragStartX = 0, dragStartPos = 0;
+
+  function half() { return track.scrollWidth / 2; }
+
+  function tick() {
+    if (!dragging) {
+      _rsPos += 0.5;
+      if (_rsPos >= half()) _rsPos -= half();
+      track.style.transform = `translateX(${-_rsPos}px)`;
+    }
+    _rsRafId = requestAnimationFrame(tick);
+  }
+
+  // Mouse drag
+  track.addEventListener('mousedown', e => {
+    if (e.target.closest('.rs-card') && e.type === 'click') return;
+    dragging = true; dragStartX = e.clientX; dragStartPos = _rsPos;
+    track.classList.add('dragging');
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const h = half();
+    _rsPos = (((dragStartPos + (dragStartX - e.clientX)) % h) + h) % h;
+    track.style.transform = `translateX(${-_rsPos}px)`;
+  });
+  document.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false; track.classList.remove('dragging');
+  });
+
+  // Touch drag
+  track.addEventListener('touchstart', e => {
+    dragStartX = e.touches[0].clientX; dragStartPos = _rsPos; dragging = true;
+  }, { passive: true });
+  track.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    const h = half();
+    _rsPos = (((dragStartPos + (dragStartX - e.touches[0].clientX)) % h) + h) % h;
+    track.style.transform = `translateX(${-_rsPos}px)`;
+  }, { passive: true });
+  track.addEventListener('touchend', () => { dragging = false; });
+
+  _rsRafId = requestAnimationFrame(tick);
 }
 
 // ── INLINE PANEL STATE ────────────────────────────────────
 let matchIncidents = [];
 let incidentVoteTotals = { neutral: {}, fan: {} };
 let myIncidentVotes = {};
+let myGeneralVotes = {}; // keyed by "matchId_incId"
 let drumState = { index: 0, incidents: [], myVotes: {}, mid: null, _updateFaces: null, _syncUI: null, _N: 0 };
+
+const GENERAL_INCIDENTS = [
+  { id: 'gen-player-mgmt',    type: 'Player Management',       synthetic: true },
+  { id: 'gen-consistency',    type: 'Consistency',              synthetic: true },
+  { id: 'gen-time-wasting',   type: 'Time Wasting Attention',  synthetic: true },
+  { id: 'gen-play-advantage', type: 'Play Advantage',          synthetic: true },
+];
 
 // ── LIVE CARD + INCIDENT AUTO-SYNC ────────────────────────
 // Fetches per-match detail for every live/complete match in the current GW.
@@ -760,9 +826,11 @@ async function loadAndRenderInline(mid) {
       TEST_FAN_VOTES ? Promise.resolve({}) : loadMyIncidentVotes(currentUser?.id, ids),
     ]);
     incidentVoteTotals = voteSplit; myIncidentVotes = myVotes;
+    matchIncidents = [...matchIncidents, ...GENERAL_INCIDENTS];
   } else {
     matchIncidents = []; incidentVoteTotals = { neutral:{}, fan:{} }; myIncidentVotes = {};
   }
+  myGeneralVotes = {};
   drumState = { index:0, incidents:matchIncidents, myVotes:myIncidentVotes, mid, _updateFaces:null, _syncUI:null, _N:matchIncidents.length };
   renderInlinePanel(mid, m, ref, isUpcoming);
 }
@@ -840,6 +908,17 @@ function renderInlinePanel(mid, m, ref, isUpcoming) {
 }
 
 function buildDrumFace(inc, index) {
+  if (inc.synthetic) {
+    const gv = myGeneralVotes[inc.id] || null;
+    const pillClass = gv === 'bad' ? 'v-wrong' : gv === 'good' ? 'v-good' : 'v-correct';
+    const pillText  = gv ? (gv === 'bad' ? '✗ Bad' : gv === 'good' ? '✓ Good' : '⭐ Excellent') : '';
+    const pill = gv ? `<span class="drum-voted-pill ${pillClass}">${pillText}</span>` : '';
+    return `<div class="drum-face dim" data-drum-index="${index}" data-inc-id="${inc.id}" data-synthetic="true">
+      <div class="drum-face-type" style="color:#a78bfa">${inc.type}</div>
+      <div class="drum-face-detail">General Rating</div>
+      ${pill}
+    </div>`;
+  }
   const myVote = myIncidentVotes[inc.id]?.vote || null;
   const parts = (inc.description || '').split('||');
   const player  = parts[0]?.trim() || '';
@@ -857,7 +936,24 @@ function buildDrumFace(inc, index) {
 function buildVoteBtnsHTML(mid, index) {
   const inc = drumState.incidents[index];
   if (!inc) return '';
+  if (inc.synthetic) {
+    const gv = myGeneralVotes[inc.id] || null;
+    const voteSection = document.getElementById(`drum-vote-btns-${mid}`);
+    if (voteSection) voteSection.classList.add('three-col');
+    return `
+      <button class="drum-vote-btn wrong${gv==='bad'?' active':''}" data-gen-vote="bad" data-iid="${inc.id}" data-mid="${mid}">
+        <span class="dvb-icon">✗</span>Bad
+      </button>
+      <button class="drum-vote-btn neutral${gv==='good'?' active':''}" data-gen-vote="good" data-iid="${inc.id}" data-mid="${mid}">
+        <span class="dvb-icon">👍</span>Good
+      </button>
+      <button class="drum-vote-btn correct${gv==='excellent'?' active':''}" data-gen-vote="excellent" data-iid="${inc.id}" data-mid="${mid}">
+        <span class="dvb-icon">⭐</span>Excellent
+      </button>`;
+  }
   const myVote = drumState.myVotes[inc.id]?.vote || null;
+  const voteSection = document.getElementById(`drum-vote-btns-${mid}`);
+  if (voteSection) voteSection.classList.remove('three-col');
   return `
     <button class="drum-vote-btn correct${myVote==='correct'?' active':''}" data-drum-vote="correct" data-iid="${inc.id}" data-mid="${mid}">
       <span class="dvb-icon">✅</span>Correct
@@ -1045,6 +1141,29 @@ document.getElementById('matchList').addEventListener('click', e => {
   }
   const voteBtn = e.target.closest('[data-drum-vote]');
   if (voteBtn) { e.stopPropagation(); handleDrumVote(voteBtn); return; }
+  const genBtn = e.target.closest('[data-gen-vote]');
+  if (genBtn) {
+    e.stopPropagation();
+    const vote = genBtn.dataset.genVote;
+    const incId = genBtn.dataset.iid;
+    const mid = genBtn.dataset.mid;
+    myGeneralVotes[incId] = vote;
+    // Update pill on the face
+    const face = document.querySelector(`.drum-face[data-inc-id="${incId}"]`);
+    if (face) {
+      let pill = face.querySelector('.drum-voted-pill');
+      if (!pill) { pill = document.createElement('span'); face.appendChild(pill); }
+      const pillClass = vote==='bad' ? 'v-wrong' : vote==='good' ? 'v-good' : 'v-correct';
+      const pillText  = vote==='bad' ? '✗ Bad' : vote==='good' ? '✓ Good' : '⭐ Excellent';
+      pill.className = `drum-voted-pill ${pillClass}`;
+      pill.textContent = pillText;
+    }
+    const vb = document.getElementById(`drum-vote-btns-${mid}`);
+    if (vb) vb.innerHTML = buildVoteBtnsHTML(mid, drumState.index);
+    const label = vote==='bad' ? '✗ Bad' : vote==='good' ? '✓ Good' : '⭐ Excellent';
+    toast(`${label} — General rating saved`);
+    return;
+  }
   const flagBtn = e.target.closest('[data-flag-mid]');
   if (flagBtn) {
     e.stopPropagation();
