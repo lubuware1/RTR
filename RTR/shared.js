@@ -1012,12 +1012,15 @@ const SHARED_CSS = `
     header{padding:0 16px;}
   }
   /* ── DARK MODE ──────────────────────────────────────── */
-  html[data-theme="dark"]{--bg:#0a0c10;--surface:rgba(18,21,28,0.55);--surface2:rgba(26,30,40,0.65);--border:rgba(255,255,255,.09);--red:#ff4757;--yellow:#ffd32a;--green:#37ecba;--text:#e8eaf0;--muted:#6b7280;--pl-green:#00ff85;--gold:#f5a623;}
+  html[data-theme="dark"]{--bg:#0a0c10;--surface:#12151c;--surface2:#1a1e28;--border:rgba(255,255,255,.09);--red:#ff4757;--yellow:#ffd32a;--green:#37ecba;--text:#e8eaf0;--muted:#6b7280;--pl-green:#00ff85;--gold:#f5a623;}
   html[data-theme="dark"] header{background:linear-gradient(135deg,#37003c 0%,#1a0020 60%,#0a0c10 100%);box-shadow:0 4px 32px rgba(0,255,133,.12);}
   html[data-theme="dark"] header::after{background:linear-gradient(to bottom,rgba(0,0,0,.55) 0%,transparent 100%);}
   html[data-theme="dark"] .mobile-nav{background:linear-gradient(135deg,#37003c 0%,#1a0020 100%);}
   html[data-theme="dark"] .gw-banner{background:linear-gradient(90deg,rgba(55,0,60,.9),rgba(10,12,16,1)) !important;}
   html[data-theme="dark"] body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 70% 50% at 20% 30%,rgba(55,0,60,.45) 0%,transparent 70%),radial-gradient(ellipse 60% 60% at 80% 70%,rgba(80,0,90,.3) 0%,transparent 65%) !important;}
+  /* ── DIAGONAL LOGO WATERMARK ── */
+  body::after{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;background-image:url(images/logos/RRLogo.svg);background-repeat:repeat;background-size:140px auto;transform:rotate(-28deg);opacity:0.045;pointer-events:none;z-index:0;}
+  html:not([data-theme="dark"]) body::after{filter:brightness(0.35);opacity:0.12;}
   html[data-theme="dark"] .match-card,
   html[data-theme="dark"] .rpc,
   html[data-theme="dark"] .rpc-stat-pill,

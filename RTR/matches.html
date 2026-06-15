@@ -18,7 +18,9 @@
   *{margin:0;padding:0;box-sizing:border-box;}
   body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;}
 
-  header{background:linear-gradient(135deg,#37003c 0%,#1a0020 60%,#0a0c10 100%);border-bottom:2px solid var(--pl-green);padding:0 24px;position:sticky;top:0;z-index:100;box-shadow:0 4px 32px rgba(0,255,133,.12);}
+  header{background-color:#37003c;background:linear-gradient(135deg,#37003c 0%,#1a0020 60%,#0a0c10 100%);border-bottom:2px solid var(--pl-green);padding:0 24px;position:sticky;top:0;z-index:100;box-shadow:0 4px 32px rgba(0,255,133,.12);isolation:isolate;}
+  header::after{display:none;}
+  .mobile-nav{background-color:#1a0020;background:linear-gradient(135deg,#37003c 0%,#1a0020 100%);isolation:isolate;}
   .header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:60px;}
   .logo{display:flex;align-items:center;gap:10px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.6rem;text-decoration:none;color:var(--text);}
   .logo-badge{background:var(--pl-green);color:#fff;width:34px;height:34px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
@@ -333,6 +335,27 @@
     .view-tabs{gap:0;}
     .view-tab{font-size:.75rem;padding:7px 4px;}
   }
+
+  /* ── RECENT SCROLL STRIP ── */
+  .recent-strip{position:sticky;top:62px;z-index:90;background:#0f1117;border-bottom:1px solid var(--border);padding:10px 0;overflow:hidden;display:flex;align-items:center;}
+  .recent-strip:empty{display:none;}
+  .rs-label{flex-shrink:0;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.65rem;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);padding:0 14px;border-right:1px solid var(--border);white-space:nowrap;z-index:1;}
+  .rs-track{display:flex;gap:10px;width:max-content;animation:rs-scroll 40s linear infinite;padding:0 10px;}
+  .rs-track:hover{animation-play-state:paused;}
+  @keyframes rs-scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+  .rs-card{flex-shrink:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;min-width:140px;transition:border-color .15s,background .15s;display:flex;flex-direction:column;gap:5px;}
+  .rs-card:hover{border-color:var(--pl-green);background:var(--surface2);animation-play-state:paused;}
+  .rs-teams{display:flex;align-items:center;gap:4px;}
+  .rs-team{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;min-width:0;}
+  .rs-team-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.6rem;letter-spacing:.3px;color:var(--text);text-align:center;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .rs-score{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.05rem;color:var(--pl-green);text-align:center;line-height:1;padding:0 6px;flex-shrink:0;}
+  .rs-stats{display:flex;gap:5px;justify-content:center;align-items:center;}
+  .rs-stat{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;font-weight:700;color:var(--muted);white-space:nowrap;}
+  .rs-stat.rs-yc{color:var(--yellow);}
+  .rs-stat.rs-rc{color:var(--red);}
+  .rs-stat.rs-pen{color:var(--pl-green);}
+  .rs-stat.rs-var{color:#00b4d8;}
+  html:not([data-theme="dark"]) .recent-strip{background:var(--surface2);}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/twemoji@14/dist/twemoji.min.js" crossorigin="anonymous"></script>
 </head>
@@ -373,6 +396,8 @@
   <a href="forum.html" class="admin-only" style="display:none">Forum</a>
   <a href="history.html" class="auth-only" style="display:none">History</a>
 </div>
+
+<div class="recent-strip" id="recentStrip"></div>
 
 <div class="container">
   <div>
@@ -555,6 +580,51 @@ function renderList() {
   el.innerHTML = cards.join('');
 }
 
+// ── RECENT SCROLL STRIP ──────────────────────────────────
+function renderRecentStrip() {
+  const strip = document.getElementById('recentStrip');
+  if (!strip) return;
+  const recent = MATCHES
+    .filter(m => m.status === 'complete')
+    .sort((a, b) => {
+      const ta = a.kickoff ? new Date(String(a.kickoff).replace(' ','T').replace(/Z$/,'')) : 0;
+      const tb = b.kickoff ? new Date(String(b.kickoff).replace(' ','T').replace(/Z$/,'')) : 0;
+      return tb - ta;
+    });
+  if (!recent.length) { strip.innerHTML = ''; return; }
+  const abbr = n => n.replace(/^(FC |AFC |CF |AS |SS |AC |CD |RC |RB |VfL |VfB |Borussia )/i,'').substring(0,4).toUpperCase();
+  const crest = (src, alt) => src
+    ? `<img src="${src}" width="26" height="26" style="object-fit:contain" alt="${alt}" onerror="this.src='images/logos/RRLogo.svg';this.style.opacity='.4';">`
+    : `<img src="images/logos/RRLogo.svg" width="22" height="22" style="opacity:.4" alt="${alt}">`;
+  const cardHTML = recent.map(m => {
+    const stats = [];
+    if (m.yc)  stats.push(`<span class="rs-stat rs-yc">🟨 ${m.yc}</span>`);
+    if (m.rc)  stats.push(`<span class="rs-stat rs-rc">🟥 ${m.rc}</span>`);
+    if (m.pen) stats.push(`<span class="rs-stat rs-pen">${m.pen > 1 ? m.pen + '× ' : ''}PEN</span>`);
+    if (m.var) stats.push(`<span class="rs-stat rs-var">VAR ×${m.var}</span>`);
+    return `<div class="rs-card" data-mid="${m.id}">
+      <div class="rs-teams">
+        <div class="rs-team">${crest(m.homeCrest, m.home)}<span class="rs-team-name">${abbr(m.home)}</span></div>
+        <div class="rs-score">${m.score || '–'}</div>
+        <div class="rs-team">${crest(m.awayCrest, m.away)}<span class="rs-team-name">${abbr(m.away)}</span></div>
+      </div>
+      ${stats.length ? `<div class="rs-stats">${stats.join('')}</div>` : ''}
+    </div>`;
+  }).join('');
+  // Duplicate cards for seamless infinite loop
+  strip.innerHTML = `<span class="rs-label">Recent</span><div class="rs-track">${cardHTML}${cardHTML}</div>`;
+  strip.querySelectorAll('.rs-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const mid = card.dataset.mid;
+      filter = 'recent';
+      document.querySelectorAll('.view-tab').forEach(x => x.classList.remove('active'));
+      document.querySelector('[data-filter="recent"]')?.classList.add('active');
+      renderList(); renderRecentStrip();
+      setTimeout(() => document.querySelector(`.match-card[data-mid="${mid}"]`)?.click(), 60);
+    });
+  });
+}
+
 // ── INLINE PANEL STATE ────────────────────────────────────
 let matchIncidents = [];
 let incidentVoteTotals = { neutral: {}, fan: {} };
@@ -660,7 +730,7 @@ function closeInline(silent = false) {
   selId = null;
   matchIncidents = []; incidentVoteTotals = { neutral:{}, fan:{} }; myIncidentVotes = {};
   drumState = { index:0, incidents:[], myVotes:{}, mid:null, _updateFaces:null, _syncUI:null, _N:0 };
-  if (!silent) renderList();
+  if (!silent) { renderList(); renderRecentStrip(); }
 }
 
 async function toggleInline(mid) {
@@ -1015,7 +1085,7 @@ function updatePanelVisibility() { /* no-op — inline panels replace the old si
 document.getElementById('filterTabs').addEventListener('click',e=>{
   const b=e.target.closest('.view-tab');if(!b)return;
   filter=b.dataset.filter; document.querySelectorAll('.view-tab').forEach(x=>x.classList.remove('active')); b.classList.add('active');
-  renderList();
+  renderList(); renderRecentStrip();
 });
 
 document.getElementById('leaderboard').addEventListener('click',e=>{
@@ -1161,9 +1231,9 @@ initHeader();
   syncMatchStatuses();
   initHeader();
   updatePanelVisibility();
-  renderList();
+  renderList(); renderRecentStrip();
   renderLb();
-  autoSyncLiveCards().then(() => { renderList(); renderLb(); }).catch(() => {});
+  autoSyncLiveCards().then(() => { renderList(); renderRecentStrip(); renderLb(); }).catch(() => {});
   // Reload sheet data + re-check statuses every minute so changes propagate without a page refresh
   setInterval(async () => {
     await loadFromSheets().catch(() => {}); // refreshes REFS
@@ -1213,7 +1283,7 @@ initHeader();
         } catch(e) {}
       }
     }
-    renderList();
+    renderList(); renderRecentStrip();
     reopenInlineAfterRender();
     renderLb();
   }, 3 * 60 * 1000);
