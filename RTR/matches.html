@@ -846,10 +846,12 @@ async function loadAndRenderInline(mid) {
     ]);
     incidentVoteTotals = voteSplit;
     myIncidentVotes = myVotes;
-    // Merge general vote aggregates into both score buckets
-    Object.entries(genAgg).forEach(([cat, totals]) => {
+    // Merge general vote aggregates into the correct fan/neutral buckets
+    Object.entries(genAgg.neutral || {}).forEach(([cat, totals]) => {
       incidentVoteTotals.neutral[cat] = { ...totals };
-      incidentVoteTotals.fan[cat]     = { ...totals };
+    });
+    Object.entries(genAgg.fan || {}).forEach(([cat, totals]) => {
+      incidentVoteTotals.fan[cat] = { ...totals };
     });
     matchIncidents = [...matchIncidents, ...GENERAL_INCIDENTS];
     myGeneralVotes = myGenVotes;
@@ -1192,26 +1194,24 @@ document.getElementById('matchList').addEventListener('click', e => {
     const incId = genBtn.dataset.iid;
     const mid   = +genBtn.dataset.mid;
     const voteWeight = TEST_FAN_VOTES ? Math.floor(Math.random()*15)+13 : 5;
+    const voteMatch  = MATCHES.find(x => x.id === mid);
+    const isFan      = !!(voteMatch && isFanMatch(voteMatch, currentUser));
+    const bucket     = isFan ? 'fan' : 'neutral';
 
-    // Remove old vote from local totals, add new one (bad→wrong, good/excellent→correct)
+    // Update the correct bucket only (same fan/neutral split as incident votes)
     const oldVote = myGeneralVotes[incId];
-    if (!incidentVoteTotals.neutral[incId]) incidentVoteTotals.neutral[incId] = { correct:0, wrong:0 };
-    if (!incidentVoteTotals.fan[incId])     incidentVoteTotals.fan[incId]     = { correct:0, wrong:0 };
+    if (!incidentVoteTotals[bucket][incId]) incidentVoteTotals[bucket][incId] = { correct:0, wrong:0 };
     if (oldVote) {
       const oldKey = oldVote === 'bad' ? 'wrong' : 'correct';
-      ['neutral','fan'].forEach(b => {
-        incidentVoteTotals[b][incId][oldKey] = Math.max(0, (incidentVoteTotals[b][incId][oldKey]||0) - voteWeight);
-      });
+      incidentVoteTotals[bucket][incId][oldKey] = Math.max(0, (incidentVoteTotals[bucket][incId][oldKey]||0) - voteWeight);
     }
     const newKey = vote === 'bad' ? 'wrong' : 'correct';
-    ['neutral','fan'].forEach(b => {
-      incidentVoteTotals[b][incId][newKey] = (incidentVoteTotals[b][incId][newKey]||0) + voteWeight;
-    });
+    incidentVoteTotals[bucket][incId][newKey] = (incidentVoteTotals[bucket][incId][newKey]||0) + voteWeight;
     myGeneralVotes[incId] = vote;
 
-    // Persist to Supabase
+    // Persist to Supabase with correct fan flag
     if (currentUser?.id) {
-      saveGeneralVote(mid, incId, currentUser.id, vote, voteWeight).catch(() => {});
+      saveGeneralVote(mid, incId, currentUser.id, vote, isFan, voteWeight).catch(() => {});
     }
 
     // Update pill on the drum face

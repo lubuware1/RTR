@@ -430,11 +430,11 @@ const GENERAL_CATEGORIES = [
   { id: 'gen-play-advantage', weight: 1 },
 ];
 
-async function saveGeneralVote(matchId, category, userId, vote, weight = 5) {
+async function saveGeneralVote(matchId, category, userId, vote, isFan, weight = 5) {
   if (PREVIEW_MODE) return true;
   const { error } = await getSB().from('RTR General Votes')
     .upsert(
-      { match_id: matchId, category, user_id: userId, vote, weight },
+      { match_id: matchId, category, user_id: userId, vote, is_fan: !!isFan, weight },
       { onConflict: 'match_id,category,user_id' }
     );
   if (error) console.error('[RTR] saveGeneralVote error:', error);
@@ -452,19 +452,21 @@ async function loadMyGeneralVotes(matchId, userId) {
   return map;
 }
 
-// Returns { category: { correct: N, wrong: N } } — bad→wrong, good/excellent→correct
+// Returns { neutral: { category: { correct, wrong } }, fan: { category: { correct, wrong } } }
+// bad→wrong, good/excellent→correct — same fan/neutral split as incident votes
 async function loadGeneralVotesAggregate(matchId) {
-  if (PREVIEW_MODE) return {};
+  if (PREVIEW_MODE) return { neutral: {}, fan: {} };
   const { data } = await getSB().from('RTR General Votes')
-    .select('category, vote, weight')
+    .select('category, vote, is_fan, weight')
     .eq('match_id', matchId);
-  const agg = {};
+  const result = { neutral: {}, fan: {} };
   (data || []).forEach(v => {
-    if (!agg[v.category]) agg[v.category] = { correct: 0, wrong: 0 };
-    if (v.vote === 'bad') agg[v.category].wrong  += v.weight || 1;
-    else                  agg[v.category].correct += v.weight || 1;
+    const bucket = v.is_fan ? result.fan : result.neutral;
+    if (!bucket[v.category]) bucket[v.category] = { correct: 0, wrong: 0 };
+    if (v.vote === 'bad') bucket[v.category].wrong  += v.weight || 1;
+    else                  bucket[v.category].correct += v.weight || 1;
   });
-  return agg;
+  return result;
 }
 
 async function saveIncidentVote(incidentId, userId, vote, isFan, weight = 5) {
@@ -497,7 +499,7 @@ async function loadIncidentRatings(matchIds) {
 
   const [{ data: incidents }, { data: genVotes }] = await Promise.all([
     getSB().from('RTR Incidents').select('id, match_id, type, weight'),
-    getSB().from('RTR General Votes').select('match_id, category, vote, weight'),
+    getSB().from('RTR General Votes').select('match_id, category, vote, is_fan, weight'),
   ]);
   if (!incidents?.length && !genVotes?.length) return;
 
@@ -523,15 +525,16 @@ async function loadIncidentRatings(matchIds) {
     if (b[v.incident_id]) b[v.incident_id][v.vote] += v.weight || 1;
   });
 
-  // Aggregate general votes per match per category — bad→wrong, good/excellent→correct
+  // Aggregate general votes per match per category, split by fan/neutral — bad→wrong, good/excellent→correct
   const genByMatch = {};
   (genVotes||[]).forEach(v => {
     const mid = Number(v.match_id);
     if (matchIdSet && !matchIdSet.has(mid)) return;
-    if (!genByMatch[mid]) genByMatch[mid] = {};
-    if (!genByMatch[mid][v.category]) genByMatch[mid][v.category] = { correct:0, wrong:0 };
-    if (v.vote === 'bad') genByMatch[mid][v.category].wrong  += v.weight || 1;
-    else                  genByMatch[mid][v.category].correct += v.weight || 1;
+    if (!genByMatch[mid]) genByMatch[mid] = { neutral: {}, fan: {} };
+    const bucket = v.is_fan ? genByMatch[mid].fan : genByMatch[mid].neutral;
+    if (!bucket[v.category]) bucket[v.category] = { correct:0, wrong:0 };
+    if (v.vote === 'bad') bucket[v.category].wrong  += v.weight || 1;
+    else                  bucket[v.category].correct += v.weight || 1;
   });
 
   REFS.forEach(r => { r.neutralRating=null; r.neutralVotes=0; r.fanRating=null; r.fanVotes=0; });
@@ -551,14 +554,14 @@ async function loadIncidentRatings(matchIds) {
       if (fv.correct + fv.wrong) refFan[ref.id].push({ ...inc, _v: fv });
     });
 
-    // General rating categories — same totals for both neutral and fan buckets
-    const gen = genByMatch[m.id] || {};
+    // General rating categories — split into correct neutral/fan buckets
+    const gen = genByMatch[m.id] || { neutral: {}, fan: {} };
     GENERAL_CATEGORIES.forEach(cat => {
-      const gv = gen[cat.id];
-      if (!gv || gv.correct + gv.wrong === 0) return;
       const synInc = { id: cat.id, match_id: m.id, type: cat.id, weight: cat.weight };
-      refNeutral[ref.id].push({ ...synInc, _v: gv });
-      refFan[ref.id].push({ ...synInc, _v: gv });
+      const nv = gen.neutral[cat.id];
+      const fv = gen.fan[cat.id];
+      if (nv && nv.correct + nv.wrong > 0) refNeutral[ref.id].push({ ...synInc, _v: nv });
+      if (fv && fv.correct + fv.wrong > 0) refFan[ref.id].push({ ...synInc, _v: fv });
     });
   });
 
