@@ -17,4 +17,4 @@ Disallow: /login.html
 # Serverless API endpoints
 Disallow: /.netlify/
 
-Sitemap: https://refrater.netlify.app/sitemap.xml
+Sitemap: https://refrater.uk/sitemap.xml

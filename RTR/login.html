@@ -314,7 +314,7 @@ document.getElementById('forgotBtn').addEventListener('click', async () => {
   const btn = document.getElementById('forgotBtn');
   btn.disabled = true; btn.textContent = 'Sending…';
   const { error } = await sb.auth.resetPasswordForEmail(email, {
-    redirectTo: 'https://refrater.netlify.app/login.html'
+    redirectTo: 'https://refrater.uk/login.html'
   });
   btn.disabled = false; btn.textContent = 'Send Reset Link';
   if (error) { showErr('forgotError', error.message); return; }
