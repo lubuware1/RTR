@@ -80,7 +80,10 @@
   .ref-name{font-weight:600;color:var(--text);}.ref-role{font-size:.7rem;color:var(--muted);}
   .rate-ref-btn{pointer-events:auto;background:none;border:1px solid rgba(0,204,112,.45);border-radius:6px;color:var(--pl-green);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.72rem;letter-spacing:.5px;text-transform:uppercase;padding:5px 12px;cursor:pointer;transition:all .15s;}
   .rate-ref-btn:hover{background:rgba(0,204,112,.12);border-color:var(--pl-green);}
-  .card-stats{display:flex;gap:14px;padding:0 0 6px;pointer-events:none;}
+  .card-stats{display:grid;grid-template-columns:1fr auto 1fr;padding:0 16px 6px;pointer-events:none;align-items:center;gap:4px;}
+  .card-stats-home{display:flex;gap:6px;align-items:center;}
+  .card-stats-center{display:flex;gap:6px;justify-content:center;align-items:center;}
+  .card-stats-away{display:flex;gap:6px;justify-content:flex-end;align-items:center;}
   .stat-pill{display:flex;align-items:center;gap:4px;font-size:.72rem;color:var(--muted);font-weight:600;}
   .stat-pill .icon{font-size:.85rem;}
   .stat-pill.yc .icon{color:var(--yellow);}.stat-pill.rc .icon{color:var(--red);}
@@ -570,12 +573,17 @@ function renderList() {
         <div class="score-block">${ref?ref.name:'<span style="color:var(--muted);font-size:1rem">Referee TBC</span>'}<span class="time"${live?' style="color:var(--red)"':''}>${live?'LIVE':up?(m.kickoff?new Date(String(m.kickoff).replace(' ','T').replace(/Z$/,'')).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).replace(',',''):'TBC'):'FT'}</span></div>
         <div class="team away"><div class="team-badge">${m.awayCrest?`<img src="${m.awayCrest}" style="width:26px;height:26px;object-fit:contain;" onerror="this.src='images/logos/RRLogo.svg';this.style.opacity='.7';">`:`<img src="images/logos/RRLogo.svg" style="width:22px;height:22px;opacity:.7;">`}</div><span>${m.away}</span></div>
       </div>
-      ${!up?`<div class="card-stats" style="padding:0 16px 6px">
-        <span class="stat-pill yc"><span class="icon">🟨</span>${m.yc}</span>
-        ${m.rc?`<span class="stat-pill rc"><span class="icon">🟥</span>${m.rc}</span>`:''}
-        ${m.pen?`<span class="stat-pill">${m.pen > 1 ? m.pen + 'x ' : ''}PEN</span>`:''}
-        ${m.var?`<span class="stat-pill"><span class="icon">📺</span>VAR×${m.var}</span>`:''}
-      </div>`:''}
+      ${!up?(()=>{
+        const split = m.homeYC != null;
+        const homeStats = split
+          ? `${m.homeYC>0?`<span class="stat-pill yc"><span class="icon">🟨</span>${m.homeYC}</span>`:''}${m.homeRC?`<span class="stat-pill rc"><span class="icon">🟥</span>${m.homeRC}</span>`:''}${m.homePen?`<span class="stat-pill">${m.homePen>1?m.homePen+'x ':''}PEN</span>`:''}`
+          : `<span class="stat-pill yc"><span class="icon">🟨</span>${m.yc}</span>${m.rc?`<span class="stat-pill rc"><span class="icon">🟥</span>${m.rc}</span>`:''}${m.pen?`<span class="stat-pill">${m.pen>1?m.pen+'x ':''}PEN</span>`:''}`;
+        const awayStats = split
+          ? `${m.awayYC>0?`<span class="stat-pill yc"><span class="icon">🟨</span>${m.awayYC}</span>`:''}${m.awayRC?`<span class="stat-pill rc"><span class="icon">🟥</span>${m.awayRC}</span>`:''}${m.awayPen?`<span class="stat-pill">${m.awayPen>1?m.awayPen+'x ':''}PEN</span>`:''}`
+          : '';
+        const centerStats = `${m.var?`<span class="stat-pill"><span class="icon">📺</span>VAR×${m.var}</span>`:''}`;
+        return `<div class="card-stats"><div class="card-stats-home">${homeStats}</div><div class="card-stats-center">${centerStats}</div><div class="card-stats-away">${awayStats}</div></div>`;
+      })():''}
       ${(m.highlightVideoId||m.varVideoId)&&!up?`<div class="match-video-btns">
         ${m.highlightVideoId?`<button class="vid-btn highlights" data-vid="${m.highlightVideoId}" data-type="highlights">▶ Highlights</button>`:''}
         ${m.varVideoId?`<button class="vid-btn var" data-vid="${m.varVideoId}" data-type="var">📺 VAR Decisions</button>`:''}
@@ -746,17 +754,31 @@ async function autoSyncLiveCards() {
       const yc  = bookings.filter(b => b.card === 'YELLOW_CARD').length;
       const rc  = bookings.filter(b => b.card === 'RED_CARD' || b.card === 'YELLOW_RED_CARD').length;
       const pen = goals.filter(g => g.type === 'PENALTY').length;
-      cardCache[lm.id] = { yc, rc, pen };
+
+      // Split cards/pens by team (home vs away) when API provides team data
+      const homeId   = detail.homeTeam?.id;
+      const canSplit = homeId && bookings.some(b => b.team?.id);
+      const homeYC  = canSplit ? bookings.filter(b => b.card === 'YELLOW_CARD' && b.team?.id === homeId).length : null;
+      const awayYC  = canSplit ? bookings.filter(b => b.card === 'YELLOW_CARD' && b.team?.id !== homeId).length : null;
+      const homeRC  = canSplit ? bookings.filter(b => (b.card === 'RED_CARD' || b.card === 'YELLOW_RED_CARD') && b.team?.id === homeId).length : null;
+      const awayRC  = canSplit ? bookings.filter(b => (b.card === 'RED_CARD' || b.card === 'YELLOW_RED_CARD') && b.team?.id !== homeId).length : null;
+      const homePen = canSplit ? goals.filter(g => g.type === 'PENALTY' && g.team?.id === homeId).length : null;
+      const awayPen = canSplit ? goals.filter(g => g.type === 'PENALTY' && g.team?.id !== homeId).length : null;
+
+      cardCache[lm.id] = { yc, rc, pen, homeYC, awayYC, homeRC, awayRC, homePen, awayPen };
       const idx = MATCHES.findIndex(m => m.id === lm.id);
-      if (idx !== -1) MATCHES[idx] = { ...MATCHES[idx], yc, rc, pen };
+      if (idx !== -1) MATCHES[idx] = { ...MATCHES[idx], yc, rc, pen, homeYC, awayYC, homeRC, awayRC, homePen, awayPen };
 
       // Persist to RTR Match Stats so card counts survive page reloads.
       // Only write if the API actually returned a bookings array — if it's
       // missing entirely the free tier isn't providing card data for this match
       // and we'd risk overwriting anything entered manually.
       if (Array.isArray(detail.bookings)) {
-        saveMatchStat({ match_id: lm.id, comp: currentComp, yellow_cards: yc, red_cards: rc, penalties_given: pen })
-          .catch(e => console.warn('[RTR] failed to persist card stats:', e));
+        saveMatchStat({
+          match_id: lm.id, comp: currentComp,
+          yellow_cards: yc, red_cards: rc, penalties_given: pen,
+          ...(canSplit && { home_yc: homeYC, away_yc: awayYC, home_rc: homeRC, away_rc: awayRC, home_pen: homePen, away_pen: awayPen }),
+        }).catch(e => console.warn('[RTR] failed to persist card stats:', e));
       }
 
       if (isAdmin()) {
