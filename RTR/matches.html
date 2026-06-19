@@ -549,7 +549,7 @@ function renderList() {
     .sort((a, b) => {
       const ta = a.kickoff ? new Date(String(a.kickoff).replace(' ','T').replace(/Z$/,'')) : Infinity;
       const tb = b.kickoff ? new Date(String(b.kickoff).replace(' ','T').replace(/Z$/,'')) : Infinity;
-      return ta - tb;
+      return filter === 'recent' ? tb - ta : ta - tb;
     });
   const list = filter==='all' ? gwFiltered : gwFiltered.filter(m=>m.status===(filter==='recent'?'complete':filter));
   if (!list.length) { el.innerHTML='<div class="empty-state"><div class="icon">📋</div><p>No matches</p></div>'; return; }
