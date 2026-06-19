@@ -228,7 +228,8 @@ sb.auth.onAuthStateChange((event) => {
 
 // If already have a valid session, skip to app (unless onboard=1 param present or recovery)
 (async () => {
-  if (window.location.hash.includes('type=recovery')) return; // handled above
+  if (window.location.hash.includes('type=recovery')) return; // hash-based recovery
+  if (new URLSearchParams(window.location.search).has('code')) return; // PKCE recovery — wait for onAuthStateChange
   const { data: { session } } = await sb.auth.getSession();
   if (!session) return;
   const params = new URLSearchParams(window.location.search);
