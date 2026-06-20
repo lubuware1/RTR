@@ -55,10 +55,56 @@
   @keyframes adScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 
   /* Match Cards */
-  .match-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden;transition:border-color .2s,transform .15s;cursor:pointer;}
+  .match-card{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden;transition:border-color .2s,transform .15s,box-shadow .2s;cursor:pointer;}
   .match-card:hover{border-color:rgba(0,255,133,.3);transform:translateY(-1px);}
   .match-card.selected{border-color:var(--pl-green);box-shadow:0 0 0 1px rgba(0,255,133,.2),0 4px 20px rgba(0,255,133,.08);}
   .match-card.fan-match{border-color:rgba(0,255,133,.22);}
+
+  /* ── LUMINOUS WATER SHIMMER ── */
+  /* ambient undulating glow — slow drift across the card */
+  .match-card::before{
+    content:'';position:absolute;inset:0;pointer-events:none;z-index:2;
+    background:radial-gradient(ellipse 75% 55% at 20% 50%, rgba(0,210,255,.07) 0%, rgba(0,180,255,.03) 40%, transparent 70%);
+    animation:waterDrift 9s ease-in-out infinite alternate;
+  }
+  /* sharp sweeping stripe — light catching a ripple */
+  .match-card::after{
+    content:'';position:absolute;top:-25%;left:-65%;width:48%;height:150%;pointer-events:none;z-index:3;
+    background:linear-gradient(90deg,
+      transparent 0%,
+      rgba(0,220,255,.03) 18%,
+      rgba(80,255,235,.11) 42%,
+      rgba(200,255,255,.18) 50%,
+      rgba(80,255,235,.11) 58%,
+      rgba(0,220,255,.03) 82%,
+      transparent 100%);
+    transform:skewX(-18deg);
+    mix-blend-mode:overlay;
+    animation:waterStripe 7s cubic-bezier(.4,0,.6,1) infinite;
+  }
+  .match-card:nth-child(2)::after{animation-delay:-1.8s}
+  .match-card:nth-child(3)::after{animation-delay:-3.6s}
+  .match-card:nth-child(4)::after{animation-delay:-5.4s}
+  .match-card:nth-child(5)::after{animation-delay:-2.7s}
+  .match-card:nth-child(6)::after{animation-delay:-0.9s}
+  .match-card:nth-child(7)::after{animation-delay:-4.5s}
+  .match-card:nth-child(8)::after{animation-delay:-6.3s}
+  .match-card:nth-child(2)::before{animation-delay:-3s}
+  .match-card:nth-child(3)::before{animation-delay:-6s}
+  .match-card:nth-child(4)::before{animation-delay:-1s}
+  .match-card:nth-child(5)::before{animation-delay:-4.5s}
+  .match-card:nth-child(6)::before{animation-delay:-7.5s}
+  @keyframes waterStripe{
+    0%{left:-65%;opacity:0}
+    8%{opacity:1}
+    92%{opacity:1}
+    100%{left:130%;opacity:0}
+  }
+  @keyframes waterDrift{
+    0%{opacity:.4;background-position:0% 50%;transform:translateX(-12%) scaleX(.85)}
+    50%{opacity:1;transform:translateX(8%) scaleX(1.15)}
+    100%{opacity:.5;transform:translateX(22%) scaleX(.9)}
+  }
   .match-header{background:var(--surface2);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);pointer-events:none;}
   .live-dot{display:inline-block;width:6px;height:6px;background:var(--red);border-radius:50%;margin-right:5px;animation:blink 1.2s infinite;}
   @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
