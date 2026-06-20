@@ -60,50 +60,21 @@
   .match-card.selected{border-color:var(--pl-green);box-shadow:0 0 0 1px rgba(0,255,133,.2),0 4px 20px rgba(0,255,133,.08);}
   .match-card.fan-match{border-color:rgba(0,255,133,.22);}
 
-  /* ── WATER DROPLET ── */
-  /* caustic glow beneath the droplet */
+  /* ── CARD DEPTH ── */
+  /* gradient background — lifts cards off the flat page */
+  .match-card{background:linear-gradient(160deg,#ffffff 0%,var(--surface2) 100%);}
+  /* thin green accent line across the top */
   .match-card::before{
-    content:'';position:absolute;pointer-events:none;z-index:2;
-    width:68px;height:18px;border-radius:50%;
-    background:radial-gradient(ellipse, rgba(0,255,80,.28) 0%, transparent 70%);
-    filter:blur(7px);
-    animation:dropGlow 6.5s ease-in-out infinite;
+    content:'';position:absolute;top:0;left:12%;right:12%;height:2px;pointer-events:none;z-index:2;
+    background:linear-gradient(90deg,transparent,rgba(0,204,112,.45) 30%,rgba(0,255,133,.65) 50%,rgba(0,204,112,.45) 70%,transparent);
   }
-  /* main droplet — shiny green bead with specular highlight */
+  /* top radial glow + diagonal gloss */
   .match-card::after{
-    content:'';position:absolute;pointer-events:none;z-index:3;
-    width:76px;height:58px;border-radius:50%;
+    content:'';position:absolute;inset:0;pointer-events:none;z-index:1;border-radius:10px;
     background:
-      radial-gradient(ellipse 26% 20% at 36% 27%, rgba(255,255,255,.96) 0%, rgba(255,255,255,.55) 45%, transparent 100%),
-      radial-gradient(ellipse 18% 14% at 58% 55%, rgba(255,255,255,.25) 0%, transparent 100%),
-      radial-gradient(ellipse at 48% 52%, rgba(160,255,160,.92) 0%, rgba(0,255,75,.82) 22%, rgba(0,220,55,.68) 48%, rgba(0,150,38,.42) 74%, rgba(0,80,18,.18) 90%, transparent 100%);
-    box-shadow:
-      0 0 22px rgba(0,255,80,.65),
-      0 0 48px rgba(0,255,80,.25),
-      0 4px 12px rgba(0,0,0,.22),
-      inset 0 -6px 12px rgba(0,60,0,.38),
-      inset 0 3px 6px rgba(255,255,255,.12);
-    animation:dropRoll 6.5s ease-in-out infinite;
+      radial-gradient(ellipse 80% 55% at 50% 0%,rgba(0,204,112,.06) 0%,transparent 65%),
+      linear-gradient(135deg,rgba(255,255,255,.55) 0%,transparent 55%);
   }
-  @keyframes dropRoll{
-    0%  {left:-11%;top:28%;opacity:0}
-    7%  {opacity:1}
-    93% {opacity:1}
-    100%{left:110%;top:44%;opacity:0}
-  }
-  @keyframes dropGlow{
-    0%  {left:-11%;top:60%;opacity:0}
-    7%  {opacity:1}
-    93% {opacity:1}
-    100%{left:109%;top:74%;opacity:0}
-  }
-  .match-card:nth-child(2)::after,.match-card:nth-child(2)::before{animation-delay:-1.4s}
-  .match-card:nth-child(3)::after,.match-card:nth-child(3)::before{animation-delay:-2.8s}
-  .match-card:nth-child(4)::after,.match-card:nth-child(4)::before{animation-delay:-4.2s}
-  .match-card:nth-child(5)::after,.match-card:nth-child(5)::before{animation-delay:-5.6s}
-  .match-card:nth-child(6)::after,.match-card:nth-child(6)::before{animation-delay:-0.7s}
-  .match-card:nth-child(7)::after,.match-card:nth-child(7)::before{animation-delay:-2.1s}
-  .match-card:nth-child(8)::after,.match-card:nth-child(8)::before{animation-delay:-3.5s}
   .match-header{background:var(--surface2);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);pointer-events:none;}
   .live-dot{display:inline-block;width:6px;height:6px;background:var(--red);border-radius:50%;margin-right:5px;animation:blink 1.2s infinite;}
   @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
