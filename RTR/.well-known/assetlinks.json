@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "uk.refrater.twa",
+        "sha256_cert_fingerprints": ["5E:D1:FC:32:0B:47:51:B2:B8:9E:53:8E:DD:F0:26:B9:CD:24:0E:3F:D6:B9:D1:27:F5:BD:2C:EE:14:48:A6:86"]
+      }
+    }]
