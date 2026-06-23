@@ -2,7 +2,7 @@
       "relation": ["delegate_permission/common.handle_all_urls"],
       "target": {
         "namespace": "android_app",
-        "package_name": "uk.refrater.twa",
-        "sha256_cert_fingerprints": ["5E:D1:FC:32:0B:47:51:B2:B8:9E:53:8E:DD:F0:26:B9:CD:24:0E:3F:D6:B9:D1:27:F5:BD:2C:EE:14:48:A6:86"]
+        "package_name": "refrater.uk",
+        "sha256_cert_fingerprints": ["70:98:5C:B6:BF:D7:8D:50:30:67:8B:1C:E5:84:BE:DE:BF:0A:CF:8E:11:84:D9:D8:FB:31:13:C8:85:93:34:87"]
       }
     }]
