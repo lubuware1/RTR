@@ -44,7 +44,7 @@
   .dd-item:hover{background:var(--surface2);color:var(--text);}
   .dd-item.danger:hover{color:var(--red);}
 
-  .container{max-width:1200px;margin:0 auto;padding:24px;display:grid;grid-template-columns:1fr 360px;gap:24px;}
+  .container{max-width:1200px;margin:0 auto;padding:24px;display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:24px;}
   .section-title{font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
   .fan-banner{background:linear-gradient(90deg,rgba(0,255,133,.06),transparent);border:1px solid rgba(0,255,133,.15);border-radius:8px;padding:9px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;font-size:.82rem;}
   .fan-banner strong{color:var(--pl-green);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;}
@@ -62,6 +62,69 @@
   .match-card:hover{border-color:rgba(0,255,133,.3);transform:translateY(-1px);}
   .match-card.selected{border-color:var(--pl-green);box-shadow:0 0 0 1px rgba(0,255,133,.2),0 4px 20px rgba(0,255,133,.08);}
   .match-card.fan-match{border-color:rgba(0,255,133,.22);}
+
+  /* ── SWIPER CAROUSEL ──────────────────────────────────── */
+  .match-swiper{overflow:hidden !important;padding-bottom:50px !important;}
+  .match-swiper .swiper-wrapper{align-items:flex-start;}
+  .match-swiper .swiper-slide{width:300px;max-width:calc(100vw - 90px);height:auto;}
+  .match-swiper .swiper-slide .match-card{width:100%;}
+  .match-swiper .swiper-pagination{bottom:4px;}
+  .match-swiper .swiper-pagination-bullet{background:var(--text);opacity:.4;width:6px;height:6px;}
+  .match-swiper .swiper-pagination-bullet-active{background:var(--pl-green);opacity:1;}
+  #inlineContainer{border-top:none !important;border-radius:10px;margin:12px auto 0;max-width:640px;box-shadow:0 8px 24px rgba(0,0,0,.08);}
+
+  /* Prominent (front) card — metallic trading-card finish, same family as the Cards page badges */
+  @property --mx{syntax:'<percentage>';inherits:true;initial-value:50%}
+  @property --my{syntax:'<percentage>';inherits:true;initial-value:50%}
+  html:not([data-theme="dark"]) .match-swiper .swiper-slide-active .match-card{
+    background:
+      linear-gradient(115deg,transparent 30%,rgba(255,255,255,.65) 45%,rgba(255,255,255,.95) 50%,rgba(255,255,255,.65) 55%,transparent 70%),
+      repeating-linear-gradient(100deg,#eef0f6 0px,#ffffff 6px,#e3e6f0 12px,#f7f8fc 18px,#eef0f6 24px);
+    background-size:220% 220%,100% 100%;
+    background-position:var(--mx) var(--my),0 0;
+    border:1px solid rgba(190,196,222,.6);
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,.9),
+      inset 0 1px 0 rgba(255,255,255,.85),
+      0 22px 44px rgba(106,88,160,.28),
+      0 6px 16px rgba(106,88,160,.14),
+      0 0 0 1px rgba(0,255,133,.18),
+      0 0 24px rgba(0,255,133,.16);
+  }
+  .match-swiper .swiper-slide-active .match-card::after{
+    content:'';position:absolute;inset:0;pointer-events:none;z-index:3;border-radius:10px;
+    mix-blend-mode:overlay;opacity:.85;
+    background:linear-gradient(115deg,transparent 25%,rgba(0,230,122,.55) 42%,rgba(220,255,235,.95) 50%,rgba(0,230,122,.55) 58%,transparent 75%);
+    background-size:220% 220%;
+    background-position:var(--mx) var(--my);
+  }
+  .match-swiper .swiper-slide-active .match-card{position:relative;}
+
+  /* Rating window — same metallic finish as the prominent match card */
+  html:not([data-theme="dark"]) #inlineContainer{
+    position:relative;
+    background:
+      linear-gradient(115deg,transparent 30%,rgba(255,255,255,.65) 45%,rgba(255,255,255,.95) 50%,rgba(255,255,255,.65) 55%,transparent 70%),
+      repeating-linear-gradient(100deg,#eef0f6 0px,#ffffff 6px,#e3e6f0 12px,#f7f8fc 18px,#eef0f6 24px);
+    background-size:220% 220%,100% 100%;
+    background-position:var(--mx) var(--my),0 0;
+    border:1px solid rgba(190,196,222,.6);
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,.9),
+      inset 0 1px 0 rgba(255,255,255,.85),
+      0 22px 44px rgba(106,88,160,.28),
+      0 6px 16px rgba(106,88,160,.14),
+      0 0 0 1px rgba(0,255,133,.18),
+      0 0 24px rgba(0,255,133,.16);
+  }
+  html:not([data-theme="dark"]) #inlineContainer::after{
+    content:'';position:absolute;inset:0;pointer-events:none;z-index:0;border-radius:10px;
+    mix-blend-mode:overlay;opacity:.85;
+    background:linear-gradient(115deg,transparent 25%,rgba(0,230,122,.55) 42%,rgba(220,255,235,.95) 50%,rgba(0,230,122,.55) 58%,transparent 75%);
+    background-size:220% 220%;
+    background-position:var(--mx) var(--my);
+  }
+  html:not([data-theme="dark"]) #inlineContainer > *{position:relative;z-index:1;}
   .match-header{background:var(--surface2);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);pointer-events:none;}
   .live-dot{display:inline-block;width:6px;height:6px;background:var(--red);border-radius:50%;margin-right:5px;animation:blink 1.2s infinite;}
   @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
@@ -378,6 +441,7 @@
   .rs-stat.rs-var{color:#00b4d8;}
   html:not([data-theme="dark"]) .recent-strip{background:var(--surface2);}
 </style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
 <script src="https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
@@ -432,7 +496,13 @@
     </div>
 
     <div class="section-title" id="matchSectionTitle">Premier League · Matchweek 1</div>
-    <div id="matchList"></div>
+    <div id="matchesArea">
+      <div class="swiper match-swiper" id="matchSwiper">
+        <div class="swiper-wrapper" id="matchList"></div>
+        <div class="swiper-pagination"></div>
+      </div>
+      <div class="match-inline-panel" id="inlineContainer"></div>
+    </div>
   </div>
   <div>
     <div class="leaderboard">
@@ -449,6 +519,7 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="shared.js"></script>
 <script>
@@ -563,7 +634,7 @@ function renderList() {
     const fSf=hasF?Math.round(ref.fanRating/2):0;
     const nStars=Array.from({length:5},(_,i)=>`<span class="vb-star${i<nSf?' ln':''}">★</span>`).join('');
     const fStars=Array.from({length:5},(_,i)=>`<span class="vb-star${i<fSf?' lf':''}">★</span>`).join('');
-    return `<div class="match-card${selId===m.id?' selected':''}${fan?' fan-match':''}" data-mid="${m.id}">
+    return `<div class="swiper-slide" data-mid="${m.id}"><div class="match-card${fan?' fan-match':''}" data-mid="${m.id}">
       <div class="match-header">
         <span>${live?'<span class="live-dot"></span>LIVE':up?'UPCOMING':'FULL TIME'}</span>
         <span>${fan?'<span class="my-team-tag">MY TEAM</span> ':''}${compLabel()} · ${roundLabel(m.matchweek||currentGW)}</span>
@@ -601,10 +672,32 @@ function renderList() {
           <div class="vote-bucket fb"><div><div class="vb-label fl">Fan</div><div class="vb-stars">${fStars}</div></div><div><div class="vb-score ${hasF?'fs':'na'}">${hasF?ref.fanRating.toFixed(1):'–'}</div><div class="vb-count">${ref.fanVotes} votes</div></div></div>
         </div>`:''}
       </div>
-      <div class="match-inline-panel" id="inline-${m.id}"></div>
-    </div>`;
+    </div></div>`;
   });
   el.innerHTML = cards.join('');
+  if (window._matchSwiper) { try { window._matchSwiper.destroy(true, true); } catch(e) {} }
+  const _mobile = window.innerWidth < 640;
+  window._matchSwiper = new Swiper('#matchSwiper', {
+    effect: 'coverflow',
+    grabCursor: true,
+    centeredSlides: true,
+    slidesPerView: 'auto',
+    spaceBetween: -20,
+    loop: true,
+    initialSlide: 0,
+    coverflowEffect: { rotate: _mobile ? 25 : 30, stretch: 0, depth: _mobile ? 70 : 80, modifier: 1, slideShadows: true },
+    pagination: { el: '.swiper-pagination', clickable: true }
+  });
+  if (!window._matchSwiperFoilBound) {
+    window._matchSwiperFoilBound = true;
+    document.getElementById('matchSwiper').addEventListener('pointermove', e => {
+      const card = e.target.closest('.swiper-slide-active .match-card');
+      if (!card) return;
+      const r = card.getBoundingClientRect();
+      card.style.setProperty('--mx', (((e.clientX - r.left) / r.width) * 100).toFixed(1) + '%');
+      card.style.setProperty('--my', (((e.clientY - r.top) / r.height) * 100).toFixed(1) + '%');
+    });
+  }
 }
 
 // ── RECENT SCROLL STRIP ──────────────────────────────────
@@ -827,23 +920,25 @@ async function autoSyncLiveCards() {
   }
 }
 
-function getInlineEl(mid) { return document.getElementById(`inline-${mid}`); }
+function getInlineEl(mid) { return document.getElementById('inlineContainer'); }
 
 function closeInline(silent = false) {
   if (!selId) return;
-  const el = getInlineEl(selId);
-  if (el) el.classList.remove('open');
+  const el = document.getElementById('inlineContainer');
+  if (el) { el.classList.remove('open'); el.innerHTML = ''; }
   selId = null;
   matchIncidents = []; incidentVoteTotals = { neutral:{}, fan:{} }; myIncidentVotes = {};
   drumState = { index:0, incidents:[], myVotes:{}, mid:null, _updateFaces:null, _syncUI:null, _N:0 };
-  if (!silent) { renderList(); renderRecentStrip(); }
 }
 
 async function toggleInline(mid) {
   if (selId === mid) { closeInline(); return; }
-  if (selId) { const prev = getInlineEl(selId); if (prev) prev.classList.remove('open'); selId = null; }
+  if (selId) { closeInline(true); }
   selId = mid;
-  renderList();
+  if (window._matchSwiper) {
+    const idx = [...document.querySelectorAll('#matchList .swiper-slide')].findIndex(s => +s.dataset.mid === +mid);
+    if (idx >= 0) window._matchSwiper.slideTo(idx);
+  }
   const el = getInlineEl(mid);
   if (!el) return;
   el.classList.add('open');
@@ -1157,6 +1252,10 @@ function reopenInlineAfterRender() {
   const el = getInlineEl(selId);
   if (!el) return;
   el.classList.add('open');
+  if (window._matchSwiper) {
+    const idx = [...document.querySelectorAll('#matchList .swiper-slide')].findIndex(s => +s.dataset.mid === +selId);
+    if (idx >= 0) window._matchSwiper.slideTo(idx, 0);
+  }
   const m   = MATCHES.find(x=>x.id===+selId);
   const ref = REFS.find(r=>r.id===+m?.refId);
   if (!m || !ref) return;
@@ -1185,8 +1284,8 @@ function renderLb(){
 }
 
 // ── EVENTS ────────────────────────────────────────────────
-document.getElementById('matchList').addEventListener('click', e => {
-  if (e.target.closest('.vid-btn')) return;
+document.getElementById('matchesArea').addEventListener('click', e => {
+  if (e.target.closest('.vid-btn')) return; // handled by video script
 
   const upBtn = e.target.closest('[data-drum-up]');
   if (upBtn) {
