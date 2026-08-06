@@ -330,6 +330,103 @@ async function loadGWConfig() {
   };
 }
 
+// ── HOMEPAGE CONTENT (index.html articles/cards) ───────────
+// Used by index.html (to display) and admin.html (to edit).
+// Falls back to these defaults until an admin saves real content.
+const HOME_CONTENT_DEFAULTS = {
+  hero: {
+    tagText: 'Live Now',
+    headline: `Arsenal 2‑1 Chelsea: Oliver waves away second‑half penalty shout`,
+    dek: `Community reaction splits down the middle after a VAR check inside the box goes uncorrected. Cast your rating before full time.`,
+    metaMinute: `76'`, metaRef: `Michael Oliver`, metaVenue: `Emirates Stadium`,
+    link: 'matches.html', articleId: null,
+    media: { type: 'css', variant: 'pitch' }
+  },
+  rail: [
+    { tagColor: 'red',   tagText: 'Flashpoint', headline: `Two reds in four minutes at Molineux — was Attwell right both times?`, sub: `1.2k ratings so far`, link: 'matches.html', articleId: null, media: { type: 'css', variant: 'card-red' } },
+    { tagColor: 'gold',  tagText: 'Ratings',     headline: `This week's top‑scored referee: fans and neutrals finally agree`, sub: `Community leaderboard`, link: 'referees.html', articleId: null, media: { type: 'css', variant: 'card-yellow' } },
+    { tagColor: 'green', tagText: 'Matches',     headline: `Every Saturday 3pm kick‑off and who's the man in the middle`, sub: `Full fixture list`, subIsGwSub: true, link: 'matches.html', articleId: null, media: { type: 'css', variant: 'stadium' } }
+  ],
+  news: [
+    { tag: 'incident', tagText: 'VAR Review',    headline: `Simon Hooper overturns his own call after four‑minute pitchside review`, dek: `A breakdown of the angle that changed the on‑field decision at St James' Park.`, metaLeft: 'GW14',    metaRight: '842 votes',   link: 'matches.html',  articleId: null, media: { type: 'css', variant: 'var' } },
+    { tag: 'match',    tagText: 'Match Report',  headline: `Three penalty shouts, one booking: how Craig Pawson handled Villa Park`, dek: `Neutral raters gave a 7.8 average — fans of the home side disagreed sharply.`, metaLeft: 'GW13', metaRight: '1.1k votes', link: 'matches.html',  articleId: null, media: { type: 'css', variant: 'pitch' } },
+    { tag: 'forum',    tagText: 'Fan Voices',    headline: `"He got both big calls right" — the thread defending Sunday's officiating`, dek: `Top comments from the Forum after a week of heated GW13 debate.`, metaLeft: 'Forum', metaRight: '236 replies', link: 'forum.html',   articleId: null, media: { type: 'css', variant: 'crowd' } },
+    { tag: 'rating',   tagText: 'Referee Focus', headline: `Referee Focus: Anthony Taylor's advantage‑play is quietly the league's best`, dek: `A season‑long look at why raters keep marking him above the neutral average.`, metaLeft: 'Feature', metaRight: '512 votes', link: 'referees.html', articleId: null, media: { type: 'css', variant: 'locker' } },
+    { tag: 'incident', tagText: 'Flashpoint',    headline: `Second yellow inside 60 seconds of the restart — the full incident timeline`, dek: `Every angle of the Molineux flashpoint, minute by minute.`, metaLeft: 'GW14', metaRight: '2.3k votes', link: 'matches.html',  articleId: null, media: { type: 'css', variant: 'pitch' } },
+    { tag: 'fantasy',  tagText: 'PVBB',          headline: `PVBB Gameweek 14: the differential referee picks climbing the ranks`, dek: `Low‑ownership officials who could swing your fantasy table this week.`, metaLeft: 'Fantasy', metaRight: 'New', link: 'fantasy.html',  articleId: null, media: { type: 'css', variant: 'var' } }
+  ],
+  leaderboard: [
+    { rank: 1, top: true,  name: 'Michael Oliver', games: '34 games', neutral: '8.4', fan: '7.9' },
+    { rank: 2, top: true,  name: 'Anthony Taylor', games: '31 games', neutral: '8.2', fan: '7.6' },
+    { rank: 3, top: true,  name: 'Paul Tierney',   games: '29 games', neutral: '8.0', fan: '7.8' },
+    { rank: 4, top: false, name: 'Craig Pawson',   games: '27 games', neutral: '7.7', fan: '7.2' },
+    { rank: 5, top: false, name: 'Simon Hooper',   games: '25 games', neutral: '7.3', fan: '6.4' }
+  ],
+  fixtures: [
+    { status: `76'`, live: true, home: 'Arsenal',   homeScore: '2', away: 'Chelsea',  awayScore: '1', ref: 'M. Oliver' },
+    { status: 'FT',               home: 'Everton',   homeScore: '0', away: 'Man City', awayScore: '3', ref: 'A. Taylor' },
+    { status: 'FT',               home: 'Wolves',    homeScore: '1', away: 'Brighton', awayScore: '1', ref: 'S. Attwell' },
+    { status: 'Sat 15:00',        home: 'Newcastle', homeScore: '–', away: 'Spurs',    awayScore: '–', ref: 'C. Pawson' },
+    { status: 'Sun 14:00',        home: 'Liverpool', homeScore: '–', away: 'Man Utd',  awayScore: '–', ref: 'P. Tierney' },
+    { status: 'Sun 16:30',        home: 'Villa',      homeScore: '–', away: 'West Ham', awayScore: '–', ref: 'D. Coote' }
+  ],
+  pvbb: {
+    headline: 'Your GW14 pick',
+    sub: 'Score points when your chosen referee out‑rates the community average.',
+    avatarInitials: 'MO', pickName: 'Michael Oliver', pickPts: 'Projected +12 pts', link: 'fantasy.html'
+  },
+  highlights: [
+    { tag: 'Key Moment', title: 'The penalty shout, every angle', link: 'matches.html', articleId: null, media: { type: 'css', variant: 'fill-1' } },
+    { tag: 'Forum Clip',  title: 'Fans react courtside',           link: 'forum.html',   articleId: null, media: { type: 'css', variant: 'fill-2' } },
+    { tag: 'VAR',         title: 'Pitchside monitor review',       link: 'matches.html', articleId: null, media: { type: 'css', variant: 'fill-3' } },
+    { tag: 'Card Watch',  title: 'Second yellow breakdown',        link: 'matches.html', articleId: null, media: { type: 'css', variant: 'fill-4' } }
+  ]
+};
+
+async function loadHomeContent() {
+  if (PREVIEW_MODE) return null;
+  const { data, error } = await getSB().from('RTR Home Content').select('content').eq('id', 1).single();
+  if (error || !data) return null;
+  return data.content || null;
+}
+
+async function saveHomeContent(content) {
+  if (PREVIEW_MODE) return true;
+  const { error } = await getSB().from('RTR Home Content').upsert({ id: 1, content }, { onConflict: 'id' });
+  if (error) console.error('[RTR] saveHomeContent error:', error);
+  return !error;
+}
+
+// ── ARTICLES (full "click a headline, read the story" pages) ──
+async function loadArticles() {
+  if (PREVIEW_MODE) return [];
+  const { data, error } = await getSB().from('RTR Articles').select('*').order('published_at', { ascending: false });
+  if (error) { console.error('[RTR] loadArticles error:', error); return []; }
+  return data || [];
+}
+
+async function loadArticle(id) {
+  if (PREVIEW_MODE) return null;
+  const { data, error } = await getSB().from('RTR Articles').select('*').eq('id', id).single();
+  if (error) { console.error('[RTR] loadArticle error:', error); return null; }
+  return data;
+}
+
+async function saveArticle(article) {
+  if (PREVIEW_MODE) return true;
+  const row = { ...article, updated_at: new Date().toISOString() };
+  const { data, error } = await getSB().from('RTR Articles').upsert(row).select().single();
+  if (error) { console.error('[RTR] saveArticle error:', error); return null; }
+  return data;
+}
+
+async function deleteArticle(id) {
+  if (PREVIEW_MODE) return true;
+  const { error } = await getSB().from('RTR Articles').delete().eq('id', id);
+  if (error) console.error('[RTR] deleteArticle error:', error);
+  return !error;
+}
+
 // ── INCIDENTS ─────────────────────────────────────────────
 
 const INCIDENT_TYPES = [
@@ -1096,6 +1193,8 @@ const SHARED_CSS = `
   .mobile-nav a{color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:600;letter-spacing:.5px;text-transform:uppercase;padding:10px 14px;border-radius:6px;text-decoration:none;display:block;border:1px solid transparent;}
   .mobile-nav a.active,.mobile-nav a:hover{background:rgba(0,255,133,.1);border-color:var(--pl-green);color:var(--pl-green);}
   .mobile-nav.open{display:flex;}
+  .ll-bar{position:absolute;top:0;height:4px;width:36px;background:var(--pl-green);border-radius:0 0 3px 3px;box-shadow:0 0 14px rgba(0,204,112,.9),0 0 5px rgba(0,255,133,.6);z-index:3;pointer-events:none;transition:left .32s cubic-bezier(.4,0,.2,1);}
+  .ll-beam{position:absolute;left:-38%;top:4px;width:176%;height:36px;clip-path:polygon(5% 100%,22% 0,78% 0,95% 100%);background:linear-gradient(180deg,rgba(0,204,112,.3) 0%,transparent 100%);pointer-events:none;}
   @media(max-width:768px){
     .hamburger{display:flex;}
     nav{display:none;}
@@ -1723,6 +1822,31 @@ function _refreshThemeBtn() {
   if (btn) btn.textContent = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
 }
 document.addEventListener('DOMContentLoaded', () => {
+  // ── LIMELIGHT NAV ────────────────────────────────────────
+  (function(){
+    const nav = document.querySelector('header nav');
+    if (!nav) return;
+    const bar = document.createElement('div');
+    bar.className = 'll-bar';
+    bar.style.left = '-999px';
+    const beam = document.createElement('div');
+    beam.className = 'll-beam';
+    bar.appendChild(beam);
+    nav.appendChild(bar);
+    function moveBar(el) {
+      bar.style.left = (el.offsetLeft + el.offsetWidth / 2 - bar.offsetWidth / 2) + 'px';
+    }
+    const active = nav.querySelector('a.active');
+    if (active) setTimeout(() => moveBar(active), 60);
+    nav.querySelectorAll('a').forEach(function(a) {
+      a.addEventListener('mouseenter', function() { moveBar(a); });
+    });
+    nav.addEventListener('mouseleave', function() {
+      const activeEl = nav.querySelector('a.active');
+      if (activeEl) moveBar(activeEl);
+    });
+  })();
+
   const dropdown = document.getElementById('userDropdown');
   if (dropdown && !document.getElementById('ddThemeToggle')) {
     const btn = document.createElement('div');
