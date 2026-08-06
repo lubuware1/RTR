@@ -134,6 +134,77 @@
     <div id="createGWPostsResult" style="margin-top:10px;font-size:.82rem;"></div>
   </div>
 
+  <!-- HOMEPAGE CONTENT -->
+  <div class="section">
+    <div class="section-title">🏠 Homepage Content</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:16px;">Edit the headlines, text and images/videos shown on the homepage (index.html). For an image or video, paste a path to a file already in the <code>images</code>/<code>images/video</code> folder, or any external URL — there's no upload button yet.</p>
+    <div id="homeContentForm"></div>
+    <div style="display:flex;gap:10px;align-items:center;margin-top:10px;">
+      <button class="btn btn-green" id="saveHomeContentBtn">Save to Live Site</button>
+      <button class="btn btn-yellow" id="resetHomeContentBtn">Reset Form to Defaults</button>
+    </div>
+    <div id="saveHomeContentResult" style="margin-top:10px;font-size:.82rem;"></div>
+  </div>
+
+  <!-- ARTICLES -->
+  <div class="section">
+    <div class="section-title">📰 Articles (full story pages)</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:16px;">Full "click a headline, read the story" pages, served at <code>article.html?id=…</code>. Write one here, then paste its ID into a homepage card above (Article ID field) to link that card to it.</p>
+    <button class="btn btn-green" id="newArticleBtn">+ New Article</button>
+    <div id="articlesList" style="margin-top:14px;"></div>
+
+    <div id="articleEditor" style="display:none;margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
+      <div class="row cols-2">
+        <div class="field-group">
+          <label>Tag</label>
+          <select id="artTag">
+            <option value="incident">incident</option>
+            <option value="match">match</option>
+            <option value="forum">forum</option>
+            <option value="rating">rating</option>
+            <option value="fantasy">fantasy</option>
+            <option value="live">live</option>
+          </select>
+        </div>
+        <div class="field-group"><label>Tag Label</label><input id="artTagText" placeholder="e.g. VAR Review"></div>
+      </div>
+      <div class="field-group"><label>Headline</label><input id="artHeadline"></div>
+      <div class="field-group"><label>Teaser (shown on cards)</label><textarea id="artDek" rows="2"></textarea></div>
+      <div class="field-group"><label>Full Story — separate paragraphs with a blank line</label><textarea id="artBody" rows="10"></textarea></div>
+      <div class="row cols-2">
+        <div class="field-group"><label>Meta Left (e.g. GW14)</label><input id="artMetaLeft"></div>
+        <div class="field-group"><label>Meta Right (e.g. referee name)</label><input id="artMetaRight"></div>
+      </div>
+      <div class="row cols-3">
+        <div class="field-group">
+          <label>Media Type</label>
+          <select id="artMediaType">
+            <option value="css">Placeholder graphic</option>
+            <option value="image">Image</option>
+            <option value="video">Video</option>
+          </select>
+        </div>
+        <div class="field-group" id="artMediaSrcGroup"><label>Image / Video URL or path</label><input id="artMediaSrc" placeholder="images/whatever.jpg"></div>
+        <div class="field-group" id="artMediaVariantGroup">
+          <label>Placeholder Style</label>
+          <select id="artMediaVariant">
+            <option value="pitch">pitch</option>
+            <option value="var">var</option>
+            <option value="crowd">crowd</option>
+            <option value="locker">locker</option>
+            <option value="stadium">stadium</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button class="btn btn-green" id="saveArticleBtn">Save Article</button>
+        <button class="btn" id="cancelArticleBtn">Cancel</button>
+        <button class="btn btn-red" id="deleteArticleBtn" style="display:none;">Delete Article</button>
+      </div>
+      <div id="articleEditorResult" style="margin-top:10px;font-size:.82rem;"></div>
+    </div>
+  </div>
+
   <!-- MATCH MANAGER -->
   <div class="section">
     <div class="section-title">Match Manager</div>
@@ -245,6 +316,158 @@
     t.textContent = msg;
     t.className = 'toast show' + (err?' err':'');
     setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ── HOMEPAGE CONTENT EDITOR ────────────────────────────────
+  function hcGetPath(obj, path) {
+    return path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj);
+  }
+  function hcSetPath(obj, path, value) {
+    const keys = path.split('.');
+    let cur = obj;
+    for (let i = 0; i < keys.length - 1; i++) {
+      if (cur[keys[i]] == null) cur[keys[i]] = {};
+      cur = cur[keys[i]];
+    }
+    cur[keys[keys.length - 1]] = value;
+  }
+  function hcField(path, label, opts = {}) {
+    const tag = opts.textarea ? 'textarea' : 'input';
+    const extra = opts.textarea ? ' rows="2" style="resize:vertical;"' : '';
+    return `<div class="field-group"><label>${label}</label><${tag} data-path="${path}"${extra}></${tag}></div>`;
+  }
+  function hcSelect(path, label, options) {
+    return `<div class="field-group"><label>${label}</label><select data-path="${path}">${options.map(o => `<option value="${o.value}">${o.label}</option>`).join('')}</select></div>`;
+  }
+  function hcMediaGroup(prefix, variants) {
+    return `
+      <div class="row cols-3">
+        ${hcSelect(prefix + '.media.type', 'Media Type', [{value:'css',label:'Placeholder graphic'},{value:'image',label:'Image'},{value:'video',label:'Video'}])}
+        <div class="field-group" data-media-src="${prefix}">${hcField(prefix + '.media.src', 'Image / Video URL or path')}</div>
+        <div class="field-group" data-media-variant="${prefix}">${hcSelect(prefix + '.media.variant', 'Placeholder Style', variants.map(v => ({value:v,label:v})))}</div>
+      </div>`;
+  }
+
+  function buildHomeContentForm() {
+    const RAIL_COLORS = [{value:'red',label:'Red'},{value:'gold',label:'Gold'},{value:'green',label:'Green'}];
+    const NEWS_TAGS = ['incident','match','forum','rating','fantasy'].map(v => ({value:v,label:v}));
+
+    let html = `<div class="section-title" style="font-size:.85rem;border:none;margin-bottom:10px;padding-bottom:0;">Hero Story</div>`;
+    html += hcField('hero.tagText', 'Tag Label (e.g. "Live Now")');
+    html += hcField('hero.headline', 'Headline', {textarea:true});
+    html += hcField('hero.dek', 'Subtext', {textarea:true});
+    html += `<div class="row cols-3">${hcField('hero.metaMinute','Meta: Minute')}${hcField('hero.metaRef','Meta: Referee')}${hcField('hero.metaVenue','Meta: Venue')}</div>`;
+    html += `<div class="row cols-2">${hcField('hero.link', 'Fallback Link (e.g. matches.html)')}${hcField('hero.articleId', 'Article ID (optional — overrides link)')}</div>`;
+    html += hcMediaGroup('hero', ['pitch']);
+
+    HOME_CONTENT_DEFAULTS.rail.forEach((_, i) => {
+      html += `<hr class="divider"><div class="section-title" style="font-size:.85rem;border:none;margin-bottom:10px;padding-bottom:0;">Side Story ${i+1}</div>`;
+      html += `<div class="row cols-2">${hcSelect(`rail.${i}.tagColor`,'Tag Colour',RAIL_COLORS)}${hcField(`rail.${i}.tagText`,'Tag Label')}</div>`;
+      html += hcField(`rail.${i}.headline`, 'Headline', {textarea:true});
+      html += `<div class="row cols-3">${hcField(`rail.${i}.sub`,'Subtext')}${hcField(`rail.${i}.link`,'Fallback Link')}${hcField(`rail.${i}.articleId`,'Article ID (optional)')}</div>`;
+      html += hcMediaGroup(`rail.${i}`, ['card-red','card-yellow','stadium']);
+    });
+
+    HOME_CONTENT_DEFAULTS.news.forEach((_, i) => {
+      html += `<hr class="divider"><div class="section-title" style="font-size:.85rem;border:none;margin-bottom:10px;padding-bottom:0;">News Card ${i+1}</div>`;
+      html += `<div class="row cols-2">${hcSelect(`news.${i}.tag`,'Tag Colour',NEWS_TAGS)}${hcField(`news.${i}.tagText`,'Tag Label')}</div>`;
+      html += hcField(`news.${i}.headline`, 'Headline', {textarea:true});
+      html += hcField(`news.${i}.dek`, 'Subtext', {textarea:true});
+      html += `<div class="row cols-2">${hcField(`news.${i}.metaLeft`,'Meta Left')}${hcField(`news.${i}.metaRight`,'Meta Right')}</div>`;
+      html += `<div class="row cols-2">${hcField(`news.${i}.link`,'Fallback Link')}${hcField(`news.${i}.articleId`,'Article ID (optional)')}</div>`;
+      html += hcMediaGroup(`news.${i}`, ['pitch','var','crowd','locker']);
+    });
+
+    html += `<hr class="divider"><div class="section-title" style="font-size:.85rem;border:none;margin-bottom:10px;padding-bottom:0;">Pick vs Best Bet Box</div>`;
+    html += `<div class="row cols-2">${hcField('pvbb.headline','Headline')}${hcField('pvbb.sub','Subtext')}</div>`;
+    html += `<div class="row cols-3">${hcField('pvbb.avatarInitials','Avatar Initials')}${hcField('pvbb.pickName','Pick Name')}${hcField('pvbb.pickPts','Points Text')}</div>`;
+    html += hcField('pvbb.link', 'Link');
+
+    HOME_CONTENT_DEFAULTS.highlights.forEach((_, i) => {
+      html += `<hr class="divider"><div class="section-title" style="font-size:.85rem;border:none;margin-bottom:10px;padding-bottom:0;">Highlight Clip ${i+1}</div>`;
+      html += `<div class="row cols-2">${hcField(`highlights.${i}.tag`,'Tag Label')}${hcField(`highlights.${i}.title`,'Title')}</div>`;
+      html += `<div class="row cols-2">${hcField(`highlights.${i}.link`,'Fallback Link')}${hcField(`highlights.${i}.articleId`,'Article ID (optional)')}</div>`;
+      html += hcMediaGroup(`highlights.${i}`, ['fill-1','fill-2','fill-3','fill-4']);
+    });
+
+    document.getElementById('homeContentForm').innerHTML = html;
+
+    document.querySelectorAll('#homeContentForm select[data-path$=".media.type"]').forEach(sel => {
+      sel.addEventListener('change', () => updateMediaFieldVisibility(sel));
+      sel.dataset.bound = '1';
+    });
+  }
+
+  function updateMediaFieldVisibility(sel) {
+    const prefix = sel.dataset.path.replace(/\.media\.type$/, '');
+    const srcField = document.querySelector(`[data-media-src="${prefix}"]`);
+    const variantField = document.querySelector(`[data-media-variant="${prefix}"]`);
+    const isCss = sel.value === 'css';
+    if (srcField) srcField.style.display = isCss ? 'none' : '';
+    if (variantField) variantField.style.display = isCss ? '' : 'none';
+  }
+
+  function populateHomeContentForm(content) {
+    document.querySelectorAll('#homeContentForm [data-path]').forEach(el => {
+      const v = hcGetPath(content, el.dataset.path);
+      if (v !== undefined) el.value = v;
+    });
+    document.querySelectorAll('#homeContentForm select[data-path$=".media.type"]').forEach(updateMediaFieldVisibility);
+  }
+
+  function gatherHomeContentForm(baseContent) {
+    const out = JSON.parse(JSON.stringify(baseContent));
+    document.querySelectorAll('#homeContentForm [data-path]').forEach(el => {
+      hcSetPath(out, el.dataset.path, el.value);
+    });
+    return out;
+  }
+
+  // ── ARTICLES EDITOR ────────────────────────────────────────
+  let editingArticleId = null;
+
+  function renderArticlesList(articles) {
+    const el = document.getElementById('articlesList');
+    if (!articles.length) { el.innerHTML = `<p style="font-size:.85rem;color:var(--muted);">No articles yet.</p>`; return; }
+    el.innerHTML = articles.map(a => `
+      <div class="bonus-row" style="align-items:center;">
+        <span class="status-pill upcoming">#${a.id}</span>
+        <span class="bonus-label">${a.headline || '(untitled)'}<br><span class="bonus-meta">${a.tag} · ${new Date(a.published_at).toLocaleDateString('en-GB')}</span></span>
+        <button class="btn btn-sm" data-edit-article="${a.id}">Edit</button>
+        <button class="btn btn-sm btn-red" data-delete-article="${a.id}">Delete</button>
+      </div>`).join('');
+  }
+
+  function openArticleEditor(article) {
+    editingArticleId = article?.id ?? null;
+    document.getElementById('artTag').value = article?.tag || 'match';
+    document.getElementById('artTagText').value = article?.tag_text || '';
+    document.getElementById('artHeadline').value = article?.headline || '';
+    document.getElementById('artDek').value = article?.dek || '';
+    document.getElementById('artBody').value = article?.body || '';
+    document.getElementById('artMetaLeft').value = article?.meta_left || '';
+    document.getElementById('artMetaRight').value = article?.meta_right || '';
+    const media = article?.media || { type: 'css', variant: 'pitch' };
+    document.getElementById('artMediaType').value = media.type || 'css';
+    document.getElementById('artMediaSrc').value = media.src || '';
+    document.getElementById('artMediaVariant').value = media.variant || 'pitch';
+    updateArticleMediaVisibility();
+    document.getElementById('deleteArticleBtn').style.display = editingArticleId ? '' : 'none';
+    document.getElementById('articleEditorResult').textContent = '';
+    document.getElementById('articleEditor').style.display = 'block';
+    document.getElementById('articleEditor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function updateArticleMediaVisibility() {
+    const isCss = document.getElementById('artMediaType').value === 'css';
+    document.getElementById('artMediaSrcGroup').style.display = isCss ? 'none' : '';
+    document.getElementById('artMediaVariantGroup').style.display = isCss ? '' : 'none';
+  }
+
+  async function refreshArticlesList() {
+    const articles = await loadArticles();
+    renderArticlesList(articles);
+    return articles;
   }
 
   // ── MATCH CARD RENDERER ───────────────────────────────────
@@ -991,6 +1214,108 @@
     }
     btn.disabled = false;
     btn.textContent = '🔄 Sync Fixtures Now';
+  });
+
+  // ── HOMEPAGE CONTENT: boot ──────────────────────────────
+  let currentHomeContent = (await loadHomeContent()) || HOME_CONTENT_DEFAULTS;
+  buildHomeContentForm();
+  populateHomeContentForm(currentHomeContent);
+
+  document.getElementById('saveHomeContentBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('saveHomeContentBtn');
+    const result = document.getElementById('saveHomeContentResult');
+    btn.disabled = true;
+    const updated = gatherHomeContentForm(currentHomeContent);
+    const ok = await saveHomeContent(updated);
+    if (ok) {
+      currentHomeContent = updated;
+      result.style.color = 'var(--pl-green)';
+      result.textContent = '✓ Saved — live on the homepage now.';
+      toast('✓ Homepage content saved');
+    } else {
+      result.style.color = 'var(--red)';
+      result.textContent = '✗ Save failed — check console.';
+      toast('Save failed', true);
+    }
+    btn.disabled = false;
+  });
+
+  document.getElementById('resetHomeContentBtn').addEventListener('click', () => {
+    populateHomeContentForm(HOME_CONTENT_DEFAULTS);
+    toast('Form reset to defaults — click Save to publish');
+  });
+
+  // ── ARTICLES: boot ──────────────────────────────────────
+  await refreshArticlesList();
+
+  document.getElementById('artMediaType').addEventListener('change', updateArticleMediaVisibility);
+
+  document.getElementById('newArticleBtn').addEventListener('click', () => openArticleEditor(null));
+
+  document.getElementById('cancelArticleBtn').addEventListener('click', () => {
+    document.getElementById('articleEditor').style.display = 'none';
+  });
+
+  document.getElementById('articlesList').addEventListener('click', async e => {
+    const editId = e.target.dataset.editArticle;
+    const delId = e.target.dataset.deleteArticle;
+    if (editId) {
+      const article = await loadArticle(editId);
+      if (article) openArticleEditor(article);
+    } else if (delId) {
+      if (!confirm(`Delete article #${delId}? This can't be undone.`)) return;
+      const ok = await deleteArticle(delId);
+      toast(ok ? '✓ Article deleted' : 'Delete failed', !ok);
+      if (ok) await refreshArticlesList();
+    }
+  });
+
+  document.getElementById('saveArticleBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('saveArticleBtn');
+    const result = document.getElementById('articleEditorResult');
+    const headline = document.getElementById('artHeadline').value.trim();
+    if (!headline) { result.style.color = 'var(--red)'; result.textContent = 'Headline is required.'; return; }
+    btn.disabled = true;
+    const mediaType = document.getElementById('artMediaType').value;
+    const article = {
+      tag: document.getElementById('artTag').value,
+      tag_text: document.getElementById('artTagText').value,
+      headline,
+      dek: document.getElementById('artDek').value,
+      body: document.getElementById('artBody').value,
+      meta_left: document.getElementById('artMetaLeft').value,
+      meta_right: document.getElementById('artMetaRight').value,
+      media: mediaType === 'css'
+        ? { type: 'css', variant: document.getElementById('artMediaVariant').value }
+        : { type: mediaType, src: document.getElementById('artMediaSrc').value }
+    };
+    if (editingArticleId) article.id = editingArticleId;
+    const saved = await saveArticle(article);
+    if (saved) {
+      editingArticleId = saved.id;
+      result.style.color = 'var(--pl-green)';
+      result.textContent = `✓ Saved — Article ID ${saved.id}. Paste this into a homepage card's "Article ID" field to link to it.`;
+      toast('✓ Article saved');
+      await refreshArticlesList();
+    } else {
+      result.style.color = 'var(--red)';
+      result.textContent = '✗ Save failed — check console.';
+      toast('Save failed', true);
+    }
+    btn.disabled = false;
+  });
+
+  document.getElementById('deleteArticleBtn').addEventListener('click', async () => {
+    if (!editingArticleId) return;
+    if (!confirm(`Delete article #${editingArticleId}? This can't be undone.`)) return;
+    const ok = await deleteArticle(editingArticleId);
+    if (ok) {
+      toast('✓ Article deleted');
+      document.getElementById('articleEditor').style.display = 'none';
+      await refreshArticlesList();
+    } else {
+      toast('Delete failed', true);
+    }
   });
 
   })();
