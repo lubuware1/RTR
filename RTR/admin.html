@@ -339,6 +339,9 @@
   function hcSelect(path, label, options) {
     return `<div class="field-group"><label>${label}</label><select data-path="${path}">${options.map(o => `<option value="${o.value}">${o.label}</option>`).join('')}</select></div>`;
   }
+  function hcCheckbox(path, label) {
+    return `<div class="checkbox-row" style="margin-bottom:12px;"><input type="checkbox" data-path="${path}" data-bool="1" id="cb-${path}"><label for="cb-${path}">${label}</label></div>`;
+  }
   function hcMediaGroup(prefix, variants) {
     return `
       <div class="row cols-3">
@@ -353,6 +356,7 @@
     const NEWS_TAGS = ['incident','match','forum','rating','fantasy'].map(v => ({value:v,label:v}));
 
     let html = `<div class="section-title" style="font-size:.85rem;border:none;margin-bottom:10px;padding-bottom:0;">Hero Story</div>`;
+    html += hcCheckbox('hero.visible', 'Show on homepage');
     html += hcField('hero.tagText', 'Tag Label (e.g. "Live Now")');
     html += hcField('hero.headline', 'Headline', {textarea:true});
     html += hcField('hero.dek', 'Subtext', {textarea:true});
@@ -362,6 +366,7 @@
 
     HOME_CONTENT_DEFAULTS.rail.forEach((_, i) => {
       html += `<hr class="divider"><div class="section-title" style="font-size:.85rem;border:none;margin-bottom:10px;padding-bottom:0;">Side Story ${i+1}</div>`;
+      html += hcCheckbox(`rail.${i}.visible`, 'Show on homepage');
       html += `<div class="row cols-2">${hcSelect(`rail.${i}.tagColor`,'Tag Colour',RAIL_COLORS)}${hcField(`rail.${i}.tagText`,'Tag Label')}</div>`;
       html += hcField(`rail.${i}.headline`, 'Headline', {textarea:true});
       html += `<div class="row cols-3">${hcField(`rail.${i}.sub`,'Subtext')}${hcField(`rail.${i}.link`,'Fallback Link')}${hcField(`rail.${i}.articleId`,'Article ID (optional)')}</div>`;
@@ -370,6 +375,7 @@
 
     HOME_CONTENT_DEFAULTS.news.forEach((_, i) => {
       html += `<hr class="divider"><div class="section-title" style="font-size:.85rem;border:none;margin-bottom:10px;padding-bottom:0;">News Card ${i+1}</div>`;
+      html += hcCheckbox(`news.${i}.visible`, 'Show on homepage');
       html += `<div class="row cols-2">${hcSelect(`news.${i}.tag`,'Tag Colour',NEWS_TAGS)}${hcField(`news.${i}.tagText`,'Tag Label')}</div>`;
       html += hcField(`news.${i}.headline`, 'Headline', {textarea:true});
       html += hcField(`news.${i}.dek`, 'Subtext', {textarea:true});
@@ -385,6 +391,7 @@
 
     HOME_CONTENT_DEFAULTS.highlights.forEach((_, i) => {
       html += `<hr class="divider"><div class="section-title" style="font-size:.85rem;border:none;margin-bottom:10px;padding-bottom:0;">Highlight Clip ${i+1}</div>`;
+      html += hcCheckbox(`highlights.${i}.visible`, 'Show on homepage');
       html += `<div class="row cols-2">${hcField(`highlights.${i}.tag`,'Tag Label')}${hcField(`highlights.${i}.title`,'Title')}</div>`;
       html += `<div class="row cols-2">${hcField(`highlights.${i}.link`,'Fallback Link')}${hcField(`highlights.${i}.articleId`,'Article ID (optional)')}</div>`;
       html += hcMediaGroup(`highlights.${i}`, ['fill-1','fill-2','fill-3','fill-4']);
@@ -410,7 +417,9 @@
   function populateHomeContentForm(content) {
     document.querySelectorAll('#homeContentForm [data-path]').forEach(el => {
       const v = hcGetPath(content, el.dataset.path);
-      if (v !== undefined) el.value = v;
+      if (v === undefined) return;
+      if (el.dataset.bool) el.checked = v !== false;
+      else el.value = v;
     });
     document.querySelectorAll('#homeContentForm select[data-path$=".media.type"]').forEach(updateMediaFieldVisibility);
   }
@@ -418,7 +427,7 @@
   function gatherHomeContentForm(baseContent) {
     const out = JSON.parse(JSON.stringify(baseContent));
     document.querySelectorAll('#homeContentForm [data-path]').forEach(el => {
-      hcSetPath(out, el.dataset.path, el.value);
+      hcSetPath(out, el.dataset.path, el.dataset.bool ? el.checked : el.value);
     });
     return out;
   }
