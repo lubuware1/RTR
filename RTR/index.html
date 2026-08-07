@@ -105,6 +105,8 @@ nav a.active{color:#fff;}
 }
 .hero-wrap{max-width:1240px;margin:0 auto;padding:28px 28px 40px;}
 .hero-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:20px;}
+.hero-grid.no-hero{grid-template-columns:1fr;}
+.hero-grid.no-hero .rail{display:grid;grid-template-columns:repeat(3,1fr);}
 .feature-card{
   position:relative;border-radius:var(--card-radius);overflow:hidden;min-height:420px;
   display:flex;align-items:flex-end;text-decoration:none;color:#fff;
@@ -438,10 +440,15 @@ function homeLinkFor(item) {
   return item.articleId ? `article.html?id=${item.articleId}` : item.link;
 }
 
-// ── render the homepage from HOME_CONTENT above ──
+// ── render the homepage from HOME_CONTENT above (skipping anything toggled off) ──
 function renderHomeContent() {
   const h = HOME_CONTENT.hero;
-  document.getElementById('heroGrid').innerHTML = `
+  const heroVisible = h.visible !== false;
+  const heroGrid = document.getElementById('heroGrid');
+  heroGrid.classList.toggle('no-hero', !heroVisible);
+  const visibleRail = HOME_CONTENT.rail.filter(r => r.visible !== false);
+  heroGrid.innerHTML = `
+    ${heroVisible ? `
     <a class="feature-card" href="${homeLinkFor(h)}">
       ${homeMediaHTML(h.media, 'feature-thumb-photo')}
       <div class="feature-body">
@@ -450,9 +457,9 @@ function renderHomeContent() {
         <p class="feature-dek">${h.dek}</p>
         <div class="feature-meta">${h.metaMinute} <b>·</b> ${h.metaRef} <b>·</b> ${h.metaVenue}</div>
       </div>
-    </a>
+    </a>` : ''}
     <div class="rail">
-      ${HOME_CONTENT.rail.map(r => `
+      ${visibleRail.map(r => `
         <a class="rail-card" href="${homeLinkFor(r)}">
           ${homeMediaHTML(r.media, 'rail-thumb')}
           <div class="rail-body">
@@ -471,7 +478,7 @@ function renderHomeContent() {
       <div class="fx-ref">Ref <b>${f.ref}</b></div>
     </a>`).join('');
 
-  document.getElementById('newsGrid').innerHTML = HOME_CONTENT.news.map(n => {
+  document.getElementById('newsGrid').innerHTML = HOME_CONTENT.news.filter(n => n.visible !== false).map(n => {
     const isCss = !n.media || n.media.type === 'css';
     const thumbClass = isCss ? `news-thumb thumb-${n.media?.variant || ''}` : 'news-thumb';
     const thumbFill = isCss ? '' : homeMediaHTML(n.media);
@@ -507,7 +514,7 @@ function renderHomeContent() {
     </div>
     <a class="btn-cta" href="${p.link}">Change Pick →</a>`;
 
-  document.getElementById('hlGrid').innerHTML = HOME_CONTENT.highlights.map(hl => `
+  document.getElementById('hlGrid').innerHTML = HOME_CONTENT.highlights.filter(hl => hl.visible !== false).map(hl => `
     <a class="hl-card" href="${homeLinkFor(hl)}">
       ${homeMediaHTML(hl.media, 'fill')}
       <div class="hl-play"><svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></div>

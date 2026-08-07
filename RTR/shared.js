@@ -335,6 +335,7 @@ async function loadGWConfig() {
 // Falls back to these defaults until an admin saves real content.
 const HOME_CONTENT_DEFAULTS = {
   hero: {
+    visible: true,
     tagText: 'Live Now',
     headline: `Arsenal 2‑1 Chelsea: Oliver waves away second‑half penalty shout`,
     dek: `Community reaction splits down the middle after a VAR check inside the box goes uncorrected. Cast your rating before full time.`,
@@ -343,17 +344,17 @@ const HOME_CONTENT_DEFAULTS = {
     media: { type: 'css', variant: 'pitch' }
   },
   rail: [
-    { tagColor: 'red',   tagText: 'Flashpoint', headline: `Two reds in four minutes at Molineux — was Attwell right both times?`, sub: `1.2k ratings so far`, link: 'matches.html', articleId: null, media: { type: 'css', variant: 'card-red' } },
-    { tagColor: 'gold',  tagText: 'Ratings',     headline: `This week's top‑scored referee: fans and neutrals finally agree`, sub: `Community leaderboard`, link: 'referees.html', articleId: null, media: { type: 'css', variant: 'card-yellow' } },
-    { tagColor: 'green', tagText: 'Matches',     headline: `Every Saturday 3pm kick‑off and who's the man in the middle`, sub: `Full fixture list`, subIsGwSub: true, link: 'matches.html', articleId: null, media: { type: 'css', variant: 'stadium' } }
+    { visible: true, tagColor: 'red',   tagText: 'Flashpoint', headline: `Two reds in four minutes at Molineux — was Attwell right both times?`, sub: `1.2k ratings so far`, link: 'matches.html', articleId: null, media: { type: 'css', variant: 'card-red' } },
+    { visible: true, tagColor: 'gold',  tagText: 'Ratings',     headline: `This week's top‑scored referee: fans and neutrals finally agree`, sub: `Community leaderboard`, link: 'referees.html', articleId: null, media: { type: 'css', variant: 'card-yellow' } },
+    { visible: true, tagColor: 'green', tagText: 'Matches',     headline: `Every Saturday 3pm kick‑off and who's the man in the middle`, sub: `Full fixture list`, subIsGwSub: true, link: 'matches.html', articleId: null, media: { type: 'css', variant: 'stadium' } }
   ],
   news: [
-    { tag: 'incident', tagText: 'VAR Review',    headline: `Simon Hooper overturns his own call after four‑minute pitchside review`, dek: `A breakdown of the angle that changed the on‑field decision at St James' Park.`, metaLeft: 'GW14',    metaRight: '842 votes',   link: 'matches.html',  articleId: null, media: { type: 'css', variant: 'var' } },
-    { tag: 'match',    tagText: 'Match Report',  headline: `Three penalty shouts, one booking: how Craig Pawson handled Villa Park`, dek: `Neutral raters gave a 7.8 average — fans of the home side disagreed sharply.`, metaLeft: 'GW13', metaRight: '1.1k votes', link: 'matches.html',  articleId: null, media: { type: 'css', variant: 'pitch' } },
-    { tag: 'forum',    tagText: 'Fan Voices',    headline: `"He got both big calls right" — the thread defending Sunday's officiating`, dek: `Top comments from the Forum after a week of heated GW13 debate.`, metaLeft: 'Forum', metaRight: '236 replies', link: 'forum.html',   articleId: null, media: { type: 'css', variant: 'crowd' } },
-    { tag: 'rating',   tagText: 'Referee Focus', headline: `Referee Focus: Anthony Taylor's advantage‑play is quietly the league's best`, dek: `A season‑long look at why raters keep marking him above the neutral average.`, metaLeft: 'Feature', metaRight: '512 votes', link: 'referees.html', articleId: null, media: { type: 'css', variant: 'locker' } },
-    { tag: 'incident', tagText: 'Flashpoint',    headline: `Second yellow inside 60 seconds of the restart — the full incident timeline`, dek: `Every angle of the Molineux flashpoint, minute by minute.`, metaLeft: 'GW14', metaRight: '2.3k votes', link: 'matches.html',  articleId: null, media: { type: 'css', variant: 'pitch' } },
-    { tag: 'fantasy',  tagText: 'PVBB',          headline: `PVBB Gameweek 14: the differential referee picks climbing the ranks`, dek: `Low‑ownership officials who could swing your fantasy table this week.`, metaLeft: 'Fantasy', metaRight: 'New', link: 'fantasy.html',  articleId: null, media: { type: 'css', variant: 'var' } }
+    { visible: true, tag: 'incident', tagText: 'VAR Review',    headline: `Simon Hooper overturns his own call after four‑minute pitchside review`, dek: `A breakdown of the angle that changed the on‑field decision at St James' Park.`, metaLeft: 'GW14',    metaRight: '842 votes',   link: 'matches.html',  articleId: null, media: { type: 'css', variant: 'var' } },
+    { visible: true, tag: 'match',    tagText: 'Match Report',  headline: `Three penalty shouts, one booking: how Craig Pawson handled Villa Park`, dek: `Neutral raters gave a 7.8 average — fans of the home side disagreed sharply.`, metaLeft: 'GW13', metaRight: '1.1k votes', link: 'matches.html',  articleId: null, media: { type: 'css', variant: 'pitch' } },
+    { visible: true, tag: 'forum',    tagText: 'Fan Voices',    headline: `"He got both big calls right" — the thread defending Sunday's officiating`, dek: `Top comments from the Forum after a week of heated GW13 debate.`, metaLeft: 'Forum', metaRight: '236 replies', link: 'forum.html',   articleId: null, media: { type: 'css', variant: 'crowd' } },
+    { visible: true, tag: 'rating',   tagText: 'Referee Focus', headline: `Referee Focus: Anthony Taylor's advantage‑play is quietly the league's best`, dek: `A season‑long look at why raters keep marking him above the neutral average.`, metaLeft: 'Feature', metaRight: '512 votes', link: 'referees.html', articleId: null, media: { type: 'css', variant: 'locker' } },
+    { visible: true, tag: 'incident', tagText: 'Flashpoint',    headline: `Second yellow inside 60 seconds of the restart — the full incident timeline`, dek: `Every angle of the Molineux flashpoint, minute by minute.`, metaLeft: 'GW14', metaRight: '2.3k votes', link: 'matches.html',  articleId: null, media: { type: 'css', variant: 'pitch' } },
+    { visible: true, tag: 'fantasy',  tagText: 'PVBB',          headline: `PVBB Gameweek 14: the differential referee picks climbing the ranks`, dek: `Low‑ownership officials who could swing your fantasy table this week.`, metaLeft: 'Fantasy', metaRight: 'New', link: 'fantasy.html',  articleId: null, media: { type: 'css', variant: 'var' } }
   ],
   leaderboard: [
     { rank: 1, top: true,  name: 'Michael Oliver', games: '34 games', neutral: '8.4', fan: '7.9' },
@@ -376,10 +377,10 @@ const HOME_CONTENT_DEFAULTS = {
     avatarInitials: 'MO', pickName: 'Michael Oliver', pickPts: 'Projected +12 pts', link: 'fantasy.html'
   },
   highlights: [
-    { tag: 'Key Moment', title: 'The penalty shout, every angle', link: 'matches.html', articleId: null, media: { type: 'css', variant: 'fill-1' } },
-    { tag: 'Forum Clip',  title: 'Fans react courtside',           link: 'forum.html',   articleId: null, media: { type: 'css', variant: 'fill-2' } },
-    { tag: 'VAR',         title: 'Pitchside monitor review',       link: 'matches.html', articleId: null, media: { type: 'css', variant: 'fill-3' } },
-    { tag: 'Card Watch',  title: 'Second yellow breakdown',        link: 'matches.html', articleId: null, media: { type: 'css', variant: 'fill-4' } }
+    { visible: true, tag: 'Key Moment', title: 'The penalty shout, every angle', link: 'matches.html', articleId: null, media: { type: 'css', variant: 'fill-1' } },
+    { visible: true, tag: 'Forum Clip',  title: 'Fans react courtside',           link: 'forum.html',   articleId: null, media: { type: 'css', variant: 'fill-2' } },
+    { visible: true, tag: 'VAR',         title: 'Pitchside monitor review',       link: 'matches.html', articleId: null, media: { type: 'css', variant: 'fill-3' } },
+    { visible: true, tag: 'Card Watch',  title: 'Second yellow breakdown',        link: 'matches.html', articleId: null, media: { type: 'css', variant: 'fill-4' } }
   ]
 };
 
