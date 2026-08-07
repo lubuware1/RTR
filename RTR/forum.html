@@ -10,6 +10,7 @@
 <link rel="apple-touch-icon" href="/images/logos/RRlogo192.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RefRater — Forum</title>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7289925014125722" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="shared.js"></script>
 <style>
@@ -483,9 +484,8 @@
         <a href="index.html">Home</a>
         <a href="matches.html">Matches</a>
         <a href="referees.html">Referees</a>
-        <a href="fantasy.html"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="Fantasy" style="height:20px;width:auto;vertical-align:middle;"></a>
         <a href="badges.html">Cards</a>
-        <a href="forum.html" class="active admin-only" style="display:none">Forum</a>
+        <a href="forum.html" class="active">Forum</a>
       </nav>
       <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
       <div class="user-chip" id="userChip">
@@ -499,6 +499,8 @@
             <div class="dd-team" id="ddTeam"></div>
           </div>
           <div class="dd-item" onclick="location.href='badges.html'">🏅 Cards</div>
+          <div class="dd-item admin-only" style="display:none" onclick="location.href='fantasy.html'"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="PVBB" style="height:16px;width:auto;vertical-align:middle;margin-right:6px;">PVBB</div>
+          <div class="dd-item admin-only" style="display:none" onclick="location.href='team_task_manager.html'">📋 Tasks</div>
           <div class="dd-item danger" id="ddLogout">↩ Sign out</div>
         </div>
       </div>
@@ -510,9 +512,8 @@
   <a href="index.html">Home</a>
   <a href="matches.html">Matches</a>
   <a href="referees.html">Referees</a>
-  <a href="fantasy.html"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="Fantasy" style="height:20px;width:auto;vertical-align:middle;"></a>
   <a href="badges.html">Cards</a>
-  <a href="forum.html" class="active admin-only" style="display:none">Forum</a>
+  <a href="forum.html" class="active">Forum</a>
 </div>
 
 <div class="page">
@@ -652,8 +653,8 @@ async function savePost(category, subject, body, replyTo, matchweek) {
     user_id: currentUser.id,
     username: currentUser.username || 'User',
     category,
-    subject: subject.trim(),
-    body: body.trim(),
+    subject: cleanText(subject.trim()),
+    body: cleanText(body.trim()),
     reply_to: replyTo || null,
     matchweek: matchweek || null,
     created_at: new Date().toISOString(),
@@ -666,7 +667,7 @@ async function saveRefPost(refId, refName, body) {
   if (PREVIEW_MODE || !currentUser) return null;
   const { data, error } = await getSB().from('RTR Forum').insert({
     user_id: currentUser.id, username: currentUser.username || 'User',
-    category: 'referee', subject: refName, body: body.trim(),
+    category: 'referee', subject: refName, body: cleanText(body.trim()),
     ref_id: refId, reply_to: null, matchweek: null,
     created_at: new Date().toISOString(),
   }).select().single();
@@ -1078,7 +1079,13 @@ function esc(str) {
 
 // ── HEADER ────────────────────────────────────────────────
 function initHeader() {
-  if (!currentUser) { window.location.href = 'login.html'; return; }
+  if (!currentUser) {
+    const nm = document.getElementById('ucName'); if (nm) nm.textContent = 'Login';
+    const av = document.getElementById('ucAvatar'); if (av) av.textContent = '→';
+    const chip = document.getElementById('userChip'); if (chip) chip.addEventListener('click', () => { window.location.href = 'login.html'; });
+    const hb = document.getElementById('hamburger'); if (hb) hb.addEventListener('click', () => { document.getElementById('mobileNav')?.classList.toggle('open'); });
+    return;
+  }
   applyUserAvatar(document.getElementById('ucAvatar'), currentUser);
   document.getElementById('ucName').textContent   = currentUser.username || 'User';
   if (isAdmin(currentUser)) document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
@@ -1172,8 +1179,7 @@ document.getElementById('compSubmit').addEventListener('click', async () => {
 
 // ── MAIN ──────────────────────────────────────────────────
 (async function init() {
-  const authed = await checkAuth();
-  if (!authed) { window.location.href = 'login.html'; return; }
+  await checkAuth();              // refresh session if logged in; no longer gates guests
   currentUser = getCurrentUser();
   initHeader();
   await loadFromSheets();

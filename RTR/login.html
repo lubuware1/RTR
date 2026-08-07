@@ -74,7 +74,7 @@
   .footer-note{text-align:center;margin-top:20px;font-size:.75rem;color:rgba(255,255,255,.2);}
   .footer-note a{color:rgba(0,255,133,.4);text-decoration:none;}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/twemoji@14/dist/twemoji.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
@@ -228,7 +228,8 @@ sb.auth.onAuthStateChange((event) => {
 
 // If already have a valid session, skip to app (unless onboard=1 param present or recovery)
 (async () => {
-  if (window.location.hash.includes('type=recovery')) return; // handled above
+  if (window.location.hash.includes('type=recovery')) return; // hash-based recovery
+  if (new URLSearchParams(window.location.search).has('code')) return; // PKCE recovery — wait for onAuthStateChange
   const { data: { session } } = await sb.auth.getSession();
   if (!session) return;
   const params = new URLSearchParams(window.location.search);
@@ -314,7 +315,7 @@ document.getElementById('forgotBtn').addEventListener('click', async () => {
   const btn = document.getElementById('forgotBtn');
   btn.disabled = true; btn.textContent = 'Sending…';
   const { error } = await sb.auth.resetPasswordForEmail(email, {
-    redirectTo: 'https://refrater.netlify.app/login.html'
+    redirectTo: 'https://refrater.uk/login.html'
   });
   btn.disabled = false; btn.textContent = 'Send Reset Link';
   if (error) { showErr('forgotError', error.message); return; }

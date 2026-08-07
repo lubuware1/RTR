@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#37003c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RefRater">
+<link rel="apple-touch-icon" href="/images/logos/RRlogo192.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Referee Profile — RefRater</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0c10;--surface:#12151c;--surface2:#1a1d26;--border:#2a2d3a;
+    --text:#e0d6f5;--muted:#8b7fb8;
+    --pl-purple:#37003c;--pl-green:#00cc70;
+    --red:#ff4757;--yellow:#ffd32a;--teal:#37ecba;--gold:#f5a623;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;min-height:100vh;padding-bottom:60px;}
+  a{color:inherit;text-decoration:none;}
+
+  /* Header */
+  header{background:linear-gradient(135deg,#37003c 0%,#1a0020 60%,var(--bg) 100%);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100;}
+  .back-btn{display:flex;align-items:center;gap:6px;color:var(--pl-green);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;border:none;background:none;}
+  .back-btn:hover{opacity:.8;}
+  .header-logo{height:28px;width:auto;margin-left:auto;}
+
+  /* Hero */
+  .bio-hero{position:relative;padding:32px 20px 24px;text-align:center;border-bottom:1px solid var(--border);overflow:hidden;background:linear-gradient(135deg,#37003c 0%,#2a0035 50%,#0a0c10 100%);}
+  .bio-hero-bg{position:absolute;inset:0;background-size:150%;background-repeat:no-repeat;background-position:calc(50% - 20px) top;z-index:0;}
+  .bio-hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.3) 0%,rgba(0,0,0,.6) 100%);z-index:1;}
+  .bio-hero>*:not(.bio-hero-bg):not(.bio-hero-overlay){position:relative;z-index:2;}
+  .bio-avatar{width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,var(--pl-purple),#6b006b);border:3px solid var(--pl-green);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.8rem;color:var(--pl-green);margin:0 auto 14px;overflow:hidden;flex-shrink:0;}
+  .bio-avatar img{width:100%;height:100%;object-fit:cover;object-position:top;}
+  .bio-name{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2rem;text-transform:uppercase;letter-spacing:1px;color:#fff;margin-bottom:4px;}
+  .bio-meta{font-size:.82rem;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;}
+  .bio-meta span{display:flex;align-items:center;gap:4px;}
+  .bio-badge{display:inline-block;background:rgba(0,204,112,.12);border:1px solid rgba(0,204,112,.3);color:var(--pl-green);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.7rem;letter-spacing:.8px;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-top:8px;}
+
+  /* Scores row */
+  .scores-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:20px;}
+  .score-tile{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;}
+  .score-tile .st-label{font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px;}
+  .score-tile .st-val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2.2rem;line-height:1;}
+  .score-tile .st-val.nv{color:var(--teal);}
+  .score-tile .st-val.fv{color:var(--yellow);}
+  .score-tile .st-val.none{color:var(--muted);font-size:1.4rem;}
+  .score-tile .st-votes{font-size:.72rem;color:var(--muted);margin-top:4px;}
+
+  /* Sections */
+  .section{padding:0 20px;margin-bottom:20px;}
+  .section-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+
+  /* Stat cards row */
+  .stat-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px;}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 8px;text-align:center;}
+  .stat-card .sc-val{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.6rem;line-height:1;}
+  .stat-card .sc-lbl{font-size:.65rem;color:var(--muted);margin-top:3px;}
+
+  /* Stat table */
+  .stat-table{width:100%;border-radius:10px;overflow:hidden;border:1px solid var(--border);}
+  .stat-table-head,.stat-table-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0;}
+  .stat-table-head{background:var(--surface2);padding:8px 12px;font-family:'Barlow Condensed',sans-serif;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
+  .stat-table-head span:not(:first-child),.stat-table-row span:not(:first-child){text-align:center;}
+  .stat-table-row{background:var(--surface);padding:8px 12px;border-top:1px solid var(--border);font-size:.8rem;}
+  .stat-table-row span:first-child{color:var(--muted);}
+  .stat-table-row span:not(:first-child){font-family:'Barlow Condensed',sans-serif;font-weight:700;}
+
+  /* Metric bars */
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .bar-lbl{font-size:.75rem;color:var(--muted);min-width:110px;}
+  .bar-track{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:3px;transition:width .4s ease;}
+  .bar-fill.g{background:var(--pl-green);}
+  .bar-fill.y{background:var(--yellow);}
+  .bar-fill.r{background:var(--red);}
+  .bar-val{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.8rem;min-width:36px;text-align:right;}
+
+  /* Recent matches */
+  .match-row{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-size:.82rem;}
+  .match-row .mr-teams{font-family:'Barlow Condensed',sans-serif;font-weight:600;}
+  .match-row .mr-meta{font-size:.7rem;color:var(--muted);margin-top:2px;}
+  .match-row .mr-score{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;}
+  .match-row .mr-stats{display:flex;gap:10px;font-size:.72rem;color:var(--muted);}
+  .match-row .mr-stats span{display:flex;align-items:center;gap:3px;}
+
+  /* Bio text */
+  .bio-text{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 16px;}
+  .bio-section-hd{display:flex;align-items:center;gap:8px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.78rem;text-transform:uppercase;letter-spacing:.12em;color:var(--pl-green);margin:18px 0 10px;}
+  .bio-section-hd::after{content:'';flex:1;height:1px;background:rgba(0,204,112,.2);}
+  .bio-section-hd:first-child{margin-top:0;}
+  .bio-kv{display:flex;align-items:baseline;gap:0;margin-bottom:0;font-size:.84rem;line-height:1.5;padding:7px 0;border-top:1px solid var(--border);}
+  .bio-kv:first-of-type{border-top:none;padding-top:0;}
+  .bio-k{color:var(--muted);width:130px;flex-shrink:0;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+  .bio-v{color:var(--text);font-size:.86rem;}
+  .bio-list{padding:0;margin:0 0 4px;list-style:none;}
+  .bio-list li{font-size:.85rem;color:var(--text);margin-bottom:8px;line-height:1.5;padding-left:18px;position:relative;}
+  .bio-list li::before{content:'';position:absolute;left:0;top:8px;width:6px;height:6px;border-radius:50%;background:var(--pl-green);}
+  .bio-collapse-btn{width:100%;display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.9rem;text-transform:uppercase;letter-spacing:.5px;color:var(--pl-green);transition:border-color .2s;}
+  .bio-collapse-btn:hover{border-color:rgba(0,204,112,.4);}
+  .bio-collapse-btn .chevron{font-size:.7rem;transition:transform .25s;color:var(--muted);}
+  .bio-collapse-btn.open{border-radius:12px 12px 0 0;border-bottom-color:transparent;}
+  .bio-collapse-btn.open .chevron{transform:rotate(180deg);}
+  .bio-collapse-content{max-height:0;overflow:hidden;transition:max-height .35s ease;}
+  .bio-collapse-content.open{max-height:1200px;}
+  .bio-collapse-content .bio-text{border-top:none;border-radius:0 0 12px 12px;}
+  /* Notes */
+  .bio-notes{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-size:.85rem;line-height:1.6;color:var(--muted);}
+
+  /* Loading/error */
+  .loading{text-align:center;padding:60px 20px;color:var(--muted);}
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--pl-green);color:#fff;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.9rem;padding:12px 20px;border-radius:8px;transform:translateY(60px);opacity:0;transition:all .3s;z-index:1000;}
+  .toast.show{transform:translateY(0);opacity:1;}
+</style>
+</head>
+<body>
+
+<header>
+  <button class="back-btn" onclick="location.href='referees.html'">← Referees</button>
+  <img class="header-logo" src="images/logos/ref_rater_logo_green_a.svg" alt="RefRater">
+</header>
+
+<div id="bioContent"><div class="loading">Loading referee profile…</div></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="shared.js"></script>
+<script>
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+
+function barFixed(val,red,yellow){if(val>=red)return'r';if(val>=yellow)return'y';return'g';}
+
+function fmt(v,dec=2){return v!=null?Number(v).toFixed(dec):'—';}
+
+const HERO_POSITIONS = {
+  'Farai Hallam':  'calc(50% - 70px) top',
+  'Anthony Taylor':'calc(50% - 20px) 20%',
+  'Rob Madley':    'calc(50% - 20px) -100px',
+  'Tim Kirk':      'calc(50% - 20px) -50px',
+};
+const AVATAR_POSITIONS = {
+  'Michael Salisbury': 'calc(50% - 30px) calc(50% + 1px)',
+};
+function heroPos(ref) {
+  return ref.hero_photo_position || HERO_POSITIONS[ref.name] || 'calc(50% - 20px) top';
+}
+function avatarPos(ref) {
+  return AVATAR_POSITIONS[ref.name] || 'top center';
+}
+
+function formatBio(text) {
+  if (!text) return '';
+  const lines = text.split('\n');
+  let html = '', inList = false;
+  for (const line of lines) {
+    const t = line.trim();
+    if (!t) { if (inList){html+='</ul>';inList=false;} continue; }
+    // Section header: ends with ":" and no value after the colon
+    if (t.endsWith(':') && !t.slice(0,-1).includes(':')) {
+      if (inList){html+='</ul>';inList=false;}
+      html += `<div class="bio-section-hd">${t.slice(0,-1)}</div>`;
+      continue;
+    }
+    // Bullet point: starts with a dash or is indented
+    if (t.startsWith('-') || line.match(/^\s+\S/)) {
+      if (!inList){html+='<ul class="bio-list">';inList=true;}
+      html += `<li>${t.replace(/^-\s*/,'')}</li>`;
+      continue;
+    }
+    // Key: Value pair
+    if (t.includes(': ')) {
+      if (inList){html+='</ul>';inList=false;}
+      const idx = t.indexOf(': ');
+      html += `<div class="bio-kv"><span class="bio-k">${t.slice(0,idx)}</span><span class="bio-v">${t.slice(idx+2)}</span></div>`;
+      continue;
+    }
+    if (inList){html+='</ul>';inList=false;}
+    html += `<div style="font-size:.84rem;color:var(--text);margin-bottom:4px;">${t}</div>`;
+  }
+  if (inList) html+='</ul>';
+  return html;
+}
+
+function renderBio(ref, matches, stats) {
+  const hasN = ref.neutralRating != null;
+  const hasF = ref.fanRating != null;
+  const g = ref.games || 1;
+
+  // Per-game values
+  const yel_pg = ref.overall_yel_pg != null ? +ref.overall_yel_pg : (ref._yc||0)/g;
+  const pen_pg = ref.overall_pen_pg != null ? +ref.overall_pen_pg : (ref._pen||0)/g;
+  const vpg = ref._var ? ref._var/g : 0;
+
+  // Recent matches (last 5)
+  const recent = matches
+    .filter(m => m.refId === ref.id && m.status !== 'upcoming')
+    .sort((a,b) => (b.matchweek||0)-(a.matchweek||0))
+    .slice(0,5);
+
+  document.title = `${ref.name} — RefRater`;
+  console.log('[BIO] photo_url:', ref.photo_url, '| hero_photo_url:', ref.hero_photo_url);
+
+  document.getElementById('bioContent').innerHTML = `
+    <div class="bio-hero">
+      ${(ref.hero_photo_url||ref.photo_url) ? `<div class="bio-hero-bg" style="background-image:url('${ref.hero_photo_url||ref.photo_url}');background-position:${heroPos(ref)}"></div><div class="bio-hero-overlay"></div>` : '<div class="bio-hero-overlay" style="background:linear-gradient(135deg,#37003c 0%,#2a0035 50%,#0a0c10 100%);position:absolute;inset:0;z-index:1;"></div>'}
+      <div class="bio-avatar">${ref.photo_url
+        ? `<img src="${ref.photo_url}" alt="${ref.name}" style="width:100%;height:100%;object-fit:cover;object-position:${avatarPos(ref)}" onerror="this.parentElement.textContent='${ref.initials||ref.name.slice(0,2).toUpperCase()}';">`
+        : ref.initials||ref.name.slice(0,2).toUpperCase()}</div>
+      <div class="bio-name">${ref.name}</div>
+      <div class="bio-meta">
+        <span>🌍 ${ref.nationality||'English'}</span>
+        ${ref.age ? `<span>Age ${ref.age}</span>` : ''}
+        <span>${ref.games} apps</span>
+      </div>
+      ${ref.fifaListed==='Yes'?'<div class="bio-badge">⚽ FIFA Listed</div>':''}
+    </div>
+
+    <div class="scores-row">
+      <div class="score-tile">
+        <div class="st-label">Neutral Score</div>
+        ${hasN
+          ? `<div class="st-val nv">${ref.neutralRating.toFixed(1)}</div><div class="st-votes">${ref.neutralVotes} votes</div>`
+          : `<div class="st-val none">No data</div>`}
+      </div>
+      <div class="score-tile">
+        <div class="st-label">Fan Score</div>
+        ${hasF
+          ? `<div class="st-val fv">${ref.fanRating.toFixed(1)}</div><div class="st-votes">${ref.fanVotes} votes</div>`
+          : `<div class="st-val none">No data</div>`}
+      </div>
+    </div>
+
+    ${ref.bio ? `
+    <div class="section" style="margin-top:20px;">
+      <button class="bio-collapse-btn" id="bioToggle">About ${ref.name} <span class="chevron">▼</span></button>
+      <div class="bio-collapse-content" id="bioCollapse">
+        <div class="bio-text">${formatBio(ref.bio)}</div>
+      </div>
+    </div>` : ''}
+
+    <div class="section">
+      <div class="section-title">Season at a Glance</div>
+      <div class="stat-cards">
+        <div class="stat-card">
+          <div class="sc-val" style="color:var(--yellow)">${ref.overall_yel??ref._yc??'—'}</div>
+          <div class="sc-lbl">Yellow Cards</div>
+        </div>
+        <div class="stat-card">
+          <div class="sc-val" style="color:var(--red)">${ref.overall_red??ref._rc??'—'}</div>
+          <div class="sc-lbl">Red Cards</div>
+        </div>
+        <div class="stat-card">
+          <div class="sc-val">${ref._var??'—'}</div>
+          <div class="sc-lbl">VAR Decisions</div>
+        </div>
+      </div>
+
+      <div class="section-title">Per Game Metrics</div>
+      <div style="margin-bottom:16px;">
+        <div class="bar-row">
+          <span class="bar-lbl">Yellows/Game</span>
+          <div class="bar-track"><div class="bar-fill ${barFixed(yel_pg,4.0,3.0)}" style="width:${Math.min(100,(yel_pg/5)*100)}%"></div></div>
+          <span class="bar-val">${fmt(yel_pg)}</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-lbl">Penalties/Game</span>
+          <div class="bar-track"><div class="bar-fill ${barFixed(pen_pg,0.25,0.10)}" style="width:${Math.min(100,(pen_pg/0.4)*100)}%"></div></div>
+          <span class="bar-val">${fmt(pen_pg)}</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-lbl">VAR/Game</span>
+          <div class="bar-track"><div class="bar-fill ${barFixed(vpg,0.50,0.25)}" style="width:${Math.min(100,(vpg/0.75)*100)}%"></div></div>
+          <span class="bar-val">${fmt(vpg)}</span>
+        </div>
+      </div>
+
+      ${ref.overall_apps!=null?`
+      <div class="section-title">Overall / Home / Away</div>
+      <div class="stat-table" style="margin-bottom:16px;">
+        <div class="stat-table-head"><span></span><span>Overall</span><span>Home</span><span>Away</span></div>
+        <div class="stat-table-row"><span>Apps</span><span>${ref.overall_apps??'—'}</span><span>${ref.home_apps??'—'}</span><span>${ref.away_apps??'—'}</span></div>
+        <div class="stat-table-row"><span>Fouls/Game</span><span>${ref.overall_fouls_pg??'—'}</span><span>${ref.home_fouls_pg??'—'}</span><span>${ref.away_fouls_pg??'—'}</span></div>
+        <div class="stat-table-row"><span>Fouls/Tackle</span><span>${ref.overall_fouls_tackles??'—'}</span><span>${ref.home_fouls_tackles??'—'}</span><span>${ref.away_fouls_tackles??'—'}</span></div>
+        <div class="stat-table-row"><span>Pens/Game</span><span>${ref.overall_pen_pg??'—'}</span><span>${ref.home_pen_pg??'—'}</span><span>${ref.away_pen_pg??'—'}</span></div>
+        <div class="stat-table-row"><span>Yellows</span><span>${ref.overall_yel??'—'}</span><span>${ref.home_yel??'—'}</span><span>${ref.away_yel??'—'}</span></div>
+        <div class="stat-table-row"><span>Yellows/Game</span><span>${ref.overall_yel_pg??'—'}</span><span>${ref.home_yel_pg??'—'}</span><span>${ref.away_yel_pg??'—'}</span></div>
+        <div class="stat-table-row"><span>Reds</span><span>${ref.overall_red??'—'}</span><span>${ref.home_red??'—'}</span><span>${ref.away_red??'—'}</span></div>
+        <div class="stat-table-row"><span>Reds/Game</span><span>${ref.overall_red_pg??'—'}</span><span>${ref.home_red_pg??'—'}</span><span>${ref.away_red_pg??'—'}</span></div>
+      </div>`:''}
+
+      ${recent.length?`
+      <div class="section-title">Recent Matches</div>
+      ${recent.map(m=>`
+        <div class="match-row">
+          <div>
+            <div class="mr-teams">${m.home} vs ${m.away}</div>
+            <div class="mr-meta">GW${m.matchweek}</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="mr-score">${m.score||'–'}</div>
+            <div class="mr-stats">
+              <span style="color:var(--yellow)">🟨 ${m.yc||0}</span>
+              <span style="color:var(--red)">🟥 ${m.rc||0}</span>
+              ${m.pen?`<span>Pen ${m.pen}</span>`:''}
+            </div>
+          </div>
+        </div>`).join('')}`:''}
+
+      ${ref.notes?`
+      <div class="section-title">Notes</div>
+      <div class="bio-notes">${ref.notes}</div>`:''}
+    </div>
+  `;
+}
+
+(async () => {
+  const params = new URLSearchParams(location.search);
+  const refId = +params.get('id');
+  if (!refId) { document.getElementById('bioContent').innerHTML = '<div class="loading">No referee specified.</div>'; return; }
+
+  await loadRefsPageData().catch(() => {});
+  await loadIncidentRatings();
+
+  const ref = REFS.find(r => r.id === refId);
+  if (!ref) { document.getElementById('bioContent').innerHTML = '<div class="loading">Referee not found.</div>'; return; }
+
+  renderBio(ref, MATCHES, []);
+})();
+</script>
+<script>
+document.addEventListener('click', e => {
+  const btn = e.target.closest('#bioToggle');
+  if (!btn) return;
+  btn.classList.toggle('open');
+  document.getElementById('bioCollapse').classList.toggle('open');
+});
+</script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{});}</script>
+</body>
+</html>

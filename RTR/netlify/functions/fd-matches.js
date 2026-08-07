@@ -15,7 +15,7 @@ exports.handler = async (event) => {
     const data = await res.json();
     return {
       statusCode: res.status,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' },
       body: JSON.stringify(data),
     };
   } catch (err) {

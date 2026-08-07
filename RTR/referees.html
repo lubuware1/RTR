@@ -10,6 +10,7 @@
 <link rel="apple-touch-icon" href="/images/logos/RRlogo192.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RefRater — Referees</title>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7289925014125722" crossorigin="anonymous"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -35,6 +36,10 @@
   .logo{display:flex;align-items:center;gap:8px;text-decoration:none;}
   .logo img{height:32px;width:auto;}
   .header-right{display:flex;align-items:center;gap:10px;}
+  nav{display:flex;gap:4px;}
+  nav a{color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:.82rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:6px 12px;border-radius:6px;transition:color .15s,background .15s;text-decoration:none;}
+  nav a.active,nav a:hover{color:var(--text);background:var(--surface2);}
+  nav a.active{color:var(--pl-green);}
   .user-chip{display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 11px 5px 6px;cursor:pointer;transition:border-color .15s;font-size:.82rem;position:relative;}
   .user-chip:hover{border-color:rgba(0,255,133,.35);}
   .uc-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--pl-purple),#8b008b);border:1.5px solid var(--pl-green);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:var(--pl-green);flex-shrink:0;}
@@ -81,7 +86,8 @@
   .rpc-head{display:grid;grid-template-columns:28px 36px 1fr 72px 72px 48px 18px;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;user-select:none;}
   .rpc-rank{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:.9rem;color:var(--muted);text-align:center;}
   .rpc-rank.top{color:var(--pl-green);}
-  .rpc-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#37003c,#6b0080);border:1.5px solid rgba(0,204,112,.3);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:.75rem;color:var(--pl-green);flex-shrink:0;}
+  .rpc-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#37003c,#6b0080);border:1.5px solid rgba(0,204,112,.3);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:.75rem;color:var(--pl-green);flex-shrink:0;overflow:hidden;}
+  .rpc-av img{width:100%;height:100%;object-fit:cover;object-position:top center;}
   .rpc-info{min-width:0;}
   .rpc-name{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .rpc-meta{font-size:.68rem;color:var(--muted);margin-top:1px;}
@@ -135,6 +141,16 @@
   .bar-fill.g{background:var(--teal);}.bar-fill.y{background:var(--yellow);}.bar-fill.r{background:var(--red);}
   .bar-val{font-family:'Barlow Condensed',sans-serif;font-size:.7rem;font-weight:700;text-align:right;color:var(--muted);}
 
+  /* Ref stat table */
+  .ref-stat-table{width:100%;border-collapse:collapse;margin-bottom:12px;font-size:.75rem;}
+  .ref-stat-header,.ref-stat-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:4px;padding:4px 6px;}
+  .ref-stat-header{font-family:'Barlow Condensed',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-size:.65rem;border-bottom:1px solid var(--border);}
+  .ref-stat-row{border-bottom:1px solid var(--border);color:var(--text);}
+  .ref-stat-row:last-child{border-bottom:none;}
+  .ref-stat-row span:first-child{color:var(--muted);}
+  .ref-stat-row span:not(:first-child){font-family:'Barlow Condensed',sans-serif;font-weight:700;text-align:center;}
+  .ref-stat-header span:not(:first-child){text-align:center;}
+
   /* Recent matches */
   .recent-matches-title{font-family:'Barlow Condensed',sans-serif;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:5px;}
   .recent-match-row{background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:5px 9px;display:flex;align-items:center;justify-content:space-between;font-size:.74rem;margin-bottom:3px;}
@@ -180,7 +196,7 @@
     .header-nav{display:none;}
   }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/twemoji@14/dist/twemoji.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -192,9 +208,8 @@
         <a href="index.html">Home</a>
         <a href="matches.html">Matches</a>
         <a href="referees.html" class="active">Referees</a>
-        <a href="fantasy.html"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="Fantasy" style="height:20px;width:auto;vertical-align:middle;"></a>
         <a href="badges.html">Cards</a>
-        <a href="forum.html" class="admin-only" style="display:none">Forum</a>
+        <a href="forum.html">Forum</a>
       </nav>
       <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
       <div class="user-chip" id="userChip">
@@ -205,6 +220,8 @@
         <div class="user-dropdown" id="userDropdown">
           <div class="dd-head"><div class="dd-uname" id="ddName"></div><div class="dd-team" id="ddTeam"></div></div>
           <div class="dd-item" onclick="location.href='badges.html'">🏅 Cards</div>
+          <div class="dd-item admin-only" style="display:none" onclick="location.href='fantasy.html'"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="PVBB" style="height:16px;width:auto;vertical-align:middle;margin-right:6px;">PVBB</div>
+          <div class="dd-item admin-only" style="display:none" onclick="location.href='team_task_manager.html'">📋 Tasks</div>
           <div class="dd-item" id="ddLogout">↩ Sign out</div>
         </div>
       </div>
@@ -216,9 +233,8 @@
   <a href="index.html">Home</a>
   <a href="matches.html">Matches</a>
   <a href="referees.html" class="active">Referees</a>
-  <a href="fantasy.html"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="Fantasy" style="height:20px;width:auto;vertical-align:middle;"></a>
   <a href="badges.html">Cards</a>
-  <a href="forum.html" class="admin-only" style="display:none">Forum</a>
+  <a href="forum.html">Forum</a>
   <a href="history.html">History</a>
 </div>
 
@@ -241,12 +257,21 @@
   </div>
 
   <div class="refs-controls">
-    <span class="refs-controls-label">Sort:</span>
-    <button class="sort-btn active" data-sort="neutral">Neutral</button>
-    <button class="sort-btn fan-sort" data-sort="fan">Fan</button>
-    <button class="sort-btn" data-sort="games">Games</button>
-    <button class="sort-btn" data-sort="votes">Votes</button>
-    <button class="sort-btn" data-sort="bias">Bias Gap</button>
+    <span class="refs-controls-label">Sort by:</span>
+    <select id="refSortSelect" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.85rem;padding:6px 12px;cursor:pointer;">
+      <option value="neutral">Neutral Rating</option>
+      <option value="fan">Fan Rating</option>
+      <option value="name">Referee (A–Z)</option>
+      <option value="games">Games Played</option>
+      <option value="votes">Most Votes</option>
+      <option value="bias">Fan vs Neutral Gap</option>
+      <option value="yel_pg">Yellows / Game</option>
+      <option value="yel">Total Yellows</option>
+      <option value="red_pg">Reds / Game</option>
+      <option value="red">Total Reds</option>
+      <option value="pen_pg">Penalties / Game</option>
+      <option value="var">VAR Decisions</option>
+    </select>
   </div>
 
   <div class="refs-col-heads">
@@ -266,7 +291,6 @@
 <script src="shared.js"></script>
 <script>
 const currentUser = getCurrentUser();
-if (!PREVIEW_MODE && !currentUser) { window.location.href = 'login.html'; }
 
 let refSort = 'neutral';
 
@@ -274,6 +298,12 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 
 // Header init
 function initHeader(){
+  if (!currentUser) {
+    document.getElementById('ucName').textContent = 'Login';
+    document.getElementById('ucAvatar').textContent = '→';
+    document.getElementById('userChip').addEventListener('click', () => { window.location.href = 'login.html'; }, { once: true });
+    return;
+  }
   const team=PL_TEAMS.find(t=>t.name===currentUser?.team);
   applyUserAvatar(document.getElementById('ucAvatar'), currentUser);
   document.getElementById('ucName').textContent=currentUser?.username||'Guest';
@@ -307,33 +337,36 @@ function renderRefs(){
   document.getElementById('statAvg').textContent=avgScore>0?avgScore.toFixed(1):'–';
 
   // Sort
+  const nullLast=(a,b,fn)=>{const av=fn(a),bv=fn(b);if(av==null&&bv==null)return 0;if(av==null)return 1;if(bv==null)return -1;return bv-av;};
   const sorted=[...REFS].sort((a,b)=>{
-    if(refSort==='neutral'){
-      if(a.neutralRating==null&&b.neutralRating==null)return 0;if(a.neutralRating==null)return 1;if(b.neutralRating==null)return -1;
-      return b.neutralRating-a.neutralRating;
-    }
-    if(refSort==='fan'){
-      if(a.fanRating==null&&b.fanRating==null)return 0;if(a.fanRating==null)return 1;if(b.fanRating==null)return -1;
-      return b.fanRating-a.fanRating;
-    }
-    if(refSort==='games')return b.games-a.games;
-    if(refSort==='votes')return(b.neutralVotes+b.fanVotes)-(a.neutralVotes+a.fanVotes);
+    if(refSort==='neutral') return nullLast(a,b,r=>r.neutralRating);
+    if(refSort==='fan')     return nullLast(a,b,r=>r.fanRating);
+    if(refSort==='name')    return a.name.localeCompare(b.name);
+    if(refSort==='games')   return b.games-a.games;
+    if(refSort==='votes')   return(b.neutralVotes+b.fanVotes)-(a.neutralVotes+a.fanVotes);
+    if(refSort==='yel_pg')  return nullLast(a,b,r=>r.overall_yel_pg!=null?+r.overall_yel_pg:null);
+    if(refSort==='yel')     return(b.overall_yel||0)-(a.overall_yel||0);
+    if(refSort==='red_pg')  return nullLast(a,b,r=>r.overall_red_pg!=null?+r.overall_red_pg:null);
+    if(refSort==='red')     return(b.overall_red||0)-(a.overall_red||0);
+    if(refSort==='pen_pg')  return nullLast(a,b,r=>r.overall_pen_pg!=null?+r.overall_pen_pg:null);
+    if(refSort==='var')     return(b._var||0)-(a._var||0);
     if(refSort==='bias'){
-      const gA=a.neutralRating!=null&&a.fanRating!=null?Math.abs(a.neutralRating-a.fanRating):0;
-      const gB=b.neutralRating!=null&&b.fanRating!=null?Math.abs(b.neutralRating-b.fanRating):0;
-      return gB-gA;
+      const gA=a.neutralRating!=null&&a.fanRating!=null?Math.abs(a.neutralRating-a.fanRating):null;
+      const gB=b.neutralRating!=null&&b.fanRating!=null?Math.abs(b.neutralRating-b.fanRating):null;
+      return nullLast(a,b,()=>null)||(gB-gA);
     }
     return 0;
   });
 
-  // League averages for metric bars
+  // League averages for metric bars — use direct stats from RTR Match Stats if available
   const lgData=REFS.map(r=>{
-    const pm=MATCHES.filter(m=>m.refId===r.id&&(m.status==='complete'||m.status==='recent'));
-    const g=r.games||pm.length||0; if(!g)return null;
+    const g=r.games||0; if(!g)return null;
+    const yc=r.overall_yel!=null?r.overall_yel:(r._yc!==undefined?r._yc:MATCHES.filter(m=>m.refId===r.id&&(m.status==='complete'||m.status==='recent')).reduce((s,m)=>s+(m.yc||0),0));
+    const rc=r.overall_red!=null?r.overall_red:(r._rc!==undefined?r._rc:MATCHES.filter(m=>m.refId===r.id&&(m.status==='complete'||m.status==='recent')).reduce((s,m)=>s+(m.rc||0),0));
+    const pen=r._pen!==undefined?r._pen:MATCHES.filter(m=>m.refId===r.id&&(m.status==='complete'||m.status==='recent')).reduce((s,m)=>s+(m.pen||0),0);
+    const varD=r._var!==undefined?r._var:MATCHES.filter(m=>m.refId===r.id&&(m.status==='complete'||m.status==='recent')).reduce((s,m)=>s+(m.var||0),0);
     return{
-      cpg:(pm.reduce((s,m)=>s+(m.yc||0),0)+pm.reduce((s,m)=>s+(m.rc||0),0))/g,
-      ppg:pm.reduce((s,m)=>s+(m.pen||0),0)/g,
-      vpg:pm.reduce((s,m)=>s+(m.var||0),0)/g,
+      cpg:(yc+rc)/g, ppg:pen/g, vpg:varD/g,
       gap:r.neutralRating!=null&&r.fanRating!=null?Math.abs(r.neutralRating-r.fanRating):null,
     };
   }).filter(Boolean);
@@ -344,9 +377,14 @@ function renderRefs(){
     vpg:avg(lgData.map(r=>r.vpg)),
     gap:avg(lgData.map(r=>r.gap).filter(v=>v!=null)),
   };
-  const allRefTotals=REFS.map(r=>{const pm=MATCHES.filter(m=>m.refId===r.id&&(m.status==='complete'||m.status==='recent'));return{cards:pm.reduce((s,m)=>s+(m.yc||0)+(m.rc||0),0),pen:pm.reduce((s,m)=>s+(m.pen||0),0),var:pm.reduce((s,m)=>s+(m.var||0),0)};});
+  const allRefTotals=REFS.map(r=>({
+    cards:(r._yc!==undefined?r._yc:0)+(r._rc!==undefined?r._rc:0),
+    pen:r._pen!==undefined?r._pen:0,
+    var:r._var!==undefined?r._var:0,
+  }));
   const metricMax={cpg:Math.max(1,...allRefTotals.map(r=>r.cards)),ppg:Math.max(1,...allRefTotals.map(r=>r.pen)),vpg:Math.max(1,...allRefTotals.map(r=>r.var)),gap:Math.max(3,...lgData.map(r=>r.gap).filter(v=>v!=null))};
   function barColor(val,avg){const t=avg*0.2;if(Math.abs(val-avg)<=t)return'y';return val>avg?'g':'r';}
+  function barFixed(val,red,yellow){if(val>=red)return'r';if(val>=yellow)return'y';return'g';}
 
   document.getElementById('refsGrid').innerHTML=sorted.map((ref,rank)=>{
     const hasN=ref.neutralRating!=null, hasF=ref.fanRating!=null;
@@ -358,20 +396,21 @@ function renderRefs(){
 
     const recentMatches=MATCHES.filter(m=>m.refId===ref.id&&m.status!=='upcoming').slice(-3);
     const playedMatches=MATCHES.filter(m=>m.refId===ref.id&&(m.status==='complete'||m.status==='recent'));
-    const totalYC=playedMatches.reduce((s,m)=>s+(m.yc||0),0);
-    const totalRC=playedMatches.reduce((s,m)=>s+(m.rc||0),0);
-    const totalPen=playedMatches.reduce((s,m)=>s+(m.pen||0),0);
-    const totalVAR=playedMatches.reduce((s,m)=>s+(m.var||0),0);
-    const g=ref.games||1;
-    const hasData=playedMatches.length>0;
-    const cpg=(totalYC+totalRC)/g;
+    const totalYC=ref.overall_yel!=null?ref.overall_yel:(ref._yc!==undefined?ref._yc:playedMatches.reduce((s,m)=>s+(m.yc||0),0));
+    const totalRC=ref.overall_red!=null?ref.overall_red:(ref._rc!==undefined?ref._rc:playedMatches.reduce((s,m)=>s+(m.rc||0),0));
+    const totalPen=ref._pen!==undefined?ref._pen:playedMatches.reduce((s,m)=>s+(m.pen||0),0);
+    const totalVAR=ref._var!==undefined?ref._var:playedMatches.reduce((s,m)=>s+(m.var||0),0);
+    const g=ref.games||playedMatches.length||1;
+    const hasData=ref.games>0||playedMatches.length>0;
     const ppg=totalPen/g;
     const vpg=totalVAR/g;
+    const yel_pg=ref.overall_yel_pg!=null?+ref.overall_yel_pg:(totalYC/g);
+    const pen_pg=ref.overall_pen_pg!=null?+ref.overall_pen_pg:ppg;
     const metrics=[
-      {lbl:'Cards Given',        hasVal:hasData, val:totalYC+totalRC, display:hasData?String(totalYC+totalRC):'—', pct:hasData?Math.min(100,((totalYC+totalRC)/metricMax.cpg)*100):50, bc:hasData?barColor(cpg,lgAvg.cpg):'y'},
-      {lbl:'Penalties Given',    hasVal:hasData, val:totalPen,        display:hasData?String(totalPen):'—',        pct:hasData?Math.min(100,(ppg/metricMax.ppg)*100):50,              bc:hasData?barColor(ppg,lgAvg.ppg):'y'},
-      {lbl:'VAR Overturned',     hasVal:hasData, val:totalVAR,        display:hasData?String(totalVAR):'—',        pct:hasData?Math.min(100,(vpg/metricMax.vpg)*100):50,              bc:hasData?barColor(vpg,lgAvg.vpg):'y'},
-      {lbl:'Fan vs Neutral Gap', hasVal:biasGap!==null, val:gapAbs,  display:biasGap!==null?gapAbs.toFixed(1):'—', pct:biasGap!==null?Math.min(100,(gapAbs/metricMax.gap)*100):50, bc:biasGap!==null?barColor(gapAbs,lgAvg.gap):'y'},
+      {lbl:'Yellows/Game',       hasVal:hasData, display:hasData?yel_pg.toFixed(2):'—', pct:hasData?Math.min(100,(yel_pg/5.0)*100):50,   bc:hasData?barFixed(yel_pg,4.0,3.0):'y'},
+      {lbl:'Penalties/Game',     hasVal:hasData, display:hasData?pen_pg.toFixed(2):'—', pct:hasData?Math.min(100,(pen_pg/0.4)*100):50,   bc:hasData?barFixed(pen_pg,0.25,0.10):'y'},
+      {lbl:'VAR Overturned/Game',hasVal:hasData, display:hasData?vpg.toFixed(2):'—',    pct:hasData?Math.min(100,(vpg/0.75)*100):50,     bc:hasData?barFixed(vpg,0.50,0.25):'y'},
+      {lbl:'Fan vs Neutral Gap', hasVal:biasGap!==null, display:biasGap!==null?gapAbs.toFixed(1):'—', pct:biasGap!==null?Math.min(100,(gapAbs/metricMax.gap)*100):50, bc:biasGap!==null?barColor(gapAbs,lgAvg.gap):'y'},
     ];
     const trendClass=hasN?(ref.neutralRating>=7?'up':ref.neutralRating>=5?'flat':'down'):'flat';
     const trendText=hasN?(ref.neutralRating>=7?'▲ Good form':ref.neutralRating>=5?'→ Average':'▼ Poor form'):'No data';
@@ -379,7 +418,7 @@ function renderRefs(){
     return`<div class="rpc" data-ref-id="${ref.id}">
       <div class="rpc-head">
         <div class="rpc-rank${rank<3?' top':''}">${rank+1}</div>
-        <div class="rpc-av">${ref.initials}</div>
+        <div class="rpc-av">${refAvatarHtml(ref)}</div>
         <div class="rpc-info">
           <div class="rpc-name">${ref.name}</div>
           <div class="rpc-meta">${ref.nationality||'English'}${ref.fifaListed==='Yes'?' · FIFA':''} · ${ref.games} games</div>
@@ -419,29 +458,49 @@ function renderRefs(){
           <div class="cat-bars">
             ${metrics.map(m=>`<div class="bar-row"><span class="bar-lbl">${m.lbl}</span><div class="bar-track"><div class="bar-fill ${m.bc}" style="width:${m.pct}%"></div></div><span class="bar-val">${m.display}</span></div>`).join('')}
           </div>
+          ${ref._last3?.length?`
+          <div class="recent-matches-title" style="margin-top:10px;">Last ${ref._last3.length} Game${ref._last3.length>1?'s':''}</div>
+          <div class="ref-stat-table">
+            <div class="ref-stat-header"><span>Match</span><span>YC</span><span>RC</span><span>Pen</span></div>
+            ${ref._last3.map(m=>`<div class="ref-stat-row" style="grid-template-columns:1fr auto auto auto;">
+              <span style="color:var(--text);font-size:.75rem;">${m.home} vs ${m.away}</span>
+              <span style="color:var(--yellow)">${m.yc}</span>
+              <span style="color:var(--red)">${m.rc}</span>
+              <span>${m.pen}</span>
+            </div>`).join('')}
+          </div>`:''}
+
+          ${ref.overall_apps!=null?`
+          <div class="ref-stat-table">
+            <div class="ref-stat-header"><span></span><span>Overall</span><span>Home</span><span>Away</span></div>
+            <div class="ref-stat-row"><span>Apps</span><span>${ref.overall_apps??'—'}</span><span>${ref.home_apps??'—'}</span><span>${ref.away_apps??'—'}</span></div>
+            <div class="ref-stat-row"><span>Fouls/Game</span><span>${ref.overall_fouls_pg??'—'}</span><span>${ref.home_fouls_pg??'—'}</span><span>${ref.away_fouls_pg??'—'}</span></div>
+            <div class="ref-stat-row"><span>Fouls/Tackle</span><span>${ref.overall_fouls_tackles??'—'}</span><span>${ref.home_fouls_tackles??'—'}</span><span>${ref.away_fouls_tackles??'—'}</span></div>
+            <div class="ref-stat-row"><span>Pens/Game</span><span>${ref.overall_pen_pg??'—'}</span><span>${ref.home_pen_pg??'—'}</span><span>${ref.away_pen_pg??'—'}</span></div>
+            <div class="ref-stat-row"><span>Yellows</span><span>${ref.overall_yel??'—'}</span><span>${ref.home_yel??'—'}</span><span>${ref.away_yel??'—'}</span></div>
+            <div class="ref-stat-row"><span>Yellows/Game</span><span>${ref.overall_yel_pg??'—'}</span><span>${ref.home_yel_pg??'—'}</span><span>${ref.away_yel_pg??'—'}</span></div>
+            <div class="ref-stat-row"><span>Reds</span><span>${ref.overall_red??'—'}</span><span>${ref.home_red??'—'}</span><span>${ref.away_red??'—'}</span></div>
+            <div class="ref-stat-row"><span>Reds/Game</span><span>${ref.overall_red_pg??'—'}</span><span>${ref.home_red_pg??'—'}</span><span>${ref.away_red_pg??'—'}</span></div>
+          </div>`:''}
           ${recentMatches.length?`
           <div class="recent-matches-title">Recent Matches</div>
           ${recentMatches.map(m=>`
             <div class="recent-match-row">
-              <span class="rm-teams">${m.hE||''} ${m.home} <span style="color:var(--muted)">vs</span> ${m.away} ${m.aE||''}</span>
-              <span class="rm-score${m.status==='live'?' live':''}">${m.score}</span>
+              <span class="rm-teams">${m.home} <span style="color:var(--muted)">vs</span> ${m.away}</span>
+              <span class="rm-score">${m.score}</span>
             </div>`).join('')}`:''}
         </div>
         <div class="rpc-footer">
           <span class="rpc-games"><strong>${ref.games}</strong> games this season</span>
-          <span class="rpc-trend ${trendClass}">${trendText}</span>
+          <a href="referee.html?id=${ref.id}" style="font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;color:var(--pl-green);letter-spacing:.5px;text-transform:uppercase;" onclick="event.stopPropagation()">View Profile →</a>
         </div>
       </div></div>
     </div>`;
   }).join('');
 }
 
-// Sort buttons
-document.querySelector('.refs-controls').addEventListener('click',e=>{
-  const btn=e.target.closest('[data-sort]');if(!btn)return;
-  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  refSort=btn.dataset.sort;
+document.getElementById('refSortSelect').addEventListener('change',e=>{
+  refSort=e.target.value;
   renderRefs();
 });
 
@@ -466,13 +525,10 @@ function skelRefCard() {
 initHeader();
 (async () => {
   document.getElementById('refsGrid').innerHTML = Array(12).fill(skelRefCard()).join('');
-  const fdLive     = await loadFromFootballData();
-  const sheetsLive = !fdLive && await loadFromSheets().catch(() => false);
-  if (fdLive || sheetsLive) {
+  await loadRefsPageData().catch(() => {});
+  {
     document.getElementById('dbDot').className = 'db-dot';
-    document.getElementById('dbText').textContent = fdLive
-      ? `Live data · GW ${fdLive.gw} · ${fdLive.count} matches loaded · football-data.org`
-      : 'Live data from Google Sheets · Updates automatically';
+    document.getElementById('dbText').textContent = 'Live data · Supabase';
   }
   await loadIncidentRatings();
   renderRefs();

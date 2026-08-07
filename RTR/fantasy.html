@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RefRater — Fantasy</title>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7289925014125722" crossorigin="anonymous"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap"
@@ -105,6 +106,32 @@
         display: flex;
         align-items: center;
         gap: 12px;
+      }
+      nav {
+        display: flex;
+        gap: 6px;
+      }
+      nav a {
+        background: none;
+        border: 1px solid transparent;
+        color: var(--muted);
+        font-family: "Barlow Condensed", sans-serif;
+        font-size: 0.9rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        padding: 6px 14px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.18s;
+        text-decoration: none;
+        display: inline-block;
+      }
+      nav a.active,
+      nav a:hover {
+        background: rgba(0, 255, 133, 0.1);
+        border-color: var(--pl-green);
+        color: var(--pl-green);
       }
       .user-chip {
         display: flex;
@@ -1494,6 +1521,11 @@
         height: 11px;
       }
 
+      /* ── DARK MODE OVERRIDES ───────────────────────────── */
+      html[data-theme="dark"] .side-panel {
+        background: #12151c;
+      }
+
       /* ── LIGHT MODE OVERRIDES ───────────────────────────── */
       html:not([data-theme="dark"]) .gw-banner-title {
         color: #fff;
@@ -1562,7 +1594,7 @@
       }
     </style>
     <script
-      src="https://cdn.jsdelivr.net/npm/twemoji@14/dist/twemoji.min.js"
+      src="https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js"
       crossorigin="anonymous"
     ></script>
   </head>

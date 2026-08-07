@@ -1,4 +1,4 @@
-const CACHE = 'refrater-v2.6';
+const CACHE = 'refrater-v6.2';
 
 // App shell — static assets to cache on install
 const SHELL = [
@@ -50,6 +50,7 @@ self.addEventListener('fetch', e => {
     url.hostname.includes('fonts.g') ||
     url.hostname.includes('football-data.org') ||
     url.hostname.includes('pagead2.googlesyndication') ||
+    url.pathname.startsWith('/.netlify/functions/') ||
     e.request.method !== 'GET'
   ) {
     return; // let browser handle it normally

@@ -12,12 +12,12 @@ const FD_API_BASE = 'https://api.football-data.org/v4';
 // Fetch PL matches for a given matchday.
 // On Netlify, routes through the serverless proxy to avoid CORS.
 // Falls back to direct API call for localhost dev.
-async function loadFromFootballData(matchday) {
+async function loadFromFootballData(matchday, comp = 'PL', season = '2025') {
   const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
   const url = isLocal
-    ? `${FD_API_BASE}/competitions/PL/matches?matchday=${matchday}&season=2025`
-    : `/.netlify/functions/fd-matches?matchday=${matchday}&season=2025`;
-  const opts = isLocal ? { headers: { 'X-Auth-Token': FOOTBALL_DATA_KEY } } : {};
+    ? `/api/fd-matches?matchday=${matchday}&season=${season}&comp=${comp}`
+    : `/.netlify/functions/fd-matches?matchday=${matchday}&season=${season}&comp=${comp}`;
+  const opts = {};
   try {
     const res = await fetch(url, opts);
     if (!res.ok) { console.warn('[RTR] FD API error:', res.status); return null; }
@@ -41,7 +41,7 @@ function buildMatchesFromFD(fdMatches) {
   console.log('[RTR] buildMatchesFromFD called with', fdMatches.length, 'matches');
   MATCHES = fdMatches.map(fm => {
     const ft = fm.score?.fullTime;
-    const hasScore = ft?.home != null && ft?.away != null && fm.status === 'FINISHED';
+    const hasScore = ft?.home != null && ft?.away != null && (fm.status === 'FINISHED' || fm.status === 'IN_PLAY' || fm.status === 'PAUSED' || fm.status === 'HALF_TIME');
     const apiRefName = (fm.referees?.find(r => r.type === 'REFEREE')?.name || '').toLowerCase();
     const ref = apiRefName ? REFS.find(r =>
       r.name.toLowerCase() === apiRefName ||
@@ -149,6 +149,36 @@ async function loadUserVotes(userId, matchIds) {
   return new Set((data || []).map(v => v.match_id));
 }
 
+// ── PROFANITY FILTER ─────────────────────────────────────
+const _badWords = [
+  'fuck','fucking','fucker','fucks','f\\*ck',
+  'shit','shitting','shitter','shits','sh\\*t',
+  'cunt','cunts',
+  'bitch','bitches','bitching',
+  'bastard','bastards',
+  'asshole','assholes','arsehole','arseholes',
+  'cock','cocks','cockhead',
+  'dick','dicks','dickhead',
+  'piss','pissed','pisser',
+  'twat','twats',
+  'wanker','wankers','wank',
+  'bollocks','bollock',
+  'prick','pricks',
+  'slut','sluts',
+  'whore','whores',
+  'nigger','niggers','nigga',
+  'faggot','faggots',
+  'retard','retards',
+];
+const _profanityRe = new RegExp(`(${_badWords.join('|')})`, 'gi');
+function cleanText(text) {
+  if (!text) return text;
+  return text
+    .replace(/[@4]/g, 'a').replace(/[3]/g, 'e').replace(/[!1|]/g, 'i')
+    .replace(/[0]/g, 'o').replace(/[5$]/g, 's').replace(/[+]/g, 't')
+    .replace(_profanityRe, m => '*'.repeat(m.length));
+}
+
 async function saveVoteToDB(voteData) {
   if (PREVIEW_MODE) return true;
   await getSB().from('RTR Votes').delete().eq('user_id', voteData.user_id).eq('match_id', voteData.match_id);
@@ -193,15 +223,15 @@ async function loadMatchStats() {
 }
 
 async function saveMatchStat(stat) {
-  if (PREVIEW_MODE) return true;
+  if (PREVIEW_MODE) return { ok: true, error: null };
   const { error } = await getSB().from('RTR Match Stats').upsert(stat, { onConflict: 'match_id' });
   if (error) console.error('[RTR] saveMatchStat error:', error);
-  return !error;
+  return { ok: !error, error };
 }
 
-async function saveGWConfig(gw, deadline) {
+async function saveGWConfig(gw, deadline, comp, season) {
   if (PREVIEW_MODE) return true;
-  const { error } = await getSB().from('RTR Config').upsert({ id: 1, gw, deadline }, { onConflict: 'id' });
+  const { error } = await getSB().from('RTR Config').upsert({ id: 1, gw, deadline, comp, season }, { onConflict: 'id' });
   if (error) console.error('[RTR] saveGWConfig error:', error);
   return !error;
 }
@@ -287,11 +317,13 @@ async function deleteManualBonus(id) {
 }
 
 async function loadGWConfig() {
-  if (PREVIEW_MODE) return { gw: 38, deadline: new Date(Date.now() + 86400000).toISOString(), deadlinePassed: false, status: 'upcoming' };
-  const { data } = await getSB().from('RTR Config').select('gw,deadline,status').eq('id', 1).single();
+  if (PREVIEW_MODE) return { gw: 38, comp: 'PL', season: '2025', deadline: new Date(Date.now() + 86400000).toISOString(), deadlinePassed: false, status: 'upcoming' };
+  const { data } = await getSB().from('RTR Config').select('gw,deadline,status,comp,season').eq('id', 1).single();
   if (!data) return null;
   return {
     gw: data.gw,
+    comp: data.comp || 'PL',
+    season: data.season || '2025',
     deadline: data.deadline,
     deadlinePassed: new Date() > new Date(data.deadline),
     status: data.status || 'upcoming'
@@ -412,25 +444,38 @@ const INCIDENT_TYPES = [
 // Votes threshold config
 const VOTE_MULTIPLIER = 1;   // votes use stored weight column — no additional multiplier needed
 const MIN_VOTES = 10;        // effective votes needed before a decision affects the score
+const INCIDENT_DECAY = 0.75; // each additional incident carries 75% of the previous one's impact
 
 // Compute incident-driven score starting from 10.
 // Returns null if no decisions have cleared the vote threshold yet.
+// The worst-voted decision is weighted at full strength; each subsequent one decays by INCIDENT_DECAY.
 // incidents: [{ id, weight }]
 // votes: { [incidentId]: { correct: N, wrong: N } }
 function calcIncidentScore(incidents, votes) {
   if (!incidents.length) return null;
-  let score = 10.0;
-  let anyQualified = false;
+
+  // collect qualified incidents with their wrong ratio
+  const qualified = [];
   incidents.forEach(inc => {
     const v = votes[inc.id];
     if (!v) return;
     const total = v.correct + v.wrong;
-    if (total * VOTE_MULTIPLIER < MIN_VOTES) return; // below threshold — pending
-    anyQualified = true;
-    const penalty = inc.weight * (v.wrong / total);
-    score -= penalty;
+    if (total * VOTE_MULTIPLIER < MIN_VOTES) return;
+    qualified.push({ inc, wrongRatio: v.wrong / total });
   });
-  if (!anyQualified) return null;
+
+  if (!qualified.length) return null;
+
+  // worst decision first so it takes the full-weight hit
+  qualified.sort((a, b) => b.wrongRatio - a.wrongRatio);
+
+  let score = 10.0;
+  let decay = 1.0;
+  qualified.forEach(({ inc, wrongRatio }) => {
+    score -= inc.weight * wrongRatio * decay;
+    decay *= INCIDENT_DECAY;
+  });
+
   return Math.max(1.0, Math.round(score * 10) / 10);
 }
 
@@ -475,6 +520,53 @@ async function loadMyIncidentVotes(userId, incidentIds) {
   return map;
 }
 
+// General rating categories (same list as GENERAL_INCIDENTS in matches.html)
+const GENERAL_CATEGORIES = [
+  { id: 'gen-player-mgmt',    weight: 1 },
+  { id: 'gen-consistency',    weight: 1 },
+  { id: 'gen-time-wasting',   weight: 1 },
+  { id: 'gen-play-advantage', weight: 1 },
+];
+
+async function saveGeneralVote(matchId, category, userId, vote, isFan, weight = 5) {
+  if (PREVIEW_MODE) return true;
+  const { error } = await getSB().from('RTR General Votes')
+    .upsert(
+      { match_id: matchId, category, user_id: userId, vote, is_fan: !!isFan, weight },
+      { onConflict: 'match_id,category,user_id' }
+    );
+  if (error) console.error('[RTR] saveGeneralVote error:', error);
+  return !error;
+}
+
+async function loadMyGeneralVotes(matchId, userId) {
+  if (!userId || PREVIEW_MODE) return {};
+  const { data } = await getSB().from('RTR General Votes')
+    .select('category, vote')
+    .eq('match_id', matchId)
+    .eq('user_id', userId);
+  const map = {};
+  (data || []).forEach(v => { map[v.category] = v.vote; });
+  return map;
+}
+
+// Returns { neutral: { category: { correct, wrong } }, fan: { category: { correct, wrong } } }
+// bad→wrong, good/excellent→correct — same fan/neutral split as incident votes
+async function loadGeneralVotesAggregate(matchId) {
+  if (PREVIEW_MODE) return { neutral: {}, fan: {} };
+  const { data } = await getSB().from('RTR General Votes')
+    .select('category, vote, is_fan, weight')
+    .eq('match_id', matchId);
+  const result = { neutral: {}, fan: {} };
+  (data || []).forEach(v => {
+    const bucket = v.is_fan ? result.fan : result.neutral;
+    if (!bucket[v.category]) bucket[v.category] = { correct: 0, wrong: 0 };
+    if (v.vote === 'bad') bucket[v.category].wrong  += v.weight || 1;
+    else                  bucket[v.category].correct += v.weight || 1;
+  });
+  return result;
+}
+
 async function saveIncidentVote(incidentId, userId, vote, isFan, weight = 5) {
   if (PREVIEW_MODE) return true;
   const { error } = await getSB().from('RTR Incident Votes').insert({
@@ -503,20 +595,20 @@ async function loadIncidentRatings(matchIds) {
   if (PREVIEW_MODE) return;
   const matchIdSet = matchIds ? new Set(matchIds.map(Number)) : null;
 
-  const { data: incidents } = await getSB()
-    .from('RTR Incidents').select('id, match_id, type, weight');
-  if (!incidents?.length) return;
+  const [{ data: incidents }, { data: genVotes }] = await Promise.all([
+    getSB().from('RTR Incidents').select('id, match_id, type, weight'),
+    getSB().from('RTR General Votes').select('match_id, category, vote, is_fan, weight'),
+  ]);
+  if (!incidents?.length && !genVotes?.length) return;
 
-  // Filter incidents to the requested matches if a scope is provided
   const scopedIncidents = matchIdSet
-    ? incidents.filter(i => matchIdSet.has(Number(i.match_id)))
-    : incidents;
-  if (!scopedIncidents.length) return;
+    ? (incidents||[]).filter(i => matchIdSet.has(Number(i.match_id)))
+    : (incidents||[]);
 
   const ids = scopedIncidents.map(i => i.id);
-  const { data: votes } = await getSB()
-    .from('RTR Incident Votes').select('incident_id, vote, is_fan, weight')
-    .in('incident_id', ids);
+  const { data: votes } = ids.length
+    ? await getSB().from('RTR Incident Votes').select('incident_id, vote, is_fan, weight').in('incident_id', ids)
+    : { data: [] };
 
   const byMatch = {};
   scopedIncidents.forEach(inc => {
@@ -531,23 +623,46 @@ async function loadIncidentRatings(matchIds) {
     if (b[v.incident_id]) b[v.incident_id][v.vote] += v.weight || 1;
   });
 
+  // Aggregate general votes per match per category, split by fan/neutral — bad→wrong, good/excellent→correct
+  const genByMatch = {};
+  (genVotes||[]).forEach(v => {
+    const mid = Number(v.match_id);
+    if (matchIdSet && !matchIdSet.has(mid)) return;
+    if (!genByMatch[mid]) genByMatch[mid] = { neutral: {}, fan: {} };
+    const bucket = v.is_fan ? genByMatch[mid].fan : genByMatch[mid].neutral;
+    if (!bucket[v.category]) bucket[v.category] = { correct:0, wrong:0 };
+    if (v.vote === 'bad') bucket[v.category].wrong  += v.weight || 1;
+    else                  bucket[v.category].correct += v.weight || 1;
+  });
+
   REFS.forEach(r => { r.neutralRating=null; r.neutralVotes=0; r.fanRating=null; r.fanVotes=0; });
   const refNeutral = {}, refFan = {};
   MATCHES.forEach(m => {
     if (matchIdSet && !matchIdSet.has(Number(m.id))) return;
-    const incs = byMatch[m.id];
-    if (!incs) return;
     const ref = REFS.find(r => r.id === +m.refId);
     if (!ref) return;
     if (!refNeutral[ref.id]) refNeutral[ref.id] = [];
     if (!refFan[ref.id])     refFan[ref.id]     = [];
-    incs.forEach(inc => {
+
+    // Specific incidents
+    (byMatch[m.id]||[]).forEach(inc => {
       const nv = neutral[inc.id] || { correct:0, wrong:0 };
       const fv = fan[inc.id]     || { correct:0, wrong:0 };
       if (nv.correct + nv.wrong) refNeutral[ref.id].push({ ...inc, _v: nv });
       if (fv.correct + fv.wrong) refFan[ref.id].push({ ...inc, _v: fv });
     });
+
+    // General rating categories — split into correct neutral/fan buckets
+    const gen = genByMatch[m.id] || { neutral: {}, fan: {} };
+    GENERAL_CATEGORIES.forEach(cat => {
+      const synInc = { id: cat.id, match_id: m.id, type: cat.id, weight: cat.weight };
+      const nv = gen.neutral[cat.id];
+      const fv = gen.fan[cat.id];
+      if (nv && nv.correct + nv.wrong > 0) refNeutral[ref.id].push({ ...synInc, _v: nv });
+      if (fv && fv.correct + fv.wrong > 0) refFan[ref.id].push({ ...synInc, _v: fv });
+    });
   });
+
   REFS.forEach(r => {
     if (refNeutral[r.id]?.length) {
       const vMap = Object.fromEntries(refNeutral[r.id].map(i => [i.id, i._v]));
@@ -727,7 +842,7 @@ function syncMatchStatuses() {
   MATCHES.forEach(m => {
     if (m.status === 'complete') return;
     if (!m.kickoff) return;
-    const ko = new Date(String(m.kickoff).replace(' ', 'T').replace(/Z$/, '')).getTime();
+    const ko = new Date(String(m.kickoff).replace(' ', 'T')).getTime();
     if (isNaN(ko)) return;
     // If manually marked live in the sheet, only advance to complete — never revert to upcoming
     if (m.status === 'live') {
@@ -799,22 +914,140 @@ function parseCSV(text) {
   });
 }
 
-async function loadFromSheets() {
-  // 1. REFS from Google Sheets (non-fatal)
+function refAvatarHtml(ref, size = 28) {
+  if (ref?.photo_url) {
+    return `<img src="${ref.photo_url}" alt="${ref.initials||''}" style="width:100%;height:100%;object-fit:cover;object-position:top center;" onerror="this.outerHTML='${ref.initials||''}'">`;
+  }
+  return ref?.initials || '';
+}
+
+function mapRef(r) {
+  return {
+    id: r.id, name: r.name, initials: r.initials,
+    nationality: r.nationality || '', age: r.age || 0,
+    fifaListed: r.fifa_listed ? 'Yes' : 'No', notes: r.notes || '',
+    games: r.overall_apps || 0, neutralRating: null, neutralVotes: 0, fanRating: null, fanVotes: 0,
+    photo_url: r.photo_url || null, hero_photo_url: r.hero_photo_url || null, bio: r.bio || null,
+    hero_photo_position: r.hero_photo_position || null,
+    overall_apps: r.overall_apps || null, overall_fouls_pg: r.overall_fouls_pg || null,
+    overall_fouls_tackles: r.overall_fouls_tackles || null, overall_pen_pg: r.overall_pen_pg || null,
+    overall_yel_pg: r.overall_yel_pg || null, overall_yel: r.overall_yel || null,
+    overall_red_pg: r.overall_red_pg || null, overall_red: r.overall_red || null,
+    home_apps: r.home_apps || null, home_fouls_pg: r.home_fouls_pg || null,
+    home_fouls_tackles: r.home_fouls_tackles || null, home_pen_pg: r.home_pen_pg || null,
+    home_yel_pg: r.home_yel_pg || null, home_yel: r.home_yel || null,
+    home_red_pg: r.home_red_pg || null, home_red: r.home_red || null,
+    away_apps: r.away_apps || null, away_fouls_pg: r.away_fouls_pg || null,
+    away_fouls_tackles: r.away_fouls_tackles || null, away_pen_pg: r.away_pen_pg || null,
+    away_yel_pg: r.away_yel_pg || null, away_yel: r.away_yel || null,
+    away_red_pg: r.away_red_pg || null, away_red: r.away_red || null,
+  };
+}
+
+// Used by referees.html — loads all historical data from Supabase only (no API)
+async function loadRefsPageData() {
   try {
-    if (SHEETS_REFS_URL) {
-      const refsRes = await fetch(SHEETS_REFS_URL);
-      if (refsRes?.ok) {
-        const parsed = parseCSV(await refsRes.text());
-        if (parsed.length) REFS = parsed.map(r => ({
-          ...r,
-          neutralRating: +r.neutralRating || 0, neutralVotes: +r.neutralVotes || 0,
-          fanRating:     +r.fanRating     || 0, fanVotes:     +r.fanVotes     || 0,
-        }));
-      }
+    const { data: refs, error: refsErr } = await getSB().from('RTR Referees').select('*');
+    console.log('[RTR] RTR Referees query → data:', refs?.length, 'error:', refsErr);
+    if (refs?.length) { REFS = refs.map(mapRef); }
+  } catch(e) { console.warn('[RTR] REFS load failed:', e); }
+
+  await loadFixtures();
+
+  try {
+    const stats = await loadMatchStats();
+    if (stats.length) {
+      // Apply overlay to MATCHES for the entries that match Supabase fixture IDs
+      const om = Object.fromEntries(stats.map(o => [+o.match_id, o]));
+      MATCHES = MATCHES.map(m => {
+        const o = om[+m.id]; if (!o) return m;
+        return { ...m,
+          score: o.score ?? m.score, status: o.status ?? m.status,
+          yc: o.yellow_cards ?? m.yc, rc: o.red_cards ?? m.rc,
+          pen: o.penalties_given ?? m.pen, var: o.var_decisions ?? m.var,
+          homeYC: o.home_yc ?? m.homeYC ?? null, awayYC: o.away_yc ?? m.awayYC ?? null,
+          homeRC: o.home_rc ?? m.homeRC ?? null, awayRC: o.away_rc ?? m.awayRC ?? null,
+          homePen: o.home_pen ?? m.homePen ?? null, awayPen: o.away_pen ?? m.awayPen ?? null,
+          perfectGame: o.perfect_game ?? m.perfectGame,
+          incorrectVarPen: o.incorrect_var_pen ?? m.incorrectVarPen,
+          incorrectVarRed: o.incorrect_var_red ?? m.incorrectVarRed,
+          refId: o.ref_id ?? m.refId,
+          highlightVideoId: o.highlight_video_id ?? m.highlightVideoId,
+          varVideoId: o.var_video_id ?? m.varVideoId,
+        };
+      });
+      // Build fixture → ref lookup from loaded fixtures
+      const fixtureRefMap = {};
+      MATCHES.forEach(m => { if (m.refId) fixtureRefMap[+m.id] = m.refId; });
+
+      // Join: RTR Match Stats.match_id → RTR Fixtures.id → RTR Fixtures.ref_id
+      const agg = {};
+      const refMatchHistory = {};
+      const fixtureMap = Object.fromEntries(MATCHES.map(m => [+m.id, m]));
+      stats.forEach(s => {
+        const refId = fixtureRefMap[+s.match_id];
+        if (!refId) return;
+        if (!agg[refId]) agg[refId] = { yc:0, rc:0, pen:0, var:0, games:0 };
+        agg[refId].yc   += s.yellow_cards   || 0;
+        agg[refId].rc   += s.red_cards       || 0;
+        agg[refId].pen  += s.penalties_given || 0;
+        agg[refId].var  += s.var_decisions   || 0;
+        agg[refId].games++;
+        if (!refMatchHistory[refId]) refMatchHistory[refId] = [];
+        const fix = fixtureMap[+s.match_id];
+        refMatchHistory[refId].push({
+          matchweek: fix?.matchweek || 0,
+          home: fix?.home || '', away: fix?.away || '',
+          yc: s.yellow_cards || 0, rc: s.red_cards || 0, pen: s.penalties_given || 0,
+        });
+      });
+      REFS.forEach(r => {
+        const s = agg[r.id]; if (!s) return;
+        if (!r.overall_apps) r.games = s.games;
+        r._yc   = s.yc;
+        r._rc   = s.rc;
+        r._pen  = s.pen;
+        r._var  = s.var;
+        const history = refMatchHistory[r.id] || [];
+        r._last3 = history.sort((a,b) => b.matchweek - a.matchweek).slice(0, 3);
+      });
     }
+  } catch(e) { console.warn('[RTR] Stats overlay failed:', e); }
+
+  // Fetch one GW from API to build team crest map, then apply to all MATCHES
+  try {
+    const gwCfg = await loadGWConfig();
+    const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    const url = isLocal
+      ? `/api/fd-matches?matchday=${gwCfg?.gw||38}&season=${gwCfg?.season||'2025'}&comp=${gwCfg?.comp||'PL'}`
+      : `/.netlify/functions/fd-matches?matchday=${gwCfg?.gw||38}&season=${gwCfg?.season||'2025'}&comp=${gwCfg?.comp||'PL'}`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      const crestMap = {};
+      (data.matches || []).forEach(m => {
+        [m.homeTeam, m.awayTeam].forEach(t => {
+          if (!t?.crest) return;
+          if (t.shortName) crestMap[t.shortName] = t.crest;
+          if (t.name)      crestMap[t.name]      = t.crest;
+        });
+      });
+      MATCHES = MATCHES.map(m => ({
+        ...m,
+        homeCrest: crestMap[m.home] || m.homeCrest || null,
+        awayCrest: crestMap[m.away] || m.awayCrest || null,
+      }));
+    }
+  } catch(e) {}
+}
+
+async function loadFromSheets() {
+  // 1. REFS from Supabase RTR Referees table (non-fatal)
+  try {
+    const { data: refs } = await getSB().from('RTR Referees').select('*');
+    if (refs?.length) { REFS = refs.map(mapRef); }
   } catch(e) {
-    console.warn('[RTR] Sheets REFS fetch failed (non-fatal):', e);
+    console.warn('[RTR] Supabase REFS load failed (non-fatal):', e);
   }
 
   // 2. Current GW + fixtures from API, with Supabase stats overlay
@@ -824,14 +1057,13 @@ async function loadFromSheets() {
     if (!gw) { console.warn('[RTR] No GW config'); return false; }
 
     // API is the primary fixture source
-    const fdMatches = await loadFromFootballData(gw);
+    const fdMatches = await loadFromFootballData(gw, gwCfg.comp, gwCfg.season);
     if (fdMatches?.length) {
       buildMatchesFromFD(fdMatches);
       console.log('[RTR] Fixtures loaded from API:', MATCHES.length, 'matches for GW', gw);
     } else {
-      // Fallback: load from Supabase Fixtures if API is unavailable
-      console.warn('[RTR] API unavailable — falling back to Supabase fixtures');
-      await loadFixtures();
+      console.warn('[RTR] API returned no matches for', gwCfg.comp, gwCfg.season, 'GW', gw);
+      MATCHES = [];
     }
 
     // 3. Overlay Supabase match stats: cards, VAR, video IDs, manual score/ref overrides
@@ -841,14 +1073,21 @@ async function loadFromSheets() {
       MATCHES = MATCHES.map(m => {
         const o = overrideMap[+m.id];
         if (!o) return m;
+        const derivedStatus = o.status ?? m.status;
         return {
           ...m,
-          score:            o.score              ?? m.score,
-          status:           o.status             ?? m.status,
+          score:            derivedStatus === 'live' ? m.score : (o.score ?? m.score),
+          status:           derivedStatus,
           yc:               o.yellow_cards       ?? m.yc,
           rc:               o.red_cards          ?? m.rc,
           pen:              o.penalties_given    ?? m.pen,
           var:              o.var_decisions      ?? m.var,
+          homeYC:           o.home_yc            ?? m.homeYC  ?? null,
+          awayYC:           o.away_yc            ?? m.awayYC  ?? null,
+          homeRC:           o.home_rc            ?? m.homeRC  ?? null,
+          awayRC:           o.away_rc            ?? m.awayRC  ?? null,
+          homePen:          o.home_pen           ?? m.homePen ?? null,
+          awayPen:          o.away_pen           ?? m.awayPen ?? null,
           perfectGame:      o.perfect_game       ?? m.perfectGame,
           incorrectVarPen:  o.incorrect_var_pen  ?? m.incorrectVarPen,
           incorrectVarRed:  o.incorrect_var_red  ?? m.incorrectVarRed,
@@ -924,12 +1163,9 @@ const SHARED_CSS = `
   .logo-badge{background:var(--pl-green);color:var(--pl-purple);width:34px;height:34px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
   .logo span{color:var(--pl-green);}
   .header-right{display:flex;align-items:center;gap:12px;}
-  nav{position:relative;display:inline-flex;align-items:center;height:42px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:0 4px;overflow:visible;}
-  nav a{position:relative;z-index:2;background:none;border:none;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:.88rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:0 12px;height:100%;display:inline-flex;align-items:center;text-decoration:none;opacity:.42;transition:opacity .1s ease;white-space:nowrap;}
-  nav a.active{background:none;border:none;color:#fff;opacity:1;}
-  nav a:hover{background:none;border:none;}
-  .ll-bar{position:absolute;top:0;height:4px;width:36px;background:var(--pl-green);border-radius:0 0 3px 3px;box-shadow:0 0 14px rgba(0,204,112,.9),0 0 5px rgba(0,255,133,.6);z-index:3;pointer-events:none;transition:left .32s cubic-bezier(.4,0,.2,1);}
-  .ll-beam{position:absolute;left:-38%;top:4px;width:176%;height:36px;clip-path:polygon(5% 100%,22% 0,78% 0,95% 100%);background:linear-gradient(180deg,rgba(0,204,112,.3) 0%,transparent 100%);pointer-events:none;}
+  nav{display:flex;gap:6px;}
+  nav a{background:none;border:1px solid transparent;color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:.9rem;font-weight:600;letter-spacing:.5px;text-transform:uppercase;padding:6px 14px;border-radius:4px;cursor:pointer;transition:all .18s;text-decoration:none;display:inline-block;}
+  nav a.active,nav a:hover{background:rgba(0,255,133,.1);border-color:var(--pl-green);color:var(--pl-green);}
   .user-chip{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 12px 5px 7px;cursor:pointer;transition:border-color .15s;font-size:.82rem;position:relative;}
   .user-chip:hover{border-color:rgba(0,255,133,.4);}
   .uc-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--pl-purple),#8b008b);border:1.5px solid var(--pl-green);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:var(--pl-green);flex-shrink:0;}
@@ -954,10 +1190,12 @@ const SHARED_CSS = `
   /* ── MOBILE NAV ─────────────────────────────────────────── */
   .hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:6px;}
   .hamburger span{display:block;width:22px;height:2px;background:var(--text);border-radius:2px;transition:all .2s;}
-  .mobile-nav{display:none;position:fixed;top:60px;left:0;right:0;background:linear-gradient(135deg,#37003c 0%,#1a0020 100%);border-bottom:2px solid var(--pl-green);z-index:99;padding:12px 16px;flex-direction:column;gap:4px;}
+  .mobile-nav{display:none;position:fixed;top:60px;left:0;right:0;background:linear-gradient(135deg,#37003c 0%,#1a0020 100%);border-bottom:2px solid var(--pl-green);z-index:300;padding:12px 16px;flex-direction:column;gap:4px;}
   .mobile-nav a{color:var(--muted);font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:600;letter-spacing:.5px;text-transform:uppercase;padding:10px 14px;border-radius:6px;text-decoration:none;display:block;border:1px solid transparent;}
   .mobile-nav a.active,.mobile-nav a:hover{background:rgba(0,255,133,.1);border-color:var(--pl-green);color:var(--pl-green);}
   .mobile-nav.open{display:flex;}
+  .ll-bar{position:absolute;top:0;height:4px;width:36px;background:var(--pl-green);border-radius:0 0 3px 3px;box-shadow:0 0 14px rgba(0,204,112,.9),0 0 5px rgba(0,255,133,.6);z-index:3;pointer-events:none;transition:left .32s cubic-bezier(.4,0,.2,1);}
+  .ll-beam{position:absolute;left:-38%;top:4px;width:176%;height:36px;clip-path:polygon(5% 100%,22% 0,78% 0,95% 100%);background:linear-gradient(180deg,rgba(0,204,112,.3) 0%,transparent 100%);pointer-events:none;}
   @media(max-width:768px){
     .hamburger{display:flex;}
     nav{display:none;}
@@ -966,12 +1204,15 @@ const SHARED_CSS = `
     header{padding:0 16px;}
   }
   /* ── DARK MODE ──────────────────────────────────────── */
-  html[data-theme="dark"]{--bg:#0a0c10;--surface:rgba(18,21,28,0.55);--surface2:rgba(26,30,40,0.65);--border:rgba(255,255,255,.09);--red:#ff4757;--yellow:#ffd32a;--green:#37ecba;--text:#e8eaf0;--muted:#6b7280;--pl-green:#00ff85;--gold:#f5a623;}
+  html[data-theme="dark"]{--bg:#0a0c10;--surface:#12151c;--surface2:#1a1e28;--border:rgba(255,255,255,.09);--red:#ff4757;--yellow:#ffd32a;--green:#37ecba;--text:#e8eaf0;--muted:#6b7280;--pl-green:#00ff85;--gold:#f5a623;}
   html[data-theme="dark"] header{background:linear-gradient(135deg,#37003c 0%,#1a0020 60%,#0a0c10 100%);box-shadow:0 4px 32px rgba(0,255,133,.12);}
   html[data-theme="dark"] header::after{background:linear-gradient(to bottom,rgba(0,0,0,.55) 0%,transparent 100%);}
   html[data-theme="dark"] .mobile-nav{background:linear-gradient(135deg,#37003c 0%,#1a0020 100%);}
   html[data-theme="dark"] .gw-banner{background:linear-gradient(90deg,rgba(55,0,60,.9),rgba(10,12,16,1)) !important;}
   html[data-theme="dark"] body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 70% 50% at 20% 30%,rgba(55,0,60,.45) 0%,transparent 70%),radial-gradient(ellipse 60% 60% at 80% 70%,rgba(80,0,90,.3) 0%,transparent 65%) !important;}
+  /* ── DIAGONAL LOGO WATERMARK ── */
+  body::after{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;background-image:url(images/logos/RRLogo.svg);background-repeat:repeat;background-size:140px auto;transform:rotate(-28deg);opacity:0.045;pointer-events:none;z-index:-1;}
+  html:not([data-theme="dark"]) body::after{filter:brightness(0.35);opacity:0.12;}
   html[data-theme="dark"] .match-card,
   html[data-theme="dark"] .rpc,
   html[data-theme="dark"] .rpc-stat-pill,
@@ -1318,7 +1559,7 @@ const BADGE_DEFS = [
   // Loyalty
   { key: 'founder',       category: 'Loyalty',  img: 'images/logos/RRlogo192.png', name: 'Founder', desc: 'A founding member of RefRater', gold: true },
   { key: 'profile_setup', category: 'Loyalty',  icon: '👤', name: 'All Kitted Out', desc: 'Set your favourite team on your profile' },
-  { key: 'early_adopter', category: 'Loyalty',  icon: '🌟', name: 'Early Adopter',  desc: 'Among the first 50 users to join RefRater' },
+  { key: 'early_adopter', category: 'Loyalty',  img: 'images/badges/RefYellow-removebg-preview.png', name: 'Early Adopter',  desc: 'Among the first 50 users to join RefRater', silver: true },
   // Special
   { key: 'perfect_voter', category: 'Special',  icon: '🎖️', name: 'Perfect Eye',    desc: 'Vote correctly on all incidents in a match' },
 ];
