@@ -459,15 +459,20 @@ function renderHomeContent() {
       </div>
     </a>` : ''}
     <div class="rail">
-      ${visibleRail.map(r => `
+      ${visibleRail.map(r => {
+        const isCss = !r.media || r.media.type === 'css';
+        const thumbClass = isCss ? `rail-thumb ${r.media?.variant || ''}` : 'rail-thumb';
+        const thumbFill = isCss ? '' : homeMediaHTML(r.media);
+        return `
         <a class="rail-card" href="${homeLinkFor(r)}">
-          ${homeMediaHTML(r.media, 'rail-thumb')}
+          <div class="${thumbClass}">${thumbFill}</div>
           <div class="rail-body">
             <div class="rail-tag ${r.tagColor}">${r.tagText}</div>
             <div class="rail-headline">${r.headline}</div>
             <div class="rail-sub"${r.subIsGwSub ? ' id="heroGwSub"' : ''}>${r.sub}</div>
           </div>
-        </a>`).join('')}
+        </a>`;
+      }).join('')}
     </div>`;
 
   document.getElementById('fixturesScroll').innerHTML = HOME_CONTENT.fixtures.map(f => `
