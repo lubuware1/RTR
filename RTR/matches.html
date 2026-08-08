@@ -487,6 +487,8 @@ let selId=null;
 const rated=new Set();
 let filter='all', lbMode='neutral';
 let currentGW = 1; // updated from Supabase on load
+let currentSeason = '2025'; // updated from Supabase on load
+let currentComp = 'PL'; // updated from Supabase on load
 
 const DESCS = RATING_DESCS;
 
@@ -1039,8 +1041,8 @@ function skelMatchCard() {
 async function loadMatchesFromAPI(gw) {
   const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
   const url = isLocal
-    ? `/api/fd-matches?matchday=${gw}&season=2025`
-    : `/.netlify/functions/fd-matches?matchday=${gw}&season=2025`;
+    ? `/api/fd-matches?matchday=${gw}&season=${currentSeason}&comp=${currentComp}`
+    : `/.netlify/functions/fd-matches?matchday=${gw}&season=${currentSeason}&comp=${currentComp}`;
   console.log('[RTR] loadMatchesFromAPI → GW', gw, '→', url);
   try {
     const res  = await fetch(url);
@@ -1093,7 +1095,11 @@ initHeader();
     currentUser = getCurrentUser();
   }
   const gwConfig = await loadGWConfig();
-  if (gwConfig) currentGW = gwConfig.gw;
+  if (gwConfig) {
+    currentGW = gwConfig.gw;
+    currentSeason = gwConfig.season;
+    currentComp = gwConfig.comp;
+  }
   await loadFromSheets().catch(() => {}); // loads REFS only (fixtures overridden below)
   await loadMatchesFromAPI(currentGW);    // overwrites MATCHES with live API data
   if (TEST_MATCHES) {
