@@ -554,7 +554,7 @@ function renderList() {
   const list = filter==='all' ? gwFiltered : gwFiltered.filter(m=>m.status===(filter==='recent'?'complete':filter));
   if (!list.length) { el.innerHTML='<div class="empty-state"><div class="icon">📋</div><p>No matches</p></div>'; return; }
   const cards = list.map(m => {
-    const ref = REFS.find(r=>r.id===+m.refId); if(!ref) return '';
+    const ref = REFS.find(r=>r.id===+m.refId) || { id:null, initials:'TBC', name:'Referee TBC', neutralRating:null, fanRating:null, neutralVotes:0, fanVotes:0 };
     const live=m.status==='live', up=m.status==='upcoming', fan=isFanMatch(m,currentUser);
     const hasN=ref.neutralRating!=null, hasF=ref.fanRating!=null;
     const nSf=hasN?Math.round(ref.neutralRating/2):0;
