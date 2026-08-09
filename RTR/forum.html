@@ -520,7 +520,10 @@
 
   <div class="forum-header">
     <div class="forum-title">Forum</div>
-    <button class="new-post-btn" id="newPostBtn">+ New Post</button>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <select class="compose-select" id="seasonFilter" style="min-width:110px;" title="Season"></select>
+      <button class="new-post-btn" id="newPostBtn">+ New Post</button>
+    </div>
   </div>
 
   <!-- Compose form -->
@@ -636,19 +639,30 @@ function postMatchesSearch(post, q) {
 }
 
 // ── SUPABASE ─────────────────────────────────────────────
-async function loadPosts() {
+async function loadPosts(season) {
   if (PREVIEW_MODE) return [];
-  const { data, error } = await getSB()
+  let q = getSB()
     .from('RTR Forum')
-    .select('id, user_id, username, category, subject, body, reply_to, matchweek, ref_id, created_at')
+    .select('id, user_id, username, category, subject, body, reply_to, matchweek, ref_id, season, created_at')
     .order('created_at', { ascending: false })
     .limit(200);
+  if (season) q = q.eq('season', season);
+  const { data, error } = await q;
   if (error) { console.error('[RTR] loadPosts error:', error); return []; }
   return data || [];
 }
 
+// Distinct seasons that have any posts, newest first, for the season switcher
+async function loadForumSeasons() {
+  if (PREVIEW_MODE) return [];
+  const { data, error } = await getSB().from('RTR Forum').select('season');
+  if (error) { console.error('[RTR] loadForumSeasons error:', error); return []; }
+  return [...new Set((data || []).map(r => r.season).filter(Boolean))].sort().reverse();
+}
+
 async function savePost(category, subject, body, replyTo, matchweek) {
   if (PREVIEW_MODE || !currentUser) return null;
+  const season = await getCurrentSeason();
   const { data, error } = await getSB().from('RTR Forum').insert({
     user_id: currentUser.id,
     username: currentUser.username || 'User',
@@ -657,6 +671,7 @@ async function savePost(category, subject, body, replyTo, matchweek) {
     body: cleanText(body.trim()),
     reply_to: replyTo || null,
     matchweek: matchweek || null,
+    season,
     created_at: new Date().toISOString(),
   }).select().single();
   if (error) { console.error('[RTR] savePost error:', error); return null; }
@@ -665,10 +680,11 @@ async function savePost(category, subject, body, replyTo, matchweek) {
 
 async function saveRefPost(refId, refName, body) {
   if (PREVIEW_MODE || !currentUser) return null;
+  const season = await getCurrentSeason();
   const { data, error } = await getSB().from('RTR Forum').insert({
     user_id: currentUser.id, username: currentUser.username || 'User',
     category: 'referee', subject: refName, body: cleanText(body.trim()),
-    ref_id: refId, reply_to: null, matchweek: null,
+    ref_id: refId, reply_to: null, matchweek: null, season,
     created_at: new Date().toISOString(),
   }).select().single();
   if (error) { console.error('[RTR] saveRefPost error:', error); return null; }
@@ -1178,12 +1194,28 @@ document.getElementById('compSubmit').addEventListener('click', async () => {
 });
 
 // ── MAIN ──────────────────────────────────────────────────
+function seasonLabel(s) {
+  const n = +s;
+  return Number.isFinite(n) ? `${n}/${(n + 1) % 100}` : s;
+}
+
 (async function init() {
   await checkAuth();              // refresh session if logged in; no longer gates guests
   currentUser = getCurrentUser();
   initHeader();
   await loadFromSheets();
-  allPosts = await loadPosts();
+
+  const currentSeason = await getCurrentSeason();
+  const seasons = await loadForumSeasons();
+  if (!seasons.includes(currentSeason)) seasons.unshift(currentSeason);
+  const seasonSel = document.getElementById('seasonFilter');
+  seasonSel.innerHTML = seasons.map(s => `<option value="${s}"${s === currentSeason ? ' selected' : ''}>${seasonLabel(s)}${s === currentSeason ? ' (current)' : ''}</option>`).join('');
+  seasonSel.addEventListener('change', async () => {
+    allPosts = await loadPosts(seasonSel.value);
+    renderPosts();
+  });
+
+  allPosts = await loadPosts(currentSeason);
 
   // ?ref=ID — open that referee's discussion section on load
   const refParam = new URLSearchParams(location.search).get('ref');

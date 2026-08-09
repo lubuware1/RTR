@@ -1096,12 +1096,14 @@
       const gwFixtures = MATCHES.filter(m => +m.matchweek === gw && m.refId);
       if (!gwFixtures.length) throw new Error(`No ref-assigned fixtures found for GW${gw}`);
 
-      // Check which posts already exist for this GW
+      // Check which posts already exist for this GW (scoped to this season —
+      // matchweek numbers repeat every season)
       const { data: existing } = await getSB()
         .from('RTR Forum')
         .select('subject')
         .eq('category', 'game')
-        .eq('matchweek', gw);
+        .eq('matchweek', gw)
+        .eq('season', cfg.season);
       const existingSubjects = new Set((existing || []).map(p => p.subject));
 
       const toCreate = gwFixtures.filter(m => !existingSubjects.has(`${m.home} vs ${m.away}`));
@@ -1120,6 +1122,7 @@
         matchweek:  gw,
         ref_id:     m.refId || null,
         reply_to:   null,
+        season:     cfg.season,
         created_at: new Date().toISOString(),
       }));
 
