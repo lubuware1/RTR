@@ -526,6 +526,32 @@ function renderHomeContent() {
       <div class="hl-meta"><div class="hl-tag">${hl.tag}</div><div class="hl-title">${hl.title}</div></div>
     </a>`).join('');
 }
+
+// ── live fixtures ribbon (replaces the placeholder rows once real data loads) ──
+function fixtureStatusText(m) {
+  if (m.status === 'live') return 'LIVE';
+  if (m.status === 'complete') return 'FT';
+  if (!m.kickoff) return 'TBC';
+  const d = new Date(m.kickoff);
+  return `${d.toLocaleDateString('en-GB', { weekday: 'short' })} ${d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
+}
+function renderLiveFixtures() {
+  if (!MATCHES.length) return false;
+  document.getElementById('fixturesScroll').innerHTML = MATCHES.map(m => {
+    const ref = REFS.find(r => r.id === +m.refId);
+    const live = m.status === 'live';
+    const [homeScore, awayScore] = m.score !== '–' ? m.score.split('-') : ['–', '–'];
+    return `
+    <a class="fx-card" href="matches.html">
+      <div class="fx-status${live ? ' live' : ''}">${live ? '<span class="dot"></span>' : ''}${fixtureStatusText(m)}</div>
+      <div class="fx-row"><span>${m.home}</span><span class="n">${homeScore}</span></div>
+      <div class="fx-row"><span>${m.away}</span><span class="n">${awayScore}</span></div>
+      <div class="fx-ref">Ref <b>${ref ? ref.name : 'TBC'}</b></div>
+    </a>`;
+  }).join('');
+  return true;
+}
+
 (async function() {
   const saved = await loadHomeContent();
   if (saved) HOME_CONTENT = saved;
@@ -541,6 +567,10 @@ function renderHomeContent() {
     if (gwSub) gwSub.textContent = `Full GW${cfg.gw} fixture list`;
     if (fixturesTitle) fixturesTitle.innerHTML = `Gameweek <em>${cfg.gw}</em> Fixtures`;
   }
+
+  // Real fixtures — falls back to the placeholder rows above if this fails or returns nothing
+  await loadFromSheets().catch(() => {});
+  renderLiveFixtures();
 })();
 
 // ── Auth-aware header ─────────────────────────────────────
