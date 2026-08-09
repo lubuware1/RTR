@@ -293,7 +293,7 @@ footer{background:var(--purple);color:rgba(255,255,255,.7);}
         <a href="index.html" class="active">Home</a>
         <a href="matches.html">Matches</a>
         <a href="referees.html">Referees</a>
-        <a href="fantasy.html"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="PVBB"></a>
+        <a href="fantasy.html" class="admin-only" style="display:none"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="PVBB"></a>
         <a href="badges.html">Cards</a>
         <a href="forum.html">Forum</a>
       </nav>
@@ -307,7 +307,7 @@ footer{background:var(--purple);color:rgba(255,255,255,.7);}
   <a href="index.html" class="active">Home</a>
   <a href="matches.html">Matches</a>
   <a href="referees.html">Referees</a>
-  <a href="fantasy.html"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="PVBB">PVBB</a>
+  <a href="fantasy.html" class="admin-only" style="display:none"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="PVBB">PVBB</a>
   <a href="badges.html">Cards</a>
   <a href="forum.html">Forum</a>
 </div>
@@ -592,6 +592,7 @@ function renderLiveFixtures() {
         </div>
       </div>`;
     applyUserAvatar(document.getElementById('ucAvatar'), currentUser);
+    if (isAdmin(currentUser)) document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
     document.getElementById('userChip').addEventListener('click', e => {
       e.stopPropagation();
       document.getElementById('userDropdown').classList.toggle('open');
