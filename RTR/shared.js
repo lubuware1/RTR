@@ -330,6 +330,17 @@ async function loadGWConfig() {
   };
 }
 
+// Current voting/forum season, read once from RTR Config and cached — this is
+// what new votes, incidents, and forum posts get stamped with (see
+// season-archiving-setup.sql for the tables this applies to).
+let _currentSeasonCache = null;
+async function getCurrentSeason() {
+  if (_currentSeasonCache) return _currentSeasonCache;
+  const cfg = await loadGWConfig();
+  _currentSeasonCache = cfg?.season || '2026';
+  return _currentSeasonCache;
+}
+
 // ── HOMEPAGE CONTENT (index.html articles/cards) ───────────
 // Used by index.html (to display) and admin.html (to edit).
 // Falls back to these defaults until an admin saves real content.
@@ -530,9 +541,10 @@ const GENERAL_CATEGORIES = [
 
 async function saveGeneralVote(matchId, category, userId, vote, isFan, weight = 5) {
   if (PREVIEW_MODE) return true;
+  const season = await getCurrentSeason();
   const { error } = await getSB().from('RTR General Votes')
     .upsert(
-      { match_id: matchId, category, user_id: userId, vote, is_fan: !!isFan, weight },
+      { match_id: matchId, category, user_id: userId, vote, is_fan: !!isFan, weight, season },
       { onConflict: 'match_id,category,user_id' }
     );
   if (error) console.error('[RTR] saveGeneralVote error:', error);
@@ -569,9 +581,10 @@ async function loadGeneralVotesAggregate(matchId) {
 
 async function saveIncidentVote(incidentId, userId, vote, isFan, weight = 5) {
   if (PREVIEW_MODE) return true;
+  const season = await getCurrentSeason();
   const { error } = await getSB().from('RTR Incident Votes').insert({
     incident_id: incidentId, user_id: userId, vote, is_fan: !!isFan,
-    weight, created_at: new Date().toISOString()
+    weight, season, created_at: new Date().toISOString()
   });
   if (error) console.error('[RTR] saveIncidentVote error:', error);
   return !error;
@@ -580,8 +593,9 @@ async function saveIncidentVote(incidentId, userId, vote, isFan, weight = 5) {
 async function saveIncident(matchId, type, minute, description) {
   if (PREVIEW_MODE) return null;
   const weight = INCIDENT_TYPES.find(t => t.type === type)?.weight ?? 0.5;
+  const season = await getCurrentSeason();
   const { data, error } = await getSB().from('RTR Incidents').insert({
-    match_id: matchId, type, minute: minute !== null ? +minute : null, description: description || null, weight
+    match_id: matchId, type, minute: minute !== null ? +minute : null, description: description || null, weight, season
   }).select().single();
   if (error) console.error('[RTR] saveIncident error:', error);
   return data || null;
@@ -590,14 +604,17 @@ async function saveIncident(matchId, type, minute, description) {
 // Populates ref.neutralRating, ref.fanRating, ref.neutralVotes, ref.fanVotes
 // from the incident voting tables. Called on any page that shows ref scores.
 // matchIds: optional array of match IDs to scope scores to (e.g. current GW only).
-// When omitted, scores accumulate across all matchweeks (used by referees page).
+// When omitted, scores accumulate across all matchweeks of the current season
+// (used by referees page) — last season's votes stay in the tables but don't
+// count towards live ratings once a new season is set in RTR Config.
 async function loadIncidentRatings(matchIds) {
   if (PREVIEW_MODE) return;
   const matchIdSet = matchIds ? new Set(matchIds.map(Number)) : null;
+  const season = await getCurrentSeason();
 
   const [{ data: incidents }, { data: genVotes }] = await Promise.all([
-    getSB().from('RTR Incidents').select('id, match_id, type, weight'),
-    getSB().from('RTR General Votes').select('match_id, category, vote, is_fan, weight'),
+    getSB().from('RTR Incidents').select('id, match_id, type, weight').eq('season', season),
+    getSB().from('RTR General Votes').select('match_id, category, vote, is_fan, weight').eq('season', season),
   ]);
   if (!incidents?.length && !genVotes?.length) return;
 
@@ -607,7 +624,7 @@ async function loadIncidentRatings(matchIds) {
 
   const ids = scopedIncidents.map(i => i.id);
   const { data: votes } = ids.length
-    ? await getSB().from('RTR Incident Votes').select('incident_id, vote, is_fan, weight').in('incident_id', ids)
+    ? await getSB().from('RTR Incident Votes').select('incident_id, vote, is_fan, weight').eq('season', season).in('incident_id', ids)
     : { data: [] };
 
   const byMatch = {};
@@ -679,16 +696,21 @@ async function loadIncidentRatings(matchIds) {
   });
 }
 
-// Find an existing "game" forum thread for a given match title
+// Find an existing "game" forum thread for a given match title, scoped to the
+// current season — fixture names repeat every season (e.g. "Arsenal vs
+// Chelsea"), so without this a new discussion could attach as a reply to
+// last season's thread of the same name.
 async function findMatchForumThread(matchTitle) {
   if (PREVIEW_MODE) return null;
   // Normalise separator — admin uses "vs", older match chat used "v"
   const normalised = matchTitle.replace(/ v /g, ' vs ');
+  const season = await getCurrentSeason();
   const { data } = await getSB().from('RTR Forum')
     .select('id, subject, matchweek')
     .eq('category', 'game')
     .is('reply_to', null)
     .eq('subject', normalised)
+    .eq('season', season)
     .limit(1)
     .maybeSingle();
   return data || null;
@@ -698,6 +720,7 @@ async function findMatchForumThread(matchTitle) {
 async function postMatchComment(matchTitle, body, userId, username, matchweek) {
   if (PREVIEW_MODE || !userId) return null;
   const sb = getSB();
+  const season = await getCurrentSeason();
   const normTitle = matchTitle.replace(/ v /g, ' vs ');
   let thread = await findMatchForumThread(normTitle);
   if (!thread) {
@@ -709,6 +732,7 @@ async function postMatchComment(matchTitle, body, userId, username, matchweek) {
       body,
       reply_to: null,
       matchweek: matchweek || null,
+      season,
       created_at: new Date().toISOString(),
     }).select('id').single();
     if (error) { console.error('[RTR] postMatchComment create thread error:', error); return null; }
@@ -723,6 +747,7 @@ async function postMatchComment(matchTitle, body, userId, username, matchweek) {
     body,
     reply_to: thread.id,
     matchweek: thread.matchweek || matchweek || null,
+    season,
     created_at: new Date().toISOString(),
   }).select('id').single();
   if (error) { console.error('[RTR] postMatchComment reply error:', error); return null; }
