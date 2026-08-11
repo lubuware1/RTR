@@ -83,8 +83,11 @@ nav a.active{color:#fff;}
 .thumb-crowd{background:radial-gradient(circle at 50% 130%, rgba(255,207,64,.16), transparent 60%), repeating-radial-gradient(circle at 20% 30%, rgba(255,255,255,.05) 0 2px, transparent 2px 7px), linear-gradient(160deg,#1c0a26 0%,#37003c 70%,#1c0a26 100%);}
 .thumb-locker{background:linear-gradient(100deg,#151515 0 48%, #1f1f1f 48% 52%, #151515 52% 100%), linear-gradient(160deg,#101010,#1a1a1a);}
 .thumb-stadium{background:radial-gradient(circle at 30% 20%,#243447,#0c1420 70%);}
-.article-banner::after{content:'';position:absolute;inset:0;background:linear-gradient(0deg, var(--bg) 0%, transparent 45%);}
-.article-banner img,.article-banner video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.article-banner::after{content:'';position:absolute;inset:0;background:
+  linear-gradient(0deg, var(--bg) 0%, transparent 45%),
+  linear-gradient(180deg, var(--bg) 0%, transparent 22%);}
+.article-banner img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;}
+.article-banner video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
 
 .article-wrap{max-width:760px;margin:-64px auto 0;padding:0 24px 80px;position:relative;z-index:1;}
 .article-tag{margin-bottom:14px;}

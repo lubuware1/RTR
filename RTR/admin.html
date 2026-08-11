@@ -344,6 +344,9 @@
   }
 
   // ── HOMEPAGE CONTENT EDITOR ────────────────────────────────
+  function isLocalFilePath(v) {
+    return /^[a-zA-Z]:[\\/]/.test(v) || /^file:\/\//i.test(v) || v.includes('\\');
+  }
   function hcGetPath(obj, path) {
     return path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj);
   }
@@ -1338,6 +1341,14 @@
   document.getElementById('saveHomeContentBtn').addEventListener('click', async () => {
     const btn = document.getElementById('saveHomeContentBtn');
     const result = document.getElementById('saveHomeContentResult');
+    const badSrcField = Array.from(document.querySelectorAll('#homeContentForm [data-path$=".media.src"]'))
+      .find(el => isLocalFilePath(el.value.trim()));
+    if (badSrcField) {
+      result.style.color = 'var(--red)';
+      result.textContent = 'One of the Image/Video URL fields looks like a local file path (e.g. C:\\...) — it won\'t load on the live site. Use a path relative to the site (e.g. images/logos/foo.png) or a full https:// URL.';
+      badSrcField.focus();
+      return;
+    }
     btn.disabled = true;
     const updated = gatherHomeContentForm(currentHomeContent);
     const ok = await saveHomeContent(updated);
@@ -1389,8 +1400,14 @@
     const result = document.getElementById('articleEditorResult');
     const headline = document.getElementById('artHeadline').value.trim();
     if (!headline) { result.style.color = 'var(--red)'; result.textContent = 'Headline is required.'; return; }
-    btn.disabled = true;
     const mediaType = document.getElementById('artMediaType').value;
+    const mediaSrc = document.getElementById('artMediaSrc').value.trim();
+    if (mediaType !== 'css' && isLocalFilePath(mediaSrc)) {
+      result.style.color = 'var(--red)';
+      result.textContent = 'Image/Video URL looks like a local file path (e.g. C:\\...) — it won\'t load on the live site. Use a path relative to the site (e.g. images/logos/foo.png) or a full https:// URL.';
+      return;
+    }
+    btn.disabled = true;
     const article = {
       tag: document.getElementById('artTag').value,
       tag_text: document.getElementById('artTagText').value,
@@ -1401,7 +1418,7 @@
       meta_right: document.getElementById('artMetaRight').value,
       media: mediaType === 'css'
         ? { type: 'css', variant: document.getElementById('artMediaVariant').value }
-        : { type: mediaType, src: document.getElementById('artMediaSrc').value }
+        : { type: mediaType, src: mediaSrc }
     };
     if (editingArticleId) article.id = editingArticleId;
     const saved = await saveArticle(article);
