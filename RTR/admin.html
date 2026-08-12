@@ -40,6 +40,10 @@
   .btn-yellow{background:rgba(255,211,42,.1);border:1.5px solid var(--yellow);color:var(--yellow);}
   .btn-yellow:hover{background:rgba(255,211,42,.2);}
   .btn-sm{padding:5px 12px;font-size:.75rem;}
+  .hc-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+  .hc-section-head .section-title{margin-bottom:0;padding-bottom:0;border-bottom:none;}
+  .hc-move-btns{display:flex;gap:6px;flex-shrink:0;}
+  .hc-move-btn{width:28px;height:28px;padding:0;border-radius:6px;font-size:.9rem;line-height:1;display:flex;align-items:center;justify-content:center;}
   .match-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:10px;}
   .match-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
   .status-pill{font-size:.65rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:4px;}
@@ -377,6 +381,17 @@
   function hcCheckbox(path, label) {
     return `<div class="checkbox-row" style="margin-bottom:12px;"><input type="checkbox" data-path="${path}" data-bool="1" id="cb-${path}"><label for="cb-${path}">${label}</label></div>`;
   }
+  function hcSectionHeader(label, section, index, count) {
+    return `
+      <hr class="divider">
+      <div class="hc-section-head">
+        <div class="section-title" style="font-size:.85rem;">${label}</div>
+        <div class="hc-move-btns">
+          <button type="button" class="btn btn-green btn-sm hc-move-btn" data-move-section="${section}" data-move-index="${index}" data-move-dir="-1" title="Move up" ${index === 0 ? 'disabled' : ''}>↑</button>
+          <button type="button" class="btn btn-green btn-sm hc-move-btn" data-move-section="${section}" data-move-index="${index}" data-move-dir="1" title="Move down" ${index === count - 1 ? 'disabled' : ''}>↓</button>
+        </div>
+      </div>`;
+  }
   function hcMediaGroup(prefix, variants) {
     return `
       <div class="row cols-3">
@@ -400,7 +415,7 @@
     html += hcMediaGroup('hero', ['pitch']);
 
     HOME_CONTENT_DEFAULTS.rail.forEach((_, i) => {
-      html += `<hr class="divider"><div class="section-title" style="font-size:.85rem;border:none;margin-bottom:10px;padding-bottom:0;">Side Story ${i+1}</div>`;
+      html += hcSectionHeader(`Side Story ${i+1}`, 'rail', i, HOME_CONTENT_DEFAULTS.rail.length);
       html += hcCheckbox(`rail.${i}.visible`, 'Show on homepage');
       html += `<div class="row cols-2">${hcSelect(`rail.${i}.tagColor`,'Tag Colour',RAIL_COLORS)}${hcField(`rail.${i}.tagText`,'Tag Label')}</div>`;
       html += hcField(`rail.${i}.headline`, 'Headline', {textarea:true});
@@ -409,7 +424,7 @@
     });
 
     HOME_CONTENT_DEFAULTS.news.forEach((_, i) => {
-      html += `<hr class="divider"><div class="section-title" style="font-size:.85rem;border:none;margin-bottom:10px;padding-bottom:0;">News Card ${i+1}</div>`;
+      html += hcSectionHeader(`News Card ${i+1}`, 'news', i, HOME_CONTENT_DEFAULTS.news.length);
       html += hcCheckbox(`news.${i}.visible`, 'Show on homepage');
       html += `<div class="row cols-2">${hcSelect(`news.${i}.tag`,'Tag Colour',NEWS_TAGS)}${hcField(`news.${i}.tagText`,'Tag Label')}</div>`;
       html += hcField(`news.${i}.headline`, 'Headline', {textarea:true});
@@ -425,7 +440,7 @@
     html += hcField('pvbb.link', 'Link');
 
     HOME_CONTENT_DEFAULTS.highlights.forEach((_, i) => {
-      html += `<hr class="divider"><div class="section-title" style="font-size:.85rem;border:none;margin-bottom:10px;padding-bottom:0;">Highlight Clip ${i+1}</div>`;
+      html += hcSectionHeader(`Highlight Clip ${i+1}`, 'highlights', i, HOME_CONTENT_DEFAULTS.highlights.length);
       html += hcCheckbox(`highlights.${i}.visible`, 'Show on homepage');
       html += `<div class="row cols-2">${hcField(`highlights.${i}.tag`,'Tag Label')}${hcField(`highlights.${i}.title`,'Title')}</div>`;
       html += `<div class="row cols-2">${hcField(`highlights.${i}.link`,'Fallback Link')}${hcField(`highlights.${i}.articleId`,'Article ID (optional)')}</div>`;
@@ -1344,6 +1359,21 @@
   let currentHomeContent = (await loadHomeContent()) || HOME_CONTENT_DEFAULTS;
   buildHomeContentForm();
   populateHomeContentForm(currentHomeContent);
+
+  document.getElementById('homeContentForm').addEventListener('click', e => {
+    const btn = e.target.closest('.hc-move-btn');
+    if (!btn || btn.disabled) return;
+    const section = btn.dataset.moveSection;
+    const index = Number(btn.dataset.moveIndex);
+    const otherIndex = index + Number(btn.dataset.moveDir);
+    const data = gatherHomeContentForm(currentHomeContent);
+    const arr = data[section];
+    if (!arr || otherIndex < 0 || otherIndex >= arr.length) return;
+    [arr[index], arr[otherIndex]] = [arr[otherIndex], arr[index]];
+    currentHomeContent = data;
+    populateHomeContentForm(currentHomeContent);
+    toast(`Swapped — click "Save to Live Site" to publish the new order`);
+  });
 
   document.getElementById('saveHomeContentBtn').addEventListener('click', async () => {
     const btn = document.getElementById('saveHomeContentBtn');
