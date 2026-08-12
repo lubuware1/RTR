@@ -316,7 +316,7 @@
       </div>
     </div>
 
-    <a class="nav-tile" href="fantasy.html">
+    <a class="nav-tile admin-only" style="display:none" href="fantasy.html">
       <div class="nav-tile-title">PVBB</div>
       <div class="nav-tile-desc">Pick your referee each matchweek, earn points and climb the leaderboard.</div>
       <div class="nav-tile-arrow">Play →</div>
@@ -344,6 +344,7 @@
     document.getElementById('liveStripTitle').textContent = `Matchweek ${cfg.gw} — Live Now`;
   }
 })();
+if (isAdmin(getCurrentUser())) document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
 </script>
 <script>if("serviceWorker"in navigator){navigator.serviceWorker.register("/sw.js").catch(()=>{});}</script>
 </body>

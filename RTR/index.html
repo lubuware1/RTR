@@ -204,6 +204,7 @@ nav a.active{color:#fff;}
 
 /* ── leaderboard widget ── */
 .split{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;}
+.split.split-solo{grid-template-columns:1fr;}
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--card-radius);overflow:hidden;}
 .panel-head{background:var(--purple);color:#fff;padding:13px 18px;display:flex;align-items:center;justify-content:space-between;}
 .panel-head h3{font-weight:800;font-size:.95rem;letter-spacing:.03em;}
@@ -363,7 +364,7 @@ footer{background:var(--purple);color:rgba(255,255,255,.7);}
       <div id="leaderboardRows"></div>
     </div>
 
-    <div class="panel">
+    <div class="panel admin-only" style="display:none">
       <div class="panel-head"><h3>Pick vs Best Bet</h3></div>
       <div class="pvbb-card" id="pvbbCard"></div>
     </div>
@@ -397,7 +398,7 @@ footer{background:var(--purple);color:rgba(255,255,255,.7);}
         <a href="badges.html">Cards</a>
         <a href="referees.html">Leaderboards</a>
       </div>
-      <div class="footer-col">
+      <div class="footer-col admin-only" style="display:none">
         <h4>PVBB</h4>
         <a href="fantasy.html">Fantasy Home</a>
         <a href="fantasy.html">My Picks</a>
@@ -608,6 +609,7 @@ function renderLiveFixtures() {
   } else {
     authArea.innerHTML = `<a class="signin-link" href="login.html">Sign In</a>`;
   }
+  if (!isAdmin(currentUser)) document.querySelector('.split')?.classList.add('split-solo');
 })();
 
 document.getElementById('hamburger').addEventListener('click', e => {

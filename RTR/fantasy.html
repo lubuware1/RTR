@@ -2252,9 +2252,12 @@
     <script src="shared.js"></script>
     <script>
       // ── AUTH ──────────────────────────────────────────────────
+      // PVBB/Fantasy is admin-only for now — everyone else gets bounced home.
       const currentUser = getCurrentUser();
       if (!PREVIEW_MODE && !currentUser) {
         window.location.href = "login.html";
+      } else if (!PREVIEW_MODE && !isAdmin(currentUser)) {
+        window.location.href = "index.html";
       }
 
       // ── FANTASY DATA ──────────────────────────────────────────
