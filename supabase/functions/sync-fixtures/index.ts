@@ -65,6 +65,9 @@ serve(async (req: Request) => {
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
+  const { data: cfg } = await supabase.from('RTR Config').select('season').eq('id', 1).single();
+  const season = cfg?.season ?? null;
+
   const res = await fetch(
     'https://api.football-data.org/v4/competitions/PL/matches',
     { headers: { 'X-Auth-Token': FOOTBALL_DATA_KEY } }
@@ -93,6 +96,7 @@ serve(async (req: Request) => {
 
     return {
       id:          m.id,
+      season,
       matchweek:   m.matchday,
       home,
       away,

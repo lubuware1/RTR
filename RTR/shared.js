@@ -1148,7 +1148,8 @@ async function loadFromSheets() {
 // ── AUTO FIXTURES (from Supabase, populated by Edge Function) ─
 async function loadFixtures() {
   try {
-    const { data } = await getSB().from('RTR Fixtures').select('*');
+    const season = await getCurrentSeason();
+    const { data } = await getSB().from('RTR Fixtures').select('*').eq('season', season);
     if (!data?.length) return;
     const existing = new Set(MATCHES.map(m => `${m.home}|${m.away}|${m.matchweek}`));
     data.forEach(f => {
