@@ -192,10 +192,11 @@ async function saveFantasyPick(matchweek, refId, wc) {
   if (PREVIEW_MODE) return true;
   const { data: { session } } = await getSB().auth.getSession();
   if (!session) return false;
+  const season = await getCurrentSeason();
   const { error } = await getSB().from('RTR Fantasy Picks').upsert({
     user_id: session.user.id, matchweek, ref_id: refId,
-    wildcards: wc, updated_at: new Date().toISOString(),
-  }, { onConflict: 'user_id,matchweek' });
+    wildcards: wc, updated_at: new Date().toISOString(), season,
+  }, { onConflict: 'user_id,matchweek,season' });
   return !error;
 }
 
@@ -203,9 +204,10 @@ async function loadMyFantasyPick(matchweek) {
   if (PREVIEW_MODE) return null;
   const { data: { session } } = await getSB().auth.getSession();
   if (!session) return null;
+  const season = await getCurrentSeason();
   const { data } = await getSB().from('RTR Fantasy Picks')
     .select('ref_id, wildcards')
-    .eq('user_id', session.user.id).eq('matchweek', matchweek)
+    .eq('user_id', session.user.id).eq('matchweek', matchweek).eq('season', season)
     .maybeSingle();
   return data;
 }
@@ -252,7 +254,8 @@ async function deleteManualBonus(id) {
 
 async function loadAllManualBonuses() {
   if (PREVIEW_MODE) return {};
-  const { data } = await getSB().from('RTR Manual Bonuses').select('ref_id, pts, label');
+  const season = await getCurrentSeason();
+  const { data } = await getSB().from('RTR Manual Bonuses').select('ref_id, pts, label').eq('season', season);
   if (!data?.length) return {};
   return data.reduce((acc, row) => {
     if (!acc[row.ref_id]) acc[row.ref_id] = [];
@@ -263,9 +266,10 @@ async function loadAllManualBonuses() {
 
 async function loadManualBonuses(matchweek) {
   if (PREVIEW_MODE) return {};
+  const season = await getCurrentSeason();
   const { data } = await getSB().from('RTR Manual Bonuses')
     .select('ref_id, pts, label')
-    .eq('matchweek', matchweek);
+    .eq('matchweek', matchweek).eq('season', season);
   if (!data?.length) return {};
   // Group by ref_id: { refId: [{pts, label}, ...] }
   return data.reduce((acc, row) => {
@@ -277,7 +281,8 @@ async function loadManualBonuses(matchweek) {
 
 async function loadAllFantasyPicks() {
   if (PREVIEW_MODE) return [];
-  const { data: picks } = await getSB().from('RTR Fantasy Picks').select('user_id, ref_id, matchweek, wildcards, gw_pts');
+  const season = await getCurrentSeason();
+  const { data: picks } = await getSB().from('RTR Fantasy Picks').select('user_id, ref_id, matchweek, wildcards, gw_pts').eq('season', season);
   if (!picks?.length) return [];
   const { data: profiles } = await getSB().from('RTR Profiles')
     .select('id, username, team, avatar_badge').in('id', picks.map(p => p.user_id));
@@ -290,11 +295,13 @@ async function saveGWPointsBatch(results) {
   // Uses individual updates so only gw_pts is written — existing pick/wildcards are untouched.
   if (PREVIEW_MODE || !results.length) return true;
   const sb = getSB();
+  const season = await getCurrentSeason();
   const updates = results.map(r =>
     sb.from('RTR Fantasy Picks')
       .update({ gw_pts: r.gw_pts })
       .eq('user_id', r.user_id)
       .eq('matchweek', r.matchweek)
+      .eq('season', season)
   );
   const settled = await Promise.all(updates);
   const failed = settled.filter(r => r.error);
@@ -304,8 +311,9 @@ async function saveGWPointsBatch(results) {
 
 async function saveManualBonus(matchweek, refId, pts, label) {
   if (PREVIEW_MODE) return true;
+  const season = await getCurrentSeason();
   const { error } = await getSB().from('RTR Manual Bonuses').insert({
-    matchweek, ref_id: refId, pts, label,
+    matchweek, ref_id: refId, pts, label, season,
   });
   return !error;
 }
