@@ -286,10 +286,11 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
 
   const { data, error } = await sb.auth.signInWithPassword({ email: identifier, password: pass });
   if (error) { showErr('loginError', error.message); setLoading('loginBtn', false); return; }
-  const { data: profile } = await sb.from('RTR Profiles').select('username,team').eq('id', data.user.id).single();
+  const { data: profile } = await sb.from('RTR Profiles').select('username,team,is_admin').eq('id', data.user.id).single();
   localStorage.setItem(_USER_KEY, JSON.stringify({
     id: data.user.id, email: data.user.email,
-    username: profile?.username || 'User', team: profile?.team || null
+    username: profile?.username || 'User', team: profile?.team || null,
+    is_admin: profile?.is_admin || false
   }));
   window.location.href = 'index.html';
 });

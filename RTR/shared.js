@@ -99,11 +99,12 @@ async function checkAuth() {
   if (PREVIEW_MODE) return true;
   const { data: { session } } = await getSB().auth.getSession();
   if (!session) { localStorage.removeItem(_USER_KEY); return false; }
-  const { data: profile, error: profileError } = await getSB().from('RTR Profiles').select('username,team,avatar_badge').eq('id', session.user.id).single();
+  const { data: profile, error: profileError } = await getSB().from('RTR Profiles').select('username,team,avatar_badge,is_admin').eq('id', session.user.id).single();
   console.log('[RTR] profile fetch:', profile, 'error:', profileError);
   localStorage.setItem(_USER_KEY, JSON.stringify({
     id: session.user.id, email: session.user.email,
-    username: profile?.username || 'User', team: profile?.team || null
+    username: profile?.username || 'User', team: profile?.team || null,
+    is_admin: profile?.is_admin || false
   }));
   // Sync avatar badge from DB to localStorage (so it persists across devices)
   if (profile?.avatar_badge) localStorage.setItem(_AVATAR_KEY, profile.avatar_badge);
@@ -903,10 +904,15 @@ async function clearCurrentUser() {
   if (!PREVIEW_MODE) await getSB().auth.signOut();
 }
 function isLoggedIn() { return PREVIEW_MODE || !!getCurrentUser(); }
+// Real enforcement is the is_admin column on RTR Profiles (checked by
+// Postgres RLS via public.is_admin()) — this list is only a fallback for
+// sessions cached in localStorage before that column existed.
 const ADMIN_USERS = ['danawhiteware', 'jware89'];
 function isAdmin(user) {
   const u = user || getCurrentUser();
-  return !!u && ADMIN_USERS.includes(u.username?.toLowerCase());
+  if (!u) return false;
+  if (u.is_admin) return true;
+  return ADMIN_USERS.includes(u.username?.toLowerCase());
 }
 
 // ── FLAG IMAGE HELPER ─────────────────────────────────────
