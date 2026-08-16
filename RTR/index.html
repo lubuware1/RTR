@@ -236,6 +236,8 @@ nav a.active{color:#fff;}
 .hl-card .fill{position:absolute;inset:0;}
 .hl-card::before{content:'';position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.9) 0%,rgba(0,0,0,.15) 55%,transparent 75%);z-index:1;}
 .hl-play{position:absolute;top:12px;right:12px;z-index:2;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.14);border:1.5px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.hl-card-yt{cursor:pointer;}
+.hl-card-yt .yt-frame{position:absolute;inset:0;width:100%;height:100%;border:0;z-index:10;border-radius:inherit;}
 .hl-meta{position:absolute;left:14px;right:14px;bottom:14px;z-index:2;}
 .hl-tag{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--green);margin-bottom:4px;}
 .hl-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;line-height:1.15;}
@@ -521,13 +523,44 @@ function renderHomeContent() {
     </div>
     <a class="btn-cta" href="${p.link}">Change Pick →</a>`;
 
-  document.getElementById('hlGrid').innerHTML = HOME_CONTENT.highlights.filter(hl => hl.visible !== false).map(hl => `
+  document.getElementById('hlGrid').innerHTML = HOME_CONTENT.highlights.filter(hl => hl.visible !== false).map(hl => {
+    if (hl.media?.type === 'youtube') {
+      const ytId = extractYouTubeId(hl.media.src);
+      return `
+      <div class="hl-card hl-card-yt" data-yt-id="${ytId}">
+        <img src="https://i.ytimg.com/vi/${ytId}/hqdefault.jpg" alt="" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
+        <div class="hl-play"><svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></div>
+        <div class="hl-meta"><div class="hl-tag">${hl.tag}</div><div class="hl-title">${hl.title}</div></div>
+      </div>`;
+    }
+    return `
     <a class="hl-card" href="${homeLinkFor(hl)}">
       ${homeMediaHTML(hl.media, 'fill')}
       <div class="hl-play"><svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></div>
       <div class="hl-meta"><div class="hl-tag">${hl.tag}</div><div class="hl-title">${hl.title}</div></div>
-    </a>`).join('');
+    </a>`;
+  }).join('');
 }
+
+// ── YouTube video ID from either a bare ID or a full URL (watch/short/embed link) ──
+function extractYouTubeId(src) {
+  if (!src) return '';
+  const m = src.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))?([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : src.trim();
+}
+
+// ── click a YouTube highlight card once to swap its thumbnail for the real player ──
+document.getElementById('hlGrid').addEventListener('click', e => {
+  const card = e.target.closest('.hl-card-yt');
+  if (!card || card.querySelector('iframe')) return;
+  const id = card.dataset.ytId;
+  const iframe = document.createElement('iframe');
+  iframe.className = 'yt-frame';
+  iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&modestbranding=1&rel=0&iv_load_policy=3&loop=1&playlist=${id}`;
+  iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+  iframe.allowFullscreen = true;
+  card.appendChild(iframe);
+});
 
 // ── live fixtures ribbon (replaces the placeholder rows once real data loads) ──
 function fixtureStatusText(m) {
@@ -583,11 +616,11 @@ function renderLiveFixtures() {
     authArea.innerHTML = `
       <div class="user-chip" id="userChip">
         <div class="uc-avatar" id="ucAvatar"></div>
-        <span class="uc-name">${currentUser.username || 'Guest'}</span>
+        <span class="uc-name">${escapeHtml(currentUser.username || 'Guest')}</span>
         <div class="user-dropdown" id="userDropdown">
           <div class="dd-head">
-            <div class="dd-uname">${currentUser.username || 'Guest'}</div>
-            <div class="dd-team">${currentUser.team ? currentUser.team + ' supporter' : 'No team selected'}</div>
+            <div class="dd-uname">${escapeHtml(currentUser.username || 'Guest')}</div>
+            <div class="dd-team">${currentUser.team ? escapeHtml(currentUser.team) + ' supporter' : 'No team selected'}</div>
           </div>
           <div class="dd-item" onclick="location.href='badges.html'">🏅 Cards</div>
           <div class="dd-item danger" id="ddLogout">↩ Sign out</div>
@@ -607,6 +640,7 @@ function renderLiveFixtures() {
       const dd = document.getElementById('userDropdown');
       if (dd) dd.classList.remove('open');
     });
+    initNotificationBell(currentUser);
   } else {
     authArea.innerHTML = `<a class="signin-link" href="login.html">Sign In</a>`;
   }

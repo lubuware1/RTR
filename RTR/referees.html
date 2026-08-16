@@ -317,6 +317,7 @@ function initHeader(){
     const b=document.createElement('div');b.className='preview-badge';b.textContent='Preview Mode';
     document.getElementById('userChip').insertBefore(b,document.getElementById('userChip').firstChild);
   }
+  initNotificationBell(currentUser);
 }
 
 document.getElementById('userChip').addEventListener('click',e=>{e.stopPropagation();document.getElementById('userDropdown').classList.toggle('open');});

@@ -260,6 +260,8 @@
     font-weight: 700; font-size: 1.05rem; color: var(--text);
     line-height: 1.3;
   }
+  .post-subject-link { color: inherit; text-decoration: none; }
+  .post-subject-link:hover { text-decoration: underline; }
   .post-preview {
     font-size: .82rem; color: var(--muted);
     line-height: 1.55; white-space: nowrap;
@@ -600,6 +602,19 @@ let activeMatchweek = null;
 let searchQuery = '';
 let expandedRefId = null;
 let allPosts = [];
+let REACTION_COUNTS = {};
+let MY_REACTIONS = {};
+
+// Batches reaction data for every post + reply currently loaded, so
+// renderPostCard()/renderRefDiscussions() can read it synchronously
+// instead of each card firing its own fetch.
+async function refreshReactionCache(posts) {
+  const ids = posts.map(p => p.id);
+  [REACTION_COUNTS, MY_REACTIONS] = await Promise.all([
+    loadReactionCounts(ids),
+    loadMyReactions(ids),
+  ]);
+}
 
 function toast(msg, dur = 3000) {
   const t = document.getElementById('toast');
@@ -677,6 +692,7 @@ async function savePost(category, subject, body, replyTo, matchweek) {
     created_at: new Date().toISOString(),
   }).select().single();
   if (error) { console.error('[RTR] savePost error:', error); return null; }
+  processMentions(body, replyTo || data.id, currentUser).catch(() => {});
   return data;
 }
 
@@ -690,6 +706,7 @@ async function saveRefPost(refId, refName, body) {
     created_at: new Date().toISOString(),
   }).select().single();
   if (error) { console.error('[RTR] saveRefPost error:', error); return null; }
+  processMentions(body, data.id, currentUser).catch(() => {});
   return data;
 }
 
@@ -855,17 +872,24 @@ function renderPosts() {
     return;
   }
 
+  const INLINE_REPLY_LIMIT = 3;
   function renderPostCard(post) {
     const replies = allPosts.filter(p => p.reply_to === post.id).sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
     const isExpanded = expandedId === post.id;
     const preview = post.body.length > 120 ? post.body.slice(0, 120) + '…' : post.body;
     const refObj = post.ref_id ? REFS.find(r => r.id === post.ref_id) : null;
     const refPill = refObj ? `<a class="ref-pill" href="forum.html?ref=${refObj.id}">🟨 ${refObj.name}</a>` : '';
-    const repliesHtml = replies.map(r => `
+    const visibleReplies = replies.slice(-INLINE_REPLY_LIMIT);
+    const hiddenReplyCount = replies.length - visibleReplies.length;
+    const repliesHtml = visibleReplies.map(r => `
       <div class="reply-card">
         <div class="reply-meta"><strong>${esc(r.username)}</strong> · ${fmtDate(r.created_at)}</div>
         <div class="reply-body">${esc(r.body)}</div>
+        ${reactionBarHtml(r.id, REACTION_COUNTS, MY_REACTIONS[r.id])}
       </div>`).join('');
+    const openThreadLabel = hiddenReplyCount > 0
+      ? `+${hiddenReplyCount} more ${hiddenReplyCount === 1 ? 'reply' : 'replies'} — open thread →`
+      : 'Open thread to reply →';
     const q = searchQuery;
     return `
       <div class="post-card${isExpanded ? ' expanded' : ''}" data-pid="${post.id}">
@@ -874,7 +898,7 @@ function renderPosts() {
             <span class="cat-pill ${post.category}">${catLabel(post.category)}</span>
             <span class="post-author">by <strong>${highlight(post.username, q)}</strong> · ${fmtDate(post.created_at)}</span>
           </div>
-          <div class="post-subject">${highlight(post.subject, q)} ${refPill}</div>
+          <div class="post-subject"><a href="forum-thread.html?id=${post.id}" class="post-subject-link" onclick="event.stopPropagation()">${highlight(post.subject, q)}</a> ${refPill}</div>
           <div class="post-preview">${highlight(preview, q)}</div>
         </div>
         <div class="post-footer">
@@ -885,13 +909,11 @@ function renderPosts() {
             ${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}
           </span>
         </div>
+        <div style="padding:0 16px 12px;">${reactionBarHtml(post.id, REACTION_COUNTS, MY_REACTIONS[post.id])}</div>
         <div class="post-body-full">${esc(post.body)}</div>
         <div class="replies-section">
           ${replies.length ? `<div class="replies-label"><span>${replies.length} ${replies.length === 1 ? 'Reply' : 'Replies'}</span></div><div class="replies-scroll" id="repliesScroll-${post.id}">${repliesHtml}</div>` : `<div class="replies-scroll" id="repliesScroll-${post.id}"></div>`}
-          <div class="reply-box">
-            <textarea class="reply-input" data-rpid="${post.id}" placeholder="Write a reply…" rows="1" maxlength="1000"></textarea>
-            <button class="reply-send-btn" data-rpid="${post.id}">Reply</button>
-          </div>
+          <a class="post-subject-link" style="display:inline-block;margin-top:8px;font-size:.82rem;" href="forum-thread.html?id=${post.id}">${openThreadLabel}</a>
         </div>
       </div>`;
   }
@@ -961,34 +983,9 @@ function renderPosts() {
   // Scroll already-expanded thread to bottom on initial render
   if (expandedId) setTimeout(() => scrollRepliesToBottom(expandedId), 30);
 
-  // Wire reply send buttons
-  el.querySelectorAll('.reply-send-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const pid = +btn.dataset.rpid;
-      const textarea = el.querySelector(`.reply-input[data-rpid="${pid}"]`);
-      const body = textarea?.value.trim();
-      if (!body) return;
-      btn.disabled = true;
-      const post = allPosts.find(p => p.id === pid);
-      const reply = await savePost(post?.category || 'general', post?.subject || '', body, pid);
-      if (reply) {
-        allPosts = [...allPosts, reply];
-        renderPosts();
-        toast('Reply posted');
-        setTimeout(() => scrollRepliesToBottom(pid), 30);
-      } else {
-        btn.disabled = false;
-        toast('Failed to post reply — please try again');
-      }
-    });
-  });
-
-  // Auto-expand reply textareas
-  el.querySelectorAll('.reply-input').forEach(ta => {
-    ta.addEventListener('input', () => {
-      ta.style.height = 'auto';
-      ta.style.height = ta.scrollHeight + 'px';
-    });
+  wireReactionButtons(el, async () => {
+    await refreshReactionCache(allPosts);
+    renderPosts();
   });
 }
 
@@ -1014,6 +1011,7 @@ function renderRefDiscussions() {
       <div class="reply-card">
         <div class="reply-meta"><strong>${esc(post.username)}</strong> · ${fmtDate(post.created_at)}</div>
         <div class="reply-body">${esc(post.body)}</div>
+        ${reactionBarHtml(post.id, REACTION_COUNTS, MY_REACTIONS[post.id])}
       </div>`).join('');
 
     return `
@@ -1084,6 +1082,11 @@ function renderRefDiscussions() {
       ta.style.height = ta.scrollHeight + 'px';
     });
   });
+
+  wireReactionButtons(el, async () => {
+    await refreshReactionCache(allPosts);
+    renderPosts();
+  });
 }
 
 function esc(str) {
@@ -1124,6 +1127,7 @@ function initHeader() {
   document.getElementById('hamburger').addEventListener('click', () => {
     document.getElementById('mobileNav').classList.toggle('open');
   });
+  initNotificationBell(currentUser);
 }
 
 // ── CATEGORY TABS ─────────────────────────────────────────
@@ -1214,10 +1218,12 @@ function seasonLabel(s) {
   seasonSel.innerHTML = seasons.map(s => `<option value="${s}"${s === currentSeason ? ' selected' : ''}>${seasonLabel(s)}${s === currentSeason ? ' (current)' : ''}</option>`).join('');
   seasonSel.addEventListener('change', async () => {
     allPosts = await loadPosts(seasonSel.value);
+    await refreshReactionCache(allPosts);
     renderPosts();
   });
 
   allPosts = await loadPosts(currentSeason);
+  await refreshReactionCache(allPosts);
 
   // ?ref=ID — open that referee's discussion section on load
   const refParam = new URLSearchParams(location.search).get('ref');

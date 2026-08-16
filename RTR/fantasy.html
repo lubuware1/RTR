@@ -2453,6 +2453,7 @@
               document.getElementById("userChip").firstChild,
             );
         }
+        if (currentUser) initNotificationBell(currentUser);
       }
       document.getElementById("userChip").addEventListener("click", (e) => {
         e.stopPropagation();
@@ -3129,7 +3130,7 @@
             <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
             <div style="display:flex;align-items:center;">${miniAvatarHtml(r.badge, r.uname)}</div>
             <div style="min-width:0;">
-              <div class="fl-name${r.isMe ? " me" : ""}">${r.uname}${r.isMe ? " ★" : ""}</div>
+              <div class="fl-name${r.isMe ? " me" : ""}">${escapeHtml(r.uname)}${r.isMe ? " ★" : ""}</div>
               <div class="fl-sub">${r.refName}</div>
             </div>
             <div class="fl-pts${r.isMe ? " me" : ""}">${ptsDisplay} <span style="font-size:.75em;opacity:.65;font-weight:500">(${refPtsDisplay})</span></div>
@@ -3517,8 +3518,8 @@
       <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
       <div style="display:flex;align-items:center;">${miniAvatarHtml(p.avatarBadge, p.username)}</div>
       <div style="min-width:0;">
-        <div class="fl-name${p.isMe ? " me" : ""}">${p.username}${p.isMe ? " ★" : ""}</div>
-        <div class="fl-sub">${p.team}${FGW.deadlinePassed || p.isMe ? ` · picked ${p.gwPick}` : " · pick hidden"}</div>
+        <div class="fl-name${p.isMe ? " me" : ""}">${escapeHtml(p.username)}${p.isMe ? " ★" : ""}</div>
+        <div class="fl-sub">${escapeHtml(p.team)}${FGW.deadlinePassed || p.isMe ? ` · picked ${p.gwPick}` : " · pick hidden"}</div>
         <div class="fl-wc-row">${wcHtml}</div>
       </div>
       <div class="fl-pts${p.isMe ? " me" : ""}">${p.pts} <span style="font-size:.75em;opacity:.65;font-weight:500">(${refPtsDisplay !== null ? refPtsDisplay : "—"} ref pts)</span></div>
@@ -3628,8 +3629,8 @@
             <div class="fl-rank${i < 3 ? " top" : ""}">${medal}</div>
             <div style="display:flex;align-items:center;">${miniAvatarHtml(seasonBadge, uname)}</div>
             <div style="min-width:0;">
-              <div class="fl-name${me ? " me" : ""}">${uname}${me ? " ★" : ""}</div>
-              <div class="fl-sub">${row.profile?.team || ""}</div>
+              <div class="fl-name${me ? " me" : ""}">${escapeHtml(uname)}${me ? " ★" : ""}</div>
+              <div class="fl-sub">${escapeHtml(row.profile?.team || "")}</div>
             </div>
             <div class="fl-pts${me ? " me" : ""}">${row.total} <span style="font-size:.75em;opacity:.65;font-weight:500">(${refPts} ref pts)</span></div>
           </div>`;
