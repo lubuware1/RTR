@@ -364,7 +364,7 @@ footer{background:var(--purple);color:rgba(255,255,255,.7);}
         <a class="section-link" href="referees.html">Full table →</a>
       </div>
       <div class="lb-row head"><span></span><span>Referee</span><span style="text-align:center">Neutral</span><span style="text-align:center">Fan</span></div>
-      <div id="leaderboardRows"></div>
+      <div id="leaderboardRows"><div class="lb-empty" style="padding:20px 4px;color:var(--muted);font-size:.85rem;">Loading standings…</div></div>
     </div>
 
     <div class="panel">
@@ -444,6 +444,48 @@ function homeLinkFor(item) {
   return item.articleId ? `article.html?id=${item.articleId}` : item.link;
 }
 
+// ── Top Rated Referees: renders whatever's currently in HOME_CONTENT.leaderboard.
+// An empty array (no votes cast yet this season) shows an honest empty state rather
+// than stale placeholder numbers — this panel only ever displays real standings. ──
+function renderLeaderboard() {
+  const rows = document.getElementById('leaderboardRows');
+  if (!HOME_CONTENT.leaderboard.length) {
+    rows.innerHTML = `<div class="lb-empty" style="padding:20px 4px;color:var(--muted);font-size:.85rem;">No ratings yet this season — check back once matches kick off.</div>`;
+    return;
+  }
+  rows.innerHTML = HOME_CONTENT.leaderboard.map(row => `
+    <div class="lb-row">
+      <span class="lb-rank${row.top ? ' top' : ''}">${row.rank}</span>
+      <span class="lb-name">${escapeHtml(row.name)}<span>${escapeHtml(row.games)}</span></span>
+      <span class="lb-num${row.top ? ' green' : ''}">${row.neutral}</span>
+      <span class="lb-num">${row.fan}</span>
+    </div>`).join('');
+}
+
+// Pulls the same live standings referees.html shows (season-scoped incident/general
+// votes aggregated per referee) and swaps them into the homepage leaderboard, so this
+// panel always matches the real Referees page instead of admin-edited sample data.
+async function loadTopReferees() {
+  try {
+    const { data: refs } = await getSB().from('RTR Referees').select('*');
+    if (refs?.length) REFS = refs.map(mapRef);
+    await loadFixtures();
+    await loadIncidentRatings();
+    const ranked = REFS.filter(r => r.neutralRating != null)
+      .sort((a, b) => b.neutralRating - a.neutralRating)
+      .slice(0, 5);
+    HOME_CONTENT.leaderboard = ranked.map((r, i) => ({
+      rank: i + 1,
+      top: i < 3,
+      name: r.name,
+      games: `${r.games || 0} game${r.games === 1 ? '' : 's'}`,
+      neutral: r.neutralRating.toFixed(1),
+      fan: r.fanRating != null ? r.fanRating.toFixed(1) : '—',
+    }));
+    renderLeaderboard();
+  } catch (e) { console.warn('[RTR] loadTopReferees failed:', e); }
+}
+
 // ── render the homepage from HOME_CONTENT above (skipping anything toggled off) ──
 function renderHomeContent() {
   const h = HOME_CONTENT.hero;
@@ -502,13 +544,9 @@ function renderHomeContent() {
     </a>`;
   }).join('');
 
-  document.getElementById('leaderboardRows').innerHTML = HOME_CONTENT.leaderboard.map(row => `
-    <div class="lb-row">
-      <span class="lb-rank${row.top ? ' top' : ''}">${row.rank}</span>
-      <span class="lb-name">${row.name}<span>${row.games}</span></span>
-      <span class="lb-num${row.top ? ' green' : ''}">${row.neutral}</span>
-      <span class="lb-num">${row.fan}</span>
-    </div>`).join('');
+  // Leaderboard is intentionally NOT rendered from HOME_CONTENT here — it's real
+  // referee standings only, filled in by loadTopReferees() once it resolves, so
+  // this panel never shows stale/fabricated numbers while that's in flight.
 
   const p = HOME_CONTENT.pvbb;
   document.getElementById('pvbbCard').innerHTML = `
@@ -591,6 +629,12 @@ function renderLiveFixtures() {
   const saved = await loadHomeContent();
   if (saved) HOME_CONTENT = saved;
   renderHomeContent();
+
+  // Top Rated Referees — pulls the same live season standings as referees.html,
+  // overwriting whatever placeholder/admin-edited rows renderHomeContent() just
+  // drew above. Runs before loadFromSheets() below, which repopulates MATCHES
+  // with just the current gameweek and would otherwise skew a season-wide ranking.
+  await loadTopReferees().catch(() => {});
 
   // Live matchweek number — runs after render so the target elements exist
   const cfg = await loadGWConfig();
