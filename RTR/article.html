@@ -162,11 +162,11 @@ nav a.active{color:#fff;}
     authArea.innerHTML = `
       <div class="user-chip" id="userChip">
         <div class="uc-avatar" id="ucAvatar"></div>
-        <span class="uc-name">${currentUser.username || 'Guest'}</span>
+        <span class="uc-name">${escapeHtml(currentUser.username || 'Guest')}</span>
         <div class="user-dropdown" id="userDropdown">
           <div class="dd-head">
-            <div class="dd-uname">${currentUser.username || 'Guest'}</div>
-            <div class="dd-team">${currentUser.team ? currentUser.team + ' supporter' : 'No team selected'}</div>
+            <div class="dd-uname">${escapeHtml(currentUser.username || 'Guest')}</div>
+            <div class="dd-team">${currentUser.team ? escapeHtml(currentUser.team) + ' supporter' : 'No team selected'}</div>
           </div>
           <div class="dd-item" onclick="location.href='badges.html'">🏅 Cards</div>
           <div class="dd-item danger" id="ddLogout">↩ Sign out</div>
@@ -186,6 +186,7 @@ nav a.active{color:#fff;}
       const dd = document.getElementById('userDropdown');
       if (dd) dd.classList.remove('open');
     });
+    initNotificationBell(currentUser);
   } else {
     authArea.innerHTML = `<a class="signin-link" href="login.html">Sign In</a>`;
   }

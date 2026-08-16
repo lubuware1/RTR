@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#37003c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RefRater">
+<link rel="apple-touch-icon" href="/images/logos/RRlogo192.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RefRater — Thread</title>
+<link rel="icon" type="image/png" sizes="192x192" href="/images/logos/RRlogo192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/images/logos/RRlogo512.png">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7289925014125722" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="shared.js"></script>
+<style>
+  body { background: var(--bg); }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 70% 50% at 20% 30%, rgba(55,0,60,.4) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 60% at 80% 70%, rgba(80,0,90,.25) 0%, transparent 65%);
+    pointer-events: none; z-index: 0;
+  }
+  .page { position: relative; z-index: 1; max-width: 760px; margin: 0 auto; padding: 28px 20px 80px; }
+
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: .82rem;
+    letter-spacing: .06em; text-transform: uppercase; text-decoration: none;
+    color: var(--muted); margin-bottom: 20px; transition: color .15s;
+  }
+  .back-link:hover { color: var(--pl-green); }
+
+  /* ── main post (same visual language as forum.html's post-card, always expanded) ── */
+  .cat-pill {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: .68rem; letter-spacing: 1px;
+    text-transform: uppercase; padding: 2px 8px; border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .cat-pill.general  { background: rgba(107,114,128,.2); color: var(--muted); }
+  .cat-pill.referee  { background: rgba(255,211,42,.12); color: var(--yellow); }
+  .cat-pill.game     { background: rgba(0,255,133,.1);   color: var(--pl-green); }
+  .cat-pill.decision { background: rgba(255,71,87,.1);   color: var(--red); }
+
+  .thread-card {
+    background: var(--surface2);
+    border: 1px solid rgba(0,255,133,.25);
+    border-radius: 14px;
+    padding: 20px 22px;
+    margin-bottom: 20px;
+  }
+  .thread-meta-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .thread-author { font-size: .78rem; color: var(--muted); }
+  .thread-author strong { color: var(--text); }
+  .thread-subject {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800; font-size: 1.55rem; color: var(--text);
+    line-height: 1.25; margin-bottom: 14px;
+  }
+  .ref-pill {
+    display: inline-block; margin-left: 8px;
+    font-size: .78rem; color: var(--yellow); text-decoration: none;
+  }
+  .ref-pill:hover { text-decoration: underline; }
+  .thread-body {
+    font-size: .92rem; color: var(--text); line-height: 1.7;
+    white-space: pre-wrap;
+  }
+
+  /* ── replies ── */
+  .replies-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: .78rem; font-weight: 700;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--muted); margin: 24px 0 12px;
+    padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  }
+  .reply-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .reply-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .reply-meta { font-size: .72rem; color: var(--muted); margin-bottom: 4px; }
+  .reply-meta strong { color: var(--text); }
+  .reply-body { font-size: .85rem; color: var(--text); line-height: 1.6; white-space: pre-wrap; }
+  .no-replies { font-size: .85rem; color: var(--muted); padding: 10px 0 16px; }
+
+  .reply-box { display: flex; gap: 8px; align-items: flex-start; }
+  .reply-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-size: .87rem;
+    resize: vertical; min-height: 44px;
+    outline: none; transition: border-color .15s;
+  }
+  .reply-input:focus { border-color: rgba(0,255,133,.35); }
+  .reply-send-btn {
+    background: rgba(0,255,133,.12);
+    border: 1px solid rgba(0,255,133,.3);
+    border-radius: 7px;
+    padding: 10px 16px;
+    color: var(--pl-green);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: .82rem; letter-spacing: .5px;
+    text-transform: uppercase; cursor: pointer;
+    transition: all .15s; white-space: nowrap;
+  }
+  .reply-send-btn:hover { background: rgba(0,255,133,.2); }
+  .reply-send-btn:disabled { opacity: .45; cursor: not-allowed; }
+  .signin-prompt {
+    font-size: .85rem; color: var(--muted);
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px; text-align: center;
+  }
+  .signin-prompt a { color: var(--pl-green); text-decoration: none; }
+  .signin-prompt a:hover { text-decoration: underline; }
+
+  .not-found { text-align: center; padding: 60px 20px; }
+  .not-found h1 { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 1.4rem; margin-bottom: 10px; }
+  .not-found p { color: var(--muted); margin-bottom: 16px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="matches.html"><img src="images/logos/RRLogo.svg" alt="RefRater" style="height:44px;width:auto;display:block;"></a>
+    <div class="header-right">
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="matches.html">Matches</a>
+        <a href="referees.html">Referees</a>
+        <a href="badges.html">Cards</a>
+        <a href="forum.html" class="active">Forum</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+      <div class="user-chip" id="userChip">
+        <div class="uc-avatar" id="ucAvatar"></div>
+        <span class="uc-name" id="ucName"></span>
+        <span id="ucTeamEmoji"></span>
+        <span style="color:var(--muted);font-size:.7rem;margin-left:2px">▾</span>
+        <div class="user-dropdown" id="userDropdown">
+          <div class="dd-head">
+            <div class="dd-uname" id="ddName"></div>
+            <div class="dd-team" id="ddTeam"></div>
+          </div>
+          <div class="dd-item" onclick="location.href='badges.html'">🏅 Cards</div>
+          <div class="dd-item admin-only" style="display:none" onclick="location.href='fantasy.html'"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="PVBB" style="height:16px;width:auto;vertical-align:middle;margin-right:6px;">PVBB</div>
+          <div class="dd-item admin-only" style="display:none" onclick="location.href='team_task_manager.html'">📋 Tasks</div>
+          <div class="dd-item danger" id="ddLogout">↩ Sign out</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-nav" id="mobileNav">
+  <a href="index.html">Home</a>
+  <a href="matches.html">Matches</a>
+  <a href="referees.html">Referees</a>
+  <a href="badges.html">Cards</a>
+  <a href="forum.html" class="active">Forum</a>
+</div>
+
+<div class="page">
+  <a class="back-link" href="forum.html">← Back to Forum</a>
+  <div id="threadRoot">Loading…</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let currentUser = null;
+
+function toast(msg, dur = 3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+function fmtDate(dateStr) {
+  if (!dateStr) return '';
+  return new Date(dateStr).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function catLabel(cat) {
+  return { general:'General', referee:'Referee', game:'Game', decision:'Decision' }[cat] || cat;
+}
+
+function initHeader() {
+  if (!currentUser) {
+    const nm = document.getElementById('ucName'); if (nm) nm.textContent = 'Login';
+    const av = document.getElementById('ucAvatar'); if (av) av.textContent = '→';
+    const chip = document.getElementById('userChip'); if (chip) chip.addEventListener('click', () => { window.location.href = 'login.html'; });
+    const hb = document.getElementById('hamburger'); if (hb) hb.addEventListener('click', () => { document.getElementById('mobileNav')?.classList.toggle('open'); });
+    return;
+  }
+  applyUserAvatar(document.getElementById('ucAvatar'), currentUser);
+  document.getElementById('ucName').textContent = currentUser.username || 'User';
+  if (isAdmin(currentUser)) document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
+  document.getElementById('ucTeamEmoji').textContent = '';
+  document.getElementById('ddName').textContent = currentUser.username || 'User';
+  document.getElementById('ddTeam').textContent = currentUser.team ? `${currentUser.team} fan` : 'No team set';
+
+  document.getElementById('userChip').addEventListener('click', () => {
+    document.getElementById('userDropdown').classList.toggle('open');
+  });
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#userChip')) document.getElementById('userDropdown').classList.remove('open');
+  });
+  document.getElementById('ddLogout').addEventListener('click', async () => {
+    await clearCurrentUser(); window.location.href = 'login.html';
+  });
+  document.getElementById('hamburger').addEventListener('click', () => {
+    document.getElementById('mobileNav').classList.toggle('open');
+  });
+  initNotificationBell(currentUser);
+}
+
+async function loadThread(id) {
+  const { data: post } = await getSB().from('RTR Forum').select('*').eq('id', id).single();
+  if (!post) return null;
+  const { data: replies } = await getSB().from('RTR Forum').select('*').eq('reply_to', id).order('created_at', { ascending: true });
+  return { post, replies: replies || [] };
+}
+
+let REACTION_COUNTS = {};
+let MY_REACTIONS = {};
+
+async function refreshReactionCache(post, replies) {
+  const ids = [post.id, ...replies.map(r => r.id)];
+  [REACTION_COUNTS, MY_REACTIONS] = await Promise.all([
+    loadReactionCounts(ids),
+    loadMyReactions(ids),
+  ]);
+}
+
+function renderThread(post, replies) {
+  const refPill = post.ref_id ? `<a class="ref-pill" href="forum.html?ref=${post.ref_id}">🟨 view referee</a>` : '';
+  const repliesHtml = replies.length
+    ? replies.map(r => `
+      <div class="reply-card">
+        <div class="reply-meta"><strong>${escapeHtml(r.username)}</strong> · ${fmtDate(r.created_at)}</div>
+        <div class="reply-body">${escapeHtml(r.body)}</div>
+        ${reactionBarHtml(r.id, REACTION_COUNTS, MY_REACTIONS[r.id])}
+      </div>`).join('')
+    : `<div class="no-replies">No replies yet — be the first.</div>`;
+
+  const replyBoxHtml = currentUser
+    ? `<div class="reply-box">
+        <textarea class="reply-input" id="replyInput" placeholder="Write a reply…" maxlength="1000"></textarea>
+        <button class="reply-send-btn" id="replySendBtn">Reply</button>
+      </div>`
+    : `<div class="signin-prompt"><a href="login.html">Sign in</a> to join the conversation.</div>`;
+
+  document.getElementById('threadRoot').innerHTML = `
+    <div class="thread-card">
+      <div class="thread-meta-row">
+        <span class="cat-pill ${post.category}">${catLabel(post.category)}</span>
+        <span class="thread-author">by <strong>${escapeHtml(post.username)}</strong> · ${fmtDate(post.created_at)}</span>
+      </div>
+      <div class="thread-subject">${escapeHtml(post.subject)}${refPill}</div>
+      <div class="thread-body">${escapeHtml(post.body)}</div>
+      ${reactionBarHtml(post.id, REACTION_COUNTS, MY_REACTIONS[post.id])}
+    </div>
+    <div class="replies-label">${replies.length} ${replies.length === 1 ? 'Reply' : 'Replies'}</div>
+    <div class="reply-list">${repliesHtml}</div>
+    ${replyBoxHtml}
+  `;
+
+  const sendBtn = document.getElementById('replySendBtn');
+  if (sendBtn) {
+    sendBtn.addEventListener('click', async () => {
+      const input = document.getElementById('replyInput');
+      const body = input.value.trim();
+      if (!body) return;
+      sendBtn.disabled = true;
+      const season = await getCurrentSeason();
+      const { data: reply, error } = await getSB().from('RTR Forum').insert({
+        user_id: currentUser.id,
+        username: currentUser.username || 'User',
+        category: post.category,
+        subject: post.subject,
+        body: cleanText(body),
+        reply_to: post.id,
+        matchweek: post.matchweek || null,
+        season,
+        created_at: new Date().toISOString(),
+      }).select().single();
+      sendBtn.disabled = false;
+      if (reply) {
+        processMentions(body, post.id, currentUser).catch(() => {});
+        replies.push(reply);
+        input.value = '';
+        renderThread(post, replies);
+        toast('Reply posted');
+      } else {
+        console.error('[RTR] reply insert error:', error);
+        toast('Failed to post reply — please try again');
+      }
+    });
+  }
+
+  wireReactionButtons(document.getElementById('threadRoot'), async () => {
+    await refreshReactionCache(post, replies);
+    renderThread(post, replies);
+  });
+}
+
+(async function init() {
+  await checkAuth();
+  currentUser = getCurrentUser();
+  initHeader();
+
+  const id = new URLSearchParams(location.search).get('id');
+  if (!id) {
+    document.getElementById('threadRoot').innerHTML = `<div class="not-found"><h1>No thread specified</h1><p>This link is missing a thread ID.</p><a class="back-link" href="forum.html">← Back to Forum</a></div>`;
+    return;
+  }
+
+  const result = await loadThread(id);
+  if (!result) {
+    document.getElementById('threadRoot').innerHTML = `<div class="not-found"><h1>Thread not found</h1><p>This post may have been removed.</p><a class="back-link" href="forum.html">← Back to Forum</a></div>`;
+    return;
+  }
+
+  await refreshReactionCache(result.post, result.replies);
+  renderThread(result.post, result.replies);
+})();
+</script>
+<script>if("serviceWorker"in navigator){navigator.serviceWorker.register("/sw.js").catch(()=>{});}</script>
+</body>
+</html>

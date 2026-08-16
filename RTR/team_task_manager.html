@@ -464,6 +464,7 @@ function initHeader() {
     document.getElementById('mobileNav').classList.toggle('open');
   });
   if (isAdmin(user)) document.querySelectorAll('.admin-only').forEach(el=>el.style.display='');
+  initNotificationBell(user);
 }
 </script>
 </body>

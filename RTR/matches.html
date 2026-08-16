@@ -502,7 +502,7 @@ function initHeader() {
   if (isAdmin(currentUser)) document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
   document.getElementById('ucTeamEmoji').innerHTML = '';
   document.getElementById('ddName').textContent = currentUser?.username || 'Guest';
-  document.getElementById('ddTeam').innerHTML = team ? `${flagImg(team.emoji, 16)} ${team.name} supporter` : currentUser?.team ? `${currentUser.team} supporter` : 'No team selected';
+  document.getElementById('ddTeam').innerHTML = team ? `${flagImg(team.emoji, 16)} ${team.name} supporter` : currentUser?.team ? `${escapeHtml(currentUser.team)} supporter` : 'No team selected';
   if (PREVIEW_MODE) {
     const badge = document.createElement('div');
     badge.className = 'preview-badge'; badge.textContent = 'Preview Mode';
@@ -510,6 +510,7 @@ function initHeader() {
   }
   if (currentUser?.team) {
   }
+  if (currentUser) initNotificationBell(currentUser);
 }
 
 document.getElementById('userChip').addEventListener('click', e => {

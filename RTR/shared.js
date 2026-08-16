@@ -172,12 +172,25 @@ const _badWords = [
   'retard','retards',
 ];
 const _profanityRe = new RegExp(`(${_badWords.join('|')})`, 'gi');
+// Finds profanity via a leetspeak-normalized copy (so "$hit" / "@$$hole"
+// still get caught), but censors those spans in the ORIGINAL text rather
+// than returning the normalized copy — every substitution below is exactly
+// one character for one character, so positions line up between the two
+// strings. This is what keeps a literal "@" (e.g. an @mention) intact
+// instead of silently becoming "a" everywhere in the text.
 function cleanText(text) {
   if (!text) return text;
-  return text
+  const normalized = text
     .replace(/[@4]/g, 'a').replace(/[3]/g, 'e').replace(/[!1|]/g, 'i')
-    .replace(/[0]/g, 'o').replace(/[5$]/g, 's').replace(/[+]/g, 't')
-    .replace(_profanityRe, m => '*'.repeat(m.length));
+    .replace(/[0]/g, 'o').replace(/[5$]/g, 's').replace(/[+]/g, 't');
+  let result = text;
+  const re = new RegExp(_profanityRe.source, 'gi');
+  let match;
+  while ((match = re.exec(normalized))) {
+    const start = match.index, len = match[0].length;
+    result = result.slice(0, start) + '*'.repeat(len) + result.slice(start + len);
+  }
+  return result;
 }
 
 async function saveVoteToDB(voteData) {
@@ -745,6 +758,7 @@ async function postMatchComment(matchTitle, body, userId, username, matchweek) {
       created_at: new Date().toISOString(),
     }).select('id').single();
     if (error) { console.error('[RTR] postMatchComment create thread error:', error); return null; }
+    processMentions(body, data.id, { id: userId, username }).catch(() => {});
     return data;
   }
   // Thread exists — add as a reply
@@ -760,6 +774,7 @@ async function postMatchComment(matchTitle, body, userId, username, matchweek) {
     created_at: new Date().toISOString(),
   }).select('id').single();
   if (error) { console.error('[RTR] postMatchComment reply error:', error); return null; }
+  processMentions(body, thread.id, { id: userId, username }).catch(() => {});
   return data;
 }
 
@@ -1404,6 +1419,35 @@ const SHARED_CSS = `
   .rr-av-popup-desc{font-size:.78rem;color:rgba(255,255,255,.55);line-height:1.5;text-align:center;border-top:1px solid rgba(255,255,255,.07);padding-top:8px;}
   .rr-av-popup-close{position:absolute;top:8px;right:10px;background:none;border:none;color:rgba(255,255,255,.25);font-size:.85rem;cursor:pointer;padding:2px 4px;line-height:1;}
   .rr-av-popup-close:hover{color:rgba(255,255,255,.6);}
+
+  /* ── CARD REACTIONS (yellow/red) ───────────────────────── */
+  .rtr-reactions{display:flex;gap:6px;margin-top:8px;}
+  .rtr-react-btn{
+    display:inline-flex;align-items:center;gap:5px;
+    background:rgba(120,120,140,.1);border:1px solid rgba(120,120,140,.25);
+    border-radius:14px;padding:3px 10px;
+    font-family:'Barlow',sans-serif;font-size:.78rem;font-weight:600;
+    color:inherit;cursor:pointer;transition:all .15s;line-height:1.4;
+  }
+  .rtr-react-btn:hover{background:rgba(120,120,140,.2);}
+  .rtr-react-btn:disabled{opacity:.5;cursor:not-allowed;}
+  .rtr-react-btn.active[data-react="yellow"]{background:rgba(255,211,42,.18);border-color:#ffd32a;}
+  .rtr-react-btn.active[data-react="red"]{background:rgba(255,71,87,.18);border-color:#ff4757;}
+
+  /* ── NOTIFICATION BELL ──────────────────────────────────── */
+  .notif-bell{position:relative;cursor:pointer;font-size:1.05rem;display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;transition:background .15s;flex-shrink:0;}
+  .notif-bell:hover{background:rgba(255,255,255,.08);}
+  .notif-badge{position:absolute;top:1px;right:1px;background:#ff4757;color:#fff;font-size:.6rem;font-weight:800;min-width:15px;height:15px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;font-family:'Barlow Condensed',sans-serif;}
+  .notif-dropdown{position:absolute;top:calc(100% + 10px);right:0;width:300px;max-height:380px;overflow-y:auto;background:#1a0f22;border:1px solid rgba(255,255,255,.12);border-radius:10px;box-shadow:0 18px 40px rgba(0,0,0,.5);display:none;z-index:250;}
+  .notif-dropdown.open{display:block;}
+  .notif-header{padding:12px 14px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.5);border-bottom:1px solid rgba(255,255,255,.1);}
+  .notif-item{display:block;padding:10px 14px;text-decoration:none;color:#fff;border-bottom:1px solid rgba(255,255,255,.07);transition:background .12s;}
+  .notif-item:last-child{border-bottom:none;}
+  .notif-item:hover{background:rgba(255,255,255,.05);}
+  .notif-item.unread{background:rgba(0,255,133,.08);}
+  .notif-text{font-size:.82rem;margin-bottom:2px;}
+  .notif-excerpt{font-size:.72rem;color:rgba(255,255,255,.5);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .notif-empty{padding:20px 14px;text-align:center;font-size:.82rem;color:rgba(255,255,255,.4);}
 `;
 (function(){const s=document.createElement('style');s.textContent=SHARED_CSS;document.head.appendChild(s);})();
 
@@ -1439,6 +1483,185 @@ function shieldBorderHtml(imgSrc, size, badgeKey) {
   const outerW = size + bdr * 2, outerH = h + bdr * 2;
   return `<div style="width:${outerW}px;height:${outerH}px;clip-path:${SHIELD_PATH};background:${borderBg};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;vertical-align:middle;">` +
     `<img src="${imgSrc}" style="width:${size}px;height:${h}px;clip-path:${SHIELD_PATH};object-fit:cover;display:block;" alt=""></div>`;
+}
+
+// Escapes user-controlled text (usernames, team names, etc.) before it's
+// interpolated into an innerHTML template literal. Any field a user can set
+// via their own profile — not just what the UI form allows, since RLS only
+// restricts *which row* they can write, not *what's in it* — must go
+// through this before being shown to anyone else.
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// ── @MENTIONS / NOTIFICATIONS ──────────────────────────────
+// Finds @username tokens (letters/digits/underscore/hyphen only — this is
+// the mention syntax's own constraint, not a restriction on what a
+// username can actually contain) in a post/reply body, resolves each to a
+// real profile by exact case-insensitive username match, and creates a
+// notification row for anyone found (skipping unknown names and self-
+// mentions). Call this after a post/reply insert succeeds.
+async function processMentions(body, postId, fromUser) {
+  if (PREVIEW_MODE || !fromUser || !body) return;
+  const names = [...new Set((body.match(/@([a-zA-Z0-9_-]{2,30})/g) || []).map(m => m.slice(1)))];
+  if (!names.length) return;
+  for (const name of names) {
+    try {
+      const { data: profile } = await getSB().from('RTR Profiles').select('id,username').ilike('username', name).maybeSingle();
+      if (!profile || profile.id === fromUser.id) continue;
+      await getSB().from('RTR Notifications').insert({
+        user_id: profile.id,
+        from_user_id: fromUser.id,
+        from_username: fromUser.username || 'User',
+        post_id: postId,
+        excerpt: body.length > 140 ? body.slice(0, 140) + '…' : body,
+      });
+    } catch (e) { console.warn('[RTR] processMentions failed for', name, e); }
+  }
+}
+
+async function loadMyNotifications() {
+  if (PREVIEW_MODE) return [];
+  const user = getCurrentUser();
+  if (!user) return [];
+  const { data, error } = await getSB().from('RTR Notifications')
+    .select('*').eq('user_id', user.id)
+    .order('created_at', { ascending: false }).limit(30);
+  if (error) { console.warn('[RTR] loadMyNotifications error:', error); return []; }
+  return data || [];
+}
+
+async function markNotificationsRead(ids) {
+  if (PREVIEW_MODE || !ids?.length) return;
+  await getSB().from('RTR Notifications').update({ read: true }).in('id', ids);
+}
+
+// ── REACTIONS (yellow/red card) ────────────────────────────
+async function loadReactionCounts(postIds) {
+  if (!postIds?.length) return {};
+  const { data } = await getSB().from('RTR Reactions').select('post_id,type').in('post_id', postIds);
+  const counts = {};
+  (data || []).forEach(r => {
+    if (!counts[r.post_id]) counts[r.post_id] = { yellow: 0, red: 0 };
+    counts[r.post_id][r.type] = (counts[r.post_id][r.type] || 0) + 1;
+  });
+  return counts;
+}
+
+async function loadMyReactions(postIds) {
+  const user = getCurrentUser();
+  if (!postIds?.length || !user) return {};
+  const { data } = await getSB().from('RTR Reactions').select('post_id,type').eq('user_id', user.id).in('post_id', postIds);
+  const mine = {};
+  (data || []).forEach(r => { mine[r.post_id] = r.type; });
+  return mine;
+}
+
+// Toggles a card reaction for the current user on a post: same type again
+// removes it, a different type switches it, no existing reaction adds one.
+// Returns the new state ('yellow' | 'red' | null).
+async function toggleReaction(postId, type) {
+  const user = getCurrentUser();
+  if (PREVIEW_MODE || !user) return null;
+  const { data: existing } = await getSB().from('RTR Reactions')
+    .select('id,type').eq('post_id', postId).eq('user_id', user.id).maybeSingle();
+  if (existing && existing.type === type) {
+    await getSB().from('RTR Reactions').delete().eq('id', existing.id);
+    return null;
+  } else if (existing) {
+    await getSB().from('RTR Reactions').update({ type }).eq('id', existing.id);
+    return type;
+  } else {
+    await getSB().from('RTR Reactions').insert({ post_id: postId, user_id: user.id, type });
+    return type;
+  }
+}
+
+function reactionBarHtml(postId, counts, mine) {
+  const c = counts[postId] || { yellow: 0, red: 0 };
+  return `
+    <div class="rtr-reactions" data-postid="${postId}">
+      <button class="rtr-react-btn${mine === 'yellow' ? ' active' : ''}" data-react="yellow" data-postid="${postId}" title="Yellow card">🟨 <span>${c.yellow || 0}</span></button>
+      <button class="rtr-react-btn${mine === 'red' ? ' active' : ''}" data-react="red" data-postid="${postId}" title="Red card">🟥 <span>${c.red || 0}</span></button>
+    </div>`;
+}
+
+// Delegated click handler for reaction buttons — attach once per container
+// (e.g. document.getElementById('postList')). rerenderFn is called after a
+// successful toggle so the caller can redraw counts from fresh data.
+function wireReactionButtons(container, rerenderFn) {
+  if (!container || container.dataset.reactionsWired) return;
+  container.dataset.reactionsWired = '1';
+  container.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.rtr-react-btn');
+    if (!btn) return;
+    e.stopPropagation();
+    if (!getCurrentUser()) { window.location.href = 'login.html'; return; }
+    btn.disabled = true;
+    await toggleReaction(+btn.dataset.postid, btn.dataset.react);
+    btn.disabled = false;
+    if (rerenderFn) await rerenderFn();
+  });
+}
+
+// ── NOTIFICATION BELL (injected into any page with a #userChip header) ──
+function notificationBellHtml() {
+  return `
+    <div class="notif-bell" id="notifBell">
+      🔔<span class="notif-badge" id="notifBadge" style="display:none">0</span>
+      <div class="notif-dropdown" id="notifDropdown">
+        <div class="notif-header">Notifications</div>
+        <div class="notif-list" id="notifList"><div class="notif-empty">No notifications yet</div></div>
+      </div>
+    </div>`;
+}
+
+// Call once per page, after the logged-in user is known (i.e. right after
+// your page's own header/auth init runs). No-op for guests or if already
+// injected (e.g. a page that calls its header setup more than once).
+async function initNotificationBell(currentUser) {
+  if (PREVIEW_MODE || !currentUser) return;
+  const chip = document.getElementById('userChip');
+  if (!chip || document.getElementById('notifBell')) return;
+  chip.insertAdjacentHTML('beforebegin', notificationBellHtml());
+
+  const bell = document.getElementById('notifBell');
+  const dropdown = document.getElementById('notifDropdown');
+  const badge = document.getElementById('notifBadge');
+  const list = document.getElementById('notifList');
+
+  const notifs = await loadMyNotifications();
+  const unread = notifs.filter(n => !n.read);
+  if (unread.length) {
+    badge.textContent = unread.length > 9 ? '9+' : String(unread.length);
+    badge.style.display = 'flex';
+  }
+  if (notifs.length) {
+    list.innerHTML = notifs.map(n => `
+      <a class="notif-item${n.read ? '' : ' unread'}" href="forum-thread.html?id=${n.post_id}">
+        <div class="notif-text"><strong>${escapeHtml(n.from_username)}</strong> mentioned you</div>
+        <div class="notif-excerpt">${escapeHtml(n.excerpt || '')}</div>
+      </a>`).join('');
+  }
+
+  bell.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    dropdown.classList.toggle('open');
+    if (dropdown.classList.contains('open') && unread.length) {
+      await markNotificationsRead(unread.map(n => n.id));
+      badge.style.display = 'none';
+      list.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
+      unread.length = 0;
+    }
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#notifBell')) dropdown.classList.remove('open');
+  });
 }
 
 function miniAvatarHtml(badge, username, size = 26) {

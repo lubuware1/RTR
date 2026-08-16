@@ -394,11 +394,11 @@
         </div>
       </div>`;
   }
-  function hcMediaGroup(prefix, variants) {
+  function hcMediaGroup(prefix, variants, extraTypes = []) {
     return `
       <div class="row cols-3">
-        ${hcSelect(prefix + '.media.type', 'Media Type', [{value:'css',label:'Placeholder graphic'},{value:'image',label:'Image'},{value:'video',label:'Video'}])}
-        <div class="field-group" data-media-src="${prefix}">${hcField(prefix + '.media.src', 'Image / Video URL or path')}</div>
+        ${hcSelect(prefix + '.media.type', 'Media Type', [{value:'css',label:'Placeholder graphic'},{value:'image',label:'Image'},{value:'video',label:'Video'},...extraTypes])}
+        <div class="field-group" data-media-src="${prefix}">${hcField(prefix + '.media.src', 'Image / Video URL, path, or YouTube link')}</div>
         <div class="field-group" data-media-variant="${prefix}">${hcSelect(prefix + '.media.variant', 'Placeholder Style', variants.map(v => ({value:v,label:v})))}</div>
       </div>`;
   }
@@ -446,7 +446,7 @@
       html += hcCheckbox(`highlights.${i}.visible`, 'Show on homepage');
       html += `<div class="row cols-2">${hcField(`highlights.${i}.tag`,'Tag Label')}${hcField(`highlights.${i}.title`,'Title')}</div>`;
       html += `<div class="row cols-2">${hcField(`highlights.${i}.link`,'Fallback Link')}${hcField(`highlights.${i}.articleId`,'Article ID (optional)')}</div>`;
-      html += hcMediaGroup(`highlights.${i}`, ['fill-1','fill-2','fill-3','fill-4']);
+      html += hcMediaGroup(`highlights.${i}`, ['fill-1','fill-2','fill-3','fill-4'], [{value:'youtube',label:'YouTube Video'}]);
     });
 
     document.getElementById('homeContentForm').innerHTML = html;
@@ -1074,7 +1074,7 @@
             ? r.wcDetails.map(w => `<span title="${w.label}" style="opacity:${w.fired?1:.4}">${w.icon}${w.fired ? ` +${w.bonus}` : ' ✗'}</span>`).join(' ')
             : '<span style="color:var(--muted)">none</span>';
           return `<tr>
-            <td style="padding:4px 8px">${r.username}</td>
+            <td style="padding:4px 8px">${escapeHtml(r.username)}</td>
             <td style="padding:4px 8px">${r.refName || '—'}<br><span style="opacity:.6;font-size:.75em">vs ${r.oppRefName||'—'} (${r.oppPts ?? '—'} pts)</span></td>
             <td style="padding:4px 8px">${r.myRaw ?? '—'}</td>
             <td style="padding:4px 8px">${wcHtml}</td>
