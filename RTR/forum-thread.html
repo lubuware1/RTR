@@ -92,6 +92,14 @@
   .reply-body { font-size: .85rem; color: var(--text); line-height: 1.6; white-space: pre-wrap; }
   .no-replies { font-size: .85rem; color: var(--muted); padding: 10px 0 16px; }
 
+  .comment-reply-link {
+    display: inline-block; margin-top: 6px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: .72rem; font-weight: 700; letter-spacing: .3px;
+    color: var(--muted); cursor: pointer; user-select: none;
+  }
+  .comment-reply-link:hover { color: var(--pl-green); }
+
   .reply-box { display: flex; gap: 8px; align-items: flex-start; }
   .reply-input {
     flex: 1;
@@ -232,8 +240,25 @@ function initHeader() {
 async function loadThread(id) {
   const { data: post } = await getSB().from('RTR Forum').select('*').eq('id', id).single();
   if (!post) return null;
-  const { data: replies } = await getSB().from('RTR Forum').select('*').eq('reply_to', id).order('created_at', { ascending: true });
-  return { post, replies: replies || [] };
+  // Walk the reply tree level by level (reply_to can point at the root post
+  // OR at another reply), so replies-to-replies come back nested rather than
+  // only direct children of the root post.
+  let replies = [];
+  let frontier = [id];
+  while (frontier.length) {
+    const { data: batch } = await getSB().from('RTR Forum').select('*').in('reply_to', frontier);
+    if (!batch || !batch.length) break;
+    replies = replies.concat(batch);
+    frontier = batch.map(r => r.id);
+  }
+  replies.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  return { post, replies };
+}
+
+function buildChildrenMap(replies) {
+  const map = {};
+  replies.forEach(r => { (map[r.reply_to] = map[r.reply_to] || []).push(r); });
+  return map;
 }
 
 let REACTION_COUNTS = {};
@@ -247,15 +272,101 @@ async function refreshReactionCache(post, replies) {
   ]);
 }
 
+const MAX_INDENT_DEPTH = 5;
+
+function renderComment(row, childrenMap, depth) {
+  const kids = childrenMap[row.id] || [];
+  const kidsHtml = kids.map(k => renderComment(k, childrenMap, depth + 1)).join('');
+  const indent = Math.min(depth, MAX_INDENT_DEPTH) * 20;
+  return `
+    <div class="reply-card" style="margin-left:${indent}px;" data-comment-id="${row.id}">
+      <div class="reply-meta"><strong>${escapeHtml(row.username)}</strong> · ${fmtDate(row.created_at)}</div>
+      <div class="reply-body">${escapeHtml(row.body)}</div>
+      ${reactionBarHtml(row.id, REACTION_COUNTS, MY_REACTIONS[row.id])}
+      <div><span class="comment-reply-link" data-reply-target="${row.id}" data-reply-user="${escapeHtml(row.username)}">↩ Reply</span></div>
+      <div class="inline-reply-box" id="inlineReplyBox-${row.id}" style="display:none;"></div>
+    </div>
+    ${kidsHtml}`;
+}
+
+async function postReply(parentId, body, post, replies) {
+  const season = await getCurrentSeason();
+  const { data: reply, error } = await getSB().from('RTR Forum').insert({
+    user_id: currentUser.id,
+    username: currentUser.username || 'User',
+    category: post.category,
+    subject: post.subject,
+    body: cleanText(body),
+    reply_to: parentId,
+    matchweek: post.matchweek || null,
+    season,
+    created_at: new Date().toISOString(),
+  }).select().single();
+  if (!reply) {
+    console.error('[RTR] reply insert error:', error);
+    toast('Failed to post reply — please try again');
+    return false;
+  }
+  processMentions(body, parentId, currentUser).catch(() => {});
+  // Notify whoever's specific comment this landed on, even without an @mention in the text.
+  if (parentId !== post.id) {
+    const parentRow = replies.find(r => r.id === parentId);
+    if (parentRow && parentRow.user_id && parentRow.user_id !== currentUser.id) {
+      getSB().from('RTR Notifications').insert({
+        user_id: parentRow.user_id,
+        from_user_id: currentUser.id,
+        from_username: currentUser.username || 'User',
+        post_id: post.id,
+        excerpt: body.length > 140 ? body.slice(0, 140) + '…' : body,
+      }).then(() => {}, () => {});
+    }
+  } else if (post.user_id && post.user_id !== currentUser.id) {
+    getSB().from('RTR Notifications').insert({
+      user_id: post.user_id,
+      from_user_id: currentUser.id,
+      from_username: currentUser.username || 'User',
+      post_id: post.id,
+      excerpt: body.length > 140 ? body.slice(0, 140) + '…' : body,
+    }).then(() => {}, () => {});
+  }
+  replies.push(reply);
+  return true;
+}
+
+function toggleInlineReplyBox(targetId, uname, post, replies) {
+  if (!currentUser) { toast('Sign in to reply'); return; }
+  const box = document.getElementById(`inlineReplyBox-${targetId}`);
+  if (!box) return;
+  const opening = box.dataset.open !== '1';
+  document.querySelectorAll('.inline-reply-box').forEach(b => { b.style.display = 'none'; b.innerHTML = ''; b.dataset.open = '0'; });
+  if (!opening) return;
+
+  box.dataset.open = '1';
+  box.style.display = 'block';
+  box.innerHTML = `
+    <div class="reply-box" style="margin-top:8px;">
+      <textarea class="reply-input" placeholder="Reply to ${escapeHtml(uname)}…" maxlength="1000"></textarea>
+      <button class="reply-send-btn">Reply</button>
+    </div>`;
+  const input = box.querySelector('.reply-input');
+  const btn = box.querySelector('.reply-send-btn');
+  input.focus();
+  btn.addEventListener('click', async () => {
+    const body = input.value.trim();
+    if (!body) return;
+    btn.disabled = true;
+    const ok = await postReply(targetId, body, post, replies);
+    btn.disabled = false;
+    if (ok) { renderThread(post, replies); toast('Reply posted'); }
+  });
+}
+
 function renderThread(post, replies) {
   const refPill = post.ref_id ? `<a class="ref-pill" href="forum.html?ref=${post.ref_id}">🟨 view referee</a>` : '';
-  const repliesHtml = replies.length
-    ? replies.map(r => `
-      <div class="reply-card">
-        <div class="reply-meta"><strong>${escapeHtml(r.username)}</strong> · ${fmtDate(r.created_at)}</div>
-        <div class="reply-body">${escapeHtml(r.body)}</div>
-        ${reactionBarHtml(r.id, REACTION_COUNTS, MY_REACTIONS[r.id])}
-      </div>`).join('')
+  const childrenMap = buildChildrenMap(replies);
+  const topLevel = childrenMap[post.id] || [];
+  const repliesHtml = topLevel.length
+    ? topLevel.map(r => renderComment(r, childrenMap, 0)).join('')
     : `<div class="no-replies">No replies yet — be the first.</div>`;
 
   const replyBoxHtml = currentUser
@@ -287,35 +398,21 @@ function renderThread(post, replies) {
       const body = input.value.trim();
       if (!body) return;
       sendBtn.disabled = true;
-      const season = await getCurrentSeason();
-      const { data: reply, error } = await getSB().from('RTR Forum').insert({
-        user_id: currentUser.id,
-        username: currentUser.username || 'User',
-        category: post.category,
-        subject: post.subject,
-        body: cleanText(body),
-        reply_to: post.id,
-        matchweek: post.matchweek || null,
-        season,
-        created_at: new Date().toISOString(),
-      }).select().single();
+      const ok = await postReply(post.id, body, post, replies);
       sendBtn.disabled = false;
-      if (reply) {
-        processMentions(body, post.id, currentUser).catch(() => {});
-        replies.push(reply);
-        input.value = '';
-        renderThread(post, replies);
-        toast('Reply posted');
-      } else {
-        console.error('[RTR] reply insert error:', error);
-        toast('Failed to post reply — please try again');
-      }
+      if (ok) { input.value = ''; renderThread(post, replies); toast('Reply posted'); }
     });
   }
 
   wireReactionButtons(document.getElementById('threadRoot'), async () => {
     await refreshReactionCache(post, replies);
     renderThread(post, replies);
+  });
+
+  document.querySelectorAll('[data-reply-target]').forEach(el => {
+    el.addEventListener('click', () => {
+      toggleInlineReplyBox(el.getAttribute('data-reply-target'), el.getAttribute('data-reply-user'), post, replies);
+    });
   });
 }
 
