@@ -63,6 +63,12 @@
   .toast.err{background:var(--red);color:#fff;box-shadow:0 8px 32px rgba(255,71,87,.3);}
   .access-denied{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;text-align:center;gap:12px;}
   .access-denied h2{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:900;color:var(--red);}
+
+  .pw-gate{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;text-align:center;gap:14px;}
+  .pw-gate h2{font-family:'Barlow Condensed',sans-serif;font-size:1.7rem;font-weight:900;color:var(--pl-green);}
+  .pw-gate p{color:var(--muted);font-size:.85rem;max-width:320px;}
+  .pw-gate form{display:flex;flex-direction:column;gap:10px;width:260px;}
+  .pw-gate .pw-error{color:var(--red);font-size:.8rem;min-height:1.1em;}
   .divider{border:none;border-top:1px solid var(--border);margin:16px 0;}
   .field-group{margin-bottom:12px;}
   select option{background:var(--surface2);}
@@ -88,6 +94,16 @@
 </style>
 </head>
 <body>
+<div id="pwGate" class="pw-gate" style="display:none">
+  <h2>Admin Access</h2>
+  <p>Enter the admin panel password to continue.</p>
+  <form id="pwGateForm">
+    <input type="password" id="pwGateInput" placeholder="Password" autocomplete="off" autofocus>
+    <button type="submit" class="btn btn-green" id="pwGateBtn">Unlock</button>
+    <div class="pw-error" id="pwGateError"></div>
+  </form>
+</div>
+
 <div id="accessDenied" class="access-denied" style="display:none">
   <h2>Access Denied</h2>
   <p style="color:var(--muted)">This page is restricted to administrators only.</p>
@@ -656,8 +672,73 @@
     populateMatchDropdown(matches, gwFilter);
   }
 
+  // ── ADMIN PASSWORD GATE ─────────────────────────────────────
+  // Second factor on top of the ADMIN_USERS check below — verified server-side
+  // by netlify/functions/admin-auth.js against an env var, never shipped to the
+  // browser. A 12h token is cached in sessionStorage so it isn't re-typed on
+  // every reload, but clears the moment the tab closes.
+  const PW_TOKEN_KEY = 'rr_admin_pw_token';
+
+  async function verifyPasswordToken(token) {
+    if (!token) return false;
+    try {
+      const res = await fetch('/.netlify/functions/admin-auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'verify', token }),
+      });
+      const data = await res.json();
+      return !!data.ok;
+    } catch (e) { console.warn('[RTR Admin] password verify failed:', e); return false; }
+  }
+
+  async function passwordGatePassed() {
+    const cached = sessionStorage.getItem(PW_TOKEN_KEY);
+    if (cached && await verifyPasswordToken(cached)) return true;
+    sessionStorage.removeItem(PW_TOKEN_KEY);
+
+    const gate = document.getElementById('pwGate');
+    const form = document.getElementById('pwGateForm');
+    const input = document.getElementById('pwGateInput');
+    const btn = document.getElementById('pwGateBtn');
+    const errEl = document.getElementById('pwGateError');
+    gate.style.display = 'flex';
+
+    return new Promise(resolve => {
+      form.addEventListener('submit', async e => {
+        e.preventDefault();
+        const password = input.value;
+        if (!password) return;
+        btn.disabled = true; errEl.textContent = '';
+        try {
+          const res = await fetch('/.netlify/functions/admin-auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'login', password }),
+          });
+          const data = await res.json();
+          btn.disabled = false;
+          if (res.ok && data.ok) {
+            sessionStorage.setItem(PW_TOKEN_KEY, data.token);
+            gate.style.display = 'none';
+            resolve(true);
+          } else {
+            errEl.textContent = 'Incorrect password';
+            input.value = '';
+            input.focus();
+          }
+        } catch (e) {
+          btn.disabled = false;
+          errEl.textContent = 'Could not reach server — try again';
+        }
+      });
+    });
+  }
+
   // ── BOOT ─────────────────────────────────────────────────
   (async () => {
+    if (!await passwordGatePassed()) return;
+
     // Re-run checkAuth to ensure localStorage is fresh from Supabase session
     const authed = await checkAuth();
     if (!authed) { window.location.href = 'login.html'; return; }

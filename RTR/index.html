@@ -179,8 +179,10 @@ nav a.active{color:#fff;}
 .fx-status{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:5px;}
 .fx-status.live{color:var(--red);}
 .fx-status.live .dot{width:5px;height:5px;border-radius:50%;background:var(--red);animation:pulse 1.1s infinite;}
-.fx-row{display:flex;align-items:center;justify-content:space-between;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.86rem;margin-bottom:3px;}
-.fx-row .n{font-variant-numeric:tabular-nums;font-weight:900;color:var(--ink);}
+.fx-row{display:flex;align-items:center;justify-content:space-between;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.86rem;margin-bottom:3px;gap:8px;}
+.fx-row .n{font-variant-numeric:tabular-nums;font-weight:900;color:var(--ink);flex-shrink:0;}
+.fx-team{display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fx-badge{width:18px;height:18px;object-fit:contain;flex-shrink:0;}
 .fx-ref{font-size:.68rem;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--border-soft);}
 .fx-ref b{color:var(--gold);font-weight:700;}
 
@@ -525,8 +527,8 @@ function renderHomeContent() {
   document.getElementById('fixturesScroll').innerHTML = HOME_CONTENT.fixtures.map(f => `
     <a class="fx-card" href="matches.html">
       <div class="fx-status${f.live ? ' live' : ''}">${f.live ? '<span class="dot"></span>' : ''}${f.status}</div>
-      <div class="fx-row"><span>${f.home}</span><span class="n">${f.homeScore}</span></div>
-      <div class="fx-row"><span>${f.away}</span><span class="n">${f.awayScore}</span></div>
+      <div class="fx-row"><span class="fx-team"><img src="images/logos/RRLogo.svg" class="fx-badge" style="opacity:.7;">${f.home}</span><span class="n">${f.homeScore}</span></div>
+      <div class="fx-row"><span class="fx-team"><img src="images/logos/RRLogo.svg" class="fx-badge" style="opacity:.7;">${f.away}</span><span class="n">${f.awayScore}</span></div>
       <div class="fx-ref">Ref <b>${f.ref}</b></div>
     </a>`).join('');
 
@@ -615,11 +617,13 @@ function renderLiveFixtures() {
     const ref = REFS.find(r => r.id === +m.refId);
     const live = m.status === 'live';
     const [homeScore, awayScore] = m.score !== '–' ? m.score.split('-') : ['–', '–'];
+    const homeBadge = m.homeCrest ? `<img src="${m.homeCrest}" class="fx-badge" onerror="this.src='images/logos/RRLogo.svg';this.style.opacity='.7';">` : `<img src="images/logos/RRLogo.svg" class="fx-badge" style="opacity:.7;">`;
+    const awayBadge = m.awayCrest ? `<img src="${m.awayCrest}" class="fx-badge" onerror="this.src='images/logos/RRLogo.svg';this.style.opacity='.7';">` : `<img src="images/logos/RRLogo.svg" class="fx-badge" style="opacity:.7;">`;
     return `
     <a class="fx-card" href="matches.html">
       <div class="fx-status${live ? ' live' : ''}">${live ? '<span class="dot"></span>' : ''}${fixtureStatusText(m)}</div>
-      <div class="fx-row"><span>${m.home}</span><span class="n">${homeScore}</span></div>
-      <div class="fx-row"><span>${m.away}</span><span class="n">${awayScore}</span></div>
+      <div class="fx-row"><span class="fx-team">${homeBadge}${m.home}</span><span class="n">${homeScore}</span></div>
+      <div class="fx-row"><span class="fx-team">${awayBadge}${m.away}</span><span class="n">${awayScore}</span></div>
       <div class="fx-ref">Ref <b>${ref ? ref.name : 'TBC'}</b></div>
     </a>`;
   }).join('');

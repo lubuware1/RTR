@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#37003c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RefRater">
+<link rel="apple-touch-icon" href="/images/logos/RRlogo192.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RefRater — News</title>
+<link rel="icon" type="image/png" sizes="192x192" href="/images/logos/RRlogo192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/images/logos/RRlogo512.png">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7289925014125722" crossorigin="anonymous"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="shared.js"></script>
+<style>
+:root{
+  --bg:#0a0c10; --surface:#12151c; --surface2:#1a1d26;
+  --border:#2a2d3a; --border-soft:rgba(224,214,245,.08);
+  --ink:#e8e0f7; --muted:#9186b8; --muted-dim:#645a82;
+  --purple:#37003c; --purple-2:#5c1064; --purple-glow:rgba(124,0,138,.35);
+  --green:#00e676; --green-dim:rgba(0,230,118,.14);
+  --gold:#ffcf40; --red:#ff4d5e; --blue:#4fb2ff;
+  --card-radius:3px;
+  --shadow-lift:0 18px 40px rgba(0,0,0,.5);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{overflow-x:hidden;width:100%;}
+body{background:var(--bg);color:var(--ink);font-family:'Barlow',sans-serif;min-height:100vh;}
+a{color:inherit;}
+h1,h2,h3,.disp{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;}
+
+/* ── header (shared with index.html / article.html) ── */
+.site-header{position:sticky;top:0;z-index:190;background:linear-gradient(180deg,#2a002e 0%, var(--purple) 100%);border-bottom:1px solid rgba(255,255,255,.08);box-shadow:0 8px 24px rgba(0,0,0,.35);}
+.header-inner{max-width:1240px;margin:0 auto;padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between;gap:24px;}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:#fff;}
+.brand img{height:32px;width:auto;display:block;}
+.header-right{display:flex;align-items:center;gap:8px;}
+nav{display:flex;align-items:center;gap:2px;position:relative;}
+nav a{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.86rem;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;color:rgba(255,255,255,.72);padding:10px 16px;position:relative;z-index:1;transition:color .15s;display:flex;align-items:center;}
+nav a img{height:18px;width:auto;vertical-align:middle;}
+nav a:hover{color:#fff;}
+nav a.active{color:#fff;}
+.hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:6px;}
+.hamburger span{display:block;width:22px;height:2px;background:#fff;border-radius:2px;}
+.user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:5px 14px 5px 5px;cursor:pointer;position:relative;}
+.uc-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--green),#00b862);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.65rem;color:#03170c;flex-shrink:0;overflow:hidden;}
+.uc-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.03em;color:#fff;text-transform:uppercase;}
+.signin-link{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.82rem;letter-spacing:.05em;text-transform:uppercase;text-decoration:none;color:#03170c;background:var(--green);padding:8px 18px;border-radius:20px;transition:opacity .15s;}
+.signin-link:hover{opacity:.88;}
+.user-dropdown{position:absolute;top:calc(100% + 10px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;min-width:200px;z-index:200;box-shadow:var(--shadow-lift);display:none;overflow:hidden;}
+.user-dropdown.open{display:block;}
+.dd-head{padding:14px 16px;border-bottom:1px solid var(--border);background:var(--surface2);}
+.dd-uname{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;color:var(--ink);}
+.dd-team{font-size:.75rem;color:var(--muted);margin-top:2px;}
+.dd-item{padding:11px 16px;font-size:.85rem;color:var(--muted);cursor:pointer;transition:background .12s;display:flex;align-items:center;gap:8px;}
+.dd-item:hover{background:var(--surface2);color:var(--ink);}
+.dd-item.danger:hover{color:var(--red);}
+.mobile-nav{display:none;position:fixed;top:64px;left:0;right:0;background:linear-gradient(135deg,var(--purple) 0%,#1a0020 100%);border-bottom:2px solid var(--green);z-index:189;padding:12px 16px;flex-direction:column;gap:4px;}
+.mobile-nav a{color:rgba(255,255,255,.72);font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:600;letter-spacing:.5px;text-transform:uppercase;padding:10px 14px;border-radius:6px;text-decoration:none;display:flex;align-items:center;gap:8px;border:1px solid transparent;}
+.mobile-nav a img{height:18px;width:auto;}
+.mobile-nav a.active,.mobile-nav a:hover{background:rgba(0,230,118,.1);border-color:var(--green);color:#fff;}
+.mobile-nav.open{display:flex;}
+@media(max-width:980px){ nav{display:none;} .hamburger{display:flex;} }
+
+/* ── tag pill (same look as homepage) ── */
+.tag{display:inline-flex;align-items:center;gap:6px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px 3px;border-radius:2px;margin:0;}
+.tag.live{background:var(--red);color:#fff;}
+.tag.incident{background:var(--red);color:#fff;}
+.tag.rating{background:var(--gold);color:#2b1d00;}
+.tag.match{background:var(--green);color:#03170c;}
+.tag.fantasy{background:var(--blue);color:#04182b;}
+.tag.forum{background:rgba(255,255,255,.16);color:#fff;}
+
+/* ── page ── */
+.page{max-width:1240px;margin:0 auto;padding:28px 28px 60px;}
+.page-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2rem;margin-bottom:4px;}
+.page-title em{color:var(--green);font-style:normal;}
+.page-sub{color:var(--muted);font-size:.85rem;margin-bottom:22px;}
+
+.chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
+.chip{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:6px 15px;cursor:pointer;transition:all .15s;text-decoration:none;display:inline-block;}
+.chip:hover{border-color:var(--green);color:var(--ink);}
+.chip.active{background:var(--green-dim);border-color:var(--green);color:var(--green);}
+
+.news-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+.news-card{text-decoration:none;color:var(--ink);background:var(--surface);border:1px solid var(--border);border-radius:var(--card-radius);overflow:hidden;transition:border-color .18s,transform .18s,box-shadow .18s;}
+.news-card:hover{border-color:var(--green);transform:translateY(-3px);box-shadow:var(--shadow-lift);}
+.news-thumb{aspect-ratio:16/10;position:relative;overflow:hidden;}
+.news-thumb img,.news-thumb video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.news-thumb .tag{position:absolute;left:12px;top:12px;z-index:2;}
+.thumb-pitch{background:radial-gradient(ellipse 80% 60% at 50% 100%, rgba(0,230,118,.18), transparent 60%), repeating-linear-gradient(100deg,#152a19 0 22px,#1c3521 22px 44px);}
+.thumb-var{background:radial-gradient(circle at 70% 30%, rgba(79,178,255,.28), transparent 55%), linear-gradient(155deg,#0a1420 0%,#0f2136 60%,#081018 100%);}
+.thumb-var::after{content:'';position:absolute;inset:16% 18%;border:2px solid rgba(79,178,255,.55);border-radius:2px;box-shadow:0 0 24px rgba(79,178,255,.25) inset;}
+.thumb-crowd{background:radial-gradient(circle at 50% 130%, rgba(255,207,64,.16), transparent 60%), repeating-radial-gradient(circle at 20% 30%, rgba(255,255,255,.05) 0 2px, transparent 2px 7px), linear-gradient(160deg,#1c0a26 0%,#37003c 70%,#1c0a26 100%);}
+.thumb-locker{background:linear-gradient(100deg,#151515 0 48%, #1f1f1f 48% 52%, #151515 52% 100%), linear-gradient(160deg,#101010,#1a1a1a);}
+.thumb-stadium{background:radial-gradient(circle at 30% 20%,#243447,#0c1420 70%);}
+.news-body{padding:14px 16px 16px;}
+.news-headline{font-family:'Anton',sans-serif;font-weight:400;font-size:1.15rem;line-height:1.12;letter-spacing:.005em;text-transform:uppercase;margin-bottom:8px;-webkit-text-stroke:1px #000;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;paint-order:stroke fill;}
+.news-dek{font-size:.78rem;color:var(--muted);line-height:1.5;margin-bottom:10px;}
+.news-meta{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-dim);display:flex;justify-content:space-between;}
+.news-empty{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--muted);font-size:.9rem;}
+
+@media(max-width:900px){ .news-grid{grid-template-columns:repeat(2,1fr);} }
+@media(max-width:620px){
+  .header-inner{padding:0 16px;}
+  .page{padding:20px 16px 50px;}
+  .news-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="index.html">
+      <img src="images/logos/RRLogo.svg" alt="RefRater">
+    </a>
+    <div class="header-right">
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="matches.html">Matches</a>
+        <a href="referees.html">Referees</a>
+        <a href="fantasy.html" class="admin-only" style="display:none"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="PVBB"></a>
+        <a href="badges.html">Cards</a>
+        <a href="forum.html">Forum</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+      <div id="authArea"></div>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-nav" id="mobileNav">
+  <a href="index.html">Home</a>
+  <a href="matches.html">Matches</a>
+  <a href="referees.html">Referees</a>
+  <a href="fantasy.html" class="admin-only" style="display:none"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="PVBB">PVBB</a>
+  <a href="badges.html">Cards</a>
+  <a href="forum.html">Forum</a>
+</div>
+
+<div class="page">
+  <h1 class="page-title">Latest <em>Ratings</em> &amp; Talking Points</h1>
+  <p class="page-sub">Every match report, VAR review, fan thread highlight and referee feature in one place.</p>
+  <div class="chip-row" id="chipRow"></div>
+  <div class="news-grid" id="newsGrid"><div class="news-empty">Loading…</div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// Not linked from anywhere yet (homepage chips are still inert) — reachable
+// only by direct URL until there's enough real article content to launch.
+const CATEGORIES = [
+  { key: '',         label: 'All' },
+  { key: 'match',    label: 'Match Reports' },
+  { key: 'incident', label: 'VAR Reviews' },
+  { key: 'forum',    label: 'Fan Voices' },
+  { key: 'rating',   label: 'Referee Focus' },
+];
+
+// ── Auth-aware header (same pattern as index.html / article.html) ──
+(function() {
+  const authArea = document.getElementById('authArea');
+  const currentUser = getCurrentUser();
+  if (currentUser) {
+    authArea.innerHTML = `
+      <div class="user-chip" id="userChip">
+        <div class="uc-avatar" id="ucAvatar"></div>
+        <span class="uc-name">${escapeHtml(currentUser.username || 'Guest')}</span>
+        <div class="user-dropdown" id="userDropdown">
+          <div class="dd-head">
+            <div class="dd-uname">${escapeHtml(currentUser.username || 'Guest')}</div>
+            <div class="dd-team">${currentUser.team ? escapeHtml(currentUser.team) + ' supporter' : 'No team selected'}</div>
+          </div>
+          <div class="dd-item" onclick="location.href='badges.html'">🏅 Cards</div>
+          <div class="dd-item danger" id="ddLogout">↩ Sign out</div>
+        </div>
+      </div>`;
+    applyUserAvatar(document.getElementById('ucAvatar'), currentUser);
+    if (isAdmin(currentUser)) document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
+    document.getElementById('userChip').addEventListener('click', e => {
+      e.stopPropagation();
+      document.getElementById('userDropdown').classList.toggle('open');
+    });
+    document.getElementById('ddLogout').addEventListener('click', async () => {
+      await clearCurrentUser();
+      location.reload();
+    });
+    document.addEventListener('click', () => {
+      const dd = document.getElementById('userDropdown');
+      if (dd) dd.classList.remove('open');
+    });
+    initNotificationBell(currentUser);
+  } else {
+    authArea.innerHTML = `<a class="signin-link" href="login.html">Sign In</a>`;
+  }
+})();
+
+document.getElementById('hamburger').addEventListener('click', e => {
+  e.stopPropagation();
+  document.getElementById('mobileNav').classList.toggle('open');
+});
+
+function newsThumbHTML(media, tag, tagText) {
+  media = media || { type: 'css', variant: 'pitch' };
+  const tagPill = `<span class="tag ${tag}">${escapeHtml(tagText || tag)}</span>`;
+  if (media.type === 'image') return `<img src="${media.src}" alt="">${tagPill}`;
+  if (media.type === 'video') return `<video src="${media.src}" autoplay muted loop playsinline></video>${tagPill}`;
+  return `<div class="thumb-${media.variant || 'pitch'}" style="position:absolute;inset:0;"></div>${tagPill}`;
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function renderChips(activeCat) {
+  document.getElementById('chipRow').innerHTML = CATEGORIES.map(c => `
+    <a class="chip${c.key === activeCat ? ' active' : ''}" href="articles.html${c.key ? '?cat=' + c.key : ''}">${c.label}</a>
+  `).join('');
+}
+
+function renderArticles(articles) {
+  const grid = document.getElementById('newsGrid');
+  if (!articles.length) {
+    grid.innerHTML = `<div class="news-empty">No stories in this category yet — check back soon.</div>`;
+    return;
+  }
+  grid.innerHTML = articles.map(a => `
+    <a class="news-card" href="article.html?id=${a.id}">
+      <div class="news-thumb">${newsThumbHTML(a.media, a.tag, a.tag_text)}</div>
+      <div class="news-body">
+        <div class="news-headline">${escapeHtml(a.headline || '')}</div>
+        <div class="news-dek">${escapeHtml(a.dek || '')}</div>
+        <div class="news-meta"><span>${escapeHtml(a.meta_left || '')}</span><span>${formatDate(a.published_at)}</span></div>
+      </div>
+    </a>`).join('');
+}
+
+(async function() {
+  const cat = new URLSearchParams(location.search).get('cat') || '';
+  renderChips(cat);
+
+  const articles = await loadArticles();
+  const filtered = cat ? articles.filter(a => a.tag === cat) : articles;
+  renderArticles(filtered);
+})();
+</script>
+<script>if("serviceWorker"in navigator){navigator.serviceWorker.register("/sw.js").catch(()=>{});}</script>
+</body>
+</html>
