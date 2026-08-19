@@ -596,6 +596,7 @@
         font-size: 0.9rem;
         color: var(--pl-green);
         flex-shrink: 0;
+        overflow: hidden;
       }
       .ref-pick-card.selected .rpc-av {
         border-color: var(--pl-green);
@@ -1021,6 +1022,7 @@
         font-size: 1rem;
         color: var(--pl-green);
         flex-shrink: 0;
+        overflow: hidden;
       }
       .my-ref-name {
         font-family: "Barlow Condensed", sans-serif;
@@ -1749,6 +1751,7 @@
                 align-items: center;
                 justify-content: center;
                 flex-shrink: 0;
+                overflow: hidden;
               "
             ></div>
             <div style="min-width: 0">
@@ -2583,7 +2586,7 @@
             <div style="background:linear-gradient(135deg,var(--pl-purple) 0%,#1a0028 50%,var(--surface) 100%);border:1.5px solid var(--pl-green);border-radius:14px;overflow:hidden;max-width:480px;box-shadow:0 0 32px rgba(0,255,133,.12);">
               <!-- Header -->
               <div style="padding:18px 20px 14px;display:flex;align-items:center;gap:16px;border-bottom:1px solid rgba(0,255,133,.15);">
-                <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#37003c,#8b008b);border:2.5px solid var(--pl-green);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;color:var(--pl-green);flex-shrink:0;box-shadow:0 0 16px rgba(0,255,133,.25);">${ref.initials}</div>
+                <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#37003c,#8b008b);border:2.5px solid var(--pl-green);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;color:var(--pl-green);flex-shrink:0;box-shadow:0 0 16px rgba(0,255,133,.25);overflow:hidden;">${refAvatarHtml(ref, 60)}</div>
                 <div style="flex:1">
                   <div style="font-size:.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--pl-green);margin-bottom:3px;">MY PICK · MW${FGW.gw}</div>
                   <div class="ref-pick-name" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.4rem;letter-spacing:.3px;">${ref.name}</div>
@@ -2674,7 +2677,7 @@
             return `<div class="ref-pick-card${sel ? " selected" : ""}" data-rid="${ref.id}">
       ${sel ? '<div class="rpc-selected-badge">MY PICK</div>' : ""}
       <div class="rpc-top">
-        <div class="rpc-av">${ref.initials}</div>
+        <div class="rpc-av">${refAvatarHtml(ref, 40)}</div>
         <div>
           <div class="rpc-name">${ref.name}</div>
           <div class="rpc-match">${m ? `${m.hE} ${m.home} v ${m.away} ${m.aE}` : "No match"}</div>
@@ -3161,7 +3164,7 @@
         // Update mobile mini-pick bar
         const mpb = document.getElementById("mobilePickBar");
         if (mpb) {
-          document.getElementById("mpbAv").textContent = ref.initials;
+          document.getElementById("mpbAv").innerHTML = refAvatarHtml(ref, 34);
           document.getElementById("mpbName").textContent = ref.name;
           mpb.classList.add("mpb-visible");
         }
@@ -3200,7 +3203,7 @@
             ? `<span style="font-size:.6rem;color:var(--pl-green);margin-left:4px">+${wcBoost} boost</span>`
             : "";
         document.getElementById("myRefCard").innerHTML = `
-    <div class="my-ref-av">${ref.initials}</div>
+    <div class="my-ref-av">${refAvatarHtml(ref, 46)}</div>
     <div style="flex:1">
       <div class="my-ref-name">${ref.name}</div>
       <div class="my-ref-match">${m ? `${m.hE} ${m.home} v ${m.away} ${m.aE}` : ""}</div>
