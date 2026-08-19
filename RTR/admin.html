@@ -42,6 +42,20 @@
   .btn-yellow{background:rgba(255,211,42,.1);border:1.5px solid var(--yellow);color:var(--yellow);}
   .btn-yellow:hover{background:rgba(255,211,42,.2);}
   .btn-sm{padding:5px 12px;font-size:.75rem;}
+  .supp-filter-btn{background:none;border:1.5px solid var(--border);color:var(--muted);}
+  .supp-filter-btn.active{border-color:var(--pl-green);color:var(--pl-green);background:rgba(0,255,133,.08);}
+  .supp-row{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:8px;}
+  .supp-row.status-new{border-left:3px solid var(--pl-green);}
+  .supp-row-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+  .supp-cat{font-size:.65rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:4px;}
+  .supp-cat.bug{background:rgba(255,71,87,.12);color:var(--red);}
+  .supp-cat.feedback{background:rgba(255,211,42,.12);color:var(--yellow);}
+  .supp-cat.other{background:rgba(107,114,128,.15);color:var(--muted);}
+  .supp-user{font-weight:700;font-size:.85rem;}
+  .supp-meta{font-size:.7rem;color:var(--muted);margin-left:auto;}
+  .supp-msg{font-size:.85rem;color:var(--text);line-height:1.5;white-space:pre-wrap;margin-bottom:10px;}
+  .supp-page{font-size:.7rem;color:var(--muted);margin-bottom:10px;}
+  .supp-actions{display:flex;gap:6px;}
   .hc-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);}
   .hc-section-head .section-title{margin-bottom:0;padding-bottom:0;border-bottom:none;}
   .hc-move-btns{display:flex;gap:6px;flex-shrink:0;}
@@ -116,6 +130,18 @@
   </div>
   <h1>RTR Admin Panel <span class="danger-badge">Admin Only</span></h1>
   <p class="subtitle" id="adminSubtitle">Changes write to Supabase (source of truth) and are reflected immediately in the app.</p>
+
+  <!-- SUPPORT MESSAGES -->
+  <div class="section">
+    <div class="section-title">🛟 Support Messages <span id="supportNewCount" class="danger-badge" style="display:none;"></span></div>
+    <div class="row cols-4" style="margin-bottom:14px;">
+      <button class="btn btn-sm supp-filter-btn active" data-filter="all">All</button>
+      <button class="btn btn-sm supp-filter-btn" data-filter="new">New</button>
+      <button class="btn btn-sm supp-filter-btn" data-filter="read">Read</button>
+      <button class="btn btn-sm supp-filter-btn" data-filter="resolved">Resolved</button>
+    </div>
+    <div id="supportList"><p style="font-size:.85rem;color:var(--muted);">Loading…</p></div>
+  </div>
 
   <!-- GW CONFIG -->
   <div class="section">
@@ -490,6 +516,83 @@
     return out;
   }
 
+  // ── SUPPORT MESSAGES ─────────────────────────────────────
+  let allSupportMessages = [];
+  let supportFilter = 'all';
+
+  async function loadSupportMessages() {
+    const { data, error } = await getSB().from('RTR Support Messages').select('*').order('created_at', { ascending: false });
+    if (error) { console.error('[RTR Admin] loadSupportMessages error:', error); return []; }
+    return data || [];
+  }
+
+  function fmtSupportDate(iso) {
+    return new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function renderSupportList() {
+    const el = document.getElementById('supportList');
+    const newCount = allSupportMessages.filter(m => m.status === 'new').length;
+    const badge = document.getElementById('supportNewCount');
+    if (newCount) { badge.style.display = ''; badge.textContent = newCount; } else { badge.style.display = 'none'; }
+
+    const filtered = supportFilter === 'all' ? allSupportMessages : allSupportMessages.filter(m => m.status === supportFilter);
+    if (!filtered.length) { el.innerHTML = `<p style="font-size:.85rem;color:var(--muted);">No ${supportFilter === 'all' ? '' : supportFilter + ' '}messages.</p>`; return; }
+
+    const catIcon = { bug: '🐛', feedback: '💡', other: '✉️' };
+    el.innerHTML = filtered.map(m => `
+      <div class="supp-row status-${m.status}" data-mid="${m.id}">
+        <div class="supp-row-head">
+          <span class="supp-cat ${m.category}">${catIcon[m.category] || ''} ${m.category}</span>
+          <span class="supp-user">${escapeHtml(m.username)}</span>
+          <span class="supp-meta">${fmtSupportDate(m.created_at)}</span>
+        </div>
+        <div class="supp-msg">${escapeHtml(m.message)}</div>
+        ${m.page_url ? `<div class="supp-page">📍 ${escapeHtml(m.page_url)}</div>` : ''}
+        <div class="supp-actions">
+          ${m.status !== 'read' ? `<button class="btn btn-sm" data-supp-status="read">Mark Read</button>` : ''}
+          ${m.status !== 'resolved' ? `<button class="btn btn-sm btn-green" data-supp-status="resolved">Resolve</button>` : ''}
+          ${m.status !== 'new' ? `<button class="btn btn-sm" data-supp-status="new">Reopen</button>` : ''}
+          <button class="btn btn-sm btn-red" data-supp-delete="1">Delete</button>
+        </div>
+      </div>`).join('');
+
+    el.querySelectorAll('[data-supp-status]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const row = btn.closest('[data-mid]');
+        const id = +row.dataset.mid;
+        const status = btn.dataset.suppStatus;
+        btn.disabled = true;
+        const { error } = await getSB().from('RTR Support Messages').update({ status }).eq('id', id);
+        if (error) { toast('Update failed', true); btn.disabled = false; return; }
+        const msg = allSupportMessages.find(m => m.id === id);
+        if (msg) msg.status = status;
+        renderSupportList();
+      });
+    });
+    el.querySelectorAll('[data-supp-delete]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const row = btn.closest('[data-mid]');
+        const id = +row.dataset.mid;
+        if (!confirm('Delete this message permanently?')) return;
+        btn.disabled = true;
+        const { error } = await getSB().from('RTR Support Messages').delete().eq('id', id);
+        if (error) { toast('Delete failed', true); btn.disabled = false; return; }
+        allSupportMessages = allSupportMessages.filter(m => m.id !== id);
+        renderSupportList();
+      });
+    });
+  }
+
+  document.querySelectorAll('.supp-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.supp-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      supportFilter = btn.dataset.filter;
+      renderSupportList();
+    });
+  });
+
   // ── ARTICLES EDITOR ────────────────────────────────────────
   let editingArticleId = null;
 
@@ -740,6 +843,10 @@
     }
     document.getElementById('adminPanel').style.display = 'block';
     document.getElementById('adminSubtitle').textContent = `Logged in as ${user.username} · Changes write to Supabase (source of truth) and are reflected immediately in the app.`;
+
+    // Load support messages
+    allSupportMessages = await loadSupportMessages();
+    renderSupportList();
 
     // Load GW config
     const gwConfig = await loadGWConfig();
