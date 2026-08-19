@@ -62,13 +62,13 @@
   .onboard-head p{font-size:.82rem;color:rgba(255,255,255,.45);margin-top:4px;}
   .onboard-body{padding:24px 28px;}
   .team-hint{font-size:.8rem;color:var(--muted);margin-bottom:16px;}
-  .team-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px;}
-  .team-tile{background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:4px;}
-  .team-tile:hover{border-color:rgba(0,255,133,.4);transform:translateY(-2px);}
-  .team-tile.picked{border-color:var(--pl-green);background:rgba(0,255,133,.07);box-shadow:0 0 0 1px rgba(0,255,133,.15);}
-  .team-tile .t-emoji{font-size:1.5rem;line-height:1;}
-  .team-tile .t-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);line-height:1.2;}
-  .team-tile.picked .t-name{color:var(--pl-green);}
+  /* Native <select>, sorted alphabetically — on iOS/Android this opens as the
+     platform's spinning wheel picker; on desktop it's a standard scrollable
+     dropdown. Simplest way to get real "scroll wheel" behavior without a
+     custom-built picker component. */
+  .team-select{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.95rem;letter-spacing:.3px;padding:13px 14px;outline:none;cursor:pointer;transition:border-color .2s;margin-bottom:12px;-webkit-appearance:menulist;appearance:menulist;}
+  .team-select:focus{border-color:rgba(0,255,133,.5);}
+  .team-other-input{display:none;}
   .onboard-btn{width:100%;background:var(--pl-green);color:#fff;border:none;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;letter-spacing:1px;text-transform:uppercase;padding:13px;cursor:pointer;transition:all .2s;}
   .onboard-btn:hover{background:#00e67a;box-shadow:0 4px 20px rgba(0,255,133,.3);}
   .onboard-btn:disabled{background:var(--border);color:var(--muted);cursor:not-allowed;box-shadow:none;}
@@ -166,7 +166,10 @@
     </div>
     <div class="onboard-body">
       <p class="team-hint">Choose the team you support (you can change this later in your profile)</p>
-      <div class="team-grid" id="teamGrid"></div>
+      <select class="team-select" id="teamSelect">
+        <option value="" disabled selected>Choose your team…</option>
+      </select>
+      <input type="text" class="auth-input team-other-input" id="teamOtherInput" placeholder="Type your team name" maxlength="60">
       <button class="onboard-btn" id="onboardDone" disabled>Let's Go →</button>
     </div>
   </div>
@@ -178,27 +181,101 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const _USER_KEY = 'rr_user';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const PL_TEAMS = [
+// All 92 English league clubs (Premier League + Championship + League One +
+// League Two), alphabetical, current for the 2026/27 season.
+const ALL_CLUBS = [
+  {name:"AFC Wimbledon",         emoji:"🔵"},
+  {name:"Accrington Stanley",    emoji:"🔴"},
   {name:"Arsenal",               emoji:"🔴"},
   {name:"Aston Villa",           emoji:"🟣"},
-  {name:"Bournemouth",           emoji:"⚫"},
+  {name:"Barnet",                emoji:"🟡"},
+  {name:"Barnsley",              emoji:"🔴"},
+  {name:"Birmingham City",       emoji:"🔵"},
+  {name:"Blackburn Rovers",      emoji:"🔵"},
+  {name:"Blackpool",             emoji:"🟠"},
+  {name:"Bolton Wanderers",      emoji:"⚪"},
+  {name:"Bournemouth",           emoji:"🔴"},
+  {name:"Bradford City",         emoji:"🟣"},
   {name:"Brentford",             emoji:"🔴"},
-  {name:"Brighton",              emoji:"🔵"},
+  {name:"Brighton & Hove Albion",emoji:"🔵"},
+  {name:"Bristol City",          emoji:"🔴"},
+  {name:"Bristol Rovers",        emoji:"🔵"},
+  {name:"Bromley",               emoji:"⚪"},
   {name:"Burnley",               emoji:"🟣"},
+  {name:"Burton Albion",         emoji:"🟡"},
+  {name:"Cambridge United",      emoji:"🟠"},
+  {name:"Cardiff City",          emoji:"🔵"},
+  {name:"Charlton Athletic",     emoji:"🔴"},
+  {name:"Cheltenham Town",       emoji:"🔴"},
   {name:"Chelsea",               emoji:"🔵"},
+  {name:"Chesterfield",          emoji:"🔵"},
+  {name:"Colchester United",     emoji:"🔵"},
+  {name:"Coventry City",         emoji:"🩵"},
+  {name:"Crawley Town",          emoji:"🔴"},
+  {name:"Crewe Alexandra",       emoji:"🔴"},
   {name:"Crystal Palace",        emoji:"🔴"},
+  {name:"Derby County",          emoji:"⚪"},
+  {name:"Doncaster Rovers",      emoji:"🔴"},
   {name:"Everton",               emoji:"🔵"},
+  {name:"Exeter City",           emoji:"🔴"},
+  {name:"Fleetwood Town",        emoji:"🔴"},
   {name:"Fulham",                emoji:"⚪"},
+  {name:"Gillingham",            emoji:"🔵"},
+  {name:"Grimsby Town",          emoji:"⚫"},
+  {name:"Huddersfield Town",     emoji:"🔵"},
+  {name:"Hull City",             emoji:"🟠"},
+  {name:"Ipswich Town",          emoji:"🔵"},
   {name:"Leeds United",          emoji:"⚪"},
+  {name:"Leicester City",        emoji:"🔵"},
+  {name:"Leyton Orient",         emoji:"🔴"},
+  {name:"Lincoln City",          emoji:"🔴"},
   {name:"Liverpool",             emoji:"🔴"},
+  {name:"Luton Town",            emoji:"🟠"},
   {name:"Manchester City",       emoji:"🩵"},
   {name:"Manchester United",     emoji:"🔴"},
+  {name:"Mansfield Town",        emoji:"🟡"},
+  {name:"Middlesbrough",         emoji:"🔴"},
+  {name:"Millwall",              emoji:"🔵"},
+  {name:"Milton Keynes Dons",    emoji:"⚪"},
   {name:"Newcastle United",      emoji:"⚫"},
+  {name:"Newport County",        emoji:"🟡"},
+  {name:"Northampton Town",      emoji:"🟣"},
+  {name:"Norwich City",          emoji:"🟡"},
   {name:"Nottingham Forest",     emoji:"🔴"},
+  {name:"Notts County",          emoji:"⚫"},
+  {name:"Oldham Athletic",       emoji:"🔵"},
+  {name:"Oxford United",         emoji:"🟡"},
+  {name:"Peterborough United",   emoji:"🔵"},
+  {name:"Plymouth Argyle",       emoji:"🟢"},
+  {name:"Port Vale",             emoji:"⚪"},
+  {name:"Portsmouth",            emoji:"🔵"},
+  {name:"Preston North End",     emoji:"⚪"},
+  {name:"Queens Park Rangers",   emoji:"🔵"},
+  {name:"Reading",               emoji:"🔵"},
+  {name:"Rochdale",              emoji:"🔵"},
+  {name:"Rotherham United",      emoji:"🔴"},
+  {name:"Salford City",          emoji:"🔴"},
+  {name:"Sheffield United",      emoji:"🔴"},
+  {name:"Sheffield Wednesday",   emoji:"🔵"},
+  {name:"Shrewsbury Town",       emoji:"🟡"},
+  {name:"Southampton",           emoji:"🔴"},
+  {name:"Stevenage",             emoji:"🔴"},
+  {name:"Stockport County",      emoji:"🔵"},
+  {name:"Stoke City",            emoji:"🔴"},
   {name:"Sunderland",            emoji:"🔴"},
+  {name:"Swansea City",          emoji:"⚪"},
+  {name:"Swindon Town",          emoji:"🔴"},
   {name:"Tottenham Hotspur",     emoji:"⚪"},
+  {name:"Tranmere Rovers",       emoji:"⚪"},
+  {name:"Walsall",               emoji:"🔴"},
+  {name:"Watford",               emoji:"🟡"},
+  {name:"West Bromwich Albion",  emoji:"🔵"},
   {name:"West Ham United",       emoji:"🟣"},
-  {name:"Wolverhampton",         emoji:"🟡"},
+  {name:"Wigan Athletic",        emoji:"🔵"},
+  {name:"Wolverhampton Wanderers",emoji:"🟡"},
+  {name:"Wrexham",               emoji:"🔴"},
+  {name:"Wycombe Wanderers",     emoji:"🩵"},
+  {name:"York City",             emoji:"🟡"},
 ];
 
 function showErr(id, msg) { const el=document.getElementById(id); el.textContent=msg; el.style.display='block'; }
@@ -381,22 +458,39 @@ let pickedTeam = null;
 function showOnboarding() {
   document.getElementById('onboardOverlay').style.display = 'flex';
   pickedTeam = null;
-  renderGrid();
+  populateTeamSelect();
 }
 
-function renderGrid() {
-  document.getElementById('teamGrid').innerHTML = PL_TEAMS.map(t =>
-    `<div class="team-tile${pickedTeam===t.name?' picked':''}" data-team="${t.name}">
-      <span class="t-name">${t.name}</span>
-    </div>`
-  ).join('');
-  twemoji.parse(document.getElementById('teamGrid'), { folder: 'svg', ext: '.svg' });
+function populateTeamSelect() {
+  const sel = document.getElementById('teamSelect');
+  const sorted = [...ALL_CLUBS].sort((a, b) => a.name.localeCompare(b.name));
+  sel.innerHTML = '<option value="" disabled selected>Choose your team…</option>'
+    + sorted.map(t => `<option value="${t.name}">${t.name}</option>`).join('')
+    + '<option value="__other__">Other…</option>';
+  const otherInput = document.getElementById('teamOtherInput');
+  otherInput.style.display = 'none';
+  otherInput.value = '';
+  document.getElementById('onboardDone').disabled = true;
+}
+
+document.getElementById('teamSelect').addEventListener('change', () => {
+  const sel = document.getElementById('teamSelect');
+  const otherInput = document.getElementById('teamOtherInput');
+  if (sel.value === '__other__') {
+    otherInput.style.display = 'block';
+    otherInput.focus();
+    pickedTeam = otherInput.value.trim() || null;
+  } else {
+    otherInput.style.display = 'none';
+    otherInput.value = '';
+    pickedTeam = sel.value || null;
+  }
   document.getElementById('onboardDone').disabled = !pickedTeam;
-}
+});
 
-document.getElementById('teamGrid').addEventListener('click', e => {
-  const tile = e.target.closest('[data-team]'); if (!tile) return;
-  pickedTeam = tile.dataset.team; renderGrid();
+document.getElementById('teamOtherInput').addEventListener('input', e => {
+  pickedTeam = e.target.value.trim() || null;
+  document.getElementById('onboardDone').disabled = !pickedTeam;
 });
 
 document.getElementById('onboardDone').addEventListener('click', async () => {
