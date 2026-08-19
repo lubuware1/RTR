@@ -945,12 +945,33 @@ function flagImg(emoji, size) {
 const gRef   = id => REFS.find(r => r.id === +id);
 const gMatch = id => MATCHES.find(m => m.id === +id);
 
+// football-data.org's `shortName` (what fixtures' m.home/m.away are built
+// from — see buildMatchesFromFD) doesn't always match the club's standard
+// name used in the team picker (e.g. "Manchester United" vs "Man United").
+// Only the 6 current PL clubs where they actually diverge need an entry —
+// everything else already matches as-is.
+const TEAM_API_ALIASES = {
+  "Brighton & Hove Albion": "Brighton Hove",
+  "Manchester City":        "Man City",
+  "Manchester United":      "Man United",
+  "Newcastle United":       "Newcastle",
+  "Nottingham Forest":      "Nottingham",
+  "Tottenham Hotspur":      "Tottenham",
+};
+function fixtureTeamName(team) {
+  return TEAM_API_ALIASES[team] || team;
+}
+
 function isFanMatch(m, user) {
-  return user?.team && (m.home === user.team || m.away === user.team);
+  if (!user?.team) return false;
+  const t = fixtureTeamName(user.team);
+  return m.home === t || m.away === t;
 }
 function isBiasedVote(mid, user) {
   const m = gMatch(mid);
-  return user?.team && (m.home === user.team || m.away === user.team);
+  if (!user?.team) return false;
+  const t = fixtureTeamName(user.team);
+  return m.home === t || m.away === t;
 }
 
 // ── GOOGLE SHEETS LOADER ──────────────────────────────────
