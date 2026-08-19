@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#37003c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RefRater">
+<link rel="apple-touch-icon" href="/images/logos/RRlogo192.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RefRater — Profile</title>
+<link rel="icon" type="image/png" sizes="192x192" href="/images/logos/RRlogo192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/images/logos/RRlogo512.png">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7289925014125722" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="shared.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  body { background: var(--bg); }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 70% 50% at 20% 30%, rgba(55,0,60,.08) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 60% at 80% 70%, rgba(80,0,90,.06) 0%, transparent 65%);
+    pointer-events: none; z-index: 0;
+  }
+  .page { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: 32px 20px 80px; }
+
+  .profile-hero { padding: 8px 0 28px; }
+  .profile-hero h1 { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 2.2rem; text-transform: uppercase; letter-spacing: 1px; color: var(--pl-green); }
+  .profile-hero p { color: var(--muted); font-size: .88rem; margin-top: 6px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px; margin-bottom: 16px; }
+
+  .id-row { display: flex; align-items: center; gap: 16px; }
+  .id-avatar {
+    width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0; overflow: hidden;
+    background: linear-gradient(135deg, var(--pl-purple), #8b008b);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 1.5rem; color: var(--pl-green);
+  }
+  .id-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .id-name { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 1.3rem; color: var(--text); }
+  .id-team { font-size: .82rem; color: var(--muted); margin-top: 3px; }
+  .id-actions { margin-left: auto; display: flex; gap: 8px; flex-shrink: 0; }
+
+  .btn-outline {
+    background: none; border: 1.5px solid var(--pl-green); color: var(--pl-green);
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: .8rem; letter-spacing: .3px;
+    text-transform: uppercase; padding: 7px 16px; border-radius: 999px; cursor: pointer; transition: all .15s;
+  }
+  .btn-outline:hover { background: rgba(0,204,112,.08); }
+  .btn-outline.danger { border-color: rgba(224,45,66,.5); color: var(--red); }
+  .btn-outline.danger:hover { background: rgba(224,45,66,.06); }
+
+  .edit-form { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border); display: none; }
+  .edit-form.open { display: block; }
+  .field-label { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: .72rem; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 6px; }
+  .field-group { margin-bottom: 14px; }
+  .profile-input, .profile-select {
+    width: 100%; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 8px;
+    color: var(--text); font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: .92rem;
+    padding: 10px 12px; outline: none; transition: border-color .15s;
+  }
+  .profile-input:focus, .profile-select:focus { border-color: var(--pl-green); }
+  .edit-error { color: var(--red); font-size: .8rem; margin-bottom: 10px; display: none; }
+  .edit-actions { display: flex; gap: 8px; }
+  .btn-save {
+    background: var(--pl-green); color: #fff; border: none; border-radius: 8px;
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: .85rem; letter-spacing: .5px;
+    text-transform: uppercase; padding: 10px 20px; cursor: pointer; transition: opacity .15s;
+  }
+  .btn-save:hover { opacity: .88; } .btn-save:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-cancel {
+    background: none; border: 1.5px solid var(--border); color: var(--muted);
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: .85rem;
+    text-transform: uppercase; padding: 10px 20px; border-radius: 8px; cursor: pointer;
+  }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .stat-tile { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 10px; text-align: center; }
+  .stat-tile-val { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 1.5rem; color: var(--pl-green); }
+  .stat-tile-lbl { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 3px; }
+
+  .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .card-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 1.05rem; text-transform: uppercase; letter-spacing: .3px; color: var(--text); }
+  .card-sub { font-size: .78rem; color: var(--muted); margin-top: 2px; }
+  .card-link { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: .78rem; color: var(--pl-green); text-decoration: none; letter-spacing: .3px; white-space: nowrap; }
+  .card-link:hover { text-decoration: underline; }
+
+  .mini-badges { display: flex; gap: 10px; flex-wrap: wrap; }
+  .mini-badge { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 66px; text-align: center; }
+  .mini-badge-icon {
+    width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: var(--surface2); border: 1.5px solid var(--border); font-size: 1.2rem; overflow: hidden;
+  }
+  .mini-badge-icon img { width: 70%; height: 70%; object-fit: contain; }
+  .mini-badge-name { font-size: .62rem; color: var(--muted); line-height: 1.2; }
+  .no-badges { font-size: .82rem; color: var(--muted); }
+
+  @media(max-width:520px){ .stats-grid{grid-template-columns:repeat(2,1fr);} .id-row{flex-wrap:wrap;} .id-actions{margin-left:0;width:100%;} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a class="logo" href="matches.html"><img src="images/logos/RRLogo.svg" alt="RefRater" style="height:44px;width:auto;display:block;"></a>
+    <div class="header-right">
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="matches.html">Matches</a>
+        <a href="referees.html">Referees</a>
+        <a href="badges.html">Cards</a>
+        <a href="forum.html">Forum</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+      <div class="user-chip" id="userChip">
+        <div class="uc-avatar" id="ucAvatar"></div>
+        <span class="uc-name" id="ucName"></span>
+        <span id="ucTeamEmoji"></span>
+        <span style="color:var(--muted);font-size:.7rem;margin-left:2px">▾</span>
+        <div class="user-dropdown" id="userDropdown">
+          <div class="dd-head">
+            <div class="dd-name" id="ddName"></div>
+            <div class="dd-team" id="ddTeam"></div>
+          </div>
+          <div class="dd-item" id="ddProfile">👤 My Profile</div>
+          <div class="dd-item" id="ddBadges">🏅 My Cards</div>
+          <div class="dd-item admin-only" style="display:none" onclick="location.href='fantasy.html'"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="PVBB" style="height:16px;width:auto;vertical-align:middle;margin-right:6px;">PVBB</div>
+          <div class="dd-item admin-only" style="display:none" onclick="location.href='team_task_manager.html'">📋 Tasks</div>
+          <div class="dd-item danger" id="ddLogout">↩ Sign out</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-nav" id="mobileNav">
+  <a href="index.html">Home</a>
+  <a href="matches.html">Matches</a>
+  <a href="referees.html">Referees</a>
+  <a href="badges.html">Cards</a>
+  <a href="forum.html">Forum</a>
+</div>
+
+<div class="page">
+  <div class="profile-hero">
+    <h1>My Profile</h1>
+    <p>Your identity, activity and cards in one place.</p>
+  </div>
+
+  <div id="profileRoot">
+    <div class="card"><p style="color:var(--muted);font-size:.85rem;">Loading…</p></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let currentUser = null;
+
+// Same 92-club list used on login.html's team picker, kept in sync manually
+// (login.html is a standalone pre-auth page that doesn't load shared.js).
+const ALL_CLUBS = [
+  {name:"AFC Wimbledon"},{name:"Accrington Stanley"},{name:"Arsenal"},{name:"Aston Villa"},
+  {name:"Barnet"},{name:"Barnsley"},{name:"Birmingham City"},{name:"Blackburn Rovers"},
+  {name:"Blackpool"},{name:"Bolton Wanderers"},{name:"Bournemouth"},{name:"Bradford City"},
+  {name:"Brentford"},{name:"Brighton & Hove Albion"},{name:"Bristol City"},{name:"Bristol Rovers"},
+  {name:"Bromley"},{name:"Burnley"},{name:"Burton Albion"},{name:"Cambridge United"},
+  {name:"Cardiff City"},{name:"Charlton Athletic"},{name:"Cheltenham Town"},{name:"Chelsea"},
+  {name:"Chesterfield"},{name:"Colchester United"},{name:"Coventry City"},{name:"Crawley Town"},
+  {name:"Crewe Alexandra"},{name:"Crystal Palace"},{name:"Derby County"},{name:"Doncaster Rovers"},
+  {name:"Everton"},{name:"Exeter City"},{name:"Fleetwood Town"},{name:"Fulham"},
+  {name:"Gillingham"},{name:"Grimsby Town"},{name:"Huddersfield Town"},{name:"Hull City"},
+  {name:"Ipswich Town"},{name:"Leeds United"},{name:"Leicester City"},{name:"Leyton Orient"},
+  {name:"Lincoln City"},{name:"Liverpool"},{name:"Luton Town"},{name:"Manchester City"},
+  {name:"Manchester United"},{name:"Mansfield Town"},{name:"Middlesbrough"},{name:"Millwall"},
+  {name:"Milton Keynes Dons"},{name:"Newcastle United"},{name:"Newport County"},{name:"Northampton Town"},
+  {name:"Norwich City"},{name:"Nottingham Forest"},{name:"Notts County"},{name:"Oldham Athletic"},
+  {name:"Oxford United"},{name:"Peterborough United"},{name:"Plymouth Argyle"},{name:"Port Vale"},
+  {name:"Portsmouth"},{name:"Preston North End"},{name:"Queens Park Rangers"},{name:"Reading"},
+  {name:"Rochdale"},{name:"Rotherham United"},{name:"Salford City"},{name:"Sheffield United"},
+  {name:"Sheffield Wednesday"},{name:"Shrewsbury Town"},{name:"Southampton"},{name:"Stevenage"},
+  {name:"Stockport County"},{name:"Stoke City"},{name:"Sunderland"},{name:"Swansea City"},
+  {name:"Swindon Town"},{name:"Tottenham Hotspur"},{name:"Tranmere Rovers"},{name:"Walsall"},
+  {name:"Watford"},{name:"West Bromwich Albion"},{name:"West Ham United"},{name:"Wigan Athletic"},
+  {name:"Wolverhampton Wanderers"},{name:"Wrexham"},{name:"Wycombe Wanderers"},{name:"York City"},
+];
+
+function initHeader() {
+  const user = getCurrentUser();
+  currentUser = user;
+  if (!user) {
+    const nm = document.getElementById('ucName'); if (nm) nm.textContent = 'Login';
+    const av = document.getElementById('ucAvatar'); if (av) av.textContent = '→';
+    const chip = document.getElementById('userChip'); if (chip) chip.addEventListener('click', () => { window.location.href = 'login.html'; });
+    const hb = document.getElementById('hamburger'); if (hb) hb.addEventListener('click', () => { document.getElementById('mobileNav')?.classList.toggle('open'); });
+    return;
+  }
+  applyUserAvatar(document.getElementById('ucAvatar'), user);
+  document.getElementById('ucName').textContent = user.username || 'User';
+  document.getElementById('ucTeamEmoji').textContent = '';
+  document.getElementById('ddName').textContent = user.username || 'User';
+  document.getElementById('ddTeam').textContent = user.team ? `${user.team} fan` : 'No team set';
+  if (isAdmin(user)) document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
+
+  document.getElementById('userChip').addEventListener('click', () => {
+    document.getElementById('userDropdown').classList.toggle('open');
+  });
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#userChip')) document.getElementById('userDropdown').classList.remove('open');
+  });
+  document.getElementById('ddLogout').addEventListener('click', async () => {
+    await clearCurrentUser(); window.location.href = 'login.html';
+  });
+  document.getElementById('ddProfile').addEventListener('click', () => { window.location.href = 'profile.html'; });
+  document.getElementById('ddBadges').addEventListener('click', () => { window.location.href = 'badges.html'; });
+  document.getElementById('hamburger').addEventListener('click', () => {
+    document.getElementById('mobileNav').classList.toggle('open');
+  });
+  initNotificationBell(user);
+}
+
+function miniBadgeHtml(def) {
+  return def.img ? `<img src="${def.img}" alt="">` : `<span>${def.icon || '🏅'}</span>`;
+}
+
+function identityAvatarHtml(user) {
+  const badge = getAvatarBadge();
+  if (badge) {
+    const imgSrc = badge.img || (badge.icon && /\.(png|jpg|jpeg|svg|webp)$/i.test(badge.icon) ? badge.icon : null);
+    if (imgSrc) return `<img src="${imgSrc}" alt="">`;
+    if (badge.icon) return `<span>${badge.icon}</span>`;
+  }
+  return `<span>${(user.username || '?').slice(0, 1).toUpperCase()}</span>`;
+}
+
+async function loadForumCounts(userId) {
+  const [{ count: posts }, { count: replies }] = await Promise.all([
+    getSB().from('RTR Forum').select('id', { count: 'exact', head: true }).eq('user_id', userId).is('reply_to', null),
+    getSB().from('RTR Forum').select('id', { count: 'exact', head: true }).eq('user_id', userId).not('reply_to', 'is', null),
+  ]);
+  return { posts: posts || 0, replies: replies || 0 };
+}
+
+async function loadVoteCount(userId) {
+  const { count } = await getSB().from('RTR Incident Votes').select('id', { count: 'exact', head: true }).eq('user_id', userId);
+  return count || 0;
+}
+
+function renderProfile(user, earned, voteCount, forumCounts) {
+  const earnedDefs = BADGE_DEFS.filter(d => earned.some(e => e.badge_key === d.key));
+  const featured = earnedDefs.slice(0, 6);
+
+  document.getElementById('profileRoot').innerHTML = `
+    <div class="card">
+      <div class="id-row">
+        <div class="id-avatar">${identityAvatarHtml(user)}</div>
+        <div>
+          <div class="id-name">${escapeHtml(user.username || 'User')}</div>
+          <div class="id-team">${user.team ? escapeHtml(user.team) + ' supporter' : 'No team selected'}</div>
+        </div>
+        <div class="id-actions">
+          <button class="btn-outline" id="editProfileBtn">Edit profile</button>
+        </div>
+      </div>
+
+      <div class="edit-form" id="editForm">
+        <div class="edit-error" id="editError"></div>
+        <div class="field-group">
+          <label class="field-label">Username</label>
+          <input class="profile-input" id="editUsername" value="${escapeHtml(user.username || '')}" maxlength="30">
+        </div>
+        <div class="field-group">
+          <label class="field-label">Team</label>
+          <select class="profile-select" id="editTeam"></select>
+        </div>
+        <div class="edit-actions">
+          <button class="btn-save" id="saveProfileBtn">Save changes</button>
+          <button class="btn-cancel" id="cancelEditBtn">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="stats-grid">
+        <div class="stat-tile"><div class="stat-tile-val">${voteCount}</div><div class="stat-tile-lbl">Total Votes</div></div>
+        <div class="stat-tile"><div class="stat-tile-val">${earned.length}/${BADGE_DEFS.length}</div><div class="stat-tile-lbl">Cards Earned</div></div>
+        <div class="stat-tile"><div class="stat-tile-val">${forumCounts.posts}</div><div class="stat-tile-lbl">Forum Posts</div></div>
+        <div class="stat-tile"><div class="stat-tile-val">${forumCounts.replies}</div><div class="stat-tile-lbl">Forum Replies</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Trophy Cabinet</div>
+          <div class="card-sub">Your most recently earned cards</div>
+        </div>
+        <a class="card-link" href="badges.html">View all cards →</a>
+      </div>
+      ${featured.length ? `<div class="mini-badges">${featured.map(d => `
+        <div class="mini-badge">
+          <div class="mini-badge-icon">${miniBadgeHtml(d)}</div>
+          <div class="mini-badge-name">${escapeHtml(d.name)}</div>
+        </div>`).join('')}</div>`
+        : `<p class="no-badges">No cards earned yet — vote, post and play fantasy to start unlocking cards.</p>`}
+    </div>
+  `;
+
+  // Team select options
+  const teamSelect = document.getElementById('editTeam');
+  const sorted = [...ALL_CLUBS].sort((a, b) => a.name.localeCompare(b.name));
+  teamSelect.innerHTML = '<option value="">No team selected</option>'
+    + sorted.map(t => `<option value="${t.name}"${t.name === user.team ? ' selected' : ''}>${t.name}</option>`).join('')
+    + `<option value="__other__"${user.team && !sorted.some(t => t.name === user.team) ? ' selected' : ''}>Other…</option>`;
+
+  document.getElementById('editProfileBtn').addEventListener('click', () => {
+    document.getElementById('editForm').classList.add('open');
+    document.getElementById('editProfileBtn').style.display = 'none';
+  });
+  document.getElementById('cancelEditBtn').addEventListener('click', () => {
+    document.getElementById('editForm').classList.remove('open');
+    document.getElementById('editProfileBtn').style.display = '';
+    document.getElementById('editError').style.display = 'none';
+  });
+
+  document.getElementById('saveProfileBtn').addEventListener('click', async () => {
+    const errEl = document.getElementById('editError');
+    errEl.style.display = 'none';
+    const newUsername = document.getElementById('editUsername').value.trim();
+    const newTeam = document.getElementById('editTeam').value;
+    if (!newUsername) { errEl.textContent = 'Username can\'t be empty'; errEl.style.display = 'block'; return; }
+    if (newTeam === '__other__') { errEl.textContent = 'Please pick a real team from the list, or contact us to add yours'; errEl.style.display = 'block'; return; }
+
+    const btn = document.getElementById('saveProfileBtn');
+    btn.disabled = true; btn.textContent = 'Saving…';
+
+    if (newUsername.toLowerCase() !== (user.username || '').toLowerCase()) {
+      const { data: existing } = await getSB().from('RTR Profiles').select('id').ilike('username', newUsername).neq('id', user.id).maybeSingle();
+      if (existing) {
+        errEl.textContent = 'That username is already taken';
+        errEl.style.display = 'block';
+        btn.disabled = false; btn.textContent = 'Save changes';
+        return;
+      }
+    }
+
+    const { error } = await getSB().from('RTR Profiles').update({ username: newUsername, team: newTeam || null }).eq('id', user.id);
+    btn.disabled = false; btn.textContent = 'Save changes';
+    if (error) {
+      errEl.textContent = 'Save failed — please try again';
+      errEl.style.display = 'block';
+      return;
+    }
+    const stored = JSON.parse(localStorage.getItem('rr_user') || '{}');
+    stored.username = newUsername; stored.team = newTeam || null;
+    localStorage.setItem('rr_user', JSON.stringify(stored));
+    toast('Profile updated');
+    window.location.reload();
+  });
+}
+
+(async function init() {
+  await checkAuth();
+  initHeader();
+  if (!currentUser) { window.location.href = 'login.html'; return; }
+
+  const [earned, voteCount, forumCounts] = await Promise.all([
+    loadMyBadges(currentUser.id),
+    loadVoteCount(currentUser.id),
+    loadForumCounts(currentUser.id),
+  ]);
+  renderProfile(currentUser, earned, voteCount, forumCounts);
+})();
+</script>
+<script>if("serviceWorker"in navigator){navigator.serviceWorker.register("/sw.js").catch(()=>{});}</script>
+</body>
+</html>
