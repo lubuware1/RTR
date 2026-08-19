@@ -670,6 +670,7 @@ function renderLiveFixtures() {
             <div class="dd-uname">${escapeHtml(currentUser.username || 'Guest')}</div>
             <div class="dd-team">${currentUser.team ? escapeHtml(currentUser.team) + ' supporter' : 'No team selected'}</div>
           </div>
+          <div class="dd-item" onclick="location.href='profile.html'">👤 My Profile</div>
           <div class="dd-item" onclick="location.href='badges.html'">🏅 Cards</div>
           <div class="dd-item danger" id="ddLogout">↩ Sign out</div>
         </div>
