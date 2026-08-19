@@ -613,7 +613,7 @@
       const selectedRefId = div.querySelector('.f-ref').value;
       const stat = {
         match_id:        +m.id,
-        comp:            gwConfig?.comp || null,
+        comp:            document.getElementById('cfgComp').value.trim() || null,
         matchweek:       +m.matchweek,
         score:           div.querySelector('.f-score').value.trim() || null,
         status:          div.querySelector('.f-status').value,
