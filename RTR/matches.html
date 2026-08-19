@@ -1040,6 +1040,40 @@ async function loadMatchesFromAPI(gw) {
         highlightVideoId: null, varVideoId: null,
       };
     });
+    // Re-apply admin-set overrides (referee, score, cards, VAR, etc.) — this
+    // function rebuilds MATCHES straight from the raw API, which otherwise
+    // silently wipes out anything set via admin.html's Match Manager.
+    const overrides = await loadMatchStats();
+    if (overrides.length) {
+      const overrideMap = Object.fromEntries(overrides.map(o => [+o.match_id, o]));
+      MATCHES = MATCHES.map(m => {
+        const o = overrideMap[+m.id];
+        if (!o) return m;
+        const derivedStatus = o.status ?? m.status;
+        return {
+          ...m,
+          score:            derivedStatus === 'live' ? m.score : (o.score ?? m.score),
+          status:           derivedStatus,
+          yc:               o.yellow_cards       ?? m.yc,
+          rc:               o.red_cards          ?? m.rc,
+          pen:              o.penalties_given    ?? m.pen,
+          var:              o.var_decisions      ?? m.var,
+          homeYC:           o.home_yc            ?? m.homeYC  ?? null,
+          awayYC:           o.away_yc            ?? m.awayYC  ?? null,
+          homeRC:           o.home_rc            ?? m.homeRC  ?? null,
+          awayRC:           o.away_rc            ?? m.awayRC  ?? null,
+          homePen:          o.home_pen           ?? m.homePen ?? null,
+          awayPen:          o.away_pen           ?? m.awayPen ?? null,
+          perfectGame:      o.perfect_game       ?? m.perfectGame,
+          incorrectVarPen:  o.incorrect_var_pen  ?? m.incorrectVarPen,
+          incorrectVarRed:  o.incorrect_var_red  ?? m.incorrectVarRed,
+          refId:            o.ref_id             ?? m.refId,
+          highlightVideoId: o.highlight_video_id ?? m.highlightVideoId,
+          varVideoId:       o.var_video_id       ?? m.varVideoId,
+        };
+      });
+    }
+
     console.log('[RTR] Matches loaded from API:', MATCHES.length, 'for GW', gw);
     return true;
   } catch(e) {
