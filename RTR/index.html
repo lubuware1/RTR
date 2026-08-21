@@ -170,6 +170,40 @@ nav a.active{color:#fff;}
 .section-link{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;color:var(--muted);white-space:nowrap;transition:color .15s;}
 .section-link:hover{color:var(--green);}
 
+/* ── Classic Decision poll ── */
+.cd-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--card-radius);overflow:hidden;display:grid;grid-template-columns:1fr 1fr;}
+.cd-image{position:relative;aspect-ratio:4/3;background:var(--surface2);overflow:hidden;}
+.cd-image img{width:100%;height:100%;object-fit:cover;display:block;}
+.cd-image-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:3rem;opacity:.25;}
+.cd-body{padding:26px 28px;display:flex;flex-direction:column;}
+.cd-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.2rem;margin-bottom:10px;}
+.cd-desc{font-size:.92rem;line-height:1.6;color:rgba(255,255,255,.75);margin-bottom:20px;flex:1;}
+.cd-vote-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.cd-vote-btn{
+  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.9rem;letter-spacing:.03em;text-transform:uppercase;
+  padding:13px 10px;border-radius:6px;cursor:pointer;transition:all .15s;text-align:center;background:none;
+}
+.cd-vote-btn.correct{border:1.5px solid var(--green);color:var(--green);}
+.cd-vote-btn.correct:hover{background:var(--green-dim);}
+.cd-vote-btn.correct.picked{background:var(--green);color:#03170c;}
+.cd-vote-btn.wrong{border:1.5px solid var(--red);color:var(--red);}
+.cd-vote-btn.wrong:hover{background:var(--red-dim);}
+.cd-vote-btn.wrong.picked{background:var(--red);color:#fff;}
+.cd-vote-btn:disabled{cursor:not-allowed;}
+.cd-results{display:none;}
+.cd-results.show{display:block;}
+.cd-split-bar{display:flex;height:8px;border-radius:999px;overflow:hidden;background:var(--surface2);margin-bottom:8px;}
+.cd-split-fill.correct{background:var(--green);}
+.cd-split-fill.wrong{background:var(--red);}
+.cd-results-text{font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:700;letter-spacing:.02em;color:var(--muted);display:flex;justify-content:space-between;}
+.cd-results-text .n{color:var(--green);}
+.cd-results-text .w{color:var(--red);}
+.cd-signin-hint{font-size:.78rem;color:var(--muted);margin-top:10px;}
+.cd-signin-hint a{color:var(--green);text-decoration:none;}
+.cd-signin-hint a:hover{text-decoration:underline;}
+.cd-empty{padding:30px;text-align:center;color:var(--muted);font-size:.88rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--card-radius);}
+@media(max-width:760px){ .cd-card{grid-template-columns:1fr;} .cd-image{aspect-ratio:16/9;} }
+
 /* ── fixtures ribbon ── */
 .fixtures-scroll{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin;}
 .fixtures-scroll::-webkit-scrollbar{height:6px;}
@@ -341,6 +375,13 @@ footer{background:var(--purple);color:rgba(255,255,255,.7);}
     <a class="section-link" href="matches.html">Full schedule →</a>
   </div>
   <div class="fixtures-scroll" id="fixturesScroll"></div>
+</section>
+
+<section class="section" style="padding-top:0;" id="classicDecisionSection">
+  <div class="section-head">
+    <h2 class="section-title">Classic <em>Decision</em></h2>
+  </div>
+  <div id="classicDecisionCard"></div>
 </section>
 
 <section class="section" style="padding-top:0;">
@@ -629,6 +670,60 @@ function renderLiveFixtures() {
   return true;
 }
 
+// ── Classic Decision poll ──────────────────────────────────
+async function loadAndRenderClassicDecision() {
+  const decision = await loadFeaturedClassicDecision();
+  const section = document.getElementById('classicDecisionSection');
+  if (!decision) { section.style.display = 'none'; return; }
+  const user = getCurrentUser();
+  const [counts, myVote] = await Promise.all([
+    loadClassicDecisionVotes(decision.id),
+    user ? loadMyClassicDecisionVote(decision.id, user.id) : Promise.resolve(null),
+  ]);
+  renderClassicDecision(decision, counts, myVote, user);
+}
+
+function renderClassicDecision(decision, counts, myVote, user) {
+  const card = document.getElementById('classicDecisionCard');
+  const total = counts.correct + counts.wrong;
+  const correctPct = total ? Math.round(counts.correct / total * 100) : 0;
+  const wrongPct = total ? 100 - correctPct : 0;
+  const revealResults = !!myVote || !user;
+
+  card.innerHTML = `
+    <div class="cd-card">
+      <div class="cd-image">
+        ${decision.image_url ? `<img src="${decision.image_url}" alt="">` : `<div class="cd-image-fallback">⚽</div>`}
+      </div>
+      <div class="cd-body">
+        <div class="cd-title">${escapeHtml(decision.title)}</div>
+        <div class="cd-desc">${escapeHtml(decision.description)}</div>
+        <div class="cd-vote-row">
+          <button class="cd-vote-btn correct${myVote === 'correct' ? ' picked' : ''}" data-vote="correct"${!user ? ' disabled' : ''}>✅ Correct Call</button>
+          <button class="cd-vote-btn wrong${myVote === 'wrong' ? ' picked' : ''}" data-vote="wrong"${!user ? ' disabled' : ''}>❌ Wrong Call</button>
+        </div>
+        <div class="cd-results${revealResults ? ' show' : ''}">
+          <div class="cd-split-bar"><div class="cd-split-fill correct" style="width:${correctPct}%"></div><div class="cd-split-fill wrong" style="width:${wrongPct}%"></div></div>
+          <div class="cd-results-text"><span class="n">${correctPct}% Correct</span><span>${total} vote${total === 1 ? '' : 's'}</span><span class="w">${wrongPct}% Wrong</span></div>
+        </div>
+        ${!user ? `<div class="cd-signin-hint"><a href="login.html">Sign in</a> to cast your vote.</div>` : ''}
+      </div>
+    </div>`;
+
+  if (user) {
+    card.querySelectorAll('.cd-vote-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        card.querySelectorAll('.cd-vote-btn').forEach(b => b.disabled = true);
+        const vote = btn.dataset.vote;
+        const ok = await voteClassicDecision(decision.id, user.id, vote);
+        if (!ok) { card.querySelectorAll('.cd-vote-btn').forEach(b => b.disabled = false); return; }
+        const newCounts = await loadClassicDecisionVotes(decision.id);
+        renderClassicDecision(decision, newCounts, vote, user);
+      });
+    });
+  }
+}
+
 (async function() {
   const saved = await loadHomeContent();
   if (saved) HOME_CONTENT = saved;
@@ -639,6 +734,10 @@ function renderLiveFixtures() {
   // drew above. Runs before loadFromSheets() below, which repopulates MATCHES
   // with just the current gameweek and would otherwise skew a season-wide ranking.
   await loadTopReferees().catch(() => {});
+
+  loadAndRenderClassicDecision().catch(() => {
+    document.getElementById('classicDecisionSection').style.display = 'none';
+  });
 
   // Live matchweek number — runs after render so the target elements exist
   const cfg = await loadGWConfig();
