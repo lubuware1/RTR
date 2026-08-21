@@ -1820,6 +1820,63 @@ function applyUserAvatar(el, user) {
   });
 })();
 
+// ── CLASSIC DECISION (homepage fan poll) ───────────────────
+async function loadFeaturedClassicDecision() {
+  if (PREVIEW_MODE) return null;
+  const { data, error } = await getSB().from('RTR Classic Decisions').select('*').eq('featured', true).limit(1).maybeSingle();
+  if (error) { console.warn('[RTR] loadFeaturedClassicDecision error:', error); return null; }
+  return data;
+}
+
+async function loadClassicDecisionVotes(decisionId) {
+  if (PREVIEW_MODE) return { correct: 0, wrong: 0 };
+  const { data } = await getSB().from('RTR Classic Decision Votes').select('vote').eq('decision_id', decisionId);
+  const counts = { correct: 0, wrong: 0 };
+  (data || []).forEach(v => { if (counts[v.vote] != null) counts[v.vote]++; });
+  return counts;
+}
+
+async function loadMyClassicDecisionVote(decisionId, userId) {
+  if (PREVIEW_MODE || !userId) return null;
+  const { data } = await getSB().from('RTR Classic Decision Votes').select('vote').eq('decision_id', decisionId).eq('user_id', userId).maybeSingle();
+  return data?.vote || null;
+}
+
+async function voteClassicDecision(decisionId, userId, vote) {
+  if (PREVIEW_MODE || !userId) return false;
+  const { error } = await getSB().from('RTR Classic Decision Votes')
+    .upsert({ decision_id: decisionId, user_id: userId, vote }, { onConflict: 'decision_id,user_id' });
+  if (error) { console.warn('[RTR] voteClassicDecision error:', error); return false; }
+  return true;
+}
+
+// ── Classic Decision admin CRUD ─────────────────────────────
+async function loadAllClassicDecisions() {
+  if (PREVIEW_MODE) return [];
+  const { data, error } = await getSB().from('RTR Classic Decisions').select('*').order('created_at', { ascending: false });
+  if (error) { console.error('[RTR] loadAllClassicDecisions error:', error); return []; }
+  return data || [];
+}
+
+// Only one decision can be featured at a time — unfeature every other row
+// first so the app never has to reconcile more than one "current" poll.
+async function saveClassicDecision(decision) {
+  if (PREVIEW_MODE) return true;
+  if (decision.featured) {
+    await getSB().from('RTR Classic Decisions').update({ featured: false }).neq('id', decision.id ?? -1);
+  }
+  const { data, error } = await getSB().from('RTR Classic Decisions').upsert(decision).select().single();
+  if (error) { console.error('[RTR] saveClassicDecision error:', error); return null; }
+  return data;
+}
+
+async function deleteClassicDecision(id) {
+  if (PREVIEW_MODE) return true;
+  const { error } = await getSB().from('RTR Classic Decisions').delete().eq('id', id);
+  if (error) console.error('[RTR] deleteClassicDecision error:', error);
+  return !error;
+}
+
 // ── BADGE SYSTEM ──────────────────────────────────────────
 const BADGE_DEFS = [
   // Voting

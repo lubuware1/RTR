@@ -278,6 +278,30 @@
     </div>
   </div>
 
+  <!-- CLASSIC DECISIONS -->
+  <div class="section">
+    <div class="section-title">⚖️ Classic Decisions</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:16px;">The homepage "Classic Decision" fan poll — old refereeing calls, voted Correct/Wrong. Only one can be <strong>Featured</strong> at a time; featuring one automatically un-features whichever was showing before.</p>
+    <button class="btn btn-green" id="newDecisionBtn">+ New Classic Decision</button>
+    <div id="decisionsList" style="margin-top:14px;"></div>
+
+    <div id="decisionEditor" style="display:none;margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
+      <div class="field-group"><label>Title</label><input id="decTitle" placeholder="e.g. Henry's Handball, 2009"></div>
+      <div class="field-group"><label>Scenario — what happened, shown to voters</label><textarea id="decDescription" rows="4"></textarea></div>
+      <div class="field-group"><label>Image URL or path</label><input id="decImageUrl" placeholder="images/whatever.jpg"></div>
+      <div class="checkbox-row" style="margin-bottom:14px;">
+        <input type="checkbox" id="decFeatured">
+        <label for="decFeatured">Featured on homepage now</label>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button class="btn btn-green" id="saveDecisionBtn">Save Decision</button>
+        <button class="btn" id="cancelDecisionBtn">Cancel</button>
+        <button class="btn btn-red" id="deleteDecisionBtn" style="display:none;">Delete</button>
+      </div>
+      <div id="decisionEditorResult" style="margin-top:10px;font-size:.82rem;"></div>
+    </div>
+  </div>
+
   <!-- MATCH MANAGER -->
   <div class="section">
     <div class="section-title">Match Manager</div>
@@ -648,6 +672,39 @@
     const articles = await loadArticles();
     renderArticlesList(articles);
     return articles;
+  }
+
+  // ── CLASSIC DECISIONS EDITOR ────────────────────────────────
+  let editingDecisionId = null;
+
+  function renderDecisionsList(decisions) {
+    const el = document.getElementById('decisionsList');
+    if (!decisions.length) { el.innerHTML = `<p style="font-size:.85rem;color:var(--muted);">No classic decisions yet.</p>`; return; }
+    el.innerHTML = decisions.map(d => `
+      <div class="bonus-row" style="align-items:center;">
+        <span class="status-pill ${d.featured ? 'complete' : 'upcoming'}">${d.featured ? 'FEATURED' : `#${d.id}`}</span>
+        <span class="bonus-label">${d.title || '(untitled)'}<br><span class="bonus-meta">${new Date(d.created_at).toLocaleDateString('en-GB')}</span></span>
+        <button class="btn btn-sm" data-edit-decision="${d.id}">Edit</button>
+        <button class="btn btn-sm btn-red" data-delete-decision="${d.id}">Delete</button>
+      </div>`).join('');
+  }
+
+  function openDecisionEditor(decision) {
+    editingDecisionId = decision?.id ?? null;
+    document.getElementById('decTitle').value = decision?.title || '';
+    document.getElementById('decDescription').value = decision?.description || '';
+    document.getElementById('decImageUrl').value = decision?.image_url || '';
+    document.getElementById('decFeatured').checked = !!decision?.featured;
+    document.getElementById('deleteDecisionBtn').style.display = editingDecisionId ? '' : 'none';
+    document.getElementById('decisionEditorResult').textContent = '';
+    document.getElementById('decisionEditor').style.display = 'block';
+    document.getElementById('decisionEditor').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function refreshDecisionsList() {
+    const decisions = await loadAllClassicDecisions();
+    renderDecisionsList(decisions);
+    return decisions;
   }
 
   // ── MATCH CARD RENDERER ───────────────────────────────────
@@ -1674,6 +1731,78 @@
       toast('✓ Article deleted');
       document.getElementById('articleEditor').style.display = 'none';
       await refreshArticlesList();
+    } else {
+      toast('Delete failed', true);
+    }
+  });
+
+  // ── CLASSIC DECISIONS: boot ──────────────────────────────
+  await refreshDecisionsList();
+
+  document.getElementById('newDecisionBtn').addEventListener('click', () => openDecisionEditor(null));
+
+  document.getElementById('cancelDecisionBtn').addEventListener('click', () => {
+    document.getElementById('decisionEditor').style.display = 'none';
+  });
+
+  document.getElementById('decisionsList').addEventListener('click', async e => {
+    const editId = e.target.dataset.editDecision;
+    const delId = e.target.dataset.deleteDecision;
+    if (editId) {
+      const decisions = await loadAllClassicDecisions();
+      const decision = decisions.find(d => String(d.id) === editId);
+      if (decision) openDecisionEditor(decision);
+    } else if (delId) {
+      if (!confirm(`Delete this classic decision? This can't be undone.`)) return;
+      const ok = await deleteClassicDecision(delId);
+      toast(ok ? '✓ Deleted' : 'Delete failed', !ok);
+      if (ok) await refreshDecisionsList();
+    }
+  });
+
+  document.getElementById('saveDecisionBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('saveDecisionBtn');
+    const result = document.getElementById('decisionEditorResult');
+    const title = document.getElementById('decTitle').value.trim();
+    const description = document.getElementById('decDescription').value.trim();
+    if (!title || !description) { result.style.color = 'var(--red)'; result.textContent = 'Title and scenario text are both required.'; return; }
+    const imageUrl = document.getElementById('decImageUrl').value.trim();
+    if (imageUrl && isLocalFilePath(imageUrl)) {
+      result.style.color = 'var(--red)';
+      result.textContent = 'Image URL looks like a local file path (e.g. C:\\...) — it won\'t load on the live site. Use a path relative to the site (e.g. images/whatever.jpg) or a full https:// URL.';
+      return;
+    }
+    btn.disabled = true;
+    const decision = {
+      title,
+      description,
+      image_url: imageUrl || null,
+      featured: document.getElementById('decFeatured').checked,
+    };
+    if (editingDecisionId) decision.id = editingDecisionId;
+    const saved = await saveClassicDecision(decision);
+    if (saved) {
+      editingDecisionId = saved.id;
+      result.style.color = 'var(--pl-green)';
+      result.textContent = `✓ Saved${saved.featured ? ' — now featured on the homepage' : ''}.`;
+      toast('✓ Classic Decision saved');
+      await refreshDecisionsList();
+    } else {
+      result.style.color = 'var(--red)';
+      result.textContent = '✗ Save failed — check console.';
+      toast('Save failed', true);
+    }
+    btn.disabled = false;
+  });
+
+  document.getElementById('deleteDecisionBtn').addEventListener('click', async () => {
+    if (!editingDecisionId) return;
+    if (!confirm(`Delete this classic decision? This can't be undone.`)) return;
+    const ok = await deleteClassicDecision(editingDecisionId);
+    if (ok) {
+      toast('✓ Deleted');
+      document.getElementById('decisionEditor').style.display = 'none';
+      await refreshDecisionsList();
     } else {
       toast('Delete failed', true);
     }
