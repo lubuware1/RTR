@@ -26,6 +26,11 @@
   .danger-badge{display:inline-block;background:rgba(255,71,87,.12);border:1px solid rgba(255,71,87,.4);color:var(--red);font-size:.65rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:4px;margin-left:8px;vertical-align:middle;}
   .section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:20px;}
   .section-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.1rem;text-transform:uppercase;letter-spacing:.5px;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);color:var(--pl-green);}
+  #adminPanel>.section>.section-title{cursor:pointer;user-select:none;display:flex;align-items:center;gap:8px;}
+  #adminPanel>.section>.section-title::after{content:'▾';margin-left:auto;font-size:.85rem;color:var(--muted);transition:transform .2s;flex-shrink:0;}
+  #adminPanel>.section.collapsed>.section-title{margin-bottom:0;padding-bottom:0;border-bottom:none;}
+  #adminPanel>.section.collapsed>.section-title::after{transform:rotate(-90deg);}
+  #adminPanel>.section.collapsed>:not(.section-title){display:none!important;}
   label{display:block;font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
   input,select{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Barlow',sans-serif;font-size:.9rem;padding:8px 12px;width:100%;transition:border-color .15s;}
   input:focus,select:focus{outline:none;border-color:var(--pl-green);}
@@ -1806,6 +1811,25 @@
     } else {
       toast('Delete failed', true);
     }
+  });
+
+  // ── COLLAPSIBLE SECTIONS ──────────────────────────────────
+  // Every top-level .section starts collapsed except whichever ones were
+  // last left open — remembered per-browser so a working session's layout
+  // survives a reload instead of snapping shut every time.
+  const COLLAPSE_KEY = 'rr_admin_open_sections';
+  const openSections = new Set(JSON.parse(localStorage.getItem(COLLAPSE_KEY) || '[]'));
+  document.querySelectorAll('#adminPanel > .section').forEach((section, i) => {
+    const title = section.querySelector(':scope > .section-title');
+    if (!title) return;
+    const key = String(i); // index, not text — some titles have a dynamic unread-count badge
+    if (!openSections.has(key)) section.classList.add('collapsed');
+    title.addEventListener('click', () => {
+      section.classList.toggle('collapsed');
+      if (section.classList.contains('collapsed')) openSections.delete(key);
+      else openSections.add(key);
+      localStorage.setItem(COLLAPSE_KEY, JSON.stringify([...openSections]));
+    });
   });
 
   })();
