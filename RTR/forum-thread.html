@@ -100,6 +100,16 @@
   }
   .comment-reply-link:hover { color: var(--pl-green); }
 
+  .reply-actions-row { display: flex; gap: 14px; align-items: center; margin-top: 6px; }
+  .reply-actions-row .comment-reply-link { margin-top: 0; }
+  .reply-collapse-toggle {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: .72rem; font-weight: 700; letter-spacing: .3px;
+    color: var(--muted); cursor: pointer; user-select: none;
+  }
+  .reply-collapse-toggle:hover { color: var(--pl-green); }
+  .reply-children.collapsed { display: none; }
+
   .reply-box { display: flex; gap: 8px; align-items: flex-start; }
   .reply-input {
     flex: 1;
@@ -280,15 +290,22 @@ function renderComment(row, childrenMap, depth) {
   const kids = childrenMap[row.id] || [];
   const kidsHtml = kids.map(k => renderComment(k, childrenMap, depth + 1)).join('');
   const indent = Math.min(depth, MAX_INDENT_DEPTH) * 20;
+  const replyCount = kids.length;
+  const collapseToggle = replyCount
+    ? `<span class="reply-collapse-toggle" data-collapse-target="${row.id}" data-reply-count="${replyCount}">[–] ${replyCount} repl${replyCount === 1 ? 'y' : 'ies'}</span>`
+    : '';
   return `
     <div class="reply-card" style="margin-left:${indent}px;" data-comment-id="${row.id}">
       <div class="reply-meta"><strong>${escapeHtml(row.username)}</strong> · ${fmtDate(row.created_at)}</div>
       <div class="reply-body">${escapeHtml(row.body)}</div>
       ${reactionBarHtml(row.id, REACTION_COUNTS, MY_REACTIONS[row.id])}
-      <div><span class="comment-reply-link" data-reply-target="${row.id}" data-reply-user="${escapeHtml(row.username)}">↩ Reply</span></div>
+      <div class="reply-actions-row">
+        <span class="comment-reply-link" data-reply-target="${row.id}" data-reply-user="${escapeHtml(row.username)}">↩ Reply</span>
+        ${collapseToggle}
+      </div>
       <div class="inline-reply-box" id="inlineReplyBox-${row.id}" style="display:none;"></div>
     </div>
-    ${kidsHtml}`;
+    ${replyCount ? `<div class="reply-children" id="replyChildren-${row.id}">${kidsHtml}</div>` : ''}`;
 }
 
 async function postReply(parentId, body, post, replies) {
@@ -414,6 +431,18 @@ function renderThread(post, replies) {
   document.querySelectorAll('[data-reply-target]').forEach(el => {
     el.addEventListener('click', () => {
       toggleInlineReplyBox(el.getAttribute('data-reply-target'), el.getAttribute('data-reply-user'), post, replies);
+    });
+  });
+
+  document.querySelectorAll('.reply-collapse-toggle').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.collapseTarget;
+      const count = el.dataset.replyCount;
+      const container = document.getElementById(`replyChildren-${id}`);
+      if (!container) return;
+      const collapsing = !container.classList.contains('collapsed');
+      container.classList.toggle('collapsed', collapsing);
+      el.textContent = `${collapsing ? '[+]' : '[–]'} ${count} repl${count == 1 ? 'y' : 'ies'}`;
     });
   });
 }
