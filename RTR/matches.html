@@ -840,7 +840,7 @@ async function handleDrumVote(btn) {
   if (vb) vb.innerHTML=buildVoteBtnsHTML(mid, drumState.index);
   updateInlineScores(mid);
 
-  const ok = await saveIncidentVote(incidentId, currentUser?.id, vote, isFan, voteWeight);
+  const ok = await saveIncidentVote(incidentId, currentUser?.id, vote, isFan, voteWeight, isAdmin(currentUser));
   if (!ok) { toast('⚠ Vote failed — please try again'); return; }
   toast(`${vote==='correct'?'✅ ':''} Vote recorded as ${isFan?'Fan':'Neutral'}!`.trim());
   const ref = REFS.find(r=>r.id===+voteMatch.refId);

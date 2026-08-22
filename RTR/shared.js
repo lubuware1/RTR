@@ -601,9 +601,26 @@ async function loadGeneralVotesAggregate(matchId) {
   return result;
 }
 
-async function saveIncidentVote(incidentId, userId, vote, isFan, weight = 5) {
+// One vote per incident per user — admins are exempt and can cast repeated
+// votes (useful for QA). For everyone else, a re-vote (including switching
+// Correct↔Wrong) updates their existing row instead of inserting a new
+// one. This is also enforced at the DB level (see
+// supabase/one-vote-per-incident-setup.sql) since this check alone is
+// bypassable via a direct API call — that trigger is the real backstop.
+async function saveIncidentVote(incidentId, userId, vote, isFan, weight = 5, isAdminVote = false) {
   if (PREVIEW_MODE) return true;
   const season = await getCurrentSeason();
+  if (!isAdminVote) {
+    const { data: existing } = await getSB().from('RTR Incident Votes')
+      .select('id').eq('incident_id', incidentId).eq('user_id', userId).limit(1).maybeSingle();
+    if (existing) {
+      const { error } = await getSB().from('RTR Incident Votes')
+        .update({ vote, is_fan: !!isFan, weight, season, created_at: new Date().toISOString() })
+        .eq('id', existing.id);
+      if (error) console.error('[RTR] saveIncidentVote update error:', error);
+      return !error;
+    }
+  }
   const { error } = await getSB().from('RTR Incident Votes').insert({
     incident_id: incidentId, user_id: userId, vote, is_fan: !!isFan,
     weight, season, created_at: new Date().toISOString()
