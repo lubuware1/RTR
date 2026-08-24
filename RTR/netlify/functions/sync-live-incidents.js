@@ -104,6 +104,7 @@ exports.handler = async () => {
     const fixturesRes = await supabaseFetch(`/RTR%20Fixtures?select=id,status&id=in.(${ids})`);
     const fixturesStatus = {};
     (fixturesRes.ok ? await fixturesRes.json() : []).forEach(f => { fixturesStatus[f.id] = f.status; });
+    console.log('[sync-live-incidents] fixturesRes.ok:', fixturesRes.ok, 'statuses:', JSON.stringify(fixturesStatus));
 
     let synced = 0;
     let incidentsCreated = 0;
@@ -169,11 +170,11 @@ exports.handler = async () => {
       }
     }
 
-    return {
-      statusCode: 200,
-      body: `GW${cfg.gw}: ${fixturesUpdated} fixtures updated, ${synced} match stats synced, ${incidentsCreated} new incidents${errors.length ? ' — errors: ' + errors.join('; ') : ''}`,
-    };
+    const summary = `GW${cfg.gw}: ${fixturesUpdated} fixtures updated, ${synced} match stats synced, ${incidentsCreated} new incidents${errors.length ? ' — errors: ' + errors.join('; ') : ''}`;
+    console.log('[sync-live-incidents]', summary);
+    return { statusCode: 200, body: summary };
   } catch (err) {
+    console.error('[sync-live-incidents] fatal:', err.message);
     return { statusCode: 502, body: `sync-live-incidents error: ${err.message}` };
   }
 };
