@@ -1,4 +1,4 @@
-const CACHE = 'refrater-v6.3';
+const CACHE = 'refrater-v6.4';
 
 // App shell — static assets to cache on install
 const SHELL = [
