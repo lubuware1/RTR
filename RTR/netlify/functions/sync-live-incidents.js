@@ -1,23 +1,27 @@
 // Scheduled function (see ../../netlify.toml) — runs every 2 minutes and
-// pulls live yellow/red card and penalty counts straight from
-// football-data.org for whichever matches are currently in play. Does two
-// things with them:
-//   1. Writes aggregate counts into RTR Match Stats — the same table
-//      matches.html already overlays onto match cards, so cards/pens show
-//      up there with no admin action needed, same as the live score does.
-//   2. Creates a real voteable RTR Incidents row for each card/penalty
-//      that doesn't already have one — same shape as an admin manually
-//      clicking "+ Add Decision", just automatic. Re-runs are safe: each
-//      event is matched against existing incidents (by match, type,
-//      minute, description) before inserting, so nothing gets duplicated
-//      across runs.
+// pulls live/finished match data straight from football-data.org for the
+// active gameweek. Does three things:
+//   1. Writes aggregate yellow/red/penalty counts into RTR Match Stats — the
+//      same table matches.html already overlays onto match cards, so
+//      cards/pens show up there with no admin action needed.
+//   2. Creates a real voteable RTR Incidents row for each card/penalty that
+//      doesn't already have one — same shape as an admin manually clicking
+//      "+ Add Decision", just automatic. Re-runs are safe: each event is
+//      matched against existing incidents (by match, type, minute,
+//      description) before inserting, so nothing gets duplicated.
+//   3. Flips RTR Fixtures.status to 'complete' (with the final score) the
+//      moment football-data.org reports FINISHED. Referee rankings
+//      (referees.html, admin.html) only count matches with
+//      status === 'complete' on RTR Fixtures — without this step that flip
+//      only ever happened via admin manually clicking "Sync Active
+//      Matchweek", so finished matches sat stuck as "upcoming" forever and
+//      never contributed to a referee's stats.
 //
-// Only scans matches with status IN_PLAY/PAUSED/HALF_TIME each run — not
-// the whole gameweek — to stay well inside football-data.org's free-tier
-// rate limit (10 calls/min): 1 call for the fixture list + 1 per live
-// match. Finished-match aggregate syncing is still the existing manual
-// "Sync Incidents for Active GW" button in admin.html — this doesn't
-// replace it (that button doesn't create individual incident rows).
+// Once a match's RTR Fixtures row is already 'complete' it's skipped
+// entirely on later runs — no more football-data calls for it. Combined
+// with only detail-fetching live/freshly-finished matches, this stays well
+// inside football-data.org's free-tier rate limit (10 calls/min): 1 call
+// for the fixture list + 1 per match that still needs work this run.
 //
 // Requires SUPABASE_SERVICE_ROLE_KEY (Netlify env var, server-side only —
 // bypasses RLS, since this runs unattended with no admin session to log
@@ -27,8 +31,15 @@ const SUPABASE_URL = 'https://sxufittkehlktlfvicom.supabase.co';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const FD_API_KEY = '15b079ce9d02424994eae82a3e5f4a31';
 const FD_BASE = 'https://api.football-data.org/v4';
-const LIVE_STATUSES = ['IN_PLAY', 'PAUSED', 'HALF_TIME'];
 const CARD_MAP = { YELLOW: 'YELLOW_CARD', YELLOW_RED: 'YELLOW_RED_CARD', RED: 'RED_CARD' };
+
+// football-data.org status -> RTR Fixtures/Match Stats status, matching
+// FD_STATUS in shared.js/admin.html/matches.html — keep in sync with those.
+const FD_STATUS = {
+  FINISHED: 'complete', IN_PLAY: 'live', PAUSED: 'live', HALF_TIME: 'live',
+  TIMED: 'upcoming', SCHEDULED: 'upcoming', SUSPENDED: 'upcoming',
+  POSTPONED: 'upcoming', CANCELLED: 'upcoming',
+};
 
 // type -> weight, matching INCIDENT_TYPES in shared.js
 const INCIDENT_WEIGHTS = { 'Yellow Card': 2.0, 'Red Card': 3.0, 'Penalty Given': 2.5 };
@@ -85,16 +96,40 @@ exports.handler = async () => {
     const comp = cfg.comp || 'PL';
     const season = String(cfg.season || '');
     const list = await fdFetch(`/competitions/${comp}/matches?matchday=${cfg.gw}&season=${cfg.season}`);
-    const liveMatches = (list.matches || []).filter(m => LIVE_STATUSES.includes(m.status));
+    const allMatches = list.matches || [];
+    if (!allMatches.length) return { statusCode: 200, body: `No matches in GW${cfg.gw}` };
 
-    if (!liveMatches.length) {
-      return { statusCode: 200, body: `No live matches in GW${cfg.gw}` };
-    }
+    // Skip matches already marked complete in RTR Fixtures — nothing left to sync.
+    const ids = allMatches.map(m => m.id).join(',');
+    const fixturesRes = await supabaseFetch(`/RTR%20Fixtures?select=id,status&id=in.(${ids})`);
+    const fixturesStatus = {};
+    (fixturesRes.ok ? await fixturesRes.json() : []).forEach(f => { fixturesStatus[f.id] = f.status; });
 
     let synced = 0;
     let incidentsCreated = 0;
+    let fixturesUpdated = 0;
     const errors = [];
-    for (const m of liveMatches) {
+
+    for (const m of allMatches) {
+      if (fixturesStatus[m.id] === 'complete') continue;
+
+      const mappedStatus = FD_STATUS[m.status] || 'upcoming';
+      const ft = m.score?.fullTime;
+      const hasScore = ft?.home != null && ft?.away != null;
+      const score = hasScore ? `${ft.home} - ${ft.away}` : '0-0';
+
+      const fixtureRes = await supabaseFetch('/RTR%20Fixtures?on_conflict=id', {
+        method: 'POST',
+        headers: { Prefer: 'resolution=merge-duplicates' },
+        body: JSON.stringify({ id: m.id, status: mappedStatus, score, updated_at: new Date().toISOString() }),
+      });
+      if (fixtureRes.ok) fixturesUpdated++;
+      else errors.push(`match ${m.id} fixture: ${fixtureRes.status}`);
+
+      // Only spend a football-data call on matches that are live or just
+      // finished — nothing new to fetch for a still-upcoming fixture.
+      if (mappedStatus !== 'live' && mappedStatus !== 'complete') continue;
+
       try {
         const detail = await fdFetch(`/matches/${m.id}`);
         const bookings = (detail.bookings || []).map(b => ({ ...b, card: CARD_MAP[b.card] || b.card }));
@@ -106,7 +141,7 @@ exports.handler = async () => {
         const upsertRes = await supabaseFetch('/RTR%20Match%20Stats?on_conflict=match_id', {
           method: 'POST',
           headers: { Prefer: 'resolution=merge-duplicates' },
-          body: JSON.stringify({ match_id: m.id, comp, yellow_cards, red_cards, penalties_given }),
+          body: JSON.stringify({ match_id: m.id, comp, status: mappedStatus, yellow_cards, red_cards, penalties_given }),
         });
         if (upsertRes.ok) synced++;
         else errors.push(`match ${m.id} stats: ${upsertRes.status}`);
@@ -136,7 +171,7 @@ exports.handler = async () => {
 
     return {
       statusCode: 200,
-      body: `Synced ${synced}/${liveMatches.length} live matches for GW${cfg.gw}, created ${incidentsCreated} new incidents${errors.length ? ' — errors: ' + errors.join('; ') : ''}`,
+      body: `GW${cfg.gw}: ${fixturesUpdated} fixtures updated, ${synced} match stats synced, ${incidentsCreated} new incidents${errors.length ? ' — errors: ' + errors.join('; ') : ''}`,
     };
   } catch (err) {
     return { statusCode: 502, body: `sync-live-incidents error: ${err.message}` };
