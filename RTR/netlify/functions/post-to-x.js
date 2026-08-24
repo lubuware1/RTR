@@ -2,15 +2,13 @@
 // admin.html's Social Posts review section when you click "Post to X".
 //
 // Request shape confirmed from https://docs.zernio.com/posts/create-post:
-//   POST {ZERNIO_BASE}/v1/posts
+//   POST {ZERNIO_BASE}/posts
 //   Authorization: Bearer <ZERNIO_API_KEY>
 //   { content, platforms: [{ platform: 'twitter', accountId }], publishNow: true }
 //
-// NOT yet confirmed against a real account — the docs excerpt didn't state
-// the actual API base URL, so ZERNIO_BASE below is a best guess
-// (https://api.zernio.com) and may need correcting once this is tested
-// live. If posting fails with a connection/DNS error rather than an auth
-// or validation error, that's the first thing to check.
+// Still unverified against a live post — the request body shape is from
+// docs, not a confirmed successful call. If posting fails, check the error
+// body returned (auth/validation errors from Zernio pass through as-is).
 //
 // Requires two Netlify env vars (server-side only):
 //   ZERNIO_API_KEY     — from the Zernio dashboard
@@ -18,7 +16,7 @@
 //                         visible in the dashboard after connecting X via
 //                         their OAuth flow
 
-const ZERNIO_BASE = 'https://api.zernio.com';
+const ZERNIO_BASE = 'https://zernio.com/api/v1';
 const ZERNIO_API_KEY = process.env.ZERNIO_API_KEY;
 const ZERNIO_ACCOUNT_ID = process.env.ZERNIO_ACCOUNT_ID;
 
@@ -41,7 +39,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const res = await fetch(`${ZERNIO_BASE}/v1/posts`, {
+    const res = await fetch(`${ZERNIO_BASE}/posts`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${ZERNIO_API_KEY}`,
