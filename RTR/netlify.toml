@@ -1,0 +1,2 @@
+[functions."sync-live-incidents"]
+  schedule = "*/2 * * * *"
