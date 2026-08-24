@@ -1894,6 +1894,45 @@ async function deleteClassicDecision(id) {
   return !error;
 }
 
+// ── Social post drafts (auto-generated from RTR Incidents — see
+// supabase/social-post-drafts-setup.sql for the trigger that creates
+// them) ──────────────────────────────────────────────────────────
+async function loadSocialPostDrafts(status = 'pending') {
+  if (PREVIEW_MODE) return [];
+  const { data, error } = await getSB().from('RTR Social Post Drafts')
+    .select('*').eq('status', status).order('created_at', { ascending: false });
+  if (error) { console.error('[RTR] loadSocialPostDrafts error:', error); return []; }
+  return data || [];
+}
+
+async function discardSocialPostDraft(id) {
+  if (PREVIEW_MODE) return true;
+  const { error } = await getSB().from('RTR Social Post Drafts').update({ status: 'discarded' }).eq('id', id);
+  if (error) console.error('[RTR] discardSocialPostDraft error:', error);
+  return !error;
+}
+
+// Posts the (possibly hand-edited) text to X via the post-to-x function,
+// then marks the draft posted. Returns { ok, error }.
+async function postSocialPostDraft(id, text) {
+  if (PREVIEW_MODE) return { ok: true };
+  try {
+    const res = await fetch('/.netlify/functions/post-to-x', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ draftId: id, text }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) return { ok: false, error: data.error || `HTTP ${res.status}` };
+    const { error } = await getSB().from('RTR Social Post Drafts')
+      .update({ status: 'posted', post_text: text, posted_at: new Date().toISOString() }).eq('id', id);
+    if (error) console.error('[RTR] postSocialPostDraft status-update error:', error);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
 // ── BADGE SYSTEM ──────────────────────────────────────────
 const BADGE_DEFS = [
   // Voting

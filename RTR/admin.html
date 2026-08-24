@@ -61,6 +61,12 @@
   .supp-msg{font-size:.85rem;color:var(--text);line-height:1.5;white-space:pre-wrap;margin-bottom:10px;}
   .supp-page{font-size:.7rem;color:var(--muted);margin-bottom:10px;}
   .supp-actions{display:flex;gap:6px;}
+  .soc-row{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px;}
+  .soc-meta{font-size:.7rem;color:var(--muted);margin-bottom:8px;}
+  .soc-textarea{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:6px;color:var(--text);font-family:'Barlow',sans-serif;font-size:.88rem;padding:10px 12px;resize:vertical;min-height:70px;margin-bottom:6px;}
+  .soc-charcount{font-size:.7rem;color:var(--muted);text-align:right;margin-bottom:8px;}
+  .soc-charcount.over{color:var(--red);font-weight:700;}
+  .soc-actions{display:flex;gap:6px;}
   .hc-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);}
   .hc-section-head .section-title{margin-bottom:0;padding-bottom:0;border-bottom:none;}
   .hc-move-btns{display:flex;gap:6px;flex-shrink:0;}
@@ -305,6 +311,13 @@
       </div>
       <div id="decisionEditorResult" style="margin-top:10px;font-size:.82rem;"></div>
     </div>
+  </div>
+
+  <!-- SOCIAL POSTS -->
+  <div class="section">
+    <div class="section-title">📣 Social Posts</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:16px;">Auto-drafted the moment a card, penalty, or manually-added decision (e.g. VAR) is created. Edit the text if needed, then Post — nothing goes out until you click it.</p>
+    <div id="socialPostsList"><p style="font-size:.85rem;color:var(--muted);">Loading…</p></div>
   </div>
 
   <!-- MATCH MANAGER -->
@@ -621,6 +634,69 @@
       renderSupportList();
     });
   });
+
+  // ── SOCIAL POSTS ──────────────────────────────────────────
+  function renderSocialPostsList(drafts) {
+    const el = document.getElementById('socialPostsList');
+    if (!drafts.length) { el.innerHTML = `<p style="font-size:.85rem;color:var(--muted);">No pending drafts — nothing to review right now.</p>`; return; }
+    el.innerHTML = drafts.map(d => `
+      <div class="soc-row" data-draft-id="${d.id}">
+        <div class="soc-meta">Incident #${d.incident_id} · ${new Date(d.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
+        <textarea class="soc-textarea" maxlength="500">${escapeHtml(d.post_text)}</textarea>
+        <div class="soc-charcount">${d.post_text.length} / 280</div>
+        <div class="soc-actions">
+          <button class="btn btn-green btn-sm" data-post="1">Post to X</button>
+          <button class="btn btn-red btn-sm" data-discard="1">Discard</button>
+        </div>
+      </div>`).join('');
+
+    el.querySelectorAll('.soc-textarea').forEach(ta => {
+      const count = ta.closest('.soc-row').querySelector('.soc-charcount');
+      const update = () => {
+        count.textContent = `${ta.value.length} / 280`;
+        count.classList.toggle('over', ta.value.length > 280);
+      };
+      ta.addEventListener('input', update);
+      update();
+    });
+
+    el.querySelectorAll('[data-post]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const row = btn.closest('[data-draft-id]');
+        const id = +row.dataset.draftId;
+        const text = row.querySelector('.soc-textarea').value.trim();
+        if (!text) { toast('Post text is empty', true); return; }
+        if (text.length > 280) { toast('Too long for X — trim it first', true); return; }
+        btn.disabled = true; btn.textContent = 'Posting…';
+        const { ok, error } = await postSocialPostDraft(id, text);
+        if (ok) {
+          toast('✓ Posted to X');
+          await refreshSocialPostsList();
+        } else {
+          toast(`Post failed: ${error || 'unknown error'}`, true);
+          btn.disabled = false; btn.textContent = 'Post to X';
+        }
+      });
+    });
+
+    el.querySelectorAll('[data-discard]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const row = btn.closest('[data-draft-id]');
+        const id = +row.dataset.draftId;
+        if (!confirm('Discard this draft? It will not be posted.')) return;
+        btn.disabled = true;
+        const ok = await discardSocialPostDraft(id);
+        if (ok) { toast('Discarded'); await refreshSocialPostsList(); }
+        else { toast('Discard failed', true); btn.disabled = false; }
+      });
+    });
+  }
+
+  async function refreshSocialPostsList() {
+    const drafts = await loadSocialPostDrafts('pending');
+    renderSocialPostsList(drafts);
+    return drafts;
+  }
 
   // ── ARTICLES EDITOR ────────────────────────────────────────
   let editingArticleId = null;
@@ -1715,6 +1791,9 @@
       toast('Delete failed', true);
     }
   });
+
+  // ── SOCIAL POSTS: boot ────────────────────────────────────
+  await refreshSocialPostsList();
 
   // ── CLASSIC DECISIONS: boot ──────────────────────────────
   await refreshDecisionsList();
