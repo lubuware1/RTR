@@ -119,10 +119,14 @@ exports.handler = async () => {
       const hasScore = ft?.home != null && ft?.away != null;
       const score = hasScore ? `${ft.home} - ${ft.away}` : '0-0';
 
-      const fixtureRes = await supabaseFetch('/RTR%20Fixtures?on_conflict=id', {
-        method: 'POST',
-        headers: { Prefer: 'resolution=merge-duplicates' },
-        body: JSON.stringify({ id: m.id, status: mappedStatus, score, updated_at: new Date().toISOString() }),
+      // PATCH, not upsert-via-POST: RTR Fixtures has NOT NULL columns (home,
+      // away, matchweek, comp, season) that Postgres still validates on the
+      // INSERT side of an ON CONFLICT upsert even when the row already
+      // exists. These rows are always pre-seeded by admin's fixture sync,
+      // so a plain update is correct and avoids that validation entirely.
+      const fixtureRes = await supabaseFetch(`/RTR%20Fixtures?id=eq.${m.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: mappedStatus, score, updated_at: new Date().toISOString() }),
       });
       if (fixtureRes.ok) fixturesUpdated++;
       else errors.push(`match ${m.id} fixture: ${fixtureRes.status}`);
