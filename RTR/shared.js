@@ -525,9 +525,9 @@ async function loadIncidents(matchId) {
 async function loadIncidentVotes(incidentIds) {
   if (!incidentIds.length) return { neutral: {}, fan: {} };
   if (PREVIEW_MODE) return { neutral: {}, fan: {} };
-  const { data } = await getSB().from('RTR Incident Votes')
+  const data = await fetchAllRows(() => getSB().from('RTR Incident Votes')
     .select('incident_id, vote, is_fan, weight')
-    .in('incident_id', incidentIds);
+    .in('incident_id', incidentIds));
   const neutral = {}, fan = {};
   incidentIds.forEach(id => {
     neutral[id] = { correct: 0, wrong: 0 };
@@ -646,14 +646,34 @@ async function saveIncident(matchId, type, minute, description) {
 // When omitted, scores accumulate across all matchweeks of the current season
 // (used by referees page) — last season's votes stay in the tables but don't
 // count towards live ratings once a new season is set in RTR Config.
+// PostgREST caps any single response at 1000 rows by default. A query with
+// no explicit range only ever sees the first 1000 rows the database happens
+// to return — for a heavily-voted incident that can silently starve every
+// other incident's votes out of the response with no error. This pages
+// through .range() until a page comes back short, so it always fetches
+// everything that actually matches, however many rows that is.
+async function fetchAllRows(buildQuery) {
+  const PAGE = 1000;
+  let from = 0, all = [];
+  while (true) {
+    const { data, error } = await buildQuery().range(from, from + PAGE - 1);
+    if (error) { console.warn('[RTR] fetchAllRows error:', error); break; }
+    if (!data?.length) break;
+    all = all.concat(data);
+    if (data.length < PAGE) break;
+    from += PAGE;
+  }
+  return all;
+}
+
 async function loadIncidentRatings(matchIds) {
   if (PREVIEW_MODE) return;
   const matchIdSet = matchIds ? new Set(matchIds.map(Number)) : null;
   const season = await getCurrentSeason();
 
-  const [{ data: incidents }, { data: genVotes }] = await Promise.all([
-    getSB().from('RTR Incidents').select('id, match_id, type, weight').eq('season', season),
-    getSB().from('RTR General Votes').select('match_id, category, vote, is_fan, weight').eq('season', season),
+  const [incidents, genVotes] = await Promise.all([
+    fetchAllRows(() => getSB().from('RTR Incidents').select('id, match_id, type, weight').eq('season', season)),
+    fetchAllRows(() => getSB().from('RTR General Votes').select('match_id, category, vote, is_fan, weight').eq('season', season)),
   ]);
   if (!incidents?.length && !genVotes?.length) return;
 
@@ -662,9 +682,9 @@ async function loadIncidentRatings(matchIds) {
     : (incidents||[]);
 
   const ids = scopedIncidents.map(i => i.id);
-  const { data: votes } = ids.length
-    ? await getSB().from('RTR Incident Votes').select('incident_id, vote, is_fan, weight').eq('season', season).in('incident_id', ids)
-    : { data: [] };
+  const votes = ids.length
+    ? await fetchAllRows(() => getSB().from('RTR Incident Votes').select('incident_id, vote, is_fan, weight').eq('season', season).in('incident_id', ids))
+    : [];
 
   const byMatch = {};
   scopedIncidents.forEach(inc => {
