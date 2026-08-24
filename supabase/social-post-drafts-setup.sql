@@ -15,7 +15,7 @@
 
 CREATE TABLE IF NOT EXISTS "RTR Social Post Drafts" (
   id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  incident_id BIGINT NOT NULL REFERENCES "RTR Incidents"(id) ON DELETE CASCADE,
+  incident_id UUID NOT NULL REFERENCES "RTR Incidents"(id) ON DELETE CASCADE,
   post_text   TEXT NOT NULL,
   status      TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'posted', 'discarded')),
   posted_at   TIMESTAMPTZ,
@@ -37,7 +37,11 @@ SECURITY DEFINER
 AS $$
 DECLARE
   minute_prefix TEXT := CASE WHEN NEW.minute IS NOT NULL THEN NEW.minute::text || '''' || ' — ' ELSE '' END;
-  detail        TEXT := COALESCE(NEW.description, 'A decision');
+  -- Manual admin entries pack description as player||outcome||colour (see
+  -- admin.html's "+ Add Decision" form); the live-sync function just writes
+  -- plain text like "Romero (Spurs)". split_part on a string with no '||'
+  -- delimiter simply returns the whole string, so this handles both shapes.
+  detail        TEXT := COALESCE(NULLIF(split_part(NEW.description, '||', 1), ''), 'A decision');
   draft_text    TEXT;
 BEGIN
   draft_text := CASE NEW.type
