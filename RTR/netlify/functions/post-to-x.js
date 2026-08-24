@@ -1,14 +1,13 @@
 // Posts a (possibly hand-edited) social draft to X via Zernio, called from
 // admin.html's Social Posts review section when you click "Post to X".
 //
-// Request shape confirmed from https://docs.zernio.com/posts/create-post:
+// Request shape confirmed from Zernio's own quickstart (docs.zernio.com):
 //   POST {ZERNIO_BASE}/posts
 //   Authorization: Bearer <ZERNIO_API_KEY>
 //   { content, platforms: [{ platform: 'twitter', accountId }], publishNow: true }
 //
-// Still unverified against a live post — the request body shape is from
-// docs, not a confirmed successful call. If posting fails, check the error
-// body returned (auth/validation errors from Zernio pass through as-is).
+// accountId is the 24-char Zernio account _id (from GET /accounts), not the
+// X user ID — get it after connecting your X profile via Zernio's OAuth flow.
 //
 // Requires two Netlify env vars (server-side only):
 //   ZERNIO_API_KEY     — from the Zernio dashboard
