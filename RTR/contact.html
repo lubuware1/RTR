@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#37003c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RefRater">
+<link rel="apple-touch-icon" href="/images/logos/RRlogo192.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RefRater — Contact</title>
+<link rel="icon" type="image/png" sizes="192x192" href="/images/logos/RRlogo192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/images/logos/RRlogo512.png">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7289925014125722" crossorigin="anonymous"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="shared.js"></script>
+<style>
+:root{
+  --bg:#0a0c10; --surface:#12151c; --surface2:#1a1d26;
+  --border:#2a2d3a; --border-soft:rgba(224,214,245,.08);
+  --ink:#e8e0f7; --muted:#9186b8; --muted-dim:#645a82;
+  --purple:#37003c; --purple-2:#5c1064; --purple-glow:rgba(124,0,138,.35);
+  --green:#00e676; --green-dim:rgba(0,230,118,.14);
+  --gold:#ffcf40; --red:#ff4d5e; --blue:#4fb2ff;
+  --card-radius:3px;
+  --shadow-lift:0 18px 40px rgba(0,0,0,.5);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{overflow-x:hidden;width:100%;}
+body{background:var(--bg);color:var(--ink);font-family:'Barlow',sans-serif;min-height:100vh;}
+a{color:var(--green);}
+h1,h2,.disp{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;}
+
+/* ── header (shared with index.html) ── */
+.site-header{position:sticky;top:0;z-index:190;background:linear-gradient(180deg,#2a002e 0%, var(--purple) 100%);border-bottom:1px solid rgba(255,255,255,.08);box-shadow:0 8px 24px rgba(0,0,0,.35);}
+.header-inner{max-width:1240px;margin:0 auto;padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between;gap:24px;}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:#fff;}
+.brand img{height:32px;width:auto;display:block;}
+.header-right{display:flex;align-items:center;gap:8px;}
+nav{display:flex;align-items:center;gap:2px;position:relative;}
+nav a{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.86rem;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;color:rgba(255,255,255,.72);padding:10px 16px;position:relative;z-index:1;transition:color .15s;display:flex;align-items:center;}
+nav a img{height:18px;width:auto;vertical-align:middle;}
+nav a:hover{color:#fff;}
+nav a.active{color:#fff;}
+.hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:6px;}
+.hamburger span{display:block;width:22px;height:2px;background:#fff;border-radius:2px;}
+.user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:5px 14px 5px 5px;cursor:pointer;position:relative;}
+.uc-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--green),#00b862);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.65rem;color:#03170c;flex-shrink:0;overflow:hidden;}
+.uc-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.03em;color:#fff;text-transform:uppercase;}
+.signin-link{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.82rem;letter-spacing:.05em;text-transform:uppercase;text-decoration:none;color:#03170c;background:var(--green);padding:8px 18px;border-radius:20px;transition:opacity .15s;}
+.signin-link:hover{opacity:.88;}
+.user-dropdown{position:absolute;top:calc(100% + 10px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;min-width:200px;z-index:200;box-shadow:var(--shadow-lift);display:none;overflow:hidden;}
+.user-dropdown.open{display:block;}
+.dd-head{padding:14px 16px;border-bottom:1px solid var(--border);background:var(--surface2);}
+.dd-uname{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;color:var(--ink);}
+.dd-team{font-size:.75rem;color:var(--muted);margin-top:2px;}
+.dd-item{padding:11px 16px;font-size:.85rem;color:var(--muted);cursor:pointer;transition:background .12s;display:flex;align-items:center;gap:8px;}
+.dd-item:hover{background:var(--surface2);color:var(--ink);}
+.dd-item.danger:hover{color:var(--red);}
+.mobile-nav{display:none;position:fixed;top:64px;left:0;right:0;background:linear-gradient(135deg,var(--purple) 0%,#1a0020 100%);border-bottom:2px solid var(--green);z-index:189;padding:12px 16px;flex-direction:column;gap:4px;}
+.mobile-nav a{color:rgba(255,255,255,.72);font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:600;letter-spacing:.5px;text-transform:uppercase;padding:10px 14px;border-radius:6px;text-decoration:none;display:flex;align-items:center;gap:8px;border:1px solid transparent;}
+.mobile-nav a img{height:18px;width:auto;}
+.mobile-nav a.active,.mobile-nav a:hover{background:rgba(0,230,118,.1);border-color:var(--green);color:#fff;}
+.mobile-nav.open{display:flex;}
+@media(max-width:980px){ nav{display:none;} .hamburger{display:flex;} }
+
+/* ── legal page layout ── */
+.legal-wrap{max-width:760px;margin:0 auto;padding:48px 24px 80px;}
+.legal-headline{font-weight:900;font-size:2.2rem;line-height:1.05;margin-bottom:8px;}
+.legal-updated{font-size:.82rem;color:var(--muted);margin-bottom:32px;}
+.legal-wrap h2{font-size:1.15rem;margin:32px 0 12px;color:var(--green);}
+.legal-wrap p{font-size:.96rem;line-height:1.75;color:var(--ink);opacity:.92;margin-bottom:14px;}
+.legal-wrap ul{margin:0 0 14px 22px;font-size:.96rem;line-height:1.75;color:var(--ink);opacity:.92;}
+.legal-wrap li{margin-bottom:6px;}
+.back-link{display:inline-flex;align-items:center;gap:6px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.82rem;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;color:var(--muted);margin-bottom:24px;transition:color .15s;}
+.back-link:hover{color:var(--green);}
+
+footer{background:var(--purple);color:rgba(255,255,255,.7);margin-top:40px;}
+.footer-inner{max-width:1240px;margin:0 auto;padding:24px 28px;text-align:center;font-size:.78rem;}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="index.html">
+      <img src="images/logos/RRLogo.svg" alt="RefRater">
+    </a>
+    <div class="header-right">
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="matches.html">Matches</a>
+        <a href="referees.html">Referees</a>
+        <a href="fantasy.html" class="admin-only" style="display:none"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="PVBB"></a>
+        <a href="badges.html">Cards</a>
+        <a href="forum.html">Forum</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+      <div id="authArea"></div>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-nav" id="mobileNav">
+  <a href="index.html">Home</a>
+  <a href="matches.html">Matches</a>
+  <a href="referees.html">Referees</a>
+  <a href="fantasy.html" class="admin-only" style="display:none"><img src="images/logos/PVBBlogo-removebg-preview.png" alt="PVBB">PVBB</a>
+  <a href="badges.html">Cards</a>
+  <a href="forum.html">Forum</a>
+</div>
+
+<div class="legal-wrap">
+  <a class="back-link" href="index.html">← Back to Home</a>
+  <h1 class="legal-headline">Contact Us</h1>
+  <div class="legal-updated">We'd like to hear from you</div>
+
+  <p>Whether it's a question about the site, a data or privacy request, a partnership enquiry, or just feedback on how RefRater could be better — get in touch.</p>
+
+  <h2>Email</h2>
+  <p>The best way to reach us is by email: <a href="mailto:hello@refrater.uk">hello@refrater.uk</a>. We aim to reply within a few days.</p>
+
+  <h2>Found a bug, or something not working right?</h2>
+  <p>If you're signed in, the fastest way to report a bug or issue is our <a href="support.html">Support page</a> — it goes straight into our team's inbox.</p>
+
+  <h2>Press or partnerships</h2>
+  <p>For press enquiries or partnership ideas, email us at the address above with a bit of detail about what you have in mind.</p>
+</div>
+
+<footer>
+  <div class="footer-inner">© RefRater — <a href="about.html" style="color:rgba(255,255,255,.85)">About</a> · <a href="privacy.html" style="color:rgba(255,255,255,.85)">Privacy</a> · <a href="contact.html" style="color:rgba(255,255,255,.85)">Contact</a></div>
+</footer>
+
+<script>
+(function() {
+  const authArea = document.getElementById('authArea');
+  const currentUser = getCurrentUser();
+  if (currentUser) {
+    authArea.innerHTML = `
+      <div class="user-chip" id="userChip">
+        <div class="uc-avatar" id="ucAvatar"></div>
+        <span class="uc-name">${escapeHtml(currentUser.username || 'Guest')}</span>
+        <div class="user-dropdown" id="userDropdown">
+          <div class="dd-head">
+            <div class="dd-uname">${escapeHtml(currentUser.username || 'Guest')}</div>
+            <div class="dd-team">${currentUser.team ? escapeHtml(currentUser.team) + ' supporter' : 'No team selected'}</div>
+          </div>
+          <div class="dd-item" onclick="location.href='profile.html'">👤 My Profile</div>
+          <div class="dd-item" onclick="location.href='badges.html'">🏅 Cards</div>
+          <div class="dd-item" onclick="location.href='support.html'">🛟 Support</div>
+          <div class="dd-item danger" id="ddLogout">↩ Sign out</div>
+        </div>
+      </div>`;
+    applyUserAvatar(document.getElementById('ucAvatar'), currentUser);
+    if (isAdmin(currentUser)) document.querySelectorAll('.admin-only').forEach(el => el.style.display = '');
+    document.getElementById('userChip').addEventListener('click', e => {
+      e.stopPropagation();
+      document.getElementById('userDropdown').classList.toggle('open');
+    });
+    document.getElementById('ddLogout').addEventListener('click', async () => {
+      await clearCurrentUser();
+      location.reload();
+    });
+    document.addEventListener('click', () => {
+      const dd = document.getElementById('userDropdown');
+      if (dd) dd.classList.remove('open');
+    });
+  } else {
+    authArea.innerHTML = `<a class="signin-link" href="login.html">Sign In</a>`;
+  }
+})();
+
+document.getElementById('hamburger').addEventListener('click', e => {
+  e.stopPropagation();
+  document.getElementById('mobileNav').classList.toggle('open');
+});
+</script>
+</body>
+</html>
