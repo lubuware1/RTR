@@ -454,8 +454,10 @@ const TEST_MATCHES   = false; // inject fake fixtures so carousel is visible
 // ──────────────────────────────────────────────────────────
 
 // ── INIT ──────────────────────────────────────────────────
+// Match cards, scores, and the leaderboard are public — only voting and
+// other interactive actions require login. No hard redirect here so
+// anonymous visitors (and search crawlers) can actually see real content.
 let currentUser = getCurrentUser();
-if (!PREVIEW_MODE && !currentUser) { window.location.href = 'login.html'; }
 
 // State
 let selId=null;
@@ -469,6 +471,12 @@ const DESCS = RATING_DESCS;
 
 // ── HEADER ────────────────────────────────────────────────
 function initHeader() {
+  if (!PREVIEW_MODE && !currentUser) {
+    document.getElementById('ucName').textContent = 'Login';
+    document.getElementById('ucAvatar').textContent = '→';
+    document.getElementById('userChip').addEventListener('click', () => { window.location.href = 'login.html'; }, { once: true });
+    return;
+  }
   const team = PL_TEAMS.find(t => t.name === currentUser?.team);
   applyUserAvatar(document.getElementById('ucAvatar'), currentUser);
   document.getElementById('ucName').textContent = currentUser?.username || 'Guest';
@@ -813,6 +821,7 @@ function initDrum(mid) {
 }
 
 async function handleDrumVote(btn) {
+  if (!PREVIEW_MODE && !currentUser?.id) { toast('Sign in to vote'); return; }
   const incidentId = btn.dataset.iid;
   const vote = btn.dataset.drumVote;
   const mid  = +btn.dataset.mid;
@@ -1093,8 +1102,7 @@ initHeader();
   document.getElementById('matchList').innerHTML = Array(6).fill(skelMatchCard()).join('');
   document.getElementById('leaderboard').innerHTML = Array(5).fill(`<div class="skel-card" style="display:flex;align-items:center;gap:12px"><div class="skel skel-circle" style="width:28px;height:28px;flex-shrink:0"></div><div style="flex:1"><div class="skel skel-line" style="width:60%;margin-bottom:6px"></div><div class="skel skel-line" style="width:40%"></div></div><div class="skel skel-line" style="width:32px;height=20px;border-radius:6px"></div></div>`).join('');
   if (!PREVIEW_MODE) {
-    const valid = await checkAuth();
-    if (!valid) { window.location.href = 'login.html'; return; }
+    await checkAuth(); // refreshes the cached profile if a session exists; no-op (and no redirect) if not
     currentUser = getCurrentUser();
   }
   const gwConfig = await loadGWConfig();
