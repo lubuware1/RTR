@@ -1112,7 +1112,8 @@ initHeader();
     currentComp = gwConfig.comp;
   }
   await loadFromSheets().catch(() => {}); // loads REFS only (fixtures overridden below)
-  await loadMatchesFromAPI(currentGW);    // overwrites MATCHES with live API data
+  await loadMatchesFromAPI(currentGW);    // overwrites MATCHES with live API data for the current GW
+  await loadFixtures().catch(() => {});   // additively backfills every other GW's fixtures (with refId) so the leaderboard can average across the whole season, not just the current GW
   if (TEST_MATCHES) {
     const r = REFS; // use loaded refs so initials/name render
     const gw = +currentGW || 1;
@@ -1128,7 +1129,7 @@ initHeader();
   }
   const gwMatchIds = MATCHES.filter(m => +m.matchweek === +currentGW).map(m => +m.id);
   await Promise.all([
-    loadIncidentRatings(gwMatchIds), // per-GW scores only
+    loadIncidentRatings(), // no matchIds = whole-season average, matching referees.html's leaderboard
     loadUserVotes(currentUser?.id, gwMatchIds).then(v => v.forEach(id => rated.add(id)))
   ]);
   syncMatchStatuses();
@@ -1140,8 +1141,8 @@ initHeader();
   setInterval(async () => {
     await loadFromSheets().catch(() => {}); // refreshes REFS
     if (!TEST_MATCHES) await loadMatchesFromAPI(currentGW); // re-fetches live scores from API
-    const refreshIds = MATCHES.filter(m => +m.matchweek === +currentGW).map(m => +m.id);
-    await loadIncidentRatings(refreshIds);
+    if (!TEST_MATCHES) await loadFixtures().catch(() => {}); // re-backfill other GWs after loadMatchesFromAPI overwrote MATCHES
+    await loadIncidentRatings(); // whole-season average, same as the initial load
     syncMatchStatuses();
     // If a panel is open for a live/complete match, re-fetch its incidents so new decisions appear
     if (selId) {
