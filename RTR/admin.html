@@ -434,6 +434,16 @@
   }
 
   // ── HOMEPAGE CONTENT EDITOR ────────────────────────────────
+  function isLocalFilePath(v) {
+    return /^[a-zA-Z]:[\\/]/.test(v) || /^file:\/\//i.test(v) || v.includes('\\');
+  }
+  function mediaFieldLabel(path) {
+    const m = (path || '').match(/^(hero|rail|news|highlights)(?:\.(\d+))?\.media\.src$/);
+    if (!m) return 'Image/Video URL';
+    const names = { hero: 'Hero Story', rail: 'Side Story', news: 'News Card', highlights: 'Highlight Clip' };
+    const base = names[m[1]] || m[1];
+    return m[2] !== undefined ? `${base} ${Number(m[2]) + 1}` : base;
+  }
   function hcGetPath(obj, path) {
     return path.split('.').reduce((o, k) => (o == null ? undefined : o[k]), obj);
   }
@@ -818,7 +828,7 @@
         <div class="field-group"><label>Yellow Cards</label><input type="number" class="f-yc" min="0" value="${yc}"></div>
         <div class="field-group"><label>Red Cards</label><input type="number" class="f-rc" min="0" value="${rc}"></div>
         <div class="field-group"><label>Penalties Given</label><input type="number" class="f-pen" min="0" value="${pen}"></div>
-        <div class="field-group"><label>VAR Decisions</label><input type="number" class="f-var" min="0" value="${varD}"></div>
+        <div class="field-group"><label>VAR Decisions <span style="color:var(--muted);font-weight:400;">(auto, from Incidents)</span></label><input type="number" class="f-var" min="0" value="${varD}" disabled></div>
       </div>
       <div class="row cols-2">
         <div class="field-group"><label>Bad VAR Penalties</label><input type="number" class="f-bpen" min="0" value="${badPen}"></div>
@@ -1698,6 +1708,15 @@
   document.getElementById('saveHomeContentBtn').addEventListener('click', async () => {
     const btn = document.getElementById('saveHomeContentBtn');
     const result = document.getElementById('saveHomeContentResult');
+    const badSrcField = Array.from(document.querySelectorAll('#homeContentForm [data-path$=".media.src"]'))
+      .find(el => isLocalFilePath(el.value.trim()));
+    if (badSrcField) {
+      result.style.color = 'var(--red)';
+      result.textContent = `"${mediaFieldLabel(badSrcField.dataset.path)}" Image/Video URL ("${badSrcField.value.trim()}") looks like a local file path or uses backslashes — it won't load on the live site. Use forward slashes and a path relative to the site (e.g. images/logos/foo.png) or a full https:// URL.`;
+      badSrcField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      badSrcField.focus();
+      return;
+    }
     btn.disabled = true;
     const updated = gatherHomeContentForm(currentHomeContent);
     const ok = await saveHomeContent(updated);
@@ -1749,8 +1768,14 @@
     const result = document.getElementById('articleEditorResult');
     const headline = document.getElementById('artHeadline').value.trim();
     if (!headline) { result.style.color = 'var(--red)'; result.textContent = 'Headline is required.'; return; }
-    btn.disabled = true;
     const mediaType = document.getElementById('artMediaType').value;
+    const mediaSrc = document.getElementById('artMediaSrc').value.trim();
+    if (mediaType !== 'css' && isLocalFilePath(mediaSrc)) {
+      result.style.color = 'var(--red)';
+      result.textContent = 'Image/Video URL looks like a local file path (e.g. C:\\...) — it won\'t load on the live site. Use a path relative to the site (e.g. images/logos/foo.png) or a full https:// URL.';
+      return;
+    }
+    btn.disabled = true;
     const article = {
       tag: document.getElementById('artTag').value,
       tag_text: document.getElementById('artTagText').value,
@@ -1761,7 +1786,7 @@
       meta_right: document.getElementById('artMetaRight').value,
       media: mediaType === 'css'
         ? { type: 'css', variant: document.getElementById('artMediaVariant').value }
-        : { type: mediaType, src: document.getElementById('artMediaSrc').value }
+        : { type: mediaType, src: mediaSrc }
     };
     if (editingArticleId) article.id = editingArticleId;
     const saved = await saveArticle(article);

@@ -14,7 +14,7 @@
 <link rel="icon" type="image/png" sizes="512x512" href="/images/logos/RRlogo512.png">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7289925014125722" crossorigin="anonymous"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&family=Anton&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="shared.js"></script>
 <style>
@@ -110,7 +110,7 @@ nav a.active{color:#fff;}
 .hero-grid.no-hero{grid-template-columns:1fr;}
 .hero-grid.no-hero .rail{display:grid;grid-template-columns:repeat(3,1fr);}
 .feature-card{
-  position:relative;border-radius:var(--card-radius);overflow:hidden;min-height:420px;
+  position:relative;border-radius:var(--card-radius);overflow:hidden;height:420px;
   display:flex;align-items:flex-end;text-decoration:none;color:#fff;
   clip-path:polygon(0 0,100% 0,100% calc(100% - 26px),calc(100% - 26px) 100%,0 100%);
   box-shadow:var(--shadow-lift);
@@ -139,8 +139,8 @@ nav a.active{color:#fff;}
 .tag.match{background:var(--green);color:#03170c;}
 .tag.fantasy{background:var(--blue);color:#04182b;}
 .tag.forum{background:rgba(255,255,255,.16);color:#fff;}
-.feature-headline{font-weight:900;font-size:2.5rem;line-height:1.02;margin-bottom:10px;}
-.feature-dek{font-size:.98rem;line-height:1.55;color:rgba(255,255,255,.82);margin-bottom:14px;max-width:480px;}
+.feature-headline{font-family:'Anton',sans-serif;font-weight:400;font-size:2.7rem;line-height:.98;letter-spacing:.005em;text-transform:uppercase;margin-bottom:10px;-webkit-text-stroke:1.5px #000;text-shadow:-1.5px -1.5px 0 #000,1.5px -1.5px 0 #000,-1.5px 1.5px 0 #000,1.5px 1.5px 0 #000;paint-order:stroke fill;}
+.feature-dek{font-size:.98rem;line-height:1.55;color:rgba(255,255,255,.82);margin-bottom:14px;max-width:480px;display:-webkit-box;-webkit-line-clamp:3;line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
 .feature-meta{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:10px;}
 .feature-meta b{color:var(--green);font-weight:800;}
 
@@ -159,7 +159,7 @@ nav a.active{color:#fff;}
 .rail-tag.gold{color:var(--gold);}
 .rail-tag.red{color:var(--red);}
 .rail-tag.green{color:var(--green);}
-.rail-headline{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.02rem;line-height:1.15;letter-spacing:.01em;}
+.rail-headline{font-family:'Anton',sans-serif;font-weight:400;font-size:1.08rem;line-height:1.12;letter-spacing:.005em;text-transform:uppercase;-webkit-text-stroke:.75px #000;text-shadow:-.75px -.75px 0 #000,.75px -.75px 0 #000,-.75px .75px 0 #000,.75px .75px 0 #000;paint-order:stroke fill;}
 .rail-sub{font-size:.72rem;color:var(--muted);}
 
 /* ── section shell ── */
@@ -236,12 +236,13 @@ nav a.active{color:#fff;}
 .thumb-crowd{background:radial-gradient(circle at 50% 130%, rgba(255,207,64,.16), transparent 60%), repeating-radial-gradient(circle at 20% 30%, rgba(255,255,255,.05) 0 2px, transparent 2px 7px), linear-gradient(160deg,#1c0a26 0%,#37003c 70%,#1c0a26 100%);}
 .thumb-locker{background:linear-gradient(100deg,#151515 0 48%, #1f1f1f 48% 52%, #151515 52% 100%), linear-gradient(160deg,#101010,#1a1a1a);}
 .news-body{padding:14px 16px 16px;}
-.news-headline{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.08rem;line-height:1.18;margin-bottom:8px;}
+.news-headline{font-family:'Anton',sans-serif;font-weight:400;font-size:1.32rem;line-height:1.08;letter-spacing:.005em;text-transform:uppercase;margin-bottom:8px;-webkit-text-stroke:1px #000;text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000;paint-order:stroke fill;}
 .news-dek{font-size:.78rem;color:var(--muted);line-height:1.5;margin-bottom:10px;}
 .news-meta{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-dim);display:flex;justify-content:space-between;}
 
 /* ── leaderboard widget ── */
 .split{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;}
+.split.split-solo{grid-template-columns:1fr;}
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--card-radius);overflow:hidden;}
 .panel-head{background:var(--purple);color:#fff;padding:13px 18px;display:flex;align-items:center;justify-content:space-between;}
 .panel-head h3{font-weight:800;font-size:.95rem;letter-spacing:.03em;}
@@ -315,6 +316,7 @@ footer{background:var(--purple);color:rgba(255,255,255,.7);}
   .hl-grid{grid-template-columns:repeat(2,1fr);}
   .footer-grid{grid-template-columns:1fr 1fr;}
   .feature-headline{font-size:1.9rem;}
+  .feature-card{height:300px;}
   .header-inner{padding:0 16px;}
   .section{padding:30px 16px;}
   .hero-wrap{padding:20px 16px 30px;}
@@ -410,7 +412,7 @@ footer{background:var(--purple);color:rgba(255,255,255,.7);}
       <div id="leaderboardRows"><div class="lb-empty" style="padding:20px 4px;color:var(--muted);font-size:.85rem;">Loading standings…</div></div>
     </div>
 
-    <div class="panel">
+    <div class="panel admin-only" style="display:none">
       <div class="panel-head"><h3>Pick vs Best Bet</h3></div>
       <div class="pvbb-card" id="pvbbCard"></div>
     </div>
@@ -444,7 +446,7 @@ footer{background:var(--purple);color:rgba(255,255,255,.7);}
         <a href="badges.html">Cards</a>
         <a href="referees.html">Leaderboards</a>
       </div>
-      <div class="footer-col">
+      <div class="footer-col admin-only" style="display:none">
         <h4>PVBB</h4>
         <a href="fantasy.html">Fantasy Home</a>
         <a href="fantasy.html">My Picks</a>
@@ -793,6 +795,7 @@ function renderClassicDecision(decision, counts, myVote, user) {
   } else {
     authArea.innerHTML = `<a class="signin-link" href="login.html">Sign In</a>`;
   }
+  if (!isAdmin(currentUser)) document.querySelector('.split')?.classList.add('split-solo');
 })();
 
 document.getElementById('hamburger').addEventListener('click', e => {
