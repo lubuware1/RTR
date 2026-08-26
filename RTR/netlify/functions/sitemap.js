@@ -14,6 +14,9 @@ const STATIC_PAGES = [
   { path: '/referees.html',  changefreq: 'weekly',  priority: '0.8' },
   { path: '/forum.html',     changefreq: 'daily',   priority: '0.7' },
   { path: '/badges.html',    changefreq: 'monthly', priority: '0.4' },
+  { path: '/about.html',     changefreq: 'monthly', priority: '0.3' },
+  { path: '/contact.html',   changefreq: 'monthly', priority: '0.3' },
+  { path: '/privacy.html',   changefreq: 'monthly', priority: '0.2' },
 ];
 
 function supabaseFetch(path) {
