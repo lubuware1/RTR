@@ -1,0 +1,4 @@
+# Force /sitemap.xml to the dynamic generator even though a static
+# sitemap.xml file also exists (kept as a fallback — Netlify serves static
+# files over redirects by default, hence the trailing ! to force it).
+/sitemap.xml  /.netlify/functions/sitemap  200!
