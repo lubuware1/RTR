@@ -68,11 +68,42 @@
     font-size: .72rem; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase;
     color: var(--muted); padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 20px;
   }
-  .badge-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 22px;
+  /* ── SHELF (horizontal scrolling row, overlapping cards) ── */
+  .badge-shelf-outer { position: relative; overflow: hidden; }
+  .badge-shelf {
+    display: flex;
+    align-items: flex-start;
+    width: 100%;
+    padding: 24px 5px 20px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
+  .badge-shelf::-webkit-scrollbar { display: none; }
+  .badge-shelf .bc-wrap {
+    flex: 0 0 200px;
+    width: 200px;
+    margin-right: -60px;
+    transition: transform .2s ease-in-out, z-index 0s;
+    position: relative;
+  }
+  .badge-shelf .bc-wrap:hover {
+    transform: translateY(-14px) scale(1.15);
+    z-index: 10;
+  }
+  .badge-shelf .bc-wrap:last-child { margin-right: 0; }
+  .badge-shelf-btn {
+    display: flex; align-items: center; justify-content: center;
+    position: absolute; top: 0; height: 100%; width: 50px;
+    z-index: 6; font-size: 2rem; color: #fff; text-shadow: 0 0 20px #000;
+    background-color: rgba(0,0,0,.5);
+    cursor: pointer; transition: all .2s ease-in-out;
+  }
+  .badge-shelf-btn.left  { left: -100px; border-radius: 0 10px 10px 0; }
+  .badge-shelf-btn.right { right: -100px; border-radius: 10px 0 0 10px; }
+  .badge-shelf-outer:hover .badge-shelf-btn.left  { left: 0; }
+  .badge-shelf-outer:hover .badge-shelf-btn.right { right: 0; }
 
   /* ── TRADING CARD SYSTEM ── */
   @property --rx { syntax:'<angle>'; inherits:true; initial-value:0deg }
@@ -437,7 +468,8 @@
   @keyframes shimmerPulse { 0%,100%{opacity:.4} 50%{opacity:.7} }
 
   @media (max-width: 600px) {
-    .badge-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .badge-shelf .bc-wrap { flex-basis: 150px; width: 150px; margin-right: -45px; }
+    .badge-shelf-btn { display: none; }
     .bc-num { font-size: 32px; }
     .bc-medallion { width: 56px; height: 56px; }
     .bc-title { font-size: 13px; }
@@ -503,23 +535,9 @@
   <div id="badgeContent">
     <div class="badge-category">
       <div class="badge-category-title">Voting</div>
-      <div class="badge-grid">
-        <div class="badge-skeleton"></div><div class="badge-skeleton"></div>
-        <div class="badge-skeleton"></div><div class="badge-skeleton"></div>
-      </div>
-    </div>
-    <div class="badge-category">
-      <div class="badge-category-title">Fantasy</div>
-      <div class="badge-grid">
-        <div class="badge-skeleton"></div><div class="badge-skeleton"></div>
-        <div class="badge-skeleton"></div><div class="badge-skeleton"></div>
-      </div>
-    </div>
-    <div class="badge-category">
-      <div class="badge-category-title">Fantasy - Wildcards</div>
-      <div class="badge-grid">
-        <div class="badge-skeleton"></div><div class="badge-skeleton"></div>
-        <div class="badge-skeleton"></div>
+      <div style="display:flex;gap:22px;padding:24px 5px 20px;">
+        <div class="badge-skeleton" style="width:200px;flex:0 0 200px;"></div><div class="badge-skeleton" style="width:200px;flex:0 0 200px;"></div>
+        <div class="badge-skeleton" style="width:200px;flex:0 0 200px;"></div><div class="badge-skeleton" style="width:200px;flex:0 0 200px;"></div>
       </div>
     </div>
   </div>
@@ -721,14 +739,19 @@ function renderBadges(earned) {
   const categories = ['Voting', 'Fantasy', 'Fantasy - Wildcards', 'Loyalty', 'Special'];
   let html = '';
   let globalIdx = 0;
+  let shelfIdx = 0;
 
   categories.forEach(cat => {
     const defs = BADGE_DEFS.filter(b => b.category === cat);
     if (!defs.length) return;
 
+    const shelfId = `badgeShelf${shelfIdx++}`;
     html += `<div class="badge-category">
       <div class="badge-category-title">${cat}</div>
-      <div class="badge-grid">`;
+      <div class="badge-shelf-outer">
+        <div class="badge-shelf-btn left" data-shelf="${shelfId}" data-dir="-1">‹</div>
+        <div class="badge-shelf-btn right" data-shelf="${shelfId}" data-dir="1">›</div>
+        <div class="badge-shelf" id="${shelfId}">`;
 
     defs.forEach(def => {
       const isEarned = earnedKeys.has(def.key);
@@ -737,11 +760,18 @@ function renderBadges(earned) {
       html += buildCard(def, globalIdx++, isEarned, isActive, dateStr);
     });
 
-    html += `</div></div>`;
+    html += `</div></div></div>`;
   });
 
   document.getElementById('badgeContent').innerHTML = html;
   initCardTilt();
+
+  document.querySelectorAll('.badge-shelf-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const shelf = document.getElementById(btn.dataset.shelf);
+      if (shelf) shelf.scrollLeft += 500 * (+btn.dataset.dir);
+    });
+  });
 
   // Wire icon buttons
   document.querySelectorAll('.badge-set-btn').forEach(btn => {
