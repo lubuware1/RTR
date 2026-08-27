@@ -74,22 +74,25 @@
     display: flex;
     align-items: flex-start;
     width: 100%;
-    padding: 24px 5px 20px;
+    padding: 24px 30px 20px;
     overflow-x: auto;
     scroll-behavior: smooth;
     -ms-overflow-style: none;
     scrollbar-width: none;
+    perspective: 800px;
   }
   .badge-shelf::-webkit-scrollbar { display: none; }
   .badge-shelf .bc-wrap {
     flex: 0 0 200px;
     width: 200px;
     margin-right: -60px;
-    transition: transform .2s ease-in-out, z-index 0s;
+    transition: transform .25s ease-in-out, z-index 0s;
+    transform: rotateY(-22deg);
+    transform-origin: left center;
     position: relative;
   }
   .badge-shelf .bc-wrap:hover {
-    transform: translateY(-14px) scale(1.15);
+    transform: rotateY(0deg) translateY(-14px) scale(1.15);
     z-index: 10;
   }
   .badge-shelf .bc-wrap:last-child { margin-right: 0; }
@@ -468,7 +471,8 @@
   @keyframes shimmerPulse { 0%,100%{opacity:.4} 50%{opacity:.7} }
 
   @media (max-width: 600px) {
-    .badge-shelf .bc-wrap { flex-basis: 150px; width: 150px; margin-right: -45px; }
+    .badge-shelf .bc-wrap { flex-basis: 150px; width: 150px; margin-right: -45px; transform: none; }
+    .badge-shelf .bc-wrap:hover { transform: scale(1.1); }
     .badge-shelf-btn { display: none; }
     .bc-num { font-size: 32px; }
     .bc-medallion { width: 56px; height: 56px; }
