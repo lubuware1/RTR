@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="RefRater">
 <link rel="apple-touch-icon" href="/images/logos/RRlogo192.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" id="metaDescription" content="Premier League referee profiles and season stats, rated by fans on RefRater.">
 <title>Referee Profile — RefRater</title>
 <link rel="icon" type="image/png" sizes="192x192" href="/images/logos/RRlogo192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="/images/logos/RRlogo512.png">
@@ -204,6 +205,7 @@ function renderBio(ref, matches, stats) {
     .slice(0,5);
 
   document.title = `${ref.name} — RefRater`;
+  document.getElementById('metaDescription').setAttribute('content', `${ref.name} — Premier League referee profile, season stats and fan ratings on RefRater. See how ${ref.name.split(' ').pop()} rates for cards, penalties and VAR decisions this season.`);
   console.log('[BIO] photo_url:', ref.photo_url, '| hero_photo_url:', ref.hero_photo_url);
 
   document.getElementById('bioContent').innerHTML = `
