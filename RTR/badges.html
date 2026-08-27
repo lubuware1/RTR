@@ -74,7 +74,7 @@
     display: flex;
     align-items: flex-start;
     width: 100%;
-    padding: 24px 30px 20px;
+    padding: 44px 30px 20px;
     overflow-x: auto;
     scroll-behavior: smooth;
     -ms-overflow-style: none;
@@ -83,16 +83,16 @@
   }
   .badge-shelf::-webkit-scrollbar { display: none; }
   .badge-shelf .bc-wrap {
-    flex: 0 0 200px;
-    width: 200px;
-    margin-right: -60px;
+    flex: 0 0 150px;
+    width: 150px;
+    margin-right: -45px;
     transition: transform .25s ease-in-out, z-index 0s;
     transform: rotateY(-22deg);
     transform-origin: left center;
     position: relative;
   }
   .badge-shelf .bc-wrap:hover {
-    transform: rotateY(-14deg) translate(18px, -46px) scale(1.15);
+    transform: rotateY(-14deg) translate(12px, -22px) scale(1.08);
     z-index: 10;
   }
   .badge-shelf .bc-wrap:last-child { margin-right: 0; }
@@ -471,8 +471,8 @@
   @keyframes shimmerPulse { 0%,100%{opacity:.4} 50%{opacity:.7} }
 
   @media (max-width: 600px) {
-    .badge-shelf .bc-wrap { flex-basis: 150px; width: 150px; margin-right: -45px; transform: none; }
-    .badge-shelf .bc-wrap:hover { transform: scale(1.1); }
+    .badge-shelf .bc-wrap { flex-basis: 120px; width: 120px; margin-right: -35px; transform: none; }
+    .badge-shelf .bc-wrap:hover { transform: scale(1.08); }
     .badge-shelf-btn { display: none; }
     .bc-num { font-size: 32px; }
     .bc-medallion { width: 56px; height: 56px; }
@@ -540,8 +540,8 @@
     <div class="badge-category">
       <div class="badge-category-title">Voting</div>
       <div style="display:flex;gap:22px;padding:24px 5px 20px;">
-        <div class="badge-skeleton" style="width:200px;flex:0 0 200px;"></div><div class="badge-skeleton" style="width:200px;flex:0 0 200px;"></div>
-        <div class="badge-skeleton" style="width:200px;flex:0 0 200px;"></div><div class="badge-skeleton" style="width:200px;flex:0 0 200px;"></div>
+        <div class="badge-skeleton" style="width:150px;flex:0 0 150px;"></div><div class="badge-skeleton" style="width:150px;flex:0 0 150px;"></div>
+        <div class="badge-skeleton" style="width:150px;flex:0 0 150px;"></div><div class="badge-skeleton" style="width:150px;flex:0 0 150px;"></div>
       </div>
     </div>
   </div>
