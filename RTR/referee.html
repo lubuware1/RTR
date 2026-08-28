@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="RefRater">
 <link rel="apple-touch-icon" href="/images/logos/RRlogo192.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" id="metaDescription" content="Premier League referee profiles and season stats, rated by fans on RefRater.">
 <title>Referee Profile — RefRater</title>
 <link rel="icon" type="image/png" sizes="192x192" href="/images/logos/RRlogo192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="/images/logos/RRlogo512.png">
@@ -33,9 +34,10 @@
 
   /* Hero */
   .bio-hero{position:relative;padding:22px 20px 18px;text-align:center;border-bottom:1px solid var(--border);overflow:hidden;background:linear-gradient(135deg,#37003c 0%,#2a0035 50%,#0a0c10 100%);}
-  .bio-hero-bg{position:absolute;inset:0;background-size:auto;background-repeat:no-repeat;background-position:calc(50% - 20px) top;z-index:0;}
-  .bio-hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.3) 0%,rgba(0,0,0,.6) 100%);z-index:1;}
-  .bio-hero>*:not(.bio-hero-bg):not(.bio-hero-overlay){position:relative;z-index:2;}
+  .bio-hero-backdrop{position:absolute;inset:-20px;background-size:cover;background-position:center;filter:blur(24px) brightness(.5);z-index:0;}
+  .bio-hero-bg{position:absolute;inset:0;background-size:auto;background-repeat:no-repeat;background-position:calc(50% - 20px) top;z-index:1;}
+  .bio-hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.3) 0%,rgba(0,0,0,.6) 100%);z-index:2;}
+  .bio-hero>*:not(.bio-hero-bg):not(.bio-hero-overlay):not(.bio-hero-backdrop){position:relative;z-index:3;}
   .bio-avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--pl-purple),#6b006b);border:3px solid var(--pl-green);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.5rem;color:var(--pl-green);margin:0 auto 12px;overflow:hidden;flex-shrink:0;}
   .bio-avatar img{width:100%;height:100%;object-fit:cover;object-position:top;}
   .bio-name{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2rem;text-transform:uppercase;letter-spacing:1px;color:#fff;margin-bottom:4px;}
@@ -204,11 +206,12 @@ function renderBio(ref, matches, stats) {
     .slice(0,5);
 
   document.title = `${ref.name} — RefRater`;
+  document.getElementById('metaDescription').setAttribute('content', `${ref.name} — Premier League referee profile, season stats and fan ratings on RefRater. See how ${ref.name.split(' ').pop()} rates for cards, penalties and VAR decisions this season.`);
   console.log('[BIO] photo_url:', ref.photo_url, '| hero_photo_url:', ref.hero_photo_url);
 
   document.getElementById('bioContent').innerHTML = `
     <div class="bio-hero">
-      ${(ref.hero_photo_url||ref.photo_url) ? `<div class="bio-hero-bg" style="background-image:url('${ref.hero_photo_url||ref.photo_url}');background-position:${heroPos(ref)}"></div><div class="bio-hero-overlay"></div>` : '<div class="bio-hero-overlay" style="background:linear-gradient(135deg,#37003c 0%,#2a0035 50%,#0a0c10 100%);position:absolute;inset:0;z-index:1;"></div>'}
+      ${(ref.hero_photo_url||ref.photo_url) ? `<div class="bio-hero-backdrop" style="background-image:url('${ref.hero_photo_url||ref.photo_url}')"></div><div class="bio-hero-bg" style="background-image:url('${ref.hero_photo_url||ref.photo_url}');background-position:${heroPos(ref)}"></div><div class="bio-hero-overlay"></div>` : '<div class="bio-hero-overlay" style="background:linear-gradient(135deg,#37003c 0%,#2a0035 50%,#0a0c10 100%);position:absolute;inset:0;z-index:2;"></div>'}
       <div class="bio-avatar">${ref.photo_url
         ? `<img src="${ref.photo_url}" alt="${ref.name}" style="width:100%;height:100%;object-fit:cover;object-position:${avatarPos(ref)}" onerror="this.parentElement.textContent='${ref.initials||ref.name.slice(0,2).toUpperCase()}';">`
         : ref.initials||ref.name.slice(0,2).toUpperCase()}</div>
