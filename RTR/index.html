@@ -477,13 +477,14 @@ footer{background:var(--purple);color:rgba(255,255,255,.7);}
 let HOME_CONTENT = HOME_CONTENT_DEFAULTS;
 
 // ── media helper: turns a media{} entry into a background element ──
-function homeMediaHTML(media, baseClass) {
+function homeMediaHTML(media, baseClass, objectPosition) {
   media = media || { type: 'css', variant: '' };
+  const posStyle = objectPosition ? `object-position:${objectPosition};` : '';
   if (media.type === 'image') {
-    return `<img src="${media.src}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">`;
+    return `<img src="${media.src}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;${posStyle}">`;
   }
   if (media.type === 'video') {
-    return `<video src="${media.src}"${media.poster ? ` poster="${media.poster}"` : ''} autoplay muted loop playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;"></video>`;
+    return `<video src="${media.src}"${media.poster ? ` poster="${media.poster}"` : ''} autoplay muted loop playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;${posStyle}"></video>`;
   }
   return `<div class="${baseClass} ${media.variant || ''}"></div>`;
 }
@@ -545,7 +546,7 @@ function renderHomeContent() {
   heroGrid.innerHTML = `
     ${heroVisible ? `
     <a class="feature-card" href="${homeLinkFor(h)}">
-      ${homeMediaHTML(h.media, 'feature-thumb-photo')}
+      ${homeMediaHTML(h.media, 'feature-thumb-photo', 'center 20%')}
       <div class="feature-body">
         <span class="tag live"><span class="dot"></span><span id="heroGwTag">${h.tagText}</span></span>
         <h1 class="feature-headline">${h.headline}</h1>
