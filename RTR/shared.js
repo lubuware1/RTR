@@ -815,6 +815,42 @@ async function postMatchComment(matchTitle, body, userId, username, matchweek) {
   return data;
 }
 
+// Find the forum discussion thread for a Classic Decision, if one exists yet.
+// Uses the existing (previously unused) 'decision' category — already wired
+// up in forum.html's category tabs — rather than a new one.
+async function findClassicDecisionForumThread(title) {
+  if (PREVIEW_MODE) return null;
+  const { data } = await getSB().from('RTR Forum')
+    .select('id, subject')
+    .eq('category', 'decision')
+    .is('reply_to', null)
+    .eq('subject', title)
+    .limit(1)
+    .maybeSingle();
+  return data || null;
+}
+
+// Find-or-create the discussion thread for a Classic Decision, called once a
+// user casts their vote so there's always somewhere real to send them.
+async function ensureClassicDecisionForumThread(decision, userId, username) {
+  if (PREVIEW_MODE || !userId) return null;
+  const existing = await findClassicDecisionForumThread(decision.title);
+  if (existing) return existing;
+  const season = await getCurrentSeason();
+  const { data, error } = await getSB().from('RTR Forum').insert({
+    user_id: userId,
+    username,
+    category: 'decision',
+    subject: decision.title,
+    body: decision.description,
+    reply_to: null,
+    season,
+    created_at: new Date().toISOString(),
+  }).select('id, subject').single();
+  if (error) { console.error('[RTR] ensureClassicDecisionForumThread error:', error); return null; }
+  return data;
+}
+
 async function saveDecisionFlag(matchId, matchMinute) {
   if (PREVIEW_MODE) return true;
   const { data: { session } } = await getSB().auth.getSession();
