@@ -1902,7 +1902,17 @@ async function saveClassicDecision(decision) {
   if (decision.featured) {
     await getSB().from('RTR Classic Decisions').update({ featured: false }).neq('id', decision.id ?? -1);
   }
-  const { data, error } = await getSB().from('RTR Classic Decisions').upsert(decision).select().single();
+  // Plain upsert() always goes through an INSERT-with-ON-CONFLICT path, and
+  // id is a GENERATED ALWAYS identity column - Postgres rejects any explicit
+  // id in that INSERT clause outright, even for what's really just an
+  // update. Split into a real INSERT (new) vs UPDATE (editing) instead.
+  if (decision.id) {
+    const { id, ...fields } = decision;
+    const { data, error } = await getSB().from('RTR Classic Decisions').update(fields).eq('id', id).select().single();
+    if (error) { console.error('[RTR] saveClassicDecision error:', error); return null; }
+    return data;
+  }
+  const { data, error } = await getSB().from('RTR Classic Decisions').insert(decision).select().single();
   if (error) { console.error('[RTR] saveClassicDecision error:', error); return null; }
   return data;
 }
