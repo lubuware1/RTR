@@ -372,6 +372,7 @@ const HOME_CONTENT_DEFAULTS = {
     tagText: 'Live Now',
     headline: `Arsenal 2‑1 Chelsea: Oliver waves away second‑half penalty shout`,
     dek: `Community reaction splits down the middle after a VAR check inside the box goes uncorrected. Cast your rating before full time.`,
+    appointments: '',
     metaMinute: `76'`, metaRef: `Michael Oliver`, metaVenue: `Emirates Stadium`,
     link: 'matches.html', articleId: null,
     media: { type: 'css', variant: 'pitch' }
