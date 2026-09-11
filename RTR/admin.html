@@ -496,6 +496,8 @@
     html += hcField('hero.tagText', 'Tag Label (e.g. "Live Now")');
     html += hcField('hero.headline', 'Headline', {textarea:true});
     html += hcField('hero.dek', 'Subtext', {textarea:true});
+    html += `<div class="field-group"><label>This Week's Appointments</label><textarea data-path="hero.appointments" rows="6" style="resize:vertical;"></textarea></div>`;
+    html += `<button type="button" class="btn btn-sm" id="loadWeeklyAppointmentsBtn" style="margin-bottom:16px;">🔄 Load This Week's Matches &amp; Refs</button>`;
     html += `<div class="row cols-3">${hcField('hero.metaMinute','Meta: Minute')}${hcField('hero.metaRef','Meta: Referee')}${hcField('hero.metaVenue','Meta: Venue')}</div>`;
     html += `<div class="row cols-2">${hcField('hero.link', 'Fallback Link (e.g. matches.html)')}${hcField('hero.articleId', 'Article ID (optional — overrides link)')}</div>`;
     html += hcMediaGroup('hero', ['pitch']);
@@ -1703,6 +1705,32 @@
     currentHomeContent = data;
     populateHomeContentForm(currentHomeContent);
     toast(`Swapped — click "Save to Live Site" to publish the new order`);
+  });
+
+  document.getElementById('loadWeeklyAppointmentsBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('loadWeeklyAppointmentsBtn');
+    btn.disabled = true;
+    try {
+      const cfg = await loadGWConfig();
+      const gw = cfg?.gw;
+      if (!gw) { toast('No active GW set in config', true); return; }
+      const weekMatches = MATCHES
+        .filter(m => +m.matchweek === +gw)
+        .sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff));
+      if (!weekMatches.length) { toast(`No fixtures found for GW${gw}`, true); return; }
+      const lines = weekMatches.map(m => {
+        const refName = REFS.find(r => r.id === +m.refId)?.name || 'TBC';
+        return `${m.home} vs ${m.away} — Ref: ${refName}`;
+      });
+      const data = gatherHomeContentForm(currentHomeContent);
+      data.hero.appointments = lines.join('\n');
+      data.hero.tagText = `Gameweek ${gw}`;
+      currentHomeContent = data;
+      populateHomeContentForm(currentHomeContent);
+      toast(`Loaded ${weekMatches.length} fixtures for GW${gw} — review, then click "Save to Live Site"`);
+    } finally {
+      btn.disabled = false;
+    }
   });
 
   document.getElementById('saveHomeContentBtn').addEventListener('click', async () => {
