@@ -110,6 +110,26 @@
   .heatmap-chart svg{display:block;width:100%;min-width:500px;}
   .heatmap-empty{color:var(--muted);font-size:.85rem;padding:12px 0;}
 
+  /* ── HERO PREVIEW (mirrors index.html's .feature-card treatment) ── */
+  .hero-preview-box{
+    position:relative;border-radius:14px;overflow:hidden;min-height:280px;
+    display:flex;align-items:flex-end;background:
+      linear-gradient(0deg, rgba(4,2,8,.95) 0%, rgba(4,2,8,.55) 55%, rgba(4,2,8,.25) 100%),
+      linear-gradient(160deg,#0c1a10 0%,#132615 55%,#0a1a0d 100%);
+  }
+  .hero-preview-body{position:relative;z-index:1;padding:22px 24px 24px;max-width:560px;color:#fff;font-family:'Barlow',sans-serif;}
+  .hero-preview-body .tag{display:inline-flex;align-items:center;gap:6px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px 3px;border-radius:2px;margin-bottom:10px;background:var(--red);color:#fff;}
+  .hero-preview-body .tag .dot{width:6px;height:6px;border-radius:50%;background:#fff;}
+  .hero-preview-body .feature-headline{font-family:'Anton',sans-serif;font-weight:400;font-size:2rem;line-height:1;letter-spacing:.005em;text-transform:uppercase;margin-bottom:8px;-webkit-text-stroke:1.2px #000;text-shadow:-1.2px -1.2px 0 #000,1.2px -1.2px 0 #000,-1.2px 1.2px 0 #000,1.2px 1.2px 0 #000;paint-order:stroke fill;}
+  .hero-preview-body .feature-dek{font-size:.92rem;line-height:1.5;color:rgba(255,255,255,.82);margin-bottom:12px;}
+  .hero-preview-body .feature-matches{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
+  .hero-preview-body .feature-match-row{display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:'Barlow Condensed',sans-serif;font-size:.82rem;font-weight:700;color:#fff;-webkit-text-stroke:.6px #000;text-shadow:-.6px -.6px 0 #000,.6px -.6px 0 #000,-.6px .6px 0 #000,.6px .6px 0 #000;paint-order:stroke fill;}
+  .hero-preview-body .feature-match-teams{display:flex;align-items:center;gap:6px;}
+  .hero-preview-body .feature-match-badge{width:16px;height:16px;object-fit:contain;flex-shrink:0;}
+  .hero-preview-body .feature-match-ref{white-space:nowrap;opacity:.9;}
+  .hero-preview-body .feature-meta{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:10px;}
+  .hero-preview-body .feature-meta b{color:var(--pl-green);font-weight:800;}
+
   /* ── MOBILE ─────────────────────────────────────────────── */
   @media(max-width:768px){
     body{padding:12px;}
@@ -496,11 +516,18 @@
     html += hcField('hero.tagText', 'Tag Label (e.g. "Live Now")');
     html += hcField('hero.headline', 'Headline', {textarea:true});
     html += hcField('hero.dek', 'Subtext', {textarea:true});
-    html += `<div class="field-group"><label>This Week's Appointments</label><textarea data-path="hero.appointments" rows="6" style="resize:vertical;"></textarea></div>`;
-    html += `<button type="button" class="btn btn-sm" id="loadWeeklyAppointmentsBtn" style="margin-bottom:16px;">🔄 Load This Week's Matches &amp; Refs</button>`;
+    html += `<div class="field-group">
+      <label>This Week's Appointments</label>
+      <button type="button" class="btn btn-sm" id="loadWeeklyAppointmentsBtn">🔄 Load This Week's Matches &amp; Refs</button>
+      <div id="heroMatchesStatus" style="margin-top:8px;font-size:.8rem;color:var(--muted);"></div>
+    </div>`;
     html += `<div class="row cols-3">${hcField('hero.metaMinute','Meta: Minute')}${hcField('hero.metaRef','Meta: Referee')}${hcField('hero.metaVenue','Meta: Venue')}</div>`;
     html += `<div class="row cols-2">${hcField('hero.link', 'Fallback Link (e.g. matches.html)')}${hcField('hero.articleId', 'Article ID (optional — overrides link)')}</div>`;
     html += hcMediaGroup('hero', ['pitch']);
+    html += `<div class="field-group" style="margin-top:8px;">
+      <label>🔍 Live Preview</label>
+      <div id="heroPreviewBox" class="hero-preview-box"><div class="hero-preview-body" id="heroPreviewBody"></div></div>
+    </div>`;
 
     HOME_CONTENT_DEFAULTS.rail.forEach((_, i) => {
       html += hcSectionHeader(`Side Story ${i+1}`, 'rail', i, HOME_CONTENT_DEFAULTS.rail.length);
@@ -1692,6 +1719,17 @@
   buildHomeContentForm();
   populateHomeContentForm(currentHomeContent);
 
+  function renderHeroPreview() {
+    const data = gatherHomeContentForm(currentHomeContent);
+    document.getElementById('heroPreviewBody').innerHTML = renderHeroFeatureBody(data.hero);
+    const n = data.hero.matches?.length || 0;
+    document.getElementById('heroMatchesStatus').textContent = n
+      ? `Showing ${n} fixture${n === 1 ? '' : 's'} in the hero card.`
+      : 'No matches loaded yet — click the button above.';
+  }
+  renderHeroPreview();
+  document.getElementById('homeContentForm').addEventListener('input', renderHeroPreview);
+
   document.getElementById('homeContentForm').addEventListener('click', e => {
     const btn = e.target.closest('.hc-move-btn');
     if (!btn || btn.disabled) return;
@@ -1704,6 +1742,7 @@
     [arr[index], arr[otherIndex]] = [arr[otherIndex], arr[index]];
     currentHomeContent = data;
     populateHomeContentForm(currentHomeContent);
+    renderHeroPreview();
     toast(`Swapped — click "Save to Live Site" to publish the new order`);
   });
 
@@ -1718,15 +1757,17 @@
         .filter(m => +m.matchweek === +gw)
         .sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff));
       if (!weekMatches.length) { toast(`No fixtures found for GW${gw}`, true); return; }
-      const lines = weekMatches.map(m => {
-        const refName = REFS.find(r => r.id === +m.refId)?.name || 'TBC';
-        return `${m.home} vs ${m.away} — Ref: ${refName}`;
-      });
+      const matches = weekMatches.map(m => ({
+        home: m.home, away: m.away,
+        homeCrest: m.homeCrest || null, awayCrest: m.awayCrest || null,
+        ref: REFS.find(r => r.id === +m.refId)?.name || 'TBC',
+      }));
       const data = gatherHomeContentForm(currentHomeContent);
-      data.hero.appointments = lines.join('\n');
+      data.hero.matches = matches;
       data.hero.tagText = `Gameweek ${gw}`;
       currentHomeContent = data;
       populateHomeContentForm(currentHomeContent);
+      renderHeroPreview();
       toast(`Loaded ${weekMatches.length} fixtures for GW${gw} — review, then click "Save to Live Site"`);
     } finally {
       btn.disabled = false;
@@ -1762,7 +1803,9 @@
   });
 
   document.getElementById('resetHomeContentBtn').addEventListener('click', () => {
-    populateHomeContentForm(HOME_CONTENT_DEFAULTS);
+    currentHomeContent = JSON.parse(JSON.stringify(HOME_CONTENT_DEFAULTS));
+    populateHomeContentForm(currentHomeContent);
+    renderHeroPreview();
     toast('Form reset to defaults — click Save to publish');
   });
 

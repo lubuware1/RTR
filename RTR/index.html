@@ -142,7 +142,11 @@ nav a.active{color:#fff;}
 .tag.forum{background:rgba(255,255,255,.16);color:#fff;}
 .feature-headline{font-family:'Anton',sans-serif;font-weight:400;font-size:2.7rem;line-height:.98;letter-spacing:.005em;text-transform:uppercase;margin-bottom:10px;-webkit-text-stroke:1.5px #000;text-shadow:-1.5px -1.5px 0 #000,1.5px -1.5px 0 #000,-1.5px 1.5px 0 #000,1.5px 1.5px 0 #000;paint-order:stroke fill;}
 .feature-dek{font-size:.98rem;line-height:1.55;color:rgba(255,255,255,.82);margin-bottom:14px;max-width:480px;display:-webkit-box;-webkit-line-clamp:3;line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
-.feature-appointments{white-space:pre-line;font-size:.85rem;line-height:1.7;color:rgba(255,255,255,.75);max-width:480px;margin-bottom:14px;}
+.feature-matches{display:flex;flex-direction:column;gap:6px;max-width:480px;margin-bottom:14px;}
+.feature-match-row{display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:'Barlow Condensed',sans-serif;font-size:.85rem;font-weight:700;color:#fff;-webkit-text-stroke:.6px #000;text-shadow:-.6px -.6px 0 #000,.6px -.6px 0 #000,-.6px .6px 0 #000,.6px .6px 0 #000;paint-order:stroke fill;}
+.feature-match-teams{display:flex;align-items:center;gap:6px;}
+.feature-match-badge{width:18px;height:18px;object-fit:contain;flex-shrink:0;}
+.feature-match-ref{white-space:nowrap;opacity:.9;}
 .feature-meta{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:10px;}
 .feature-meta b{color:var(--green);font-weight:800;}
 
@@ -551,11 +555,7 @@ function renderHomeContent() {
     <a class="feature-card" href="${homeLinkFor(h)}">
       ${homeMediaHTML(h.media, 'feature-thumb-photo', 'center 20%')}
       <div class="feature-body">
-        <span class="tag live"><span class="dot"></span><span id="heroGwTag">${h.tagText}</span></span>
-        <h1 class="feature-headline">${h.headline}</h1>
-        <p class="feature-dek">${h.dek}</p>
-        ${h.appointments ? `<div class="feature-appointments">${h.appointments}</div>` : ''}
-        <div class="feature-meta">${h.metaMinute} <b>·</b> ${h.metaRef} <b>·</b> ${h.metaVenue}</div>
+        ${renderHeroFeatureBody(h)}
       </div>
     </a>` : ''}
     <div class="rail">
