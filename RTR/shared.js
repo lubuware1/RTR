@@ -372,7 +372,7 @@ const HOME_CONTENT_DEFAULTS = {
     tagText: 'Live Now',
     headline: `Arsenal 2‑1 Chelsea: Oliver waves away second‑half penalty shout`,
     dek: `Community reaction splits down the middle after a VAR check inside the box goes uncorrected. Cast your rating before full time.`,
-    appointments: '',
+    matches: [],
     metaMinute: `76'`, metaRef: `Michael Oliver`, metaVenue: `Emirates Stadium`,
     link: 'matches.html', articleId: null,
     media: { type: 'css', variant: 'pitch' }
@@ -1592,6 +1592,31 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+// Shared hero-card body renderer — used by both index.html (live homepage)
+// and admin.html (Homepage Content preview panel), so the markup an admin
+// previews is exactly what goes live rather than two copies that can drift.
+function renderHeroFeatureBody(h) {
+  const matchesHTML = (h.matches && h.matches.length) ? `
+    <div class="feature-matches">
+      ${h.matches.map(m => `
+        <div class="feature-match-row">
+          <span class="feature-match-teams">
+            <img src="${m.homeCrest || 'images/logos/RRLogo.svg'}" class="feature-match-badge" onerror="this.src='images/logos/RRLogo.svg';this.style.opacity='.7';">
+            ${escapeHtml(m.home)} vs ${escapeHtml(m.away)}
+            <img src="${m.awayCrest || 'images/logos/RRLogo.svg'}" class="feature-match-badge" onerror="this.src='images/logos/RRLogo.svg';this.style.opacity='.7';">
+          </span>
+          <span class="feature-match-ref">Ref: ${escapeHtml(m.ref || 'TBC')}</span>
+        </div>`).join('')}
+    </div>` : '';
+
+  return `
+    <span class="tag live"><span class="dot"></span><span id="heroGwTag">${h.tagText}</span></span>
+    <h1 class="feature-headline">${h.headline}</h1>
+    <p class="feature-dek">${h.dek}</p>
+    ${matchesHTML}
+    <div class="feature-meta">${h.metaMinute} <b>·</b> ${h.metaRef} <b>·</b> ${h.metaVenue}</div>`;
 }
 
 // ── @MENTIONS / NOTIFICATIONS ──────────────────────────────
