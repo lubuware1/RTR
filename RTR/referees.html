@@ -502,24 +502,8 @@ function renderRefs(){
           <a href="referee.html?id=${ref.id}" style="font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;color:var(--pl-green);letter-spacing:.5px;text-transform:uppercase;" onclick="event.stopPropagation()">View Profile →</a>
         </div>
       </div></div>
-    </div>${(rank+1)%5===0?'<div class="ref-ad-slot"></div>':''}`;
+    </div>${(rank+1)%5===0?'<div class="ref-ad-slot">Ad placeholder</div>':''}`;
   }).join('');
-
-  // Ad iframes can't go through innerHTML directly (script tags inserted
-  // that way never execute) — fill each placeholder with a DOM-built
-  // iframe instead. sandbox (with no allow-same-origin) forces the ad's
-  // script into a genuinely separate opaque origin — unlike a plain
-  // srcdoc iframe, which is same-origin by default and is exactly why an
-  // earlier attempt let the ad's document.write() escape and overwrite
-  // the parent page.
-  document.querySelectorAll('.ref-ad-slot').forEach(slot => {
-    const iframe = document.createElement('iframe');
-    iframe.style.cssText = 'width:468px;max-width:100%;height:60px;border:0;display:block;margin:0 auto;';
-    iframe.scrolling = 'no';
-    iframe.sandbox = 'allow-scripts allow-popups allow-popups-to-escape-sandbox';
-    iframe.srcdoc = `<script>atOptions={'key':'493e6ade044c43d667d023d1c05fba71','format':'iframe','height':60,'width':468,'params':{}};</script><script src="https://www.highrevenueformat.com/493e6ade044c43d667d023d1c05fba71/invoke.js"></script>`;
-    slot.appendChild(iframe);
-  });
 }
 
 document.getElementById('refSortSelect').addEventListener('change',e=>{
