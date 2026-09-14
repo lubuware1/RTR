@@ -83,6 +83,7 @@
   .refs-list{display:flex;flex-direction:column;gap:4px;}
 
   /* Row */
+  .ref-group{display:flex;flex-direction:column;gap:4px;}
   .rpc{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .2s;}
   .rpc:hover{border-color:rgba(0,204,112,.25);}
   .ref-ad-slot{margin:6px 0;padding:20px;border:1px dashed var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--surface2);}
@@ -393,7 +394,7 @@ function renderRefs(){
   function barColor(val,avg){const t=avg*0.2;if(Math.abs(val-avg)<=t)return'y';return val>avg?'g':'r';}
   function barFixed(val,red,yellow){if(val>=red)return'r';if(val>=yellow)return'y';return'g';}
 
-  document.getElementById('refsGrid').innerHTML=sorted.map((ref,rank)=>{
+  const cardsHtml=sorted.map((ref,rank)=>{
     const hasN=ref.neutralRating!=null, hasF=ref.fanRating!=null;
     const biasGap=hasN&&hasF?ref.neutralRating-ref.fanRating:null;
     const gapAbs=biasGap!==null?Math.abs(biasGap):0;
@@ -502,8 +503,19 @@ function renderRefs(){
           <a href="referee.html?id=${ref.id}" style="font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;color:var(--pl-green);letter-spacing:.5px;text-transform:uppercase;" onclick="event.stopPropagation()">View Profile →</a>
         </div>
       </div></div>
-    </div>${(rank+1)%5===0?'<div class="ref-ad-slot">Ad placeholder</div>':''}`;
-  }).join('');
+    </div>`;
+  });
+
+  // Separate containers per group of 5, not just an inline divider inside
+  // one continuous list — each group is its own standalone block, with the
+  // ad slot sitting between them as a sibling rather than interleaved
+  // list items within a single flat container.
+  let gridHtml = '';
+  for (let i = 0; i < cardsHtml.length; i += 5) {
+    gridHtml += `<div class="ref-group">${cardsHtml.slice(i, i + 5).join('')}</div>`;
+    if (i + 5 < cardsHtml.length) gridHtml += '<div class="ref-ad-slot">Ad placeholder</div>';
+  }
+  document.getElementById('refsGrid').innerHTML = gridHtml;
 }
 
 document.getElementById('refSortSelect').addEventListener('change',e=>{
