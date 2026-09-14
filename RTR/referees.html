@@ -520,16 +520,19 @@ function renderRefs(){
   // Ad iframes can't go through innerHTML directly (script tags inserted
   // that way never execute) — fill each placeholder with a DOM-built
   // iframe instead. sandbox (with no allow-same-origin) forces the ad's
-  // script into a genuinely separate opaque origin — unlike a plain
-  // srcdoc iframe, which is same-origin by default and is exactly why an
-  // earlier attempt let the ad's document.write() escape and overwrite
-  // the parent page.
+  // script into a genuinely separate opaque origin, and every </script>
+  // in the srcdoc string is escaped as <\/script> — the HTML parser looks
+  // for that literal sequence to close a <script> tag even inside a JS
+  // string, so an unescaped one here was closing referees.html's own
+  // enclosing <script> block early and rendering everything after it as
+  // garbled raw text. That was the actual cause of the earlier breakage,
+  // not iframe isolation.
   document.querySelectorAll('.ref-ad-slot').forEach(slot => {
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'width:468px;max-width:100%;height:60px;border:0;display:block;margin:0 auto;';
     iframe.scrolling = 'no';
     iframe.sandbox = 'allow-scripts allow-popups allow-popups-to-escape-sandbox';
-    iframe.srcdoc = `<script>atOptions={'key':'493e6ade044c43d667d023d1c05fba71','format':'iframe','height':60,'width':468,'params':{}};</script><script src="https://www.highrevenueformat.com/493e6ade044c43d667d023d1c05fba71/invoke.js"></script>`;
+    iframe.srcdoc = `<script>atOptions={'key':'493e6ade044c43d667d023d1c05fba71','format':'iframe','height':60,'width':468,'params':{}};<\/script><script src="https://www.highrevenueformat.com/493e6ade044c43d667d023d1c05fba71/invoke.js"><\/script>`;
     slot.appendChild(iframe);
   });
 }
