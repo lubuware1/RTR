@@ -518,7 +518,10 @@
     html += hcField('hero.dek', 'Subtext', {textarea:true});
     html += `<div class="field-group">
       <label>This Week's Appointments</label>
-      <button type="button" class="btn btn-sm" id="loadWeeklyAppointmentsBtn">🔄 Load This Week's Matches &amp; Refs</button>
+      <div style="display:flex;gap:8px;">
+        <button type="button" class="btn btn-sm" id="loadWeeklyAppointmentsBtn">🔄 Load This Week's Matches &amp; Refs</button>
+        <button type="button" class="btn btn-sm btn-yellow" id="clearWeeklyAppointmentsBtn">✕ Clear</button>
+      </div>
       <div id="heroMatchesStatus" style="margin-top:8px;font-size:.8rem;color:var(--muted);"></div>
     </div>`;
     html += `<div class="row cols-3">${hcField('hero.metaMinute','Meta: Minute')}${hcField('hero.metaRef','Meta: Referee')}${hcField('hero.metaVenue','Meta: Venue')}</div>`;
@@ -1772,6 +1775,15 @@
     } finally {
       btn.disabled = false;
     }
+  });
+
+  document.getElementById('clearWeeklyAppointmentsBtn').addEventListener('click', () => {
+    const data = gatherHomeContentForm(currentHomeContent);
+    data.hero.matches = [];
+    currentHomeContent = data;
+    populateHomeContentForm(currentHomeContent);
+    renderHeroPreview();
+    toast('Cleared — click "Save to Live Site" to publish');
   });
 
   document.getElementById('saveHomeContentBtn').addEventListener('click', async () => {
