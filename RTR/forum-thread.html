@@ -72,6 +72,16 @@
     white-space: pre-wrap;
   }
 
+  .ad-placeholder {
+    margin: 0 0 20px; padding: 24px 14px;
+    border: 1px dashed var(--border); border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: .78rem; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--muted);
+    background: var(--surface2);
+  }
+
   /* ── replies ── */
   .replies-label {
     font-family: 'Barlow Condensed', sans-serif;
@@ -405,6 +415,7 @@ function renderThread(post, replies) {
       <div class="thread-body">${escapeHtml(post.body)}</div>
       ${reactionBarHtml(post.id, REACTION_COUNTS, MY_REACTIONS[post.id])}
     </div>
+    <div class="ad-placeholder">Ad placeholder</div>
     <div class="replies-label">${replies.length} ${replies.length === 1 ? 'Reply' : 'Replies'}</div>
     <div class="reply-list">${repliesHtml}</div>
     ${replyBoxHtml}

@@ -30,13 +30,23 @@
 
   .page { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 28px 20px 80px; }
   .forum-layout { display: flex; gap: 20px; align-items: flex-start; }
+  .forum-sidebar-col { width: 210px; flex-shrink: 0; }
   .forum-sidebar {
-    width: 210px; flex-shrink: 0;
     background: var(--surface2); border: 1px solid var(--border);
     border-radius: 12px; padding: 14px 0;
     position: sticky; top: 80px;
     max-height: calc(100vh - 100px); overflow-y: auto;
   }
+  .ad-placeholder {
+    margin: 16px 14px; padding: 24px 14px;
+    border: 1px dashed var(--border); border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: .78rem; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--muted);
+    background: var(--surface2);
+  }
+  .ad-placeholder.inline { margin: 16px 0; }
   .sidebar-heading {
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 800; font-size: .72rem; letter-spacing: 2px;
@@ -117,7 +127,8 @@
   .forum-main { flex: 1; min-width: 0; }
   @media (max-width: 700px) {
     .forum-layout { flex-direction: column; }
-    .forum-sidebar { width: 100%; position: static; max-height: none; }
+    .forum-sidebar-col { width: 100%; }
+    .forum-sidebar { position: static; max-height: none; }
   }
 
   /* ── PAGE HEADER ── */
@@ -555,8 +566,11 @@
   <div class="forum-layout">
 
     <!-- Sidebar -->
-    <div class="forum-sidebar" id="forumSidebar">
-      <div class="sidebar-heading">Threads</div>
+    <div class="forum-sidebar-col">
+      <div class="forum-sidebar" id="forumSidebar">
+        <div class="sidebar-heading">Threads</div>
+      </div>
+      <div class="ad-placeholder">Ad placeholder</div>
     </div>
 
     <!-- Main -->
@@ -580,6 +594,9 @@
 
       <!-- Matchweek filter (Games only) -->
       <div class="mw-filter" id="mwFilterBar" style="display:none"></div>
+
+      <!-- Ad placeholder — above the post list -->
+      <div class="ad-placeholder inline">Ad placeholder</div>
 
       <!-- Post list -->
       <div id="postList">
