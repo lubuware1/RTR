@@ -6,9 +6,10 @@
 //      cards/pens show up there with no admin action needed.
 //   2. Creates a real voteable RTR Incidents row for each card/penalty that
 //      doesn't already have one — same shape as an admin manually clicking
-//      "+ Add Decision", just automatic. Re-runs are safe: each event is
-//      matched against existing incidents (by match, type, minute,
-//      description) before inserting, so nothing gets duplicated.
+//      "+ Add Decision", just automatic. Re-runs are safe: a DB-level unique
+//      constraint on (match_id, type, minute, description) — see
+//      supabase/dedupe-incidents-setup.sql — makes a repeat insert a no-op,
+//      so nothing gets duplicated even across overlapping/retried runs.
 //   3. Flips RTR Fixtures.status to 'complete' (with the final score) the
 //      moment football-data.org reports FINISHED. Referee rankings
 //      (referees.html, admin.html) only count matches with
@@ -62,25 +63,24 @@ function supabaseFetch(path, options = {}) {
   });
 }
 
-// Inserts an RTR Incidents row for this event if one doesn't already exist
-// (matched on match_id + type + minute + description). Returns 'created',
+// Inserts an RTR Incidents row for this event, or silently no-ops if one
+// already exists for this (match_id, type, minute, description) — enforced
+// by a real DB unique constraint (see supabase/dedupe-incidents-setup.sql),
+// not just an app-side read-then-check. That in-app check existed before
+// and still failed in practice: a single live match ended up with the same
+// 5 events duplicated 25-30 times each, once per poll. A unique constraint
+// plus ignore-duplicates can't have that class of bug. Returns 'created',
 // 'exists', or 'failed'.
-async function ensureIncident(matchId, season, type, minute, description, existingIncidents) {
-  const dup = existingIncidents.some(inc =>
-    inc.type === type && inc.minute === minute && inc.description === description
-  );
-  if (dup) return 'exists';
-
+async function ensureIncident(matchId, season, type, minute, description) {
   const weight = INCIDENT_WEIGHTS[type] ?? 1.5;
-  const res = await supabaseFetch('/RTR%20Incidents', {
+  const res = await supabaseFetch('/RTR%20Incidents?on_conflict=match_id,type,minute,description', {
     method: 'POST',
-    headers: { Prefer: 'return=representation' },
+    headers: { Prefer: 'resolution=ignore-duplicates,return=representation' },
     body: JSON.stringify({ match_id: matchId, type, minute, description, weight, season }),
   });
   if (!res.ok) return 'failed';
-  const [created] = await res.json();
-  if (created) existingIncidents.push(created); // guard against dupes within the same run too
-  return 'created';
+  const created = await res.json();
+  return created.length ? 'created' : 'exists';
 }
 
 exports.handler = async () => {
@@ -151,21 +151,17 @@ exports.handler = async () => {
         if (upsertRes.ok) synced++;
         else errors.push(`match ${m.id} stats: ${upsertRes.status}`);
 
-        // Fetch existing incidents once per match, then check each card/pen against them.
-        const existingRes = await supabaseFetch(`/RTR%20Incidents?select=id,type,minute,description&match_id=eq.${m.id}`);
-        const existingIncidents = existingRes.ok ? await existingRes.json() : [];
-
         for (const b of bookings) {
           const type = b.card === 'YELLOW_CARD' ? 'Yellow Card' : 'Red Card';
           const description = `${b.player?.name || 'Unknown player'} (${b.team?.name || 'Unknown team'})`;
-          const result = await ensureIncident(m.id, season, type, b.minute, description, existingIncidents);
+          const result = await ensureIncident(m.id, season, type, b.minute, description);
           if (result === 'created') incidentsCreated++;
           else if (result === 'failed') errors.push(`match ${m.id} incident (${type} ${b.minute}'): insert failed`);
         }
 
         for (const g of goals.filter(g => g.type === 'PENALTY')) {
           const description = `${g.scorer?.name || 'Unknown player'} (${g.team?.name || 'Unknown team'}) penalty`;
-          const result = await ensureIncident(m.id, season, 'Penalty Given', g.minute, description, existingIncidents);
+          const result = await ensureIncident(m.id, season, 'Penalty Given', g.minute, description);
           if (result === 'created') incidentsCreated++;
           else if (result === 'failed') errors.push(`match ${m.id} incident (Penalty ${g.minute}'): insert failed`);
         }
