@@ -1546,6 +1546,24 @@ const SHARED_CSS = `
 `;
 (function(){const s=document.createElement('style');s.textContent=SHARED_CSS;document.head.appendChild(s);})();
 
+// Adsterra Native Banner ad — appended once at the end of <body> on every
+// public page (skipped on admin/gated/internal tools, matching robots.txt's
+// own exclusion list) so it shows sitewide with one code change instead of
+// editing every HTML file.
+(function() {
+  const excluded = ['/admin.html', '/team_task_manager.html', '/fantasy.html', '/login.html'];
+  if (excluded.some(p => location.pathname.endsWith(p))) return;
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;justify-content:center;padding:20px 0;';
+  wrap.innerHTML = '<div id="container-fc22b5515e409f224fb051d936e4f0c0"></div>';
+  document.body.appendChild(wrap);
+  const s = document.createElement('script');
+  s.async = true;
+  s.dataset.cfasync = 'false';
+  s.src = 'https://pl31337849.profitableratecpmnetwork.com/fc22b5515e409f224fb051d936e4f0c0/invoke.js';
+  document.body.appendChild(s);
+})();
+
 // ── AVATAR BADGE ─────────────────────────────────────────
 function getAvatarBadge() {
   const s = localStorage.getItem(_AVATAR_KEY);
