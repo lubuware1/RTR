@@ -85,6 +85,7 @@
   /* Row */
   .rpc{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .2s;}
   .rpc:hover{border-color:rgba(0,204,112,.25);}
+  .ref-ad-slot{margin:6px 0;padding:20px;border:1px dashed var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--surface2);}
   .rpc.open{border-color:rgba(0,204,112,.4);}
   .rpc-head{display:grid;grid-template-columns:28px 36px 1fr 72px 72px 48px 18px;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;user-select:none;}
   .rpc-rank{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:.9rem;color:var(--muted);text-align:center;}
@@ -501,7 +502,7 @@ function renderRefs(){
           <a href="referee.html?id=${ref.id}" style="font-family:'Barlow Condensed',sans-serif;font-size:.75rem;font-weight:700;color:var(--pl-green);letter-spacing:.5px;text-transform:uppercase;" onclick="event.stopPropagation()">View Profile →</a>
         </div>
       </div></div>
-    </div>`;
+    </div>${(rank+1)%5===0?'<div class="ref-ad-slot">Ad placeholder</div>':''}`;
   }).join('');
 }
 
