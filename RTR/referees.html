@@ -520,13 +520,12 @@ function renderRefs(){
   // Ad iframes can't go through innerHTML directly (script tags inserted
   // that way never execute) — fill each placeholder with a DOM-built
   // iframe instead. sandbox (with no allow-same-origin) forces the ad's
-  // script into a genuinely separate opaque origin, and every </script>
-  // in the srcdoc string is escaped as <\/script> — the HTML parser looks
-  // for that literal sequence to close a <script> tag even inside a JS
-  // string, so an unescaped one here was closing referees.html's own
-  // enclosing <script> block early and rendering everything after it as
-  // garbled raw text. That was the actual cause of the earlier breakage,
-  // not iframe isolation.
+  // script into a genuinely separate opaque origin. The srcdoc string's
+  // closing tags below use a backslash before the forward slash, which
+  // keeps a valid JS string but breaks the exact character run the HTML
+  // parser scans for to end a script block early — critically, that rule
+  // applies to raw file bytes only, so don't ever spell that closing
+  // sequence out literally anywhere in this file, comments included.
   document.querySelectorAll('.ref-ad-slot').forEach(slot => {
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'width:468px;max-width:100%;height:60px;border:0;display:block;margin:0 auto;';
