@@ -506,14 +506,15 @@ function renderRefs(){
     </div>`;
   });
 
-  // Separate containers per group of 5, not just an inline divider inside
+  // Separate containers per group of 10, not just an inline divider inside
   // one continuous list — each group is its own standalone block, with the
   // ad slot sitting between them as a sibling rather than interleaved
   // list items within a single flat container.
+  const REFS_PER_GROUP = 10;
   let gridHtml = '';
-  for (let i = 0; i < cardsHtml.length; i += 5) {
-    gridHtml += `<div class="ref-group">${cardsHtml.slice(i, i + 5).join('')}</div>`;
-    if (i + 5 < cardsHtml.length) gridHtml += '<div class="ref-ad-slot"></div>';
+  for (let i = 0; i < cardsHtml.length; i += REFS_PER_GROUP) {
+    gridHtml += `<div class="ref-group">${cardsHtml.slice(i, i + REFS_PER_GROUP).join('')}</div>`;
+    if (i + REFS_PER_GROUP < cardsHtml.length) gridHtml += '<div class="ref-ad-slot"></div>';
   }
   document.getElementById('refsGrid').innerHTML = gridHtml;
 
