@@ -1546,18 +1546,6 @@ const SHARED_CSS = `
 `;
 (function(){const s=document.createElement('style');s.textContent=SHARED_CSS;document.head.appendChild(s);})();
 
-// Adsterra ad script (Social Bar / Popunder — self-injecting, no placement
-// div needed). Loaded on every public page except admin/gated/internal
-// tools, matching robots.txt's own exclusion list for the same reason.
-(function() {
-  const excluded = ['/admin.html', '/team_task_manager.html', '/fantasy.html', '/login.html'];
-  if (excluded.some(p => location.pathname.endsWith(p))) return;
-  const s = document.createElement('script');
-  s.src = 'https://pl31337414.profitableratecpmnetwork.com/9c/d0/d2/9cd0d2a46dfbf0feef793724eeea1f01.js';
-  s.async = true;
-  document.head.appendChild(s);
-})();
-
 // ── AVATAR BADGE ─────────────────────────────────────────
 function getAvatarBadge() {
   const s = localStorage.getItem(_AVATAR_KEY);
