@@ -1152,11 +1152,16 @@ initHeader();
   renderList();
   renderLb();
   // Reload sheet data + re-check statuses every minute so changes propagate without a page refresh
+  let _refreshTick = 0;
   setInterval(async () => {
+    _refreshTick++;
     await loadFromSheets().catch(() => {}); // refreshes REFS
     if (!TEST_MATCHES) await loadMatchesFromAPI(currentGW); // re-fetches live scores from API
     if (!TEST_MATCHES) await loadFixtures().catch(() => {}); // re-backfill other GWs after loadMatchesFromAPI overwrote MATCHES
-    await loadIncidentRatings(); // whole-season average, same as the initial load
+    // loadIncidentRatings pulls the whole season's incidents/votes tables —
+    // expensive, and the leaderboard numbers it feeds don't need per-minute
+    // freshness, so only run it every 5th tick (~5 min) instead of every tick.
+    if (_refreshTick % 5 === 0) await loadIncidentRatings();
     syncMatchStatuses();
     // If a panel is open for a live/complete match, re-fetch its incidents so new decisions appear
     if (selId) {
