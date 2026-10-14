@@ -1553,15 +1553,20 @@ const SHARED_CSS = `
 (function() {
   const excluded = ['/admin.html', '/team_task_manager.html', '/fantasy.html', '/login.html'];
   if (excluded.some(p => location.pathname.endsWith(p))) return;
-  const wrap = document.createElement('div');
-  wrap.style.cssText = 'display:flex;justify-content:center;padding:20px 0;';
-  wrap.innerHTML = '<div id="container-fc22b5515e409f224fb051d936e4f0c0"></div>';
-  document.body.appendChild(wrap);
-  const s = document.createElement('script');
-  s.async = true;
-  s.dataset.cfasync = 'false';
-  s.src = 'https://pl31337849.profitableratecpmnetwork.com/fc22b5515e409f224fb051d936e4f0c0/invoke.js';
-  document.body.appendChild(s);
+  // shared.js can load from <head>, before <body> exists
+  const inject = function() {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;justify-content:center;padding:20px 0;';
+    wrap.innerHTML = '<div id="container-fc22b5515e409f224fb051d936e4f0c0"></div>';
+    document.body.appendChild(wrap);
+    const s = document.createElement('script');
+    s.async = true;
+    s.dataset.cfasync = 'false';
+    s.src = 'https://pl31337849.profitableratecpmnetwork.com/fc22b5515e409f224fb051d936e4f0c0/invoke.js';
+    document.body.appendChild(s);
+  };
+  if (document.body) inject();
+  else document.addEventListener('DOMContentLoaded', inject);
 })();
 
 // ── AVATAR BADGE ─────────────────────────────────────────
