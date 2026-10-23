@@ -83,8 +83,10 @@
   .refs-list{display:flex;flex-direction:column;gap:4px;}
 
   /* Row */
+  .ref-group{display:flex;flex-direction:column;gap:4px;}
   .rpc{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .2s;}
   .rpc:hover{border-color:rgba(0,204,112,.25);}
+  .ref-ad-slot{margin:6px 0;padding:20px;border:1px dashed var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--surface2);}
   .rpc.open{border-color:rgba(0,204,112,.4);}
   .rpc-head{display:grid;grid-template-columns:28px 36px 1fr 72px 72px 48px 18px;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;user-select:none;}
   .rpc-rank{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:.9rem;color:var(--muted);text-align:center;}
@@ -392,7 +394,7 @@ function renderRefs(){
   function barColor(val,avg){const t=avg*0.2;if(Math.abs(val-avg)<=t)return'y';return val>avg?'g':'r';}
   function barFixed(val,red,yellow){if(val>=red)return'r';if(val>=yellow)return'y';return'g';}
 
-  document.getElementById('refsGrid').innerHTML=sorted.map((ref,rank)=>{
+  const cardsHtml=sorted.map((ref,rank)=>{
     const hasN=ref.neutralRating!=null, hasF=ref.fanRating!=null;
     const biasGap=hasN&&hasF?ref.neutralRating-ref.fanRating:null;
     const gapAbs=biasGap!==null?Math.abs(biasGap):0;
@@ -502,7 +504,37 @@ function renderRefs(){
         </div>
       </div></div>
     </div>`;
-  }).join('');
+  });
+
+  // Separate containers per group of 10, not just an inline divider inside
+  // one continuous list — each group is its own standalone block, with the
+  // ad slot sitting between them as a sibling rather than interleaved
+  // list items within a single flat container.
+  const REFS_PER_GROUP = 10;
+  let gridHtml = '';
+  for (let i = 0; i < cardsHtml.length; i += REFS_PER_GROUP) {
+    gridHtml += `<div class="ref-group">${cardsHtml.slice(i, i + REFS_PER_GROUP).join('')}</div>`;
+    if (i + REFS_PER_GROUP < cardsHtml.length) gridHtml += '<div class="ref-ad-slot"></div>';
+  }
+  document.getElementById('refsGrid').innerHTML = gridHtml;
+
+  // Ad iframes can't go through innerHTML directly (script tags inserted
+  // that way never execute) — fill each placeholder with a DOM-built
+  // iframe instead. No sandbox attribute here — Adsterra's script refused
+  // to render at all inside one, so this trades that safety net back out
+  // in exchange for the ad actually showing. The srcdoc string's closing
+  // tags below use a backslash before the forward slash, which keeps a
+  // valid JS string but breaks the exact character run the HTML parser
+  // scans for to end a script block early — critically, that rule applies
+  // to raw file bytes only, so don't ever spell that closing sequence out
+  // literally anywhere in this file, comments included.
+  document.querySelectorAll('.ref-ad-slot').forEach(slot => {
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'width:468px;max-width:100%;height:60px;border:0;display:block;margin:0 auto;';
+    iframe.scrolling = 'no';
+    iframe.srcdoc = `<script>atOptions={'key':'493e6ade044c43d667d023d1c05fba71','format':'iframe','height':60,'width':468,'params':{}};<\/script><script src="https://www.highrevenueformat.com/493e6ade044c43d667d023d1c05fba71/invoke.js"><\/script>`;
+    slot.appendChild(iframe);
+  });
 }
 
 document.getElementById('refSortSelect').addEventListener('change',e=>{
