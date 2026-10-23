@@ -740,6 +740,47 @@
     return drafts;
   }
 
+  // A newly published story takes the Hero slot and everything shifts down:
+  // old hero -> top Side Story, last Side Story -> top News Card, last News Card drops off.
+  // (Each slot has a different shape/palette, so fields are translated when demoted.)
+  function cascadeStoryIntoHomepage(content, article) {
+    const NEWS_TAG_BY_COLOR = { red: 'incident', gold: 'rating', green: 'match' };
+    const RAIL_VARIANT = { var: 'card-red', locker: 'card-yellow' };              // everything else -> stadium
+    const NEWS_VARIANT = { 'card-red': 'var', 'card-yellow': 'locker', stadium: 'pitch' };
+    const remap = (media, table, fallback) => (!media || media.type === 'css')
+      ? { type: 'css', variant: table[media?.variant] || fallback }
+      : media;
+
+    const oldHero = content.hero;
+    const rail = content.rail || [];
+    const news = content.news || [];
+    const railSlots = HOME_CONTENT_DEFAULTS.rail.length;
+
+    const demotedHero = oldHero?.headline ? {
+      visible: oldHero.visible !== false, tagColor: 'green', tagText: oldHero.tagText || '',
+      headline: oldHero.headline, sub: oldHero.dek || '', link: oldHero.link || 'articles.html',
+      articleId: oldHero.articleId || null, media: remap(oldHero.media, RAIL_VARIANT, 'stadium')
+    } : null;
+    const droppedRail = demotedHero && rail.length >= railSlots ? rail[railSlots - 1] : null;
+    const newRail = (demotedHero ? [demotedHero, ...rail] : rail).slice(0, railSlots);
+
+    const demotedRail = droppedRail ? {
+      visible: droppedRail.visible !== false, tag: NEWS_TAG_BY_COLOR[droppedRail.tagColor] || 'match',
+      tagText: droppedRail.tagText || '', headline: droppedRail.headline, dek: droppedRail.sub || '',
+      metaLeft: '', metaRight: '', link: droppedRail.link || 'articles.html',
+      articleId: droppedRail.articleId || null, media: remap(droppedRail.media, NEWS_VARIANT, 'pitch')
+    } : null;
+
+    content.hero = {
+      ...(oldHero || {}), visible: true, tagText: article.tag_text || article.tag,
+      headline: article.headline, dek: article.dek, matches: [],
+      metaMinute: article.meta_left || '', metaRef: article.meta_right || '', metaVenue: '',
+      link: 'articles.html', articleId: article.id, media: article.media || { type: 'css', variant: 'pitch' }
+    };
+    content.rail = newRail;
+    content.news = (demotedRail ? [demotedRail, ...news] : news).slice(0, HOME_CONTENT_DEFAULTS.news.length);
+  }
+
   // ── ARTICLES EDITOR ────────────────────────────────────────
   let editingArticleId = null;
 
@@ -1840,14 +1881,10 @@
     if (pubId) {
       const article = await loadArticle(pubId, { includeDrafts: true });
       if (!article) return;
-      if (!confirm(`Publish "${article.headline}" and add it to the top of the homepage news grid?`)) return;
+      if (!confirm(`Publish "${article.headline}" as the homepage Hero story? Everything else moves down one slot, and the current Hero's matches/appointments list will be removed.`)) return;
       const saved = await saveArticle({ id: article.id, status: 'published', published_at: new Date().toISOString() });
       const content = await loadHomeContent() || structuredClone(HOME_CONTENT_DEFAULTS);
-      content.news = [{
-        visible: true, tag: article.tag, tagText: article.tag_text, headline: article.headline, dek: article.dek,
-        metaLeft: article.meta_left, metaRight: article.meta_right, link: 'articles.html', articleId: article.id,
-        media: article.media || { type: 'css', variant: 'pitch' }
-      }, ...(content.news || [])].slice(0, HOME_CONTENT_DEFAULTS.news.length); // form has fixed slots; oldest card drops off
+      cascadeStoryIntoHomepage(content, article);
       const ok = saved && await saveHomeContent(content);
       if (ok) { currentHomeContent = content; populateHomeContentForm(currentHomeContent); renderHeroPreview(); }
       toast(ok ? '✓ Published and added to homepage' : 'Publish failed', !ok);
