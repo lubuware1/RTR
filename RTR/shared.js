@@ -1645,7 +1645,7 @@ function renderHeroFeatureBody(h) {
     <h1 class="feature-headline">${h.headline}</h1>
     <p class="feature-dek">${h.dek}</p>
     ${matchesHTML}
-    <div class="feature-meta">${h.metaMinute} <b>·</b> ${h.metaRef} <b>·</b> ${h.metaVenue}</div>`;
+    <div class="feature-meta">${[h.metaMinute, h.metaRef, h.metaVenue].filter(Boolean).join(' <b>·</b> ')}</div>`;
 }
 
 // ── @MENTIONS / NOTIFICATIONS ──────────────────────────────
