@@ -912,7 +912,7 @@
         <label>Referee</label>
         <select class="f-ref">
           <option value="">— Not assigned —</option>
-          ${REFS.map(r => `<option value="${r.id}"${+m.refId === r.id ? ' selected' : ''}>${r.name}</option>`).join('')}
+          ${[...REFS].sort((a, b) => a.name.localeCompare(b.name)).map(r => `<option value="${r.id}"${+m.refId === r.id ? ' selected' : ''}>${r.name}</option>`).join('')}
         </select>
       </div>
       <div class="checkbox-row" style="margin-bottom:14px;">
