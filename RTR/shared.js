@@ -433,16 +433,22 @@ async function saveHomeContent(content) {
 }
 
 // ── ARTICLES (full "click a headline, read the story" pages) ──
-async function loadArticles() {
+// Auto-imported stories (sync-drive-stories.js) arrive as status='draft' and stay
+// hidden from the public until published in admin.html, which passes includeDrafts.
+async function loadArticles({ includeDrafts = false } = {}) {
   if (PREVIEW_MODE) return [];
-  const { data, error } = await getSB().from('RTR Articles').select('*').order('published_at', { ascending: false });
+  let q = getSB().from('RTR Articles').select('*');
+  if (!includeDrafts) q = q.neq('status', 'draft');
+  const { data, error } = await q.order('published_at', { ascending: false });
   if (error) { console.error('[RTR] loadArticles error:', error); return []; }
   return data || [];
 }
 
-async function loadArticle(id) {
+async function loadArticle(id, { includeDrafts = false } = {}) {
   if (PREVIEW_MODE) return null;
-  const { data, error } = await getSB().from('RTR Articles').select('*').eq('id', id).single();
+  let q = getSB().from('RTR Articles').select('*').eq('id', id);
+  if (!includeDrafts) q = q.neq('status', 'draft');
+  const { data, error } = await q.single();
   if (error) { console.error('[RTR] loadArticle error:', error); return null; }
   return data;
 }

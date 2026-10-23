@@ -1,2 +1,5 @@
 [functions."sync-live-incidents"]
   schedule = "*/2 * * * *"
+
+[functions."sync-drive-stories"]
+  schedule = "*/10 * * * *"

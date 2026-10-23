@@ -748,8 +748,9 @@
     if (!articles.length) { el.innerHTML = `<p style="font-size:.85rem;color:var(--muted);">No articles yet.</p>`; return; }
     el.innerHTML = articles.map(a => `
       <div class="bonus-row" style="align-items:center;">
-        <span class="status-pill upcoming">#${a.id}</span>
-        <span class="bonus-label">${a.headline || '(untitled)'}<br><span class="bonus-meta">${a.tag} · ${new Date(a.published_at).toLocaleDateString('en-GB')}</span></span>
+        <span class="status-pill ${a.status === 'draft' ? 'live' : 'upcoming'}">${a.status === 'draft' ? 'DRAFT' : '#' + a.id}</span>
+        <span class="bonus-label">${a.headline || '(untitled)'}<br><span class="bonus-meta">${a.tag} · ${new Date(a.published_at).toLocaleDateString('en-GB')}${a.drive_file_id ? ' · imported from Drive' : ''}</span></span>
+        ${a.status === 'draft' ? `<button class="btn btn-sm btn-green" data-publish-article="${a.id}">Publish</button>` : ''}
         <button class="btn btn-sm" data-edit-article="${a.id}">Edit</button>
         <button class="btn btn-sm btn-red" data-delete-article="${a.id}">Delete</button>
       </div>`).join('');
@@ -782,7 +783,7 @@
   }
 
   async function refreshArticlesList() {
-    const articles = await loadArticles();
+    const articles = await loadArticles({ includeDrafts: true });
     renderArticlesList(articles);
     return articles;
   }
@@ -1835,8 +1836,26 @@
   document.getElementById('articlesList').addEventListener('click', async e => {
     const editId = e.target.dataset.editArticle;
     const delId = e.target.dataset.deleteArticle;
+    const pubId = e.target.dataset.publishArticle;
+    if (pubId) {
+      const article = await loadArticle(pubId, { includeDrafts: true });
+      if (!article) return;
+      if (!confirm(`Publish "${article.headline}" and add it to the top of the homepage news grid?`)) return;
+      const saved = await saveArticle({ id: article.id, status: 'published', published_at: new Date().toISOString() });
+      const content = await loadHomeContent() || structuredClone(HOME_CONTENT_DEFAULTS);
+      content.news = [{
+        visible: true, tag: article.tag, tagText: article.tag_text, headline: article.headline, dek: article.dek,
+        metaLeft: article.meta_left, metaRight: article.meta_right, link: 'articles.html', articleId: article.id,
+        media: article.media || { type: 'css', variant: 'pitch' }
+      }, ...(content.news || [])].slice(0, HOME_CONTENT_DEFAULTS.news.length); // form has fixed slots; oldest card drops off
+      const ok = saved && await saveHomeContent(content);
+      if (ok) { currentHomeContent = content; populateHomeContentForm(currentHomeContent); renderHeroPreview(); }
+      toast(ok ? '✓ Published and added to homepage' : 'Publish failed', !ok);
+      await refreshArticlesList();
+      return;
+    }
     if (editId) {
-      const article = await loadArticle(editId);
+      const article = await loadArticle(editId, { includeDrafts: true });
       if (article) openArticleEditor(article);
     } else if (delId) {
       if (!confirm(`Delete article #${delId}? This can't be undone.`)) return;
